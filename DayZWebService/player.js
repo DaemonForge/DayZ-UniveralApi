@@ -113,7 +113,6 @@ async function runUpdate(req, res, GUID, mod, auth, write) {
         }
     } else {
         res.json(req.body);
-        await client.close();
     }
 };
 
