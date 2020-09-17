@@ -1,8 +1,8 @@
-class ApiAuthToken{
+class ApiAuthToken extends ConfigBase{
 	string GUID = "";
 	string AUTH = "";
 	
 	string GetAuthToken(){
-		return GUID;
+		return AUTH;
 	}
 }

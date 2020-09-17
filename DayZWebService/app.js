@@ -13,9 +13,9 @@ const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
 const app = express();
 
 
-console.log("AP Started");
 app.use(bodyParser.json())
 app.use('/Item', RouterItem)
 app.use('/Player', RouterPlayer)
 app.use('/Gobals', RouterGlobals)
 app.listen(config.Port);
+console.log("API Webservice Started");

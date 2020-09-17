@@ -1,4 +1,4 @@
-class UniversalRestApi
+class UniversalRest
 {	
 	static RestApi Api()
 	{
@@ -10,9 +10,13 @@ class UniversalRestApi
 		return clCore;
 	}
 	
-	static void PlayerSave(string mod, string guid, string auth, void data_out, RestCallback UCBX = new UApiSilentCallBack)
+	static void PlayerSave(string mod, string guid, string auth, ref ConfigBase data_out, ref RestCallback UCBX = NULL)
 	{		
 		string url = UApiConfig().ServerURL + "/Player/Save/" + guid + "/" + auth + "/" + mod;
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack;
+		}
 		
 		string jsonString = "{}";
 		bool ok = false;
@@ -23,13 +27,13 @@ class UniversalRestApi
 		if (ok){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
-			ctx.POST(UCBX, "", json);
+			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[GameApi] Error Saving Player Data for " + mod);
+			Print("[UPAI] [GameApi] Error Saving Player Data for " + mod);
 		}
 	}
 	
-	static void PlayerLoad(string mod, string guid, string auth, RestCallback UCBX, void data_out = NULL)
+	static void PlayerLoad(string mod, string guid, string auth,ref RestCallback UCBX, ref ConfigBase data_out = NULL)
 	{
 		string url = UApiConfig().ServerURL + "/Player/Load/" + guid + "/" + auth + "/" + mod;
 		
@@ -45,23 +49,29 @@ class UniversalRestApi
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[GameApi] Error Loading Player Data for " + mod);
+			Print("[UPAI] [GameApi] Error Loading Player Data for " + mod);
 		}
 	}
 	
 	static void GetAuth( string auth, string guid )
 	{
-		UApiAuthCallBack UCBX = new UApiAuthCallBack
 		string url = UApiConfig().ServerURL + "/Player/GetAuth/" + guid + "/" + auth;
+		
+		UApiAuthCallBack UCBX = new UApiAuthCallBack;
+		
 		RestContext ctx = Api().GetRestContext(url);
 		ctx.SetHeader("application/json");
 		ctx.POST(UCBX, "", "{}");
 	}
 
 
-	static void GlobalsSave(string mod, string auth, void data_out, RestCallback UCBX = new UApiSilentCallBack)
+	static void GlobalsSave(string mod, string auth, ref ConfigBase data_out, ref RestCallback UCBX = NULL)
 	{
 		string url = UApiConfig().ServerURL + "/Gobals/Save/" + auth + "/" + mod;
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack;
+		}
 		
 		string jsonString = "{}";
 		bool ok = false;
@@ -72,13 +82,13 @@ class UniversalRestApi
 		if (ok){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
-			ctx.POST(UCBX, "", json);
+			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[GameApi] Error Saving Globals Data for " + mod);
+			Print("[UPAI] [GameApi] Error Saving Globals Data for " + mod);
 		}
 	}
 	
-	static void GlobalsLoad(string mod, string auth, void data_out = NULL, RestCallback UCBX)
+	static void GlobalsLoad(string mod, string auth, ref RestCallback UCBX, ref ConfigBase data_out = NULL)
 	{
 		string url = UApiConfig().ServerURL + "/Gobals/Load/" + auth + "/" + mod;
 		
@@ -94,13 +104,17 @@ class UniversalRestApi
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[GameApi] Error Loading Globals Data for " + mod);
+			Print("[UPAI] [GameApi] Error Loading Globals Data for " + mod);
 		}
 	}
 	
-	static void ServerSave(string mod, string serverId, string auth, void data_out, RestCallback UCBX = new UApiSilentCallBack)
+	static void ItemSave(string mod, string serverId, string auth, ref ConfigBase data_out, ref RestCallback UCBX = NULL)
 	{
-		string url = UApiConfig().ServerURL + "/Server/Save/" + serverId + "/" + auth + "/" + mod;
+		string url = UApiConfig().ServerURL + "/Item/Save/" + serverId + "/" + auth + "/" + mod;
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack;
+		}
 		
 		string jsonString = "{}";
 		bool ok = false;
@@ -111,15 +125,15 @@ class UniversalRestApi
 		if (ok){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
-			ctx.POST(UCBX, "", json);
+			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[GameApi] Error Saving Globals Data for " + mod);
+			Print("[UPAI] [GameApi] Error Saving Globals Data for " + mod);
 		}
 	}
 	
-	static void ServerLoad(string mod, string serverId, string auth, RestCallback UCBX, void data_out = NULL)
+	static void ItemLoad(string mod, string serverId, string auth, ref RestCallback UCBX, ref ConfigBase data_out = NULL)
 	{
-		string url = UApiConfig().ServerURL + "/Server/Load/" + serverId + "/" + auth + "/" + mod;
+		string url = UApiConfig().ServerURL + "/Item/Load/" + serverId + "/" + auth + "/" + mod;
 		
 		string jsonString = "{}";
 		bool ok = true;
@@ -133,7 +147,7 @@ class UniversalRestApi
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[GameApi] Error Loading Globals Data for " + mod);
+			Print("[UPAI] [GameApi] Error Loading Globals Data for " + mod);
 		}
 	}
 };

@@ -19,6 +19,7 @@ router.post('/Save/:GUID/:auth/:mod', (req, res)=>{
 
 router.post('/GetAuth/:GUID/:auth', (req, res)=>{
     if ( req.params.auth == config.ServerAuth ){
+        console.log("Auth Token Requested for: " + req.params.GUID);
         runGetAuth(req, res, req.params.GUID, req.params.auth);
     }else{
         res.json({ GUID: req.params.GUID, AuthToken: "NULL" });
@@ -141,9 +142,6 @@ async function CheckPlayerAuth(guid, auth){
 }
 
 async function runGetAuth(req, res, GUID, auth) {
-    if (auth.toString ==  config.ServerAuth.toString){
-        return true;
-    }
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     try{
 
@@ -163,7 +161,7 @@ async function runGetAuth(req, res, GUID, auth) {
         const updateDocValue  = { GUID: GUID, AUTH: AuthToken }
         const updateDoc = { $set: updateDocValue, };
         const result = await collection.updateOne(query, updateDoc, options);
-        console.log(result);
+        console.log(result.result);
         res.json({GUID: GUID, AUTH: AuthToken});
     }catch(err){
         console.log("Found Server with ID " + err)
@@ -177,9 +175,9 @@ async function runGetAuth(req, res, GUID, auth) {
 };
 function makeAuthToken() {
     var result           = '';
-    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.~()*:@,;';
     var charactersLength = characters.length;
-    for ( var i = 0; i < 32; i++ ) {
+    for ( var i = 0; i < 42; i++ ) {
        result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
