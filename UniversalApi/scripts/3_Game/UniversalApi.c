@@ -26,7 +26,7 @@ class UniversalApi{
 		m_ReadAuthToken  = readAuthToken;
 	}
 	
-	ref UniversalRest Request(){
+	ref UniversalRest Rest(){
 		if (!m_UniversalRest){
 			m_UniversalRest = new ref UniversalRest;
 		}
@@ -59,7 +59,7 @@ class UniversalApi{
 			AddToQueue(idenitity);
 			UApiConfig();
 			if (UApiConfig().ServerAuth != "" && UApiConfig().ServerAuth != "null"){
-				Request().GetAuth( UApiConfig().ServerAuth, idenitity.GetId() );
+				Rest().GetAuth( UApiConfig().ServerAuth, idenitity.GetId() );
 			}
 		}
 	}

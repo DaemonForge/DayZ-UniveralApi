@@ -84,7 +84,7 @@ async function runGet(req, res, GUID, mod, auth) {
     }
 };
 async function runUpdate(req, res, GUID, mod, auth, write) {
-    if ( ((await CheckPlayerAuth(GUID, auth)) && config.AllowClientWrite) || (write != false && auth == config.ReadAllAuth) || auth == config.ServerAuth ){
+    if ( (write != false && auth == config.ReadAllAuth) || auth == config.ServerAuth || ((await CheckPlayerAuth(GUID, auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();

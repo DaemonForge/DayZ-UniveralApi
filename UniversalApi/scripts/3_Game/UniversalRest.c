@@ -10,9 +10,13 @@ class UniversalRest
 		return clCore;
 	}
 	
-	static void PlayerSave(string mod, string guid, string auth, ref ConfigBase data_out, ref RestCallback UCBX = NULL)
+	static void PlayerSave(string mod, string guid, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
 	{		
 		string url = UApiConfig().ServerURL + "/Player/Save/" + guid + "/" + auth + "/" + mod;
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
 		
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
@@ -33,13 +37,27 @@ class UniversalRest
 		}
 	}
 	
-	static void PlayerLoad(string mod, string guid, string auth,ref RestCallback UCBX, ref ConfigBase data_out = NULL)
+	static void PlayerLoad(string mod, string guid, ref ConfigBase data_out = NULL, ref RestCallback UCBX = NULL, string auth = "")
 	{
 		string url = UApiConfig().ServerURL + "/Player/Load/" + guid + "/" + auth + "/" + mod;
 		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
 		string jsonString = "{}";
 		bool ok = true;
+		
+		if (!data_out && !UCBX){
+			UCBX = new ref RestCallback;
+		}
+		
 		if (data_out){
+			if (!UCBX){
+				ref UApiCallBack UAPICBX = new ref UApiCallBack;
+				UAPICBX.SetConfig(data_out);
+				UCBX = Class.Cast(UAPICBX);
+			}
 			JsonSerializer js = new JsonSerializer();
 			ok = js.WriteToString(data_out, false, jsonString);
 		}
@@ -53,9 +71,13 @@ class UniversalRest
 		}
 	}
 	
-	static void GetAuth( string auth, string guid )
+	static void GetAuth( string guid,  string auth  = "")
 	{
 		string url = UApiConfig().ServerURL + "/Player/GetAuth/" + guid + "/" + auth;
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
 		
 		UApiAuthCallBack UCBX = new UApiAuthCallBack;
 		
@@ -65,9 +87,13 @@ class UniversalRest
 	}
 
 
-	static void GlobalsSave(string mod, string auth, ref ConfigBase data_out, ref RestCallback UCBX = NULL)
+	static void GlobalsSave(string mod, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
 	{
 		string url = UApiConfig().ServerURL + "/Gobals/Save/" + auth + "/" + mod;
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
 		
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
@@ -88,9 +114,13 @@ class UniversalRest
 		}
 	}
 	
-	static void GlobalsLoad(string mod, string auth, ref RestCallback UCBX, ref ConfigBase data_out = NULL)
+	static void GlobalsLoad(string mod, ref RestCallback UCBX = NULL, ref ConfigBase data_out = NULL, string auth = "")
 	{
 		string url = UApiConfig().ServerURL + "/Gobals/Load/" + auth + "/" + mod;
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
 		
 		string jsonString = "{}";
 		bool ok = true;
@@ -108,12 +138,16 @@ class UniversalRest
 		}
 	}
 	
-	static void ItemSave(string mod, string serverId, string auth, ref ConfigBase data_out, ref RestCallback UCBX = NULL)
+	static void ItemSave(string mod, string serverId, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
 	{
 		string url = UApiConfig().ServerURL + "/Item/Save/" + serverId + "/" + auth + "/" + mod;
 		
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
 		}
 		
 		string jsonString = "{}";
@@ -131,9 +165,14 @@ class UniversalRest
 		}
 	}
 	
-	static void ItemLoad(string mod, string serverId, string auth, ref RestCallback UCBX, ref ConfigBase data_out = NULL)
+	static void ItemLoad(string mod, string serverId, ref RestCallback UCBX = NULL, ref ConfigBase data_out = NULL, string auth = "")
 	{
 		string url = UApiConfig().ServerURL + "/Item/Load/" + serverId + "/" + auth + "/" + mod;
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
 		
 		string jsonString = "{}";
 		bool ok = true;
