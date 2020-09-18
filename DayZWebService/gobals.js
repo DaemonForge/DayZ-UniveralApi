@@ -28,9 +28,9 @@ async function runGet(req, res, mod, auth) {
                 if (auth == config.ServerAuth || config.AllowClientWrite){
                     var doc = { Mod: mod, Data: RawData };
                     var result = await collection.insertOne(doc);
-                    console.log("result: "+ results.result)
+                    console.log("result: "+ results)
                 }
-                    res.json(RawData);
+                res.json(RawData);
             } else {
                 var data = await results.toArray(); 
                 console.log("Found " + mod + " data: " + data)

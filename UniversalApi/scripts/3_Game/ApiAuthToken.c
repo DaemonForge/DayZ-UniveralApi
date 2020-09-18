@@ -1,4 +1,4 @@
-class ApiAuthToken extends ConfigBase{
+class ApiAuthToken extends UApiConfigBase{
 	string GUID = "";
 	string AUTH = "";
 	

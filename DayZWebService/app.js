@@ -16,12 +16,16 @@ const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
 const app = express();
 
 
-app.use(bodyParser.json())
-app.use('/Item', RouterItem)
-app.use('/Player', RouterPlayer)
-app.use('/Gobals', RouterGlobals)
-app.use('/GetAuth', RouterAuth)
+app.use(bodyParser.json());
+app.use('/Item', RouterItem);
+app.use('/Player', RouterPlayer);
+app.use('/Gobals', RouterGlobals);
+app.use('/GetAuth', RouterAuth);
+app.use('/', (req,res)=>{
 
+    console.log("Error in URL:" + req.url);
+    res.json({Error: "Error"});
+});
 
 https.createServer({
     key: fs.readFileSync('server.key'),

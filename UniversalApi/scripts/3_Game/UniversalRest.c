@@ -12,6 +12,7 @@ class UniversalRest
 		if (!clCore)
 		{
 			clCore = CreateRestApi();
+			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
 		}
 		return clCore;
 	}
@@ -23,26 +24,18 @@ class UniversalRest
 		return UApiConfig().ServerURL;
 	}
 	
-	static void PlayerSave(string mod, string guid, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
+	static void PlayerSave(string mod, string guid, string jsonString, ref RestCallback UCBX = NULL, string auth = "")
 	{		
-		
-		string url = BaseUrl() + "/Player/Save/" + guid + "/" + mod  + "/" + auth;
-		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
 		
+		string url = BaseUrl() + "/Player/Save/" + guid + "/" + mod  + "/" + auth;
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
 		}
 		
-		string jsonString = "{}";
-		bool ok = false;
-		if (data_out){
-			JsonSerializer js = new JsonSerializer();
-			ok = js.WriteToString(data_out, false, jsonString);
-		}
-		if (ok){
+		if (jsonString){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
@@ -51,32 +44,16 @@ class UniversalRest
 		}
 	}
 	
-	static void PlayerLoad(string mod, string guid, ref ConfigBase data_out = NULL, ref RestCallback UCBX = NULL, string auth = "")
+	static void PlayerLoad(string mod, string guid,  ref RestCallback UCBX, string jsonString = "{}",string auth = "")
 	{
-		string url = BaseUrl() + "/Player/Load/" + guid + "/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
 		
-		string jsonString = "{}";
-		bool ok = true;
+		string url = BaseUrl() + "/Player/Load/" + guid + "/" + mod  + "/" + auth;
 		
-		if (!data_out && !UCBX){
-			UCBX = new ref RestCallback;
-		}
-		
-		if (data_out){
-			if (!UCBX){
-				ref UApiCallBack UAPICBX = new ref UApiCallBack;
-				UAPICBX.SetConfig(data_out);
-				UCBX = Class.Cast(UAPICBX);
-			}
-			JsonSerializer js = new JsonSerializer();
-			ok = js.WriteToString(data_out, false, jsonString);
-		}
-		
-		if (ok){
+		if (UCBX){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
@@ -87,11 +64,11 @@ class UniversalRest
 	
 	static void GetAuth( string guid,  string auth  = "")
 	{
-		string url = BaseUrl() + "/GetAuth/" + guid + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
+		string url = BaseUrl() + "/GetAuth/" + guid + "/" + auth;
 		
 		UApiAuthCallBack UCBX = new UApiAuthCallBack;
 		
@@ -101,25 +78,19 @@ class UniversalRest
 	}
 
 
-	static void GlobalsSave(string mod, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
+	static void GlobalsSave(string mod, string jsonString, ref RestCallback UCBX = NULL, string auth = "")
 	{
-		string url = BaseUrl() + "/Gobals/Save/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
+		string url = BaseUrl() + "/Gobals/Save/" + mod  + "/" + auth;
 		
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
 		}
 		
-		string jsonString = "{}";
-		bool ok = false;
-		if (data_out){
-			JsonSerializer js = new JsonSerializer();
-			ok = js.WriteToString(data_out, false, jsonString);
-		}
-		if (ok){
+		if (jsonString){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
@@ -128,22 +99,14 @@ class UniversalRest
 		}
 	}
 	
-	static void GlobalsLoad(string mod, ref RestCallback UCBX = NULL, ref ConfigBase data_out = NULL, string auth = "")
-	{
-		string url = BaseUrl() + "/Gobals/Load/" + mod  + "/" + auth;
+	static void GlobalsLoad(string mod, ref RestCallback UCBX, string jsonString = "{}", string auth = ""){
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
-		
-		string jsonString = "{}";
-		bool ok = true;
-		if (data_out){
-			JsonSerializer js = new JsonSerializer();
-			ok = js.WriteToString(data_out, false, jsonString);
-		}
-		
-		if (ok){
+		string url = BaseUrl() + "/Gobals/Load/" + mod  + "/" + auth;
+
+		if (UCBX){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
@@ -152,9 +115,7 @@ class UniversalRest
 		}
 	}
 	
-	static void ItemSave(string mod, string itemId, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
-	{
-		string url = BaseUrl() + "/Item/Save/" + itemId + "/" +  mod + "/" + auth;
+	static void ItemSave(string mod, string itemId, string jsonString, ref RestCallback UCBX = NULL, string auth = ""){
 		
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
@@ -163,14 +124,9 @@ class UniversalRest
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
+		string url = BaseUrl() + "/Item/Save/" + itemId + "/" +  mod + "/" + auth;
 		
-		string jsonString = "{}";
-		bool ok = false;
-		if (data_out){
-			JsonSerializer js = new JsonSerializer();
-			ok = js.WriteToString(data_out, false, jsonString);
-		}
-		if (ok){
+		if (jsonString){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
@@ -179,23 +135,15 @@ class UniversalRest
 		}
 	}
 	
-	static void ItemLoad(string mod, string itemId, ref RestCallback UCBX = NULL, ref ConfigBase data_out = NULL, string auth = "")
-	{
-		string url = BaseUrl() + "/Item/Load/" +  itemId + "/" + mod  + "/" + auth;
+	static void ItemLoad(string mod, string itemId, ref RestCallback UCBX, string jsonString = "{}", string auth = ""){
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
 		
+		string url = BaseUrl() + "/Item/Load/" +  itemId + "/" + mod  + "/" + auth;
 		
-		string jsonString = "{}";
-		bool ok = true;
-		if (data_out){
-			JsonSerializer js = new JsonSerializer();
-			ok = js.WriteToString(data_out, false, jsonString);
-		}
-		
-		if (ok){
+		if (UCBX){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);

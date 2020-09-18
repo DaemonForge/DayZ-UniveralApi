@@ -38,7 +38,8 @@ class UApiAuthCallBack : RestCallback
 			m_ClientConfig.ServerAuth = "null";
 			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiConfig", new Param2<ApiAuthToken, UniversalApiConfig>(authToken, m_ClientConfig), true, player);
 			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiReady", new Param1<string>(authToken.GUID), true, player);
-			UApi().RemoveFromQueue(player);
+			//Removing the Player from the Que About 3 Second Later to allow for other mods the possiblty to search the que as well.
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UApi().RemoveFromQueue, 3000, false, player);
 		} else if (m_TryCount <= 16){
 			m_TryCount++;
 			Print("[UPAI] [UApiAuthCallBack] Auth of a Player failed to Find Player retry: " + m_TryCount);

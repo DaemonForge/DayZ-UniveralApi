@@ -8,7 +8,7 @@ class UniversalApiConfig
 	void Load(){
 		if (GetGame().IsServer()){
 			if (FileExist(ConfigPATH)){ //If config exist load File
-			      JsonFileLoader<UniversalApiConfig>.JsonLoadFile(ConfigPATH, this);
+			    JsonFileLoader<UniversalApiConfig>.JsonLoadFile(ConfigPATH, this);
 			}else{ //File does not exist create file	
 				Save();
 			}

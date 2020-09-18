@@ -12,4 +12,5 @@ modded class MissionBase extends MissionBaseWorld
 		//Don't forget to Super As
 		//super.UniversalApiReady();
 	}
+	
 }

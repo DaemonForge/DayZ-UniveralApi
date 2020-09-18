@@ -69,6 +69,8 @@ class UniversalApi{
 		return NULL;
 	}
 	
+	
+	//This is so I can get the Identity Quicker as the GetPlayers Method doesn't get the player ID till later
 	ref PlayerIdentity SearchQueue(string GUID){
 		if (GetGame().IsServer()){
 			for (int i = 0; i < QueuedPlayers.Count(); i++){
