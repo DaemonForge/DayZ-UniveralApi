@@ -1,5 +1,11 @@
 class UniversalRest
 {	
+	static protected string m_BaseUrl = "";
+	
+	static void SetBaseUrl(string new_BaseUrl){
+		m_BaseUrl = new_BaseUrl;
+	}
+	
 	static RestApi Api()
 	{
 		RestApi clCore = GetRestApi();
@@ -10,9 +16,17 @@ class UniversalRest
 		return clCore;
 	}
 	
+	static string BaseUrl(){
+		if (m_BaseUrl != ""){
+			return m_BaseUrl;
+		}
+		return UApiConfig().ServerURL;
+	}
+	
 	static void PlayerSave(string mod, string guid, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
 	{		
-		string url = UApiConfig().ServerURL + "/Player/Save/" + guid + "/" + mod  + "/" + auth;
+		
+		string url = BaseUrl() + "/Player/Save/" + guid + "/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -39,7 +53,7 @@ class UniversalRest
 	
 	static void PlayerLoad(string mod, string guid, ref ConfigBase data_out = NULL, ref RestCallback UCBX = NULL, string auth = "")
 	{
-		string url = UApiConfig().ServerURL + "/Player/Load/" + guid + "/" + mod  + "/" + auth;
+		string url = BaseUrl() + "/Player/Load/" + guid + "/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -73,7 +87,7 @@ class UniversalRest
 	
 	static void GetAuth( string guid,  string auth  = "")
 	{
-		string url = UApiConfig().ServerURL + "/Player/GetAuth/" + guid + "/" + auth;
+		string url = BaseUrl() + "/GetAuth/" + guid + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -89,7 +103,7 @@ class UniversalRest
 
 	static void GlobalsSave(string mod, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
 	{
-		string url = UApiConfig().ServerURL + "/Gobals/Save/" + mod  + "/" + auth;
+		string url = BaseUrl() + "/Gobals/Save/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -116,7 +130,7 @@ class UniversalRest
 	
 	static void GlobalsLoad(string mod, ref RestCallback UCBX = NULL, ref ConfigBase data_out = NULL, string auth = "")
 	{
-		string url = UApiConfig().ServerURL + "/Gobals/Load/" + mod  + "/" + auth;
+		string url = BaseUrl() + "/Gobals/Load/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -140,7 +154,7 @@ class UniversalRest
 	
 	static void ItemSave(string mod, string itemId, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
 	{
-		string url = UApiConfig().ServerURL + "/Item/Save/" + itemId + "/" +  mod + "/" + auth;
+		string url = BaseUrl() + "/Item/Save/" + itemId + "/" +  mod + "/" + auth;
 		
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
@@ -167,7 +181,7 @@ class UniversalRest
 	
 	static void ItemLoad(string mod, string itemId, ref RestCallback UCBX = NULL, ref ConfigBase data_out = NULL, string auth = "")
 	{
-		string url = UApiConfig().ServerURL + "/Item/Load/" +  itemId + "/" + mod  + "/" + auth;
+		string url = BaseUrl() + "/Item/Load/" +  itemId + "/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();

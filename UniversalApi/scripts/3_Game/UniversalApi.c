@@ -3,7 +3,6 @@ class UniversalApi{
 	protected bool UAPI_Init = false;
 	protected ref ApiAuthToken m_authToken;
 	
-	protected string m_ReadAuthToken;
 	
 	protected ref UniversalRest m_UniversalRest;
 	
@@ -17,15 +16,7 @@ class UniversalApi{
 		}
 		return "null";
 	}
-	
-	string GetReadAuth(){
-		return m_ReadAuthToken;
-	}
-	
-	void SetReadAuth(string readAuthToken){
-		m_ReadAuthToken  = readAuthToken;
-	}
-	
+		
 	ref UniversalRest Rest(){
 		if (!m_UniversalRest){
 			m_UniversalRest = new ref UniversalRest;
@@ -49,7 +40,6 @@ class UniversalApi{
 		m_authToken = data.param1;
 		Print("[UPAI] Received Auth Token: GUID" + m_authToken.GUID + " AUTH" + m_authToken.AUTH);
 		m_UniversalApiConfig = data.param2;
-		SetReadAuth(m_UniversalApiConfig.ReadAuth);
 	}
 	
 	void RPCRequestAuthToken( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
@@ -59,7 +49,7 @@ class UniversalApi{
 			AddToQueue(idenitity);
 			UApiConfig();
 			if (UApiConfig().ServerAuth != "" && UApiConfig().ServerAuth != "null"){
-				Rest().GetAuth( UApiConfig().ServerAuth, idenitity.GetId() );
+				Rest().GetAuth(idenitity.GetId());
 			}
 		}
 	}

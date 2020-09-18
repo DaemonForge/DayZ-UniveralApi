@@ -4,8 +4,6 @@ class UniversalApiConfig
 	string ServerURL = "";
 	string ServerID = "";
     string ServerAuth = "";
-    string ReadAuth = "";
-    string ReadAllAuth = "";
 	
 	void Load(){
 		if (GetGame().IsServer()){
@@ -21,7 +19,7 @@ class UniversalApiConfig
 		if (GetGame().IsServer()){
 			return ServerAuth;
 		}
-		return ReadAuth;
+		return "ERROR";
 	}
 	
 	void Save(){

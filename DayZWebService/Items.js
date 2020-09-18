@@ -16,6 +16,7 @@ router.post('/Load/:ItemId/:mod/:auth', (req, res)=>{
 router.post('/Save/:ItemId/:mod/:auth', (req, res)=>{
     runUpdate(req, res, req.params.ItemId, req.params.mod, req.params.auth);
 });
+
 async function runGet(req, res, ItemId, mod, auth) {
     if (auth == config.ServerAuth || (await CheckPlayerAuth(auth)) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
@@ -25,22 +26,22 @@ async function runGet(req, res, ItemId, mod, auth) {
 
             // Connect the client to the server
             await client.connect();
-            
-            await client.db(config.DB).command({ ping: 1 });
             console.log("ID " + ItemId + " req" + req);
             const db = client.db(config.DB);
-            var collection = db.collection("server");
+            var collection = db.collection("Items");
             var query = { ItemId: ItemId };
             var results = collection.find(query);
             
             if ((await results.count()) == 0){
-                console.log("Can't find Server with ID " + ItemId + "Creating it now");
+                if (auth == config.ServerAuth || config.AllowClientWrite ){
+                    console.log("Can't find Item with ID " + ItemId + "Creating it now");
 
-                const doc  = JSON.parse("{ \"ItemId\": \"" + ItemId + "\", \""+mod+"\": "+ StringData + " }");
-                var result = await collection.insertOne(doc);
-                var Data = result.ops[0];
+                    const doc  = JSON.parse("{ \"ItemId\": \"" + ItemId + "\", \""+mod+"\": "+ StringData + " }");
+                    var result = await collection.insertOne(doc);
+                    var Data = result.ops[0];
+                    console.log("Data: " + Data);
+                }
                 res.json(RawData);
-                
             } else {
                 var dataarr = await results.toArray(); 
                 var data = dataarr[0]; 
@@ -87,7 +88,7 @@ async function runUpdate(req, res, ItemId, mod, auth) {
             await client.db(config.DB).command({ ping: 1 });
             console.log("ID " + ItemId + " req" + req);
             const db = client.db(config.DB);
-            var collection = db.collection("server");
+            var collection = db.collection("Items");
             var query = { ItemId: ItemId };
             const options = { upsert: true };
             const updateDocValue  = JSON.parse("{ \"ItemId\": \"" + ItemId + "\", \""+mod+"\": "+ StringData + " }");
@@ -115,7 +116,7 @@ async function CheckPlayerAuth(auth){
         // Connect the client to the server        
         console.log(" auth" + auth);
         const db = client.db(config.DB);
-        var collection = db.collection("players");
+        var collection = db.collection("Players");
         var query = { AUTH: auth };
         var results = collection.find(query);
             if ((await results.count()) != 0){

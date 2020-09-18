@@ -20,9 +20,11 @@ class UApiAuthCallBack : RestCallback
 		if (error != ""){
 			Print("[UPAI] [UApiAuthCallBack] Error: " + error);
 		}
-		if (authToken.GUID){
+		if (authToken.GUID && authToken.AUTH != "ERROR"){
 			Print("[UPAI] [UApiAuthCallBack] Auth of a Player Success data: GUID " + authToken.GUID);
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.DeferredLoad, authToken);
+		} else {
+			UApi().AuthError();
 		}
 	};
 	
@@ -34,8 +36,6 @@ class UApiAuthCallBack : RestCallback
 			m_ClientConfig.ServerURL = UApiConfig().ServerURL;
 			m_ClientConfig.ServerID = UApiConfig().ServerID;
 			m_ClientConfig.ServerAuth = "null";
-			m_ClientConfig.ReadAuth = UApiConfig().ReadAuth;
-			m_ClientConfig.ReadAllAuth = UApiConfig().ReadAllAuth;
 			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiConfig", new Param2<ApiAuthToken, UniversalApiConfig>(authToken, m_ClientConfig), true, player);
 			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiReady", new Param1<string>(authToken.GUID), true, player);
 			UApi().RemoveFromQueue(player);
