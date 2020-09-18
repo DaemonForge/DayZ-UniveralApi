@@ -12,7 +12,7 @@ class UniversalRest
 	
 	static void PlayerSave(string mod, string guid, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
 	{		
-		string url = UApiConfig().ServerURL + "/Player/Save/" + guid + "/" + auth + "/" + mod;
+		string url = UApiConfig().ServerURL + "/Player/Save/" + guid + "/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -33,13 +33,13 @@ class UniversalRest
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[UPAI] [GameApi] Error Saving Player Data for " + mod);
+			Print("[UPAI] [Api] Error Saving Player Data for " + mod);
 		}
 	}
 	
 	static void PlayerLoad(string mod, string guid, ref ConfigBase data_out = NULL, ref RestCallback UCBX = NULL, string auth = "")
 	{
-		string url = UApiConfig().ServerURL + "/Player/Load/" + guid + "/" + auth + "/" + mod;
+		string url = UApiConfig().ServerURL + "/Player/Load/" + guid + "/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -67,7 +67,7 @@ class UniversalRest
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[UPAI] [GameApi] Error Loading Player Data for " + mod);
+			Print("[UPAI] [Api] Error Loading Player Data for " + mod);
 		}
 	}
 	
@@ -89,7 +89,7 @@ class UniversalRest
 
 	static void GlobalsSave(string mod, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
 	{
-		string url = UApiConfig().ServerURL + "/Gobals/Save/" + auth + "/" + mod;
+		string url = UApiConfig().ServerURL + "/Gobals/Save/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -110,13 +110,13 @@ class UniversalRest
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[UPAI] [GameApi] Error Saving Globals Data for " + mod);
+			Print("[UPAI] [Api] Error Saving Globals Data for " + mod);
 		}
 	}
 	
 	static void GlobalsLoad(string mod, ref RestCallback UCBX = NULL, ref ConfigBase data_out = NULL, string auth = "")
 	{
-		string url = UApiConfig().ServerURL + "/Gobals/Load/" + auth + "/" + mod;
+		string url = UApiConfig().ServerURL + "/Gobals/Load/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -134,13 +134,13 @@ class UniversalRest
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[UPAI] [GameApi] Error Loading Globals Data for " + mod);
+			Print("[UPAI] [Api] Error Loading Globals Data for " + mod);
 		}
 	}
 	
-	static void ItemSave(string mod, string serverId, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
+	static void ItemSave(string mod, string itemId, ref ConfigBase data_out, ref RestCallback UCBX = NULL, string auth = "")
 	{
-		string url = UApiConfig().ServerURL + "/Item/Save/" + serverId + "/" + auth + "/" + mod;
+		string url = UApiConfig().ServerURL + "/Item/Save/" + itemId + "/" +  mod + "/" + auth;
 		
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
@@ -161,13 +161,13 @@ class UniversalRest
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[UPAI] [GameApi] Error Saving Globals Data for " + mod);
+			Print("[UPAI] [Api] Error Saving Globals Data for " + mod);
 		}
 	}
 	
-	static void ItemLoad(string mod, string serverId, ref RestCallback UCBX = NULL, ref ConfigBase data_out = NULL, string auth = "")
+	static void ItemLoad(string mod, string itemId, ref RestCallback UCBX = NULL, ref ConfigBase data_out = NULL, string auth = "")
 	{
-		string url = UApiConfig().ServerURL + "/Item/Load/" + serverId + "/" + auth + "/" + mod;
+		string url = UApiConfig().ServerURL + "/Item/Load/" +  itemId + "/" + mod  + "/" + auth;
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -186,7 +186,7 @@ class UniversalRest
 			ctx.SetHeader("application/json");
 			ctx.POST(UCBX, "", jsonString);
 		} else {
-			Print("[UPAI] [GameApi] Error Loading Globals Data for " + mod);
+			Print("[UPAI] [Api] Error Loading Globals Data for " + mod);
 		}
 	}
 };

@@ -4,11 +4,11 @@ const config = require('./config.json');
 
 const router = express.Router();
 
-router.post('/Load/:auth/:mod', (req, res)=>{
+router.post('/Load/:mod/:auth', (req, res)=>{
     runGet(req, res, req.params.mod, req.params.auth);
 });
 
-router.post('/Save/:auth/:mod', (req, res)=>{
+router.post('/Save/:mod/:auth', (req, res)=>{
     runUpdate(req, res, req.params.mod, req.params.auth);
 });
 async function runGet(req, res, mod, auth) {

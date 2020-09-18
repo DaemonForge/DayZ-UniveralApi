@@ -9,11 +9,11 @@ const config = require('./config.json');
 
 const router = express.Router();
 
-router.post('/Load/:GUID/:auth/:mod', (req, res)=>{
+router.post('/Load/:GUID/:mod/:auth', (req, res)=>{
     runGet(req, res, req.params.GUID, req.params.mod, req.params.auth, false);
 });
 
-router.post('/Save/:GUID/:auth/:mod', (req, res)=>{
+router.post('/Save/:GUID/:mod/:auth', (req, res)=>{
     runUpdate(req, res, req.params.GUID, req.params.mod, req.params.auth, true);
 });
 
@@ -177,7 +177,7 @@ function makeAuthToken() {
     var result           = '';
     var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.~()*:@,;';
     var charactersLength = characters.length;
-    for ( var i = 0; i < 42; i++ ) {
+    for ( var i = 0; i < 44; i++ ) {
        result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;

@@ -9,20 +9,12 @@ const config = require('./config.json');
 
 const router = express.Router();
 
-router.post('/Load/:ItemId/:auth/:mod', (req, res)=>{
-    if ( req.params.auth === config.ServerAuth ||  req.params.auth === config.ReadAuth ){
-        runGet(req, res, req.params.ItemId, req.params.mod, req.params.auth);
-    } else {
-        res.json(req.body);
-    }
+router.post('/Load/:ItemId/:mod/:auth', (req, res)=>{
+    runGet(req, res, req.params.ItemId, req.params.mod, req.params.auth);
 });
 
-router.post('/Save/:ItemId/:auth/:mod', (req, res)=>{
-    if ( req.params.auth === config.ServerAuth){
-        runUpdate(req, res, req.params.ItemId, req.params.mod, req.params.auth);
-    } else {
-        res.json(req.body);
-    }
+router.post('/Save/:ItemId/:mod/:auth', (req, res)=>{
+    runUpdate(req, res, req.params.ItemId, req.params.mod, req.params.auth);
 });
 async function runGet(req, res, ItemId, mod, auth) {
     if (auth == config.ServerAuth || (await CheckPlayerAuth(auth)) ){
