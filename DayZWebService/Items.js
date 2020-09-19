@@ -1,5 +1,3 @@
-const { json } = require('body-parser');
-const e = require('express');
 const express = require('express');
 const { MongoClient } = require("mongodb");
 const config = require('./config.json');
@@ -26,7 +24,6 @@ async function runGet(req, res, ItemId, mod, auth) {
 
             // Connect the client to the server
             await client.connect();
-            console.log("ID " + ItemId + " req" + req);
             const db = client.db(config.DB);
             var collection = db.collection("Items");
             var query = { ItemId: ItemId };
@@ -39,16 +36,13 @@ async function runGet(req, res, ItemId, mod, auth) {
                     const doc  = JSON.parse("{ \"ItemId\": \"" + ItemId + "\", \""+mod+"\": "+ StringData + " }");
                     var result = await collection.insertOne(doc);
                     var Data = result.ops[0];
-                    console.log("Data: " + Data);
                 }
                 res.json(RawData);
             } else {
                 var dataarr = await results.toArray(); 
                 var data = dataarr[0]; 
-                console.log("Found Server with ID " + ItemId + " data: " + data)
                 var sent = false;
                 for (const [key, value] of Object.entries(data)) {
-                    console.log(`${key}: ${value}`);
                     if(key === mod){
                         var sent = true;
                         res.json(value);
@@ -108,13 +102,11 @@ async function runUpdate(req, res, ItemId, mod, auth) {
 };
 
 async function CheckPlayerAuth(auth){
-    console.log("Checking Player AUTH");
     var isAuth = false;
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     try{
         await client.connect();
-        // Connect the client to the server        
-        console.log(" auth" + auth);
+        // Connect the client to the server      
         const db = client.db(config.DB);
         var collection = db.collection("Players");
         var query = { AUTH: auth };

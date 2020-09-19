@@ -21,13 +21,10 @@ async function runGetAuth(req, res, GUID, auth) {
         var RawData = req.body;
         // Connect the client to the server       
         await client.connect(); 
-        await client.db(config.DB).command({ ping: 1 });
         console.log("ID " + GUID + " RawData" + RawData);
         const db = client.db(config.DB);
         var collection = db.collection("Players");
         var query = { GUID: GUID };
-        var results = collection.find(query);
-        var reqData = req.body.Data;
         const options = { upsert: true };
         var AuthToken = makeAuthToken();
         const updateDocValue  = { GUID: GUID, AUTH: AuthToken }

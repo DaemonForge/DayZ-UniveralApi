@@ -8,10 +8,7 @@ const RouterItem = require('./Items');
 const RouterPlayer = require('./player');
 const RouterGlobals = require('./gobals');
 const RouterAuth = require('./Auth');
- 
-// Create a new MongoClient
-const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-
+const RouterStatus = require('./Status');
 
 const app = express();
 
@@ -21,6 +18,7 @@ app.use('/Item', RouterItem);
 app.use('/Player', RouterPlayer);
 app.use('/Gobals', RouterGlobals);
 app.use('/GetAuth', RouterAuth);
+app.use('/Status', RouterStatus);
 app.use('/', (req,res)=>{
 
     console.log("Error in URL:" + req.url);
@@ -32,5 +30,5 @@ https.createServer({
     cert: fs.readFileSync('server.cert')
   }, app)
   .listen(config.Port, function () {
-    console.log('API Webservice  listening on port 3000! Go to https://localhost:3000/')
+    console.log('API Webservice  listening on port "' + config.Port +'"! Go to https://localhost:'+config.Port+'/')
   });

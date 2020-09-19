@@ -4,14 +4,20 @@ const config = require('./config.json');
 
 const router = express.Router();
 
-router.post('/Load/:mod/:auth', (req, res)=>{
-    runGet(req, res, req.params.mod, req.params.auth);
+router.post('/:mod/:auth', (req, res)=>{
+    runQuery(req, res, req.params.mod, req.params.auth, GetCollection(req.url));
 });
 
-router.post('/Save/:mod/:auth', (req, res)=>{
-    runUpdate(req, res, req.params.mod, req.params.auth);
-});
-async function runGet(req, res, mod, auth) {
+function GetCollection(URL){
+    if (URL.includes("/Player/")){
+        return "Players"
+    }
+    if (URL.includes("/Item/")){
+        return "Items"
+    }
+}
+
+async function runQuery(req, res, mod, auth, COLL) {
     if (auth == config.ServerAuth || (await CheckPlayerAuth(auth)) ){
         var RawData = req.body;
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
@@ -21,7 +27,7 @@ async function runGet(req, res, mod, auth) {
             await client.connect();
     
             const db = client.db(config.DB);
-            var collection = db.collection("Globals");
+            var collection = db.collection(COLL);
             var query = { Mod: mod };
             var results = collection.find(query);
             if ((await results.count()) == 0){
@@ -47,38 +53,6 @@ async function runGet(req, res, mod, auth) {
         res.json(RawData);
     }
 };
-async function runUpdate(req, res, mod, auth) {
-    if (auth == config.ServerAuth || ((await CheckPlayerAuth(auth)) && config.AllowClientWrite) ){
-        const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-        var StringData = JSON.stringify(req.body);
-        var RawData = req.body;
-
-        try{
-            await client.connect();
-            // Connect the client to the server
-            console.log("ID " + mod + " req" + req.body);
-            const db = client.db(config.DB);
-            var collection = db.collection("Globals");
-            var query = { Mod: mod };
-            const options = { upsert: true };
-            const updateDoc  = {
-                $set: { Mod: mod, Data: RawData }
-            };
-            const result = await collection.updateOne(query, updateDoc, options);
-            console.log("Posted New Data result: " + result.result)
-            res.json(RawData);
-        }catch(err){
-            console.log("err " + err)
-            res.json(RawData);
-        }finally{
-            // Ensures that the client will close when you finish/error
-            await client.close();
-        }
-    } else {
-        res.json(req.body);
-    }
-};
-
 async function CheckPlayerAuth(auth){
     var isAuth = false;
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
