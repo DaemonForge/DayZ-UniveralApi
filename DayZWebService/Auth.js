@@ -9,6 +9,7 @@ router.post('/:GUID/:auth', (req, res)=>{
         console.log("Auth Token Requested for: " + req.params.GUID);
         runGetAuth(req, res, req.params.GUID, req.params.auth);
     }else{
+        res.status(401);
         res.json({ GUID: req.params.GUID, AuthToken: "ERROR" });
     }
 });

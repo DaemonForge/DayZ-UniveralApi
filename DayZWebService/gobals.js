@@ -30,6 +30,7 @@ async function runGet(req, res, mod, auth) {
                     var result = await collection.insertOne(doc);
                     console.log("result: "+ results)
                 }
+                res.status(201);
                 res.json(RawData);
             } else {
                 var data = await results.toArray(); 
@@ -38,12 +39,14 @@ async function runGet(req, res, mod, auth) {
             }
         }catch(err){
             console.log("Found Server with ID " + err)
+            res.status(203);
             res.json(RawData);
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
         }
     } else {
+        res.status(401);
         res.json(RawData);
     }
 };
@@ -69,12 +72,14 @@ async function runUpdate(req, res, mod, auth) {
             res.json(RawData);
         }catch(err){
             console.log("err " + err)
+            res.status(203);
             res.json(RawData);
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
         }
     } else {
+        res.status(401);
         res.json(req.body);
     }
 };

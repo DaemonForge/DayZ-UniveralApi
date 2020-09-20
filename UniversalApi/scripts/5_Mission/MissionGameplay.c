@@ -1,15 +1,16 @@
 modded class MissionGameplay extends MissionBase
 {
-	
-	override void OnMissionStart()
-	{
-		
+	void MissionGameplay(){
 		GetRPCManager().AddRPC( "UAPI", "RPCUniversalApiReady", this, SingeplayerExecutionType.Both );
 		if (!GetGame().IsServer()){
 			Print("[UPAI] Requesting API TOKEN");
 			
 			GetRPCManager().SendRPC("UAPI", "RPCRequestAuthToken", NULL, true);
 		}
+	}
+	
+	override void OnMissionStart()
+	{
 		super.OnMissionStart();
 	}
 	

@@ -44,12 +44,14 @@ async function runQuery(req, res, mod, auth, COLL) {
             }
         }catch(err){
             console.log("Found Server with ID " + err)
+            res.status(203);
             res.json(RawData);
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
         }
     } else {
+        res.status(203);
         res.json(RawData);
     }
 };

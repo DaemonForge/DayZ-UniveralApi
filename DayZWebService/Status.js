@@ -15,7 +15,7 @@ router.post('/:Auth', (req, res)=>{
 });
 
 
-async function runStatusCheck(req, res, GUID, auth) {
+async function runStatusCheck(req, res, auth) {
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     try{
         // Connect the client to the server       
@@ -31,15 +31,16 @@ async function runStatusCheck(req, res, GUID, auth) {
         if (result.result.ok == 1){
             res.json({Status: "ok", Error: "null"});
         } else {
+            res.status(500);
             res.json({Status: "error", Error: "Database Write Error"});
         }
     }catch(err){
-        console.log(err)
+        console.log(err);
+        res.status(500);
         res.json({Status: "error", Error: err});
     }finally{
         // Ensures that the client will close when you finish/error
-        await client.close();
-        return res;
+        client.close();
     }
 };
 

@@ -36,6 +36,7 @@ async function runGet(req, res, GUID, mod, auth) {
                     const doc  = JSON.parse("{ \"GUID\": \"" + GUID + "\", \""+mod+"\": "+ StringData + " }");
                     await collection.insertOne(doc);
                 }
+                res.status(201);
                 res.json(RawData);
             } else {
                 var dataarr = await results.toArray(); 
@@ -53,19 +54,20 @@ async function runGet(req, res, GUID, mod, auth) {
                     const updateDoc = { $set: updateDocValue, };
                     const options = { upsert: false };
                     await collection.updateOne(query, updateDoc, options);
+                    res.status(203);
                     res.json(RawData);
                 }
             }
         }catch(err){
+            res.status(203);
             res.json(req.body);
         }finally{
             // Ensures that the client will close when you finish/error
             client.close();
-            return res;
         }
     } else {
+        res.status(401);
         res.json(req.body);
-        return res;
     }
 };
 async function runUpdate(req, res, GUID, mod, auth, write) {
@@ -87,18 +89,22 @@ async function runUpdate(req, res, GUID, mod, auth, write) {
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
             if (result.result.ok == 1){
+                res.status(201);
                 res.json(RawData);
             } else {
+                res.status(203);
                 res.json(req.body);
             }
         }catch(err){
             console.log("Found Server with ID " + err)
+            res.status(203);
             res.json(req.body);
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
         }
     } else {
+        res.status(401);
         res.json(req.body);
     }
 };

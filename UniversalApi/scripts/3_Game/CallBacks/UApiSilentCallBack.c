@@ -1,4 +1,4 @@
-class UApiSilentCallBack : UApiCallBack
+class UApiSilentCallBack : RestCallback
 {
 	override void OnError(int errorCode) {};
 	override void OnTimeout() {};

@@ -37,6 +37,7 @@ async function runGet(req, res, ItemId, mod, auth) {
                     var result = await collection.insertOne(doc);
                     var Data = result.ops[0];
                 }
+                res.status(201);
                 res.json(RawData);
             } else {
                 var dataarr = await results.toArray(); 
@@ -53,19 +54,20 @@ async function runGet(req, res, ItemId, mod, auth) {
                     const updateDoc = { $set: updateDocValue, };
                     const options = { upsert: false };
                     const result = await collection.updateOne(query, updateDoc, options);
+                    res.status(203);
                     res.json(RawData);
                 }
             }
         }catch(err){
-            console.log("Found Item with ID " + err)
+            console.log(err);
+            res.status(203);
             res.json(RawData);
-            return res;
         }finally{
             // Ensures that the client will close when you finish/error
-            await client.close();
-            return res;
+            client.close();
         }
     }  else {
+        res.status(401);
         res.json(req.body);
     }
 };
@@ -97,6 +99,7 @@ async function runUpdate(req, res, ItemId, mod, auth) {
             await client.close();
         }
     }  else {
+        res.status(401);
         res.json(req.body);
     }
 };

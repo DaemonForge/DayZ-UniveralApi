@@ -34,7 +34,7 @@ class UniversalRest
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
 		}
-		
+		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (jsonString){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
@@ -53,6 +53,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "/Player/Load/" + guid + "/" + mod  + "/" + auth;
 		
+		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (UCBX){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
@@ -90,6 +91,7 @@ class UniversalRest
 			UCBX = new ref UApiSilentCallBack;
 		}
 		
+		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (jsonString){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
@@ -106,6 +108,7 @@ class UniversalRest
 		}
 		string url = BaseUrl() + "/Gobals/Load/" + mod  + "/" + auth;
 
+		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (UCBX){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
@@ -126,6 +129,7 @@ class UniversalRest
 		}
 		string url = BaseUrl() + "/Item/Save/" + itemId + "/" +  mod + "/" + auth;
 		
+		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (jsonString){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
@@ -143,6 +147,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "/Item/Load/" +  itemId + "/" + mod  + "/" + auth;
 		
+		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (UCBX){
 			RestContext ctx = Api().GetRestContext(url);
 			ctx.SetHeader("application/json");
