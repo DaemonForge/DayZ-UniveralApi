@@ -1,9 +1,7 @@
 {
-    "DBServer": "mongodb://localhost:27017/",
-    "DB": "dayz",
+    "DBServer": "mongodb://localhost",
+    "DB": "DayZ",
     "ServerAuth": "3kVzGDc7esfsadwBeZDd3ewqrq3kVzGDc7e",
-    "ReadAuth": "3kVzGDc7esfsad3ewqrqwerasdffvfgdcxb",
-    "ReadAllAuth": "3kVzGDc7esfsaeZsf432BfzQrH4dPryxXk3",
     "AllowClientWrite": false,
     "Port": 3000
 }

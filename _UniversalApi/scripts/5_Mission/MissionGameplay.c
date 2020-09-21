@@ -26,5 +26,4 @@ modded class MissionGameplay extends MissionBase
 		super.UniversalApiReady();
 	}
 	
-	
 }

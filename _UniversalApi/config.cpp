@@ -13,7 +13,7 @@ class CfgMods
 {
 	class UniversalApi
 	{
-		dir = "UniversalApi";
+		dir = "_UniversalApi";
 		picture = "";
 		action = "";
 		hideName = 1;
@@ -34,8 +34,8 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"UniversalApi/scripts/Common",
-					"UniversalApi/scripts/3_Game"
+					"_UniversalApi/scripts/Common",
+					"_UniversalApi/scripts/3_Game"
 					};
 			}
 			
@@ -43,8 +43,8 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"UniversalApi/scripts/Common",
-					"UniversalApi/scripts/4_World"
+					"_UniversalApi/scripts/Common",
+					"_UniversalApi/scripts/4_World"
 					};
 			}
 
@@ -52,8 +52,8 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"UniversalApi/scripts/Common",
-					"UniversalApi/scripts/5_Mission"
+					"_UniversalApi/scripts/Common",
+					"_UniversalApi/scripts/5_Mission"
 					};
 			};
 		};
