@@ -1,6 +1,15 @@
 const express = require('express');
 const { MongoClient } = require("mongodb");
-const config = require('./config.json');
+
+const fs = require('fs');
+const Defaultconfig = require('./sample-config.json');
+const ConfigPath = "config.json"
+var config;
+try{
+  config = JSON.parse(fs.readFileSync(ConfigPath));
+} catch (err){
+  config = Defaultconfig;
+}
 
 const router = express.Router();
 
@@ -38,9 +47,9 @@ async function runGet(req, res, mod, auth) {
                 res.json(data[0].Data);
             }
         }catch(err){
-            console.log("Found Server with ID " + err)
             res.status(203);
             res.json(RawData);
+            console.log("ERROR: " + err);
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
@@ -48,6 +57,7 @@ async function runGet(req, res, mod, auth) {
     } else {
         res.status(401);
         res.json(RawData);
+        console.log("AUTH ERROR: " + req.url);
     }
 };
 async function runUpdate(req, res, mod, auth) {
@@ -71,9 +81,9 @@ async function runUpdate(req, res, mod, auth) {
             console.log("Posted New Data result: " + result.result)
             res.json(RawData);
         }catch(err){
-            console.log("err " + err)
             res.status(203);
             res.json(RawData);
+            console.log("ERROR: " + err);
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
@@ -81,6 +91,7 @@ async function runUpdate(req, res, mod, auth) {
     } else {
         res.status(401);
         res.json(req.body);
+        console.log("AUTH ERROR: " + req.url);
     }
 };
 
@@ -98,7 +109,7 @@ async function CheckPlayerAuth(auth){
                 isAuth = true;
             }
     } catch(err){
-        console.log(" auth" + auth + " err" + err);
+        console.log("AUTH ERROR: " + req.url);
     } finally{
         await client.close();
         return isAuth;

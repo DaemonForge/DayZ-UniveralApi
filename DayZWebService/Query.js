@@ -1,6 +1,15 @@
 const express = require('express');
 const { MongoClient } = require("mongodb");
-const config = require('./config.json');
+
+const fs = require('fs');
+const Defaultconfig = require('./sample-config.json');
+const ConfigPath = "config.json"
+var config;
+try{
+  config = JSON.parse(fs.readFileSync(ConfigPath));
+} catch (err){
+  config = Defaultconfig;
+}
 
 const router = express.Router();
 

@@ -1,6 +1,16 @@
 const express = require('express');
 const { MongoClient } = require("mongodb");
-const config = require('./config.json');
+
+const fs = require('fs');
+const Defaultconfig = require('./sample-config.json');
+const ConfigPath = "config.json"
+var config;
+try{
+  config = JSON.parse(fs.readFileSync(ConfigPath));
+} catch (err){
+  config = Defaultconfig;
+}
+
 const queryHandler = require("./Query");
 // Create a new MongoClient
 
@@ -61,6 +71,7 @@ async function runGet(req, res, GUID, mod, auth) {
         }catch(err){
             res.status(203);
             res.json(req.body);
+            console.log("ERROR: " + err);
         }finally{
             // Ensures that the client will close when you finish/error
             client.close();
@@ -99,6 +110,7 @@ async function runUpdate(req, res, GUID, mod, auth, write) {
             console.log("Found Server with ID " + err)
             res.status(203);
             res.json(req.body);
+            console.log("ERROR: " + err);
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
@@ -106,6 +118,7 @@ async function runUpdate(req, res, GUID, mod, auth, write) {
     } else {
         res.status(401);
         res.json(req.body);
+        console.log("AUTH ERROR: " + req.url);
     }
 };
 

@@ -1,7 +1,9 @@
 {
-    "DBServer": "mongodb://localhost",
+    "DBServer": "mongodb://localhost:27017",
     "DB": "DayZ",
-    "ServerAuth": "3kVzGDc7esfsadwBeZDd3ewqrq3kVzGDc7e",
+    "ServerAuth": "Hk@1k77Fxrut.ltqpT5mY)-rYIrNOHQdZM~8@b@~UeZy",
     "AllowClientWrite": false,
-    "Port": 3000
+    "Port": 443,
+    "Certificate": "",
+    "CertificateKey": ""
 }

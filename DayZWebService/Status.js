@@ -1,6 +1,15 @@
 const express = require('express');
 const { MongoClient } = require("mongodb");
-const config = require('./config.json');
+
+const fs = require('fs');
+const Defaultconfig = require('./sample-config.json');
+const ConfigPath = "config.json"
+var config;
+try{
+  config = JSON.parse(fs.readFileSync(ConfigPath));
+} catch (err){
+  config = Defaultconfig;
+}
  
 const router = express.Router();
 
@@ -30,14 +39,17 @@ async function runStatusCheck(req, res, auth) {
         const result = await collection.updateOne(query, updateDoc, options);
         if (result.result.ok == 1){
             res.json({Status: "ok", Error: "null"});
+            console.log("Status Check Called");
         } else {
             res.status(500);
             res.json({Status: "error", Error: "Database Write Error"});
+            console.log("ERROR: Database Write Error");
         }
     }catch(err){
         console.log(err);
         res.status(500);
         res.json({Status: "error", Error: err});
+        console.log("ERROR: " + err);
     }finally{
         // Ensures that the client will close when you finish/error
         client.close();
