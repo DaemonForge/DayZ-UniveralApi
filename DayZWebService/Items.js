@@ -40,7 +40,7 @@ async function runGet(req, res, ItemId, mod, auth) {
             
             if ((await results.count()) == 0){
                 if (auth == config.ServerAuth || config.AllowClientWrite ){
-                    console.log("Can't find Item with ID " + ItemId + "Creating it now");
+                    console.log("Can't find Item for mod " + mod + " with ID " + ItemId + "Creating it now");
 
                     const doc  = JSON.parse("{ \"ItemId\": \"" + ItemId + "\", \""+mod+"\": "+ StringData + " }");
                     var result = await collection.insertOne(doc);
@@ -59,16 +59,18 @@ async function runGet(req, res, ItemId, mod, auth) {
                     }
                 }
                 if (sent != true){
-                    const updateDocValue  = JSON.parse("{ \""+mod+"\": "+ StringData + " }");
-                    const updateDoc = { $set: updateDocValue, };
-                    const options = { upsert: false };
-                    const result = await collection.updateOne(query, updateDoc, options);
+                    if (auth == config.ServerAuth || config.AllowClientWrite){
+                        const updateDocValue  = JSON.parse("{ \""+mod+"\": "+ StringData + " }");
+                        const updateDoc = { $set: updateDocValue, };
+                        const options = { upsert: false };
+                        const result = await collection.updateOne(query, updateDoc, options);
+                    }
                     res.status(203);
                     res.json(RawData);
                 }
             }
         }catch(err){
-            console.log(err);
+            console.log("ERROR: " + err);
             res.status(203);
             res.json(RawData);
         }finally{
@@ -78,6 +80,7 @@ async function runGet(req, res, ItemId, mod, auth) {
     }  else {
         res.status(401);
         res.json(req.body);
+        console.log("ERROR: Bad Auth Token");
     }
 };
 async function runUpdate(req, res, ItemId, mod, auth) {  
@@ -89,9 +92,6 @@ async function runUpdate(req, res, ItemId, mod, auth) {
 
             // Connect the client to the server
             await client.connect();
-            
-            await client.db(config.DB).command({ ping: 1 });
-            console.log("ID " + ItemId + " req" + req);
             const db = client.db(config.DB);
             var collection = db.collection("Items");
             var query = { ItemId: ItemId };
@@ -99,7 +99,15 @@ async function runUpdate(req, res, ItemId, mod, auth) {
             const updateDocValue  = JSON.parse("{ \"ItemId\": \"" + ItemId + "\", \""+mod+"\": "+ StringData + " }");
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
-            res.json(RawData);
+            if (result.result.ok == 1){
+                console.log("Updated "+ mod + " Data for Item: " + ItemId);
+                res.status(201);
+                res.json(RawData);
+            } else {
+                console.log("Error with Updating "+ mod + " Data for Item: " + ItemId);
+                res.status(203);
+                res.json(RawData);
+            }
         }catch(err){
             console.log("err " + err)
             res.json(RawData);
@@ -110,6 +118,7 @@ async function runUpdate(req, res, ItemId, mod, auth) {
     }  else {
         res.status(401);
         res.json(req.body);
+        console.log("ERROR: Bad Auth Token");
     }
 };
 

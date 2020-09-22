@@ -54,7 +54,7 @@ https.createServer({
     cert: ServerCert
   }, app)
   .listen(config.Port, function () {
-    console.log('API Webservice  listening on port "' + config.Port +'"! Go to https://localhost:'+config.Port+'/')
+    console.log('API Webservice started and is now listening on port "' + config.Port +'"!')
   });
   function makeAuthToken() {
     var result           = '';

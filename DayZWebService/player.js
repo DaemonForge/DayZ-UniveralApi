@@ -12,6 +12,7 @@ try{
 }
 
 const queryHandler = require("./Query");
+const e = require('express');
 // Create a new MongoClient
 
 
@@ -48,22 +49,28 @@ async function runGet(req, res, GUID, mod, auth) {
                 }
                 res.status(201);
                 res.json(RawData);
+                console.log("Can't Find "+ mod + " Data for GUID: " + GUID + " Creating it now");
             } else {
                 var dataarr = await results.toArray(); 
                 var data = dataarr[0]; 
                 var sent = false;
                 for (const [key, value] of Object.entries(data)) {
-                    console.log(`${key}: ${value}`);
                     if(key === mod){
                         var sent = true;
                         res.json(value);
+                        console.log("Retrieving "+ mod + " Data for GUID: " + GUID);
                     }
                 }
                 if (sent != true){
-                    const updateDocValue  = JSON.parse("{ \""+mod+"\": "+ StringData + " }");
-                    const updateDoc = { $set: updateDocValue, };
-                    const options = { upsert: false };
-                    await collection.updateOne(query, updateDoc, options);
+                    if (auth == config.ServerAuth || config.AllowClientWrite){
+                        const updateDocValue  = JSON.parse("{ \""+mod+"\": "+ StringData + " }");
+                        const updateDoc = { $set: updateDocValue, };
+                        const options = { upsert: false };
+                        await collection.updateOne(query, updateDoc, options);
+                        console.log("Can't find "+ mod + " Data for GUID: " + GUID +  " Creating it now");
+                    } else {
+                        console.log("Can't find "+ mod + " Data for GUID: " + GUID);
+                    }
                     res.status(203);
                     res.json(RawData);
                 }
@@ -79,6 +86,7 @@ async function runGet(req, res, GUID, mod, auth) {
     } else {
         res.status(401);
         res.json(req.body);
+        console.log("ERROR: Bad Auth Token");
     }
 };
 async function runUpdate(req, res, GUID, mod, auth, write) {
@@ -96,18 +104,18 @@ async function runUpdate(req, res, GUID, mod, auth, write) {
             const options = { upsert: true };
             const jsonString = "{ \"GUID\": \""+GUID+"\", \""+mod+"\": "+ StringData + " }";
             const updateDocValue  = JSON.parse(jsonString);
-            console.log(updateDocValue);
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
             if (result.result.ok == 1){
+                console.log("Updated "+ mod + " Data for GUID: " + GUID);
                 res.status(201);
                 res.json(RawData);
             } else {
+                console.log("Error with Updating "+ mod + " Data for GUID: " + GUID);
                 res.status(203);
                 res.json(req.body);
             }
         }catch(err){
-            console.log("Found Server with ID " + err)
             res.status(203);
             res.json(req.body);
             console.log("ERROR: " + err);
@@ -123,7 +131,6 @@ async function runUpdate(req, res, GUID, mod, auth, write) {
 };
 
 async function CheckPlayerAuth(guid, auth){
-    console.log("Checking Player AUTH " + guid);
     var isAuth = false;
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     try{

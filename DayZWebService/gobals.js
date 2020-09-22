@@ -37,13 +37,15 @@ async function runGet(req, res, mod, auth) {
                 if (auth == config.ServerAuth || config.AllowClientWrite){
                     var doc = { Mod: mod, Data: RawData };
                     var result = await collection.insertOne(doc);
-                    console.log("result: "+ results)
+                    if (result.result.ok == 1){ 
+                        console.log("Created "+ mod + " Globals");
+                        res.status(201);
+                    }
                 }
-                res.status(201);
                 res.json(RawData);
             } else {
                 var data = await results.toArray(); 
-                console.log("Found " + mod + " data: " + data[0].Data)
+                console.log("Retrieving "+ mod + " Globals");
                 res.json(data[0].Data);
             }
         }catch(err){
@@ -63,13 +65,10 @@ async function runGet(req, res, mod, auth) {
 async function runUpdate(req, res, mod, auth) {
     if (auth == config.ServerAuth || ((await CheckPlayerAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-        var StringData = JSON.stringify(req.body);
         var RawData = req.body;
-
         try{
             await client.connect();
             // Connect the client to the server
-            console.log("ID " + mod + " req" + req.body);
             const db = client.db(config.DB);
             var collection = db.collection("Globals");
             var query = { Mod: mod };
@@ -78,8 +77,15 @@ async function runUpdate(req, res, mod, auth) {
                 $set: { Mod: mod, Data: RawData }
             };
             const result = await collection.updateOne(query, updateDoc, options);
-            console.log("Posted New Data result: " + result.result)
-            res.json(RawData);
+            if (result.result.ok == 1){
+                console.log("Updated "+ mod + " Globals");
+                res.status(201);
+                res.json(RawData);
+            } else {
+                console.log("Error with Updating "+ mod + "Globals");
+                res.status(203);
+                res.json(RawData);
+            }
         }catch(err){
             res.status(203);
             res.json(RawData);

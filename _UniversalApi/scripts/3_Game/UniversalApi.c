@@ -6,6 +6,7 @@ class UniversalApi{
 	
 	protected ref UniversalRest m_UniversalRest;
 	
+	
 	protected ref array<ref PlayerIdentity> QueuedPlayers = new ref array<ref PlayerIdentity>;
 	
 	string GetAuthToken(){
@@ -15,6 +16,13 @@ class UniversalApi{
 			return UApiConfig().ServerAuth;
 		}
 		return "null";
+	}
+	
+	bool HasValidAuth(){
+		if (GetAuthToken() != "null" && GetAuthToken() != "error" && GetAuthToken() != "ERROR" && GetAuthToken() != "" ){
+			return true;
+		}
+		return false;
 	}
 		
 	ref UniversalRest Rest(){
@@ -38,7 +46,6 @@ class UniversalApi{
 		Param2<ApiAuthToken, UniversalApiConfig> data;  //Player ID, Icon
 		if ( !ctx.Read( data ) ) return;
 		m_authToken = data.param1;
-		Print("[UPAI] Received Auth Token: GUID" + m_authToken.GUID + " AUTH" + m_authToken.AUTH);
 		m_UniversalApiConfig = data.param2;
 	}
 	
@@ -61,7 +68,6 @@ class UniversalApi{
 			for (int i = 0; i < players.Count(); i++){
 				DayZPlayer player = DayZPlayer.Cast(players.Get(i));
 				if (player.GetIdentity() && player.GetIdentity().GetId() == GUID ){
-					Print("[UPAI] GUID Match: " + GUID + " to " + player.GetIdentity().GetId());
 					return player;
 				}
 			}
@@ -76,7 +82,6 @@ class UniversalApi{
 			for (int i = 0; i < QueuedPlayers.Count(); i++){
 				PlayerIdentity indentity = PlayerIdentity.Cast(QueuedPlayers.Get(i));
 				if (indentity && indentity.GetId() == GUID ){
-					Print("[UPAI] GUID Match: " + GUID + " to " + indentity.GetId());
 					return indentity;
 				}
 			}
@@ -100,9 +105,21 @@ class UniversalApi{
 		}
 	}
 	
-	void AuthError(){
-		Print("[UPAI] Auth Error");
+	void AuthError(string guid){
+		Print("[UPAI] Auth Error for " + guid);
 	}
+	
+	void DiscordMessage(string webhookUrl, string message, string botName = "", string botAvatarUrl = ""){
+		UApiDiscordObject DiscordMessage = new UApiDiscordObject;
+		DiscordMessage.content = message;
+		DiscordMessage.username = botName;
+		DiscordMessage.avatar_url = botAvatarUrl;
+		Rest().Post(webhookUrl, DiscordMessage.ToJson());
+	}
+	
+	void DiscordObject(string webhookUrl, UApiDiscordObject discordObject){
+		Rest().Post(webhookUrl, discordObject.ToJson());
+	} 
 	
 };
 

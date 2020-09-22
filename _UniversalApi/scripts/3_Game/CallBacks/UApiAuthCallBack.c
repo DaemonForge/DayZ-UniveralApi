@@ -1,13 +1,23 @@
 class UApiAuthCallBack : RestCallback
 {
 	protected int m_TryCount = 0;
+	protected string m_GUID = "";
+	
+	void UApiAuthCallBack(string guid = ""){
+		m_GUID = guid;
+	}
+	
 	override void OnError(int errorCode) {
 		Print("[UPAI] [UApiAuthCallBack] Auth of a Player Failed errorCode: " + errorCode);
-		UApi().AuthError();
+		if (m_GUID != ""){
+			UApi().AuthError(m_GUID);
+		}
 	};
 	override void OnTimeout() {
 		Print("[UPAI] [UApiAuthCallBack] Auth of a Player Failed errorCode: Timeout");
-		UApi().AuthError();
+		if (m_GUID != ""){
+			UApi().AuthError(m_GUID);
+		}
 	};
 	override void OnSuccess(string data, int dataSize) {
 		
@@ -24,7 +34,9 @@ class UApiAuthCallBack : RestCallback
 			Print("[UPAI] [UApiAuthCallBack] Auth of a Player Success data: GUID " + authToken.GUID);
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.DeferredLoad, authToken);
 		} else {
-			UApi().AuthError();
+			if (m_GUID != ""){
+				UApi().AuthError(m_GUID);
+			}
 		}
 	};
 	
@@ -46,6 +58,9 @@ class UApiAuthCallBack : RestCallback
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.DeferredLoad, m_TryCount * 250, false, authToken);
 		} else {
 			Print("[UPAI] [UApiAuthCallBack] Couldn't Find Player on server");
+			if (m_GUID != ""){
+				UApi().AuthError(m_GUID);
+			}
 		}
 	}
 };

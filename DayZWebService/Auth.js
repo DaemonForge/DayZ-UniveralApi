@@ -15,24 +15,19 @@ const router = express.Router();
 
 router.post('/:GUID/:auth', (req, res)=>{
     if ( req.params.auth == config.ServerAuth ){
-        console.log("Auth Token Requested for: " + req.params.GUID);
-        runGetAuth(req, res, req.params.GUID, req.params.auth);
+        runGetAuth(req, res, req.params.GUID);
     }else{
         res.status(401);
         res.json({ GUID: req.params.GUID, AuthToken: "ERROR" });
-        console.log("AUTH ERROR: " + req.url);
+        console.log("AUTH ERROR: " + req.url + " Invalid Server Token");
     }
 });
 
-async function runGetAuth(req, res, GUID, auth) {
+async function runGetAuth(req, res, GUID) {
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     try{
-
-        var StringData = JSON.stringify(req.body);
-        var RawData = req.body;
         // Connect the client to the server       
         await client.connect(); 
-        console.log("ID " + GUID + " RawData" + RawData);
         const db = client.db(config.DB);
         var collection = db.collection("Players");
         var query = { GUID: GUID };
@@ -41,16 +36,17 @@ async function runGetAuth(req, res, GUID, auth) {
         const updateDocValue  = { GUID: GUID, AUTH: AuthToken }
         const updateDoc = { $set: updateDocValue, };
         const result = await collection.updateOne(query, updateDoc, options);
-        console.log(result.result);
-        res.json({GUID: GUID, AUTH: AuthToken});
-        console.log("Successfull auth for: " + GUID);
+        if (result.result.ok == 1){
+            res.json({GUID: GUID, AUTH: AuthToken});
+            console.log("Auth Token Generated for: " + GUID);
+        } else {
+            res.json({GUID: GUID, AUTH: "ERROR"});
+            console.log("Error Generating Auth Token  for: " + GUID);
+        }
     }catch(err){
-        console.log("Found Server with ID " + err)
         res.json({GUID: GUID, AUTH: "ERROR"});
         console.log("AUTH ERROR: " + req.url);
     }finally{
-        // Ensures that the client will close when you finish/error
-
         await client.close();
     }
 };

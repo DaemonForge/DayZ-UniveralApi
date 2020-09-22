@@ -17,6 +17,17 @@ class UniversalRest
 		return clCore;
 	}
 	
+	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL)
+	{
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack
+		}
+		RestContext ctx =  Api().GetRestContext(url);
+		ctx.SetHeader("application/json");
+		ctx.POST(UCBX , "", jsonString);
+	}
+	
+	
 	static string BaseUrl(){
 		if (m_BaseUrl != ""){
 			return m_BaseUrl;
@@ -34,11 +45,9 @@ class UniversalRest
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
 		}
-		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
+		
 		if (jsonString){
-			RestContext ctx = Api().GetRestContext(url);
-			ctx.SetHeader("application/json");
-			ctx.POST(UCBX, "", jsonString);
+			Post(url,jsonString,UCBX);
 		} else {
 			Print("[UPAI] [Api] Error Saving Player Data for " + mod);
 		}
@@ -53,29 +62,21 @@ class UniversalRest
 		
 		string url = BaseUrl() + "/Player/Load/" + guid + "/" + mod  + "/" + auth;
 		
-		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (UCBX){
-			RestContext ctx = Api().GetRestContext(url);
-			ctx.SetHeader("application/json");
-			ctx.POST(UCBX, "", jsonString);
+			Post(url,jsonString,UCBX);
 		} else {
 			Print("[UPAI] [Api] Error Loading Player Data for " + mod);
 		}
 	}
 	
-	static void GetAuth( string guid,  string auth  = "")
+	static void GetAuth( string guid, string auth  = "")
 	{
-		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
 		string url = BaseUrl() + "/GetAuth/" + guid + "/" + auth;
 		
-		UApiAuthCallBack UCBX = new UApiAuthCallBack;
-		
-		RestContext ctx = Api().GetRestContext(url);
-		ctx.SetHeader("application/json");
-		ctx.POST(UCBX, "", "{}");
+		Post(url, "{}", new ref UApiAuthCallBack(guid));
 	}
 
 
@@ -91,11 +92,8 @@ class UniversalRest
 			UCBX = new ref UApiSilentCallBack;
 		}
 		
-		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (jsonString){
-			RestContext ctx = Api().GetRestContext(url);
-			ctx.SetHeader("application/json");
-			ctx.POST(UCBX, "", jsonString);
+			Post(url,jsonString,UCBX);
 		} else {
 			Print("[UPAI] [Api] Error Saving Globals Data for " + mod);
 		}
@@ -108,11 +106,8 @@ class UniversalRest
 		}
 		string url = BaseUrl() + "/Gobals/Load/" + mod  + "/" + auth;
 
-		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (UCBX){
-			RestContext ctx = Api().GetRestContext(url);
-			ctx.SetHeader("application/json");
-			ctx.POST(UCBX, "", jsonString);
+			Post(url,jsonString,UCBX);
 		} else {
 			Print("[UPAI] [Api] Error Loading Globals Data for " + mod);
 		}
@@ -129,11 +124,8 @@ class UniversalRest
 		}
 		string url = BaseUrl() + "/Item/Save/" + itemId + "/" +  mod + "/" + auth;
 		
-		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (jsonString){
-			RestContext ctx = Api().GetRestContext(url);
-			ctx.SetHeader("application/json");
-			ctx.POST(UCBX, "", jsonString);
+			Post(url,jsonString,UCBX);
 		} else {
 			Print("[UPAI] [Api] Error Saving Globals Data for " + mod);
 		}
@@ -147,11 +139,8 @@ class UniversalRest
 		
 		string url = BaseUrl() + "/Item/Load/" +  itemId + "/" + mod  + "/" + auth;
 		
-		Print("[UPAI] [Debug] URL: " + url + " jsonString: " + jsonString );
 		if (UCBX){
-			RestContext ctx = Api().GetRestContext(url);
-			ctx.SetHeader("application/json");
-			ctx.POST(UCBX, "", jsonString);
+			Post(url,jsonString,UCBX);
 		} else {
 			Print("[UPAI] [Api] Error Loading Globals Data for " + mod);
 		}
