@@ -1,9 +1,10 @@
 class UniversalApiConfig
 {
-	protected string ConfigPATH = "$profile:UniversalApi.json";
+	protected string ConfigPATH = "$profile:UApi\\UniversalApi.json";
 	string ServerURL = "";
 	string ServerID = "";
     string ServerAuth = "";
+	bool QnAEnabled = false;
 	
 	void Load(){
 		if (GetGame().IsServer()){
@@ -26,9 +27,7 @@ class UniversalApiConfig
 			JsonFileLoader<UniversalApiConfig>.JsonSaveFile(ConfigPATH, this);
 	}
 }
-
 ref UniversalApiConfig m_UniversalApiConfig;
-
 
 //Helper function to return Config
 static ref UniversalApiConfig UApiConfig()

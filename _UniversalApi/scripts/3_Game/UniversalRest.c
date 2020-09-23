@@ -145,4 +145,32 @@ class UniversalRest
 			Print("[UPAI] [Api] Error Loading Globals Data for " + mod);
 		}
 	}
+	
+	
+	//This is just something I'm playing with maybe helpfull
+	static void QnA(string question, bool alwaysAnswer = true, ref RestCallback UCBX = NULL, string jsonString = "{}", string auth = ""){
+		
+		if (!UCBX && alwaysAnswer){
+			ref UApiQnACallBack QnACBX = new ref UApiQnACallBack;
+			QnACBX.SetAlwaysAnswer();
+			UCBX = QnACBX;
+		} else if (!UCBX) {
+			UCBX = new ref UApiQnACallBack;
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		if (jsonString == "{}" && question != "" ){
+			QnAQuestion QuestionObj = new QnAQuestion(question);
+			jsonString = QuestionObj.ToJson();
+		}
+		string url = BaseUrl() + "/QnAMaker/" + auth;
+		
+		if (jsonString != "{}" ){
+			Post(url,jsonString,UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Asking Question ");
+		}
+	}
 };

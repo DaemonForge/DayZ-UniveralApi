@@ -28,6 +28,7 @@ const RouterPlayer = require('./player');
 const RouterGlobals = require('./gobals');
 const RouterAuth = require('./Auth');
 const RouterStatus = require('./Status');
+const RouterQnA = require('./QnAMaker');
 
 app.use(bodyParser.json());
 app.use('/Item', RouterItem);
@@ -35,6 +36,7 @@ app.use('/Player', RouterPlayer);
 app.use('/Gobals', RouterGlobals);
 app.use('/GetAuth', RouterAuth);
 app.use('/Status', RouterStatus);
+app.use('/QnAMaker', RouterQnA);
 app.use('/', (req,res)=>{
 
     console.log("Error in URL:" + req.url);
