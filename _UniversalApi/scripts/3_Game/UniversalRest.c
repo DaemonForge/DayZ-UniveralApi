@@ -41,7 +41,7 @@ class UniversalRest
 			auth = UApi().GetAuthToken();
 		}
 		
-		string url = BaseUrl() + "/Player/Save/" + guid + "/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Player/Save/" + guid + "/" + mod  + "/" + auth;
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
 		}
@@ -60,7 +60,7 @@ class UniversalRest
 			auth = UApi().GetAuthToken();
 		}
 		
-		string url = BaseUrl() + "/Player/Load/" + guid + "/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Player/Load/" + guid + "/" + mod  + "/" + auth;
 		
 		if (UCBX){
 			Post(url,jsonString,UCBX);
@@ -74,7 +74,7 @@ class UniversalRest
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
-		string url = BaseUrl() + "/GetAuth/" + guid + "/" + auth;
+		string url = BaseUrl() + "GetAuth/" + guid + "/" + auth;
 		
 		Post(url, "{}", new ref UApiAuthCallBack(guid));
 	}
@@ -86,7 +86,7 @@ class UniversalRest
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
-		string url = BaseUrl() + "/Gobals/Save/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Gobals/Save/" + mod  + "/" + auth;
 		
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
@@ -104,7 +104,7 @@ class UniversalRest
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
-		string url = BaseUrl() + "/Gobals/Load/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Gobals/Load/" + mod  + "/" + auth;
 
 		if (UCBX){
 			Post(url,jsonString,UCBX);
@@ -122,7 +122,7 @@ class UniversalRest
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
-		string url = BaseUrl() + "/Item/Save/" + itemId + "/" +  mod + "/" + auth;
+		string url = BaseUrl() + "Item/Save/" + itemId + "/" +  mod + "/" + auth;
 		
 		if (jsonString){
 			Post(url,jsonString,UCBX);
@@ -137,7 +137,7 @@ class UniversalRest
 			auth = UApi().GetAuthToken();
 		}
 		
-		string url = BaseUrl() + "/Item/Load/" +  itemId + "/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Item/Load/" +  itemId + "/" + mod  + "/" + auth;
 		
 		if (UCBX){
 			Post(url,jsonString,UCBX);
@@ -165,7 +165,7 @@ class UniversalRest
 			QnAQuestion QuestionObj = new QnAQuestion(question);
 			jsonString = QuestionObj.ToJson();
 		}
-		string url = BaseUrl() + "/QnAMaker/" + auth;
+		string url = BaseUrl() + "QnAMaker/" + auth;
 		
 		if (jsonString != "{}" ){
 			Post(url,jsonString,UCBX);

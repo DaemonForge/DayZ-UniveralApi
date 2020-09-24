@@ -1,18 +1,12 @@
 const express = require('express');
 const { MongoClient } = require("mongodb");
+var crypto = require('crypto');
 
-const fs = require('fs');
-const Defaultconfig = require('./sample-config.json');
-const ConfigPath = "config.json"
-var config;
-try{
-  config = JSON.parse(fs.readFileSync(ConfigPath));
-} catch (err){
-  config = Defaultconfig;
-}
+const CheckAuth = require('./AuthChecker')
+
+const config = require('./configLoader');
 
 const queryHandler = require("./Query");
-const e = require('express');
 // Create a new MongoClient
 
 
@@ -133,24 +127,28 @@ async function runUpdate(req, res, GUID, mod, auth, write) {
 async function CheckPlayerAuth(guid, auth){
     var isAuth = false;
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-    try{
-        await client.connect();
-        // Connect the client to the server        
-        const db = client.db(config.DB);
-        var collection = db.collection("Players");
-        var query = { GUID: guid, AUTH: auth };
-        var results = collection.find(query);
-            if ((await results.count()) != 0){
-                isAuth = true;
-            }
-    } catch(err){
-        console.log("ID " + guid + " err" + err);
-    } finally{
-        await client.close();
-        return isAuth;
+    if ((await CheckAuth(auth))){
+        try{
+            await client.connect();
+            // Connect the client to the server        
+            const db = client.db(config.DB);
+            var collection = db.collection("Players");
+            var SavedAuth = crypto.createHash('sha256').update(auth).digest('base64');
+            var query = { GUID: guid, AUTH: SavedAuth };
+            var results = collection.find(query);
+                if ((await results.count()) != 0){
+                    isAuth = true;
+                }
+        } catch(err){
+            console.log("ID " + guid + " err" + err);
+        } finally{
+            await client.close();
+            return isAuth;
+        }
     }
-
+    return isAuth;
 }
+
 
 
 module.exports = router;

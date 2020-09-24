@@ -1,15 +1,10 @@
 const express = require('express');
 const { MongoClient } = require("mongodb");
 
-const fs = require('fs');
-const Defaultconfig = require('./sample-config.json');
-const ConfigPath = "config.json"
-var config;
-try{
-  config = JSON.parse(fs.readFileSync(ConfigPath));
-} catch (err){
-  config = Defaultconfig;
-}
+const CheckAuth = require('./AuthChecker')
+
+
+const config = require('./configLoader');
 
 const router = express.Router();
 
@@ -27,62 +22,41 @@ function GetCollection(URL){
 }
 
 async function runQuery(req, res, mod, auth, COLL) {
-    if (auth == config.ServerAuth || (await CheckPlayerAuth(auth)) ){
+    if (auth == config.ServerAuth || (await CheckAuth(auth)) ){
         var RawData = req.body;
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
 
             // Connect the client to the server
             await client.connect();
-    
+            
             const db = client.db(config.DB);
             var collection = db.collection(COLL);
-            var query = { Mod: mod };
-            var results = collection.find(query);
-            if ((await results.count()) == 0){
-                if (auth == config.ServerAuth || config.AllowClientWrite){
-                    var doc = { Mod: mod, Data: RawData };
-                    var result = await collection.insertOne(doc);
-                    console.log("result: "+ results)
-                }
-                res.json(RawData);
+            var query = JSON.parse(RawData.Query);
+            var results =  collection.distinct(mod, query);
+            var Count =  await results.count();
+            if (Count == 0){
+                var simpleReturn = { Status: "NoResults", Count: 0, Results: [] }
+                res.json(simpleReturn);
             } else {
                 var data = await results.toArray(); 
-                console.log("Found " + mod + " data: " + data[0].Data)
-                res.json(data[0].Data);
+
+                var simpleReturn = {Status: "Success", Count: Count, Results: data }
+                console.log("Found " + mod + " data: " + data)
+                res.json(simpleReturn);
             }
         }catch(err){
-            console.log("Found Server with ID " + err)
+            console.log("Error " + err)
             res.status(203);
-            res.json(RawData);
+            res.json({Status: "Error", Count: 0, Results: [] });
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
         }
     } else {
         res.status(203);
-        res.json(RawData);
+        res.json({Status: "NoAuth", Count: 0, Results: [] });
     }
 };
-async function CheckPlayerAuth(auth){
-    var isAuth = false;
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-    try{
-        await client.connect();
-        // Connect the client to the server       
-        const db = client.db(config.DB);
-        var collection = db.collection("Players");
-        var query = { AUTH: auth };
-        var results = collection.find(query);
-            if ((await results.count()) != 0){
-                isAuth = true;
-            }
-    } catch(err){
-        console.log(" auth" + auth + " err" + err);
-    } finally{
-        await client.close();
-        return isAuth;
-    }
 
-}
 module.exports = router;

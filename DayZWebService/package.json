@@ -11,8 +11,10 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.0",
+    "crypto": "^1.0.1",
     "express": "^4.17.1",
     "https": "^1.0.0",
+    "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.2",
     "node-fetch": "^2.6.1"
   },

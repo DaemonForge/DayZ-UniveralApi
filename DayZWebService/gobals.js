@@ -1,15 +1,9 @@
 const express = require('express');
 const { MongoClient } = require("mongodb");
 
-const fs = require('fs');
-const Defaultconfig = require('./sample-config.json');
-const ConfigPath = "config.json"
-var config;
-try{
-  config = JSON.parse(fs.readFileSync(ConfigPath));
-} catch (err){
-  config = Defaultconfig;
-}
+const CheckAuth = require('./AuthChecker')
+
+const config = require('./configLoader');
 
 const router = express.Router();
 
@@ -21,8 +15,8 @@ router.post('/Save/:mod/:auth', (req, res)=>{
     runUpdate(req, res, req.params.mod, req.params.auth);
 });
 async function runGet(req, res, mod, auth) {
-    if (auth == config.ServerAuth || (await CheckPlayerAuth(auth)) ){
-        var RawData = req.body;
+    var RawData = req.body;
+    if (auth == config.ServerAuth || (await CheckAuth(auth)) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
 
@@ -63,9 +57,9 @@ async function runGet(req, res, mod, auth) {
     }
 };
 async function runUpdate(req, res, mod, auth) {
-    if (auth == config.ServerAuth || ((await CheckPlayerAuth(auth)) && config.AllowClientWrite) ){
+    var RawData = req.body;
+    if (auth == config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-        var RawData = req.body;
         try{
             await client.connect();
             // Connect the client to the server
@@ -101,25 +95,4 @@ async function runUpdate(req, res, mod, auth) {
     }
 };
 
-async function CheckPlayerAuth(auth){
-    var isAuth = false;
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-    try{
-        await client.connect();
-        // Connect the client to the server       
-        const db = client.db(config.DB);
-        var collection = db.collection("Players");
-        var query = { AUTH: auth };
-        var results = collection.find(query);
-            if ((await results.count()) != 0){
-                isAuth = true;
-            }
-    } catch(err){
-        console.log("AUTH ERROR: " + req.url);
-    } finally{
-        await client.close();
-        return isAuth;
-    }
-
-}
 module.exports = router;

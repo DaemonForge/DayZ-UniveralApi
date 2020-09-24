@@ -107,6 +107,10 @@ class UniversalApi{
 	
 	void AuthError(string guid){
 		Print("[UPAI] Auth Error for " + guid);
+		//If Auth Token Failed just try again in 3 minutes 
+		if (PlayerIdentity.Cast(SearchQueue(guid))){ //Check to make sure the GUID is still in the queue to prevent any endless loops
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuth, 180 * 1000, false, guid);
+		}
 	}
 	
 	void DiscordMessage(string webhookUrl, string message, string botName = "", string botAvatarUrl = ""){

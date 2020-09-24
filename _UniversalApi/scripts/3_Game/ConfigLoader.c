@@ -10,6 +10,13 @@ class UniversalApiConfig
 		if (GetGame().IsServer()){
 			if (FileExist(ConfigPATH)){ //If config exist load File
 			    JsonFileLoader<UniversalApiConfig>.JsonLoadFile(ConfigPATH, this);
+				if (ServerURL != ""){
+					int lastIndex = ServerURL.Length() - 1;
+					if ( ServerURL.Substring(lastIndex,1) != "/"){ //correct URL
+						ServerURL = ServerURL + "/";
+						Save();
+					}
+				}
 			}else{ //File does not exist create file	
 				Save();
 			}

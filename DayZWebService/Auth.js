@@ -1,16 +1,11 @@
 const express = require('express');
 const { MongoClient } = require("mongodb");
+const jwt = require('jsonwebtoken');
+var crypto = require('crypto');
 
-const fs = require('fs');
-const Defaultconfig = require('./sample-config.json');
-const ConfigPath = "config.json"
-var config;
-try{
-  config = JSON.parse(fs.readFileSync(ConfigPath));
-} catch (err){
-  config = Defaultconfig;
-}
- 
+
+const config = require('./configLoader');
+
 const router = express.Router();
 
 router.post('/:GUID/:auth', (req, res)=>{
@@ -32,8 +27,9 @@ async function runGetAuth(req, res, GUID) {
         var collection = db.collection("Players");
         var query = { GUID: GUID };
         const options = { upsert: true };
-        var AuthToken = makeAuthToken();
-        const updateDocValue  = { GUID: GUID, AUTH: AuthToken }
+        var AuthToken = makeAuthToken(GUID);
+        var SaveToken = crypto.createHash('sha256').update(AuthToken).digest('base64');
+        const updateDocValue  = { GUID: GUID, AUTH: SaveToken }
         const updateDoc = { $set: updateDocValue, };
         const result = await collection.updateOne(query, updateDoc, options);
         if (result.result.ok == 1){
@@ -50,13 +46,10 @@ async function runGetAuth(req, res, GUID) {
         await client.close();
     }
 };
-function makeAuthToken() {
-    var result           = '';
-    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.~()*:@,;';
-    var charactersLength = characters.length;
-    for ( var i = 0; i < 44; i++ ) {
-       result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
+
+function makeAuthToken(GUID) {
+    const player = { GUID: GUID }; 
+    var result = jwt.sign(player, config.ServerAuth, { expiresIn: 3800 });
     return result;
  }
 
