@@ -3,6 +3,8 @@ const { MongoClient } = require("mongodb");
 
 const CheckAuth = require('./AuthChecker')
 
+const log = require("./log");
+
 const config = require('./configLoader');
 
 const router = express.Router();
@@ -32,20 +34,20 @@ async function runGet(req, res, mod, auth) {
                     var doc = { Mod: mod, Data: RawData };
                     var result = await collection.insertOne(doc);
                     if (result.result.ok == 1){ 
-                        console.log("Created "+ mod + " Globals");
+                        log("Created "+ mod + " Globals");
                         res.status(201);
                     }
                 }
                 res.json(RawData);
             } else {
                 var data = await results.toArray(); 
-                console.log("Retrieving "+ mod + " Globals");
+                log("Retrieving "+ mod + " Globals");
                 res.json(data[0].Data);
             }
         }catch(err){
             res.status(203);
             res.json(RawData);
-            console.log("ERROR: " + err);
+            log("ERROR: " + err, "warn");
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
@@ -53,7 +55,7 @@ async function runGet(req, res, mod, auth) {
     } else {
         res.status(401);
         res.json(RawData);
-        console.log("AUTH ERROR: " + req.url);
+        log("AUTH ERROR: " + req.url, "warn");
     }
 };
 async function runUpdate(req, res, mod, auth) {
@@ -72,18 +74,18 @@ async function runUpdate(req, res, mod, auth) {
             };
             const result = await collection.updateOne(query, updateDoc, options);
             if (result.result.ok == 1){
-                console.log("Updated "+ mod + " Globals");
+                log("Updated "+ mod + " Globals");
                 res.status(201);
                 res.json(RawData);
             } else {
-                console.log("Error with Updating "+ mod + "Globals");
+                log("Error with Updating "+ mod + "Globals", "warn");
                 res.status(203);
                 res.json(RawData);
             }
         }catch(err){
             res.status(203);
             res.json(RawData);
-            console.log("ERROR: " + err);
+            log("ERROR: " + err, "warn");
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
@@ -91,7 +93,7 @@ async function runUpdate(req, res, mod, auth) {
     } else {
         res.status(401);
         res.json(req.body);
-        console.log("AUTH ERROR: " + req.url);
+        log("AUTH ERROR: " + req.url, "warn");
     }
 };
 

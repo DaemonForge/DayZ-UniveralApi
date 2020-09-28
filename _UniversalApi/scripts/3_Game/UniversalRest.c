@@ -35,8 +35,16 @@ class UniversalRest
 		return UApiConfig().ServerURL;
 	}
 	
-	static void PlayerSave(string mod, string guid, string jsonString, ref RestCallback UCBX = NULL, string auth = "")
-	{		
+	static void GetAuth( string guid, string auth  = ""){
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		string url = BaseUrl() + "GetAuth/" + guid + "/" + auth;
+		
+		Post(url, "{}", new ref UApiAuthCallBack(guid));
+	}
+	
+	static void PlayerSave(string mod, string guid, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
@@ -53,8 +61,7 @@ class UniversalRest
 		}
 	}
 	
-	static void PlayerLoad(string mod, string guid,  ref RestCallback UCBX, string jsonString = "{}",string auth = "")
-	{
+	static void PlayerLoad(string mod, string guid,  ref RestCallback UCBX, string jsonString = "{}",string auth = "") {
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -69,19 +76,23 @@ class UniversalRest
 		}
 	}
 	
-	static void GetAuth( string guid, string auth  = "")
-	{
+	static void PlayerQuery(string mod, UApiQueryObject query, ref RestCallback UCBX, string auth = "") {
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
-		string url = BaseUrl() + "GetAuth/" + guid + "/" + auth;
 		
-		Post(url, "{}", new ref UApiAuthCallBack(guid));
+		string url = BaseUrl() + "Player/Query/" + mod  + "/" + auth;
+		
+		if ( query && UCBX){
+			Post(url,query.ToJson(),UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Querying " +  mod);
+		}
 	}
+	
 
 
-	static void GlobalsSave(string mod, string jsonString, ref RestCallback UCBX = NULL, string auth = "")
-	{
+	static void GlobalsSave(string mod, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -99,7 +110,7 @@ class UniversalRest
 		}
 	}
 	
-	static void GlobalsLoad(string mod, ref RestCallback UCBX, string jsonString = "{}", string auth = ""){
+	static void GlobalsLoad(string mod, ref RestCallback UCBX, string jsonString = "{}", string auth = "") {
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -113,7 +124,10 @@ class UniversalRest
 		}
 	}
 	
-	static void ItemSave(string mod, string itemId, string jsonString, ref RestCallback UCBX = NULL, string auth = ""){
+	
+	//Saving or loading an object with the ObjectId of "NewObject" will generate an Object ID for you, this Object ID will be returned
+	//in the ObjectId var of the Class so make sure your Class has the varible ObjectId if you plan on using this feature
+	static void ObjectSave(string mod, string objectId, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
 			UCBX = new ref UApiSilentCallBack;
@@ -122,55 +136,64 @@ class UniversalRest
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
-		string url = BaseUrl() + "Item/Save/" + itemId + "/" +  mod + "/" + auth;
+		string url = BaseUrl() + "Object/Save/" + objectId + "/" +  mod + "/" + auth;
 		
 		if (jsonString){
 			Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Saving Globals Data for " + mod);
+			Print("[UPAI] [Api] Error Saving Object " + objectId + " Data for " + mod);
 		}
 	}
 	
-	static void ItemLoad(string mod, string itemId, ref RestCallback UCBX, string jsonString = "{}", string auth = ""){
+	static void ObjectLoad(string mod, string objectId, ref RestCallback UCBX, string jsonString = "{}", string auth = "") {
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
 		
-		string url = BaseUrl() + "Item/Load/" +  itemId + "/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Object/Load/" +  objectId + "/" + mod  + "/" + auth;
 		
 		if (UCBX){
 			Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Loading Globals Data for " + mod);
+			Print("[UPAI] [Api] Error Loading Object (" + objectId + ") Data for " + mod);
 		}
 	}
 	
-	
-	//This is just something I'm playing with maybe helpfull
-	static void QnA(string question, bool alwaysAnswer = true, ref RestCallback UCBX = NULL, string jsonString = "{}", string auth = ""){
-		
-		if (!UCBX && alwaysAnswer){
-			ref UApiQnACallBack QnACBX = new ref UApiQnACallBack;
-			QnACBX.SetAlwaysAnswer();
-			UCBX = QnACBX;
-		} else if (!UCBX) {
-			UCBX = new ref UApiQnACallBack;
-		}
+	static void ObjectQuery(string mod, UApiQueryObject query, ref RestCallback UCBX, string auth = "") {
 		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
-		if (jsonString == "{}" && question != "" ){
-			QnAQuestion QuestionObj = new QnAQuestion(question);
-			jsonString = QuestionObj.ToJson();
-		}
-		string url = BaseUrl() + "QnAMaker/" + auth;
 		
-		if (jsonString != "{}" ){
-			Post(url,jsonString,UCBX);
+		string url = BaseUrl() + "Object/Query/" + mod  + "/" + auth;
+		
+		if ( query && UCBX){
+			Post(url,query.ToJson(),UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Asking Question ");
+			Print("[UPAI] [Api] Error Querying " +  mod);
 		}
 	}
+	
+	
+	static void Request(ref UApiForwarder data, ref RestCallback UCBX = NULL, string auth = ""){
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack;
+		}
+		
+		string url = BaseUrl() + "Forward/" + auth;
+		
+		if ( data && UCBX){
+			Post(url,data.ToJson(),UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Fowarding ");
+		}
+	}
+	
+	
 };

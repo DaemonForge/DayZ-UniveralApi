@@ -1,6 +1,6 @@
 class UniversalApiConfig
 {
-	protected string ConfigPATH = "$profile:UApi\\UniversalApi.json";
+	protected static string ConfigPATH = "$profile:UApi\\UniversalApi.json";
 	string ServerURL = "";
 	string ServerID = "";
     string ServerAuth = "";
@@ -15,6 +15,9 @@ class UniversalApiConfig
 					if ( ServerURL.Substring(lastIndex,1) != "/"){ //correct URL
 						ServerURL = ServerURL + "/";
 						Save();
+					}
+					if (QnAEnabled){
+						UApiQnAMaker();
 					}
 				}
 			}else{ //File does not exist create file	
@@ -33,6 +36,8 @@ class UniversalApiConfig
 	void Save(){
 			JsonFileLoader<UniversalApiConfig>.JsonSaveFile(ConfigPATH, this);
 	}
+	
+	
 }
 ref UniversalApiConfig m_UniversalApiConfig;
 

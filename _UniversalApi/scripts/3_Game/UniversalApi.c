@@ -37,16 +37,32 @@ class UniversalApi{
 			UAPI_Init = true;
 			Print("[UPAI] UAPIRPCRegistrations");
 			GetRPCManager().AddRPC( "UAPI", "RPCUniversalApiConfig", this, SingeplayerExecutionType.Both );
+			GetRPCManager().AddRPC( "UAPI", "RPCRequestQnAConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
 		}
 	}
 	
 	void RPCUniversalApiConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
 	{
-		Param2<ApiAuthToken, UniversalApiConfig> data;  //Player ID, Icon
+		Param2<ApiAuthToken, UniversalApiConfig> data; 
 		if ( !ctx.Read( data ) ) return;
 		m_authToken = data.param1;
 		m_UniversalApiConfig = data.param2;
+		if (m_UniversalApiConfig.QnAEnabled){
+			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(NULL), true);
+		}
+	}
+	
+	
+	void RPCRequestQnAConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	{
+		Param1<UApiQnAMakerServerAnswers> data; 
+		if ( !ctx.Read( data ) ) return;
+		if (!GetGame().IsServer() && !PlayerIdentity.Cast(sender) && data.param1){
+			m_QnAMakerServerAnswers = data.param1;
+		} else if (GetGame().IsServer() && PlayerIdentity.Cast(sender) && data.param1 == NULL){
+			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(m_QnAMakerServerAnswers), true, sender);
+		}
 	}
 	
 	void RPCRequestAuthToken( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
@@ -125,6 +141,33 @@ class UniversalApi{
 		Rest().Post(webhookUrl, discordObject.ToJson());
 	} 
 	
+	
+	//This is just something I'm playing with maybe helpfull
+	void QnA(string question, bool alwaysAnswer = true, ref RestCallback UCBX = NULL, string jsonString = "{}", string auth = ""){
+		
+		if (!UCBX && alwaysAnswer){
+			ref UApiQnACallBack QnACBX = new ref UApiQnACallBack;
+			QnACBX.SetAlwaysAnswer();
+			UCBX = QnACBX;
+		} else if (!UCBX) {
+			UCBX = new ref UApiQnACallBack;
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		if (jsonString == "{}" && question != "" ){
+			QnAQuestion QuestionObj = new QnAQuestion(question);
+			jsonString = QuestionObj.ToJson();
+		}
+		string url = Rest().BaseUrl() + "QnAMaker/" + auth;
+		
+		if (jsonString != "{}" ){
+			Rest().Post(url,jsonString,UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Asking Question ");
+		}
+	}
 };
 
 static ref UniversalApi g_UniversalApi;

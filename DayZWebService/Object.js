@@ -1,24 +1,28 @@
 const express = require('express');
 const { MongoClient } = require("mongodb");
 const CheckAuth = require('./AuthChecker')
+var crypto = require('crypto');
 
 const config = require('./configLoader');
  
+const log = require("./log");
 // Create a new MongoClient
 
+const queryHandler = require("./Query");
 
 const router = express.Router();
 
-router.post('/Load/:ItemId/:mod/:auth', (req, res)=>{
-    runGet(req, res, req.params.ItemId, req.params.mod, req.params.auth);
+router.use('/Query', queryHandler);
+router.post('/Load/:ObjectId/:mod/:auth', (req, res)=>{
+    runGet(req, res, req.params.ObjectId, req.params.mod, req.params.auth);
 });
 
-router.post('/Save/:ItemId/:mod/:auth', (req, res)=>{
-    runUpdate(req, res, req.params.ItemId, req.params.mod, req.params.auth);
+router.post('/Save/:ObjectId/:mod/:auth', (req, res)=>{
+    runUpdate(req, res, req.params.ObjectId, req.params.mod, req.params.auth);
 });
 
-async function runGet(req, res, ItemId, mod, auth) {
-    if (auth == config.ServerAuth || (await CheckAuth(auth)) ){
+async function runGet(req, res, ObjectId, mod, auth) {
+    if (auth === config.ServerAuth || (await CheckAuth(auth)) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         var StringData = JSON.stringify(req.body);
         var RawData = req.body;
@@ -27,15 +31,19 @@ async function runGet(req, res, ItemId, mod, auth) {
             // Connect the client to the server
             await client.connect();
             const db = client.db(config.DB);
-            var collection = db.collection("Items");
-            var query = { ItemId: ItemId };
+            var collection = db.collection("Objects");
+            var query = { ObjectId: ObjectId, Mod: mod };
             var results = collection.find(query);
             
             if ((await results.count()) == 0){
-                if (auth == config.ServerAuth || config.AllowClientWrite ){
-                    console.log("Can't find Item for mod " + mod + " with ID " + ItemId + "Creating it now");
-
-                    const doc  = JSON.parse("{ \"ItemId\": \"" + ItemId + "\", \""+mod+"\": "+ StringData + " }");
+                if (auth === config.ServerAuth || config.AllowClientWrite ){
+                    if (ObjectId == "NewObject"){
+                        ObjectId = makeObjectId();
+                        RawData.ObjectId = ObjectId;
+                        console.log("Item called as NewObject for " + mod + " Generating ID " + ObjectId);
+                    }
+                    console.log("Can't find Object for mod " + mod + " with ID " + ObjectId + " Creating it now");
+                    const doc  = {ObjectId: ObjectId, Mod: mod, Data: RawData}
                     var result = await collection.insertOne(doc);
                     var Data = result.ops[0];
                 }
@@ -52,7 +60,7 @@ async function runGet(req, res, ItemId, mod, auth) {
                     }
                 }
                 if (sent != true){
-                    if (auth == config.ServerAuth || config.AllowClientWrite){
+                    if (auth === config.ServerAuth || config.AllowClientWrite){
                         const updateDocValue  = JSON.parse("{ \""+mod+"\": "+ StringData + " }");
                         const updateDoc = { $set: updateDocValue, };
                         const options = { upsert: false };
@@ -76,8 +84,8 @@ async function runGet(req, res, ItemId, mod, auth) {
         console.log("ERROR: Bad Auth Token");
     }
 };
-async function runUpdate(req, res, ItemId, mod, auth) {  
-    if (auth == config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
+async function runUpdate(req, res, ObjectId, mod, auth) {  
+    if (auth === config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         var StringData = JSON.stringify(req.body);
         var RawData = req.body;
@@ -86,23 +94,27 @@ async function runUpdate(req, res, ItemId, mod, auth) {
             // Connect the client to the server
             await client.connect();
             const db = client.db(config.DB);
-            var collection = db.collection("Items");
-            var query = { ItemId: ItemId };
+            var collection = db.collection("Objects");
+            if (ObjectId == "NewObject"){
+                ObjectId = makeObjectId();
+                RawData.ObjectId = ObjectId;
+            }
+            var query = { ObjectId: ObjectId, Mod: mod };
             const options = { upsert: true };
-            const updateDocValue  = JSON.parse("{ \"ItemId\": \"" + ItemId + "\", \""+mod+"\": "+ StringData + " }");
+            const updateDocValue  =  {ObjectId: ObjectId, Mod: mod, Data: RawData};
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
             if (result.result.ok == 1){
-                console.log("Updated "+ mod + " Data for Item: " + ItemId);
+                log("Updated "+ mod + " Data for Object: " + ObjectId);
                 res.status(201);
                 res.json(RawData);
             } else {
-                console.log("Error with Updating "+ mod + " Data for Item: " + ItemId);
+                log("Error with Updating "+ mod + " Data for Object: " + ObjectId, "warn");
                 res.status(203);
                 res.json(RawData);
             }
         }catch(err){
-            console.log("err " + err)
+            log("err " + err, "warn")
             res.json(RawData);
         }finally{
             // Ensures that the client will close when you finish/error
@@ -111,8 +123,24 @@ async function runUpdate(req, res, ItemId, mod, auth) {
     }  else {
         res.status(401);
         res.json(req.body);
-        console.log("ERROR: Bad Auth Token");
+        log("ERROR: Bad Auth Token", "warn");
     }
 };
-
+function makeObjectId() {
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.~()*:@,;';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < 16; i++ ) {
+       result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    var datetime = new Date();
+    var date = datetime.toISOString()
+    result += date;
+    var SaveToken = crypto.createHash('sha256').update(result).digest('base64');
+    //Making it URLSafe
+    SaveToken = SaveToken.replace(/\+/g, '-'); 
+    SaveToken = SaveToken.replace(/\//g, '_');
+    SaveToken = SaveToken.replace(/=+$/, '');
+    return SaveToken; //Reduce to a more mangable 42 Chacters
+ }
 module.exports = router;

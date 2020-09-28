@@ -1,6 +1,7 @@
 const express = require('express');
 const { MongoClient } = require("mongodb");
 
+const log = require("./log")
 const fetch  = require('node-fetch');
 
 const fs = require('fs');
@@ -40,7 +41,7 @@ async function runQnA(req, res, QnAconfig){
     }else{
         res.status(401);
         res.json({ Message: "Error"});
-        console.log("AUTH ERROR: " + req.url + " Invalid Server Token");
+        log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
     }
 }
 
@@ -68,12 +69,12 @@ async function WriteQuestionToDataBase(question){
         const Doc  = { UnAnweredAbleQuestion: question }
         const result = await collection.insertOne(Doc);
         if (result.result.ok == 1){
-            console.log("Logged Question: " + question);
+            log("Logged Question: " + question, "info");
         } else {
-            console.log("Error Logging Question: " + question);
+            log("Error Logging Question: " + question, "warn");
         }
     }catch(err){
-        console.log("ERROR: " + err);
+        log("ERROR: " + err, "warn");
     }finally{
         await client.close();
     }

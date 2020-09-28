@@ -3,6 +3,7 @@ const { MongoClient } = require("mongodb");
 const jwt = require('jsonwebtoken');
 var crypto = require('crypto');
 
+const log = require("./log");
 
 const config = require('./configLoader');
 
@@ -14,7 +15,7 @@ router.post('/:GUID/:auth', (req, res)=>{
     }else{
         res.status(401);
         res.json({ GUID: req.params.GUID, AuthToken: "ERROR" });
-        console.log("AUTH ERROR: " + req.url + " Invalid Server Token");
+        log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
     }
 });
 
@@ -34,14 +35,14 @@ async function runGetAuth(req, res, GUID) {
         const result = await collection.updateOne(query, updateDoc, options);
         if (result.result.ok == 1){
             res.json({GUID: GUID, AUTH: AuthToken});
-            console.log("Auth Token Generated for: " + GUID);
+            log("Auth Token Generated for: " + GUID);
         } else {
             res.json({GUID: GUID, AUTH: "ERROR"});
-            console.log("Error Generating Auth Token  for: " + GUID);
+            log("Error Generating Auth Token  for: " + GUID, "warn");
         }
     }catch(err){
         res.json({GUID: GUID, AUTH: "ERROR"});
-        console.log("AUTH ERROR: " + req.url);
+        log("AUTH ERROR: " + req.url + " error: " + err, "warn");
     }finally{
         await client.close();
     }

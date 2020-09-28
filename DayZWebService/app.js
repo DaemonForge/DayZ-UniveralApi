@@ -5,26 +5,29 @@ const https = require('https')
 const bodyParser = require('body-parser');
 const DefaultCert = require('./defaultkeys.json');
 const app = express();
+const log = require("./log");
 
 /* Config File */
 const config = require('./configLoader');
 
-const RouterItem = require('./Items');
+const RouterItem = require('./Object');
 const RouterPlayer = require('./player');
 const RouterGlobals = require('./gobals');
 const RouterAuth = require('./Auth');
 const RouterStatus = require('./Status');
 const RouterQnA = require('./QnAMaker');
+const RouterFowarder = require("./apiFowarder");
 
 app.use(bodyParser.json());
-app.use('/Item', RouterItem);
+app.use('/Object', RouterItem);
 app.use('/Player', RouterPlayer);
 app.use('/Gobals', RouterGlobals);
 app.use('/GetAuth', RouterAuth);
 app.use('/Status', RouterStatus);
 app.use('/QnAMaker', RouterQnA);
+app.use('/Forward', RouterFowarder);
 app.use('/', (req,res)=>{
-    console.log("Error invalid or is not a post Requested URL is:" + req.url);
+    log("Error invalid or is not a post Requested URL is:" + req.url);
     res.json({Error: "Error"});
 });
 var ServerKey = DefaultCert.Key;

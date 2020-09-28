@@ -4,6 +4,7 @@
     "ServerAuth": "Hk@1k77Fxrut.ltqpT5mY)-rYIrNOHQdZM~8@b@~UeZy",
     "AllowClientWrite": false,
     "Port": 443,
+    "LogToFile": false,
     "Certificate": "",
     "CertificateKey": ""
 }

@@ -1,17 +1,20 @@
 const jwt = require('jsonwebtoken');
 const config = require('./configLoader');
 
+const log = require("./log");
 
 
-module.exports = async function CheckAuth(auth){
+module.exports = async function CheckAuth(auth, ignoreError = false){
     return jwt.verify(auth, config.ServerAuth, function(err) {
         if (err) {
             if (err.name == "TokenExpiredError"){
-                console.log("Error: Auth Token is expired, it expired at " + err.expiredAt);
+                log("Error: Auth Token is expired, it expired at " + err.expiredAt, "warn");
+            } else if (ignoreError){
+                return false;
             } else if (err.name == "JsonWebTokenError") {
-                console.log("Auth Token is Null");
+                log("Auth Token is not valid", "warn");
             } else {
-                console.log(err);
+                log(err, "warn");
             }
             return false;
         } else {

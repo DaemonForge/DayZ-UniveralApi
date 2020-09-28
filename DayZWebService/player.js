@@ -2,6 +2,8 @@ const express = require('express');
 const { MongoClient } = require("mongodb");
 var crypto = require('crypto');
 
+const log = require("./log");
+
 const CheckAuth = require('./AuthChecker')
 
 const config = require('./configLoader');
@@ -22,7 +24,7 @@ router.post('/Save/:GUID/:mod/:auth', (req, res)=>{
 
 
 async function runGet(req, res, GUID, mod, auth) {
-    if (  (auth == config.ServerAuth) || (await CheckPlayerAuth(GUID, auth))){
+    if (  (auth === config.ServerAuth) || (await CheckPlayerAuth(GUID, auth))){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
 
@@ -36,14 +38,15 @@ async function runGet(req, res, GUID, mod, auth) {
             var RawData = req.body;
             
             if ((await results.count()) == 0){
-                if (auth == config.ServerAuth || config.AllowClientWrite){
-                    console.log("Can't find Player with ID " + GUID + "Creating it now");
+                if (auth === config.ServerAuth || config.AllowClientWrite){
+                    log("Can't find Player with ID " + GUID + "Creating it now");
                     const doc  = JSON.parse("{ \"GUID\": \"" + GUID + "\", \""+mod+"\": "+ StringData + " }");
                     await collection.insertOne(doc);
+                } else {
+                    log("Can't find Player with ID " + GUID, "warn");
                 }
                 res.status(201);
                 res.json(RawData);
-                console.log("Can't Find "+ mod + " Data for GUID: " + GUID + " Creating it now");
             } else {
                 var dataarr = await results.toArray(); 
                 var data = dataarr[0]; 
@@ -52,18 +55,18 @@ async function runGet(req, res, GUID, mod, auth) {
                     if(key === mod){
                         var sent = true;
                         res.json(value);
-                        console.log("Retrieving "+ mod + " Data for GUID: " + GUID);
+                        log("Retrieving "+ mod + " Data for GUID: " + GUID);
                     }
                 }
                 if (sent != true){
-                    if (auth == config.ServerAuth || config.AllowClientWrite){
+                    if (auth === config.ServerAuth || config.AllowClientWrite){
                         const updateDocValue  = JSON.parse("{ \""+mod+"\": "+ StringData + " }");
                         const updateDoc = { $set: updateDocValue, };
                         const options = { upsert: false };
                         await collection.updateOne(query, updateDoc, options);
-                        console.log("Can't find "+ mod + " Data for GUID: " + GUID +  " Creating it now");
+                        log("Can't find "+ mod + " Data for GUID: " + GUID +  " Creating it now");
                     } else {
-                        console.log("Can't find "+ mod + " Data for GUID: " + GUID);
+                        log("Can't find "+ mod + " Data for GUID: " + GUID, "warn");
                     }
                     res.status(203);
                     res.json(RawData);
@@ -72,7 +75,7 @@ async function runGet(req, res, GUID, mod, auth) {
         }catch(err){
             res.status(203);
             res.json(req.body);
-            console.log("ERROR: " + err);
+            log("ERROR: " + err, "warn");
         }finally{
             // Ensures that the client will close when you finish/error
             client.close();
@@ -80,7 +83,6 @@ async function runGet(req, res, GUID, mod, auth) {
     } else {
         res.status(401);
         res.json(req.body);
-        console.log("ERROR: Bad Auth Token");
     }
 };
 async function runUpdate(req, res, GUID, mod, auth, write) {
@@ -101,18 +103,18 @@ async function runUpdate(req, res, GUID, mod, auth, write) {
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
             if (result.result.ok == 1){
-                console.log("Updated "+ mod + " Data for GUID: " + GUID);
+                log("Updated "+ mod + " Data for GUID: " + GUID);
                 res.status(201);
                 res.json(RawData);
             } else {
-                console.log("Error with Updating "+ mod + " Data for GUID: " + GUID);
+                log("Error with Updating "+ mod + " Data for GUID: " + GUID, "warn");
                 res.status(203);
                 res.json(req.body);
             }
         }catch(err){
             res.status(203);
             res.json(req.body);
-            console.log("ERROR: " + err);
+            log("ERROR: " + err, "warn");
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
@@ -120,7 +122,7 @@ async function runUpdate(req, res, GUID, mod, auth, write) {
     } else {
         res.status(401);
         res.json(req.body);
-        console.log("AUTH ERROR: " + req.url);
+        log("AUTH ERROR: " + req.url, "warn");
     }
 };
 
@@ -140,7 +142,7 @@ async function CheckPlayerAuth(guid, auth){
                     isAuth = true;
                 }
         } catch(err){
-            console.log("ID " + guid + " err" + err);
+            log("ID " + guid + " err" + err, "warn");
         } finally{
             await client.close();
             return isAuth;
@@ -148,7 +150,5 @@ async function CheckPlayerAuth(guid, auth){
     }
     return isAuth;
 }
-
-
 
 module.exports = router;

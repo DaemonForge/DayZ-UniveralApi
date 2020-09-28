@@ -15,6 +15,7 @@
     "express": "^4.17.1",
     "https": "^1.0.0",
     "jsonwebtoken": "^8.5.1",
+    "log4js": "^6.3.0",
     "mongodb": "^3.6.2",
     "node-fetch": "^2.6.1"
   },

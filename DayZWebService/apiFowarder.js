@@ -2,6 +2,8 @@ const express = require('express');
 const { MongoClient } = require("mongodb");
 const fetch  = require('node-fetch');
 
+const log = require("./log");
+
 const CheckAuth = require('./AuthChecker')
 
 const config = require('./configLoader');
@@ -10,7 +12,6 @@ const config = require('./configLoader');
     var Request.URL
     var Request.Headers[].Key 
     var Request.Headers[].Value
-    var Request.Type = "post"
     var Request.Body
     var Request.Method
     var Request.ReturnValue = "" //Will look for this specific Key to return as the data
@@ -22,37 +23,51 @@ router.post('/:auth', (req, res)=>{
 });
 async function runFowarder(req, res, auth){
     var RawData = req.body;
-    if ( auth == config.ServerAuth || (await CheckAuth( auth )) ){
+    if ( auth === config.ServerAuth || (await CheckAuth( auth )) ){
+        log("Fowarded Called URL: " + RawData.URL );
         var strHeaders = "{";
         
         for (var header of RawData.Headers) {
             strHeaders = strHeaders + " \"" + header.Key + "\": \"" + header.Value + "\",";
         }
-        var strHeadersLen = strHeaders.length() - 1; //Remove the last extra ','
+        var strHeadersLen = strHeaders.length - 1; //Remove the last extra ','
         strHeaders = strHeaders.substring(0,strHeadersLen);
         strHeaders = strHeaders + " }";
         var Headers = JSON.parse(strHeaders);
-        var response = {};
+        //console.log(RawData.Body)
         json = await fetch(RawData.URL, { 
             method: RawData.Method, 
-            body: JSON.stringify(RawData.body),
+            body: RawData.Body,
             headers: Headers
         }).then(response => response.json());
+        //console.log(json);
+        var ReturnValue;
         if (RawData.ReturnValue != ""){
-            for (const [key, value] of Object.entries(json)) {
-                if(key === RawData.ReturnValue){
-                    response = value;
-                    console.log("Retrieving "+ RawData.ReturnValue + " Data for GUID: " + GUID);
+            try{
+                ReturnValue = json[RawData.ReturnValue];
+                if (RawData.ReturnValueArrayIndex >= 0){
+                    ReturnValue = json[RawData.ReturnValue][RawData.ReturnValueArrayIndex];
                 }
+            } catch(err) {
+                log("Error Trying to get Return Value " + RawData.ReturnValue + " from response " + err, "warn");
+                ReturnValue = json;
             }
         } else {
-            response = json;
+            ReturnValue = json;
+            try{
+                if (RawData.ReturnValueArrayIndex >= 0){
+                    ReturnValue = json[RawData.ReturnValueArrayIndex];
+                }
+            } catch(err) {
+                log("Error Trying to get Return index: " + err, "warn");
+                ReturnValue = json;
+            }
         }
-        res.json(response);
+        res.json(ReturnValue);
     }else{
         res.status(401);
         res.json({});
-        console.log("AUTH ERROR: " + req.url + " Invalid Token");
+        log("AUTH ERROR: " + req.url + " Invalid Token", "warn");
     }
 }
 
