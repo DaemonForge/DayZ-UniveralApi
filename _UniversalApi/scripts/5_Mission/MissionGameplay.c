@@ -6,7 +6,7 @@ modded class MissionGameplay extends MissionBase
 		if (!GetGame().IsServer()){
 			Print("[UPAI] Requesting First API TOKEN");
 			GetRPCManager().SendRPC("UAPI", "RPCRequestAuthToken", NULL, true);
-			int TokenRefreshRate = Math.RandomInt(0,150) + 1725; //So that way on server starts it less likley to get a ton of requests at once 
+			int TokenRefreshRate = Math.RandomInt(1200,1325); //So that way on server starts it less likley to get a ton of requests at once 
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestNewAuthToken, TokenRefreshRate * 1000, true);
 		}
 	}

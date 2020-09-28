@@ -50,7 +50,7 @@ async function runGetAuth(req, res, GUID) {
 
 function makeAuthToken(GUID) {
     const player = { GUID: GUID }; 
-    var result = jwt.sign(player, config.ServerAuth, { expiresIn: 3800 });
+    var result = jwt.sign(player, config.ServerAuth, { expiresIn: 2800 });
     return result;
  }
 

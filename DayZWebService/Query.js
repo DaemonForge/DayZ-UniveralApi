@@ -24,7 +24,7 @@ function GetCollection(URL){
 }
 
 async function runQuery(req, res, mod, auth, COLL) {
-    if (auth === config.ServerAuth || (await CheckAuth(auth)) ){
+    if (auth === config.ServerAuth || ((await CheckAuth(auth)) && COLL === "Objects") ){
         var RawData = req.body;
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
