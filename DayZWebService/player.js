@@ -150,5 +150,5 @@ async function CheckPlayerAuth(guid, auth){
     }
     return isAuth;
 }
-
+ 
 module.exports = router;

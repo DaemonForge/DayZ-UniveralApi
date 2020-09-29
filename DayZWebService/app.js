@@ -28,7 +28,8 @@ app.use('/QnAMaker', RouterQnA);
 app.use('/Forward', RouterFowarder);
 app.use('/', (req,res)=>{
     log("Error invalid or is not a post Requested URL is:" + req.url);
-    res.json({Error: "Error"});
+    res.status(404);
+    res.json({Status: "error", Error: "Reqested bad URL"});
 });
 var ServerKey = DefaultCert.Key;
 var ServerCert = DefaultCert.Cert;
