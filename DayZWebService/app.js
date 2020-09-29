@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const DefaultCert = require('./defaultkeys.json');
 const app = express();
 const log = require("./log");
+const saslprep = require("saslprep");
 
 /* Config File */
 const config = require('./configLoader');

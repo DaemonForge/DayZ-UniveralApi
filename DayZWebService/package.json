@@ -22,5 +22,10 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.4"
+  },
+  "pkg": {
+    "assets": [
+      "node_modules/saslprep/code-points.mem"
+    ]
   }
 }
