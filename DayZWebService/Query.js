@@ -66,12 +66,12 @@ async function runQuery(req, res, mod, auth, COLL) {
                     res.json(simpleReturn);
                 } else {
                     var simpleReturn = {Status: "Success", Count: count, Results: RetrunData }
-                    log("Query:  " + JSON.stringify(query) + " against " + COLL + " for " + ReturnCol + " Got " + count + " Results", "info");
+                    log("Query:  " + JSON.stringify(query) + " against " + COLL + " for " + ReturnCol + " Got " + count + " Results", "warn");
                     res.json(simpleReturn);
                 }
             }
         }catch(err){
-            log("Error in Query:  " + query + " against " + COLL + " for mod " + mod + " error: " + err, "info");
+            log("Error in Query:  " + query + " against " + COLL + " for mod " + mod + " error: " + err, "warn");
             res.status(203);
             res.json({Status: "Error", Count: 0, Results: [] });
         }finally{

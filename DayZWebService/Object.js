@@ -52,20 +52,10 @@ async function runGet(req, res, ObjectId, mod, auth) {
             } else {
                 var dataarr = await results.toArray(); 
                 var data = dataarr[0]; 
-                var sent = false;
-                for (const [key, value] of Object.entries(data)) {
-                    if(key === mod){
-                        var sent = true;
-                        res.json(value);
-                    }
-                }
-                if (sent != true){
-                    if (auth === config.ServerAuth || config.AllowClientWrite){
-                        const updateDocValue  = JSON.parse("{ \""+mod+"\": "+ StringData + " }");
-                        const updateDoc = { $set: updateDocValue, };
-                        const options = { upsert: false };
-                        const result = await collection.updateOne(query, updateDoc, options);
-                    }
+                if (typeof data.Data !== 'undefined' && data.Data){
+                    res.status(200);
+                    res.json(data.Data);
+                } else {
                     res.status(203);
                     res.json(RawData);
                 }
@@ -87,7 +77,6 @@ async function runGet(req, res, ObjectId, mod, auth) {
 async function runUpdate(req, res, ObjectId, mod, auth) {  
     if (auth === config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-        var StringData = JSON.stringify(req.body);
         var RawData = req.body;
         try{
 
@@ -141,6 +130,6 @@ function makeObjectId() {
     SaveToken = SaveToken.replace(/\+/g, '-'); 
     SaveToken = SaveToken.replace(/\//g, '_');
     SaveToken = SaveToken.replace(/=+$/, '');
-    return SaveToken; //Reduce to a more mangable 42 Chacters
+    return SaveToken;
  }
 module.exports = router;
