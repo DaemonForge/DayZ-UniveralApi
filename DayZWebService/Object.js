@@ -9,10 +9,12 @@ const log = require("./log");
 // Create a new MongoClient
 
 const queryHandler = require("./Query");
+const TransactionHandler = require("./Transaction");
 
 const router = express.Router();
 
 router.use('/Query', queryHandler);
+router.use('/Transaction', TransactionHandler);
 router.post('/Load/:ObjectId/:mod/:auth', (req, res)=>{
     runGet(req, res, req.params.ObjectId, req.params.mod, req.params.auth);
 });

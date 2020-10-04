@@ -90,7 +90,27 @@ class UniversalRest
 		}
 	}
 	
-
+	static void PlayerTransaction(string mod, string guid, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
+		
+		if (!UCBX){
+			UCBX = new ref UApiTransactionCallBack
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		
+		string url = BaseUrl() + "Player/Transaction/" + mod  + "/"+ guid + "/" + auth;
+		
+		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		
+		if ( element && transaction && UCBX){
+			Post(url,transaction.ToJson(),UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Transaction " +  mod);
+		}
+	}
 
 	static void GlobalsSave(string mod, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {
 		
@@ -124,6 +144,27 @@ class UniversalRest
 		}
 	}
 	
+	static void GlobalsTransaction(string mod, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
+		
+		if (!UCBX){
+			UCBX = new ref UApiTransactionCallBack
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		
+		string url = BaseUrl() + "Object/Transaction/" + mod  + "/" + auth;
+		
+		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		
+		if ( element && transaction && UCBX){
+			Post(url,transaction.ToJson(),UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Transaction " +  mod);
+		}
+	}
 	
 	//Saving or loading an object with the ObjectId of "NewObject" will generate an Object ID for you, this Object ID will be returned
 	//in the ObjectId var of the Class so make sure your Class has the varible ObjectId if you plan on using this feature
@@ -172,6 +213,28 @@ class UniversalRest
 			Post(url,query.ToJson(),UCBX);
 		} else {
 			Print("[UPAI] [Api] Error Querying " +  mod);
+		}
+	}
+	
+	static void ObjectTransaction(string mod, string objectId, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
+		
+		if (!UCBX){
+			UCBX = new ref UApiTransactionCallBack
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		
+		string url = BaseUrl() + "Object/Transaction/" + mod  + "/"+ objectId + "/" + auth;
+		
+		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		
+		if ( element && transaction && UCBX){
+			Post(url,transaction.ToJson(),UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Transaction " +  mod);
 		}
 	}
 	

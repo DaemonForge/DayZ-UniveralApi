@@ -9,11 +9,13 @@ const CheckAuth = require('./AuthChecker')
 const config = require('./configLoader');
 
 const queryHandler = require("./Query");
+const TransactionHandler = require("./Transaction");
 // Create a new MongoClient
 
 
 const router = express.Router();
 router.use('/Query', queryHandler);
+router.use('/Transaction', TransactionHandler);
 router.post('/Load/:GUID/:mod/:auth', (req, res)=>{
     runGet(req, res, req.params.GUID, req.params.mod, req.params.auth, false);
 });

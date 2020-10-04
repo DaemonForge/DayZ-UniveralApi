@@ -41,7 +41,7 @@ async function runStatusCheck(req, res, auth) {
         const result = await collection.updateOne(query, updateDoc, options);
         if (result.result.ok == 1){
             res.json({Status: "ok", Error: returnError});
-            log("Status Check Called", "info");
+           // log("Status Check Called", "info");
         } else {
             res.status(500);
             res.json({Status: "error", Error: "Database Write Error"});
