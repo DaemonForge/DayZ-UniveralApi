@@ -14,11 +14,15 @@ router.post('/Load/:mod/:auth', (req, res)=>{
 });
 
 router.post('/Save/:mod/:auth', (req, res)=>{
-    runUpdate(req, res, req.params.mod, req.params.auth);
+    runSave(req, res, req.params.mod, req.params.auth);
 });
 
 router.post('/Transaction/:mod/:auth', (req, res)=>{
     runTransaction(req, res, req.params.mod, req.params.auth);
+});
+
+router.post('/Update/:mod/:auth', (req, res)=>{
+    runUpdate(req, res, req.params.mod, req.params.auth);
 });
 async function runGet(req, res, mod, auth) {
     var RawData = req.body;
@@ -62,7 +66,7 @@ async function runGet(req, res, mod, auth) {
         log("AUTH ERROR: " + req.url, "warn");
     }
 };
-async function runUpdate(req, res, mod, auth) {
+async function runSave(req, res, mod, auth) {
     var RawData = req.body;
     if (auth == config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
@@ -140,5 +144,60 @@ async function runTransaction(req, res, mod, auth){
     }
 
 }
+async function runUpdate(req, res, mod, auth) {
+    if ( auth == config.ServerAuth || ((await CheckPlayerAuth(GUID, auth)) && config.AllowClientWrite) ){
+        const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+        try{
+            await client.connect();
 
+            var RawData = req.body;
+            var element = RawData.Element;
+            var StringData;
+            if (isObject(RawData.Value)){
+                StringData = JSON.stringify(RawData.Value);
+            } else if (isArray(RawData.Value)) {
+                StringData = JSON.stringify(RawData.Value);
+            } else {
+                StringData = RawData.Value;
+            }
+            // Connect the client to the server
+            const db = client.db(config.DB);
+            var collection = db.collection("Objects");
+            var query = { Mod: mod };
+            const options = { upsert: false };
+            const jsonString = "{ \"Data."+element+"\": "+ StringData + " }";
+            const updateDocValue  = JSON.parse(jsonString);
+            const updateDoc = { $set: updateDocValue, };
+            const result = await collection.updateOne(query, updateDoc, options);
+            if (result.result.ok == 1 && result.result.n > 0){
+                log("Updated " + element +" for "+ mod + " Globals");
+                res.status(200);
+                res.json({ Status: "Success", Element: element, Mod: mod, ID: "Globals"});
+            } else {
+                log("Error with Updating " + element +" for "+ mod + " Globals", "warn");
+                res.status(203);
+                res.json({ Status: "Error", Element: element, Mod: mod, ID: "Globals"});
+            }
+        }catch(err){
+            res.status(203);
+            res.json({ Status: "Error", Element: element, Mod: mod, ID: "Globals"});
+            log("ERROR: " + err, "warn");
+        }finally{
+            // Ensures that the client will close when you finish/error
+            await client.close();
+        }
+    } else {
+        res.status(401);
+        res.json({ Status: "NoAuth", Element: element, Mod: mod, ID: "Globals"});
+        log("AUTH ERROR: " + req.url, "warn");
+    }
+};
 module.exports = router;
+isObject = function(a) {
+    return (!!a) && (a.constructor === Object);
+};
+
+
+isArray = function(a) {
+    return (!!a) && (a.constructor === Array);
+};

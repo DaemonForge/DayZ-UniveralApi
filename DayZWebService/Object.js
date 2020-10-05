@@ -20,9 +20,12 @@ router.post('/Load/:ObjectId/:mod/:auth', (req, res)=>{
 });
 
 router.post('/Save/:ObjectId/:mod/:auth', (req, res)=>{
-    runUpdate(req, res, req.params.ObjectId, req.params.mod, req.params.auth);
+    runSave(req, res, req.params.ObjectId, req.params.mod, req.params.auth);
 });
 
+router.post('/Update/:ObjectId/:mod/:auth', (req, res)=>{
+    runUpdate(req, res, req.params.ObjectId, req.params.mod, req.params.auth);
+});
 async function runGet(req, res, ObjectId, mod, auth) {
     if (auth === config.ServerAuth || (await CheckAuth(auth)) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
@@ -76,7 +79,8 @@ async function runGet(req, res, ObjectId, mod, auth) {
         console.log("ERROR: Bad Auth Token");
     }
 };
-async function runUpdate(req, res, ObjectId, mod, auth) {  
+
+async function runSave(req, res, ObjectId, mod, auth) {  
     if (auth === config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         var RawData = req.body;
@@ -117,6 +121,55 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
         log("ERROR: Bad Auth Token", "warn");
     }
 };
+
+async function runUpdate(req, res, ObjectId, mod, auth) {
+    if ( auth == config.ServerAuth || ((await CheckPlayerAuth(GUID, auth)) && config.AllowClientWrite) ){
+        const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+        try{
+            await client.connect();
+
+            var RawData = req.body;
+            var element = RawData.Element;
+            var StringData;
+            if (isObject(RawData.Value)){
+                StringData = JSON.stringify(RawData.Value);
+            } else if (isArray(RawData.Value)) {
+                StringData = JSON.stringify(RawData.Value);
+            } else {
+                StringData = RawData.Value;
+            }
+            // Connect the client to the server
+            const db = client.db(config.DB);
+            var collection = db.collection("Objects");
+            var query = { ObjectId: ObjectId, Mod: mod };
+            const options = { upsert: false };
+            const jsonString = "{ \"Data."+element+"\": "+ StringData + " }";
+            const updateDocValue  = JSON.parse(jsonString);
+            const updateDoc = { $set: updateDocValue, };
+            const result = await collection.updateOne(query, updateDoc, options);
+            if (result.result.ok == 1 && result.result.n > 0){
+                log("Updated " + element +" for "+ mod + " Data for ObjectId: " + ObjectId);
+                res.status(200);
+                res.json({ Status: "Success", Element: element, Mod: mod, ID: ObjectId});
+            } else {
+                log("Error with Updating " + element +" for "+ mod + " Data for ObjectId: " + ObjectId, "warn");
+                res.status(203);
+                res.json({ Status: "Error", Element: element, Mod: mod, ID: ObjectId});
+            }
+        }catch(err){
+            res.status(203);
+            res.json({ Status: "Error", Element: element, Mod: mod, ID: ObjectId});
+            log("ERROR: " + err, "warn");
+        }finally{
+            // Ensures that the client will close when you finish/error
+            await client.close();
+        }
+    } else {
+        res.status(401);
+        res.json({ Status: "NoAuth", Element: element, Mod: mod, ID: ObjectId});
+        log("AUTH ERROR: " + req.url, "warn");
+    }
+};
 function makeObjectId() {
     var result           = '';
     var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.~()*:@,;';
@@ -135,3 +188,11 @@ function makeObjectId() {
     return SaveToken;
  }
 module.exports = router;
+
+isObject = function(a) {
+    return (!!a) && (a.constructor === Object);
+};
+
+isArray = function(a) {
+    return (!!a) && (a.constructor === Array);
+};

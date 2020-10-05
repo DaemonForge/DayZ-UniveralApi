@@ -101,7 +101,7 @@ class UniversalRest
 		}
 		
 		
-		string url = BaseUrl() + "Player/Transaction/" + mod  + "/"+ guid + "/" + auth;
+		string url = BaseUrl() + "Player/Transaction/" + guid   + "/"+ mod + "/" + auth;
 		
 		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
 		
@@ -111,7 +111,30 @@ class UniversalRest
 			Print("[UPAI] [Api] Error Transaction " +  mod);
 		}
 	}
-
+	
+	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
+	static void PlayerUpdate(string mod, string guid, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		
+		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
+		
+		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		
+		if ( element && transaction && UCBX){
+			Post(url,transaction.ToJson(),UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Transaction " +  mod);
+		}
+	}
+	
 	static void GlobalsSave(string mod, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (auth == "" ){
@@ -156,6 +179,29 @@ class UniversalRest
 		
 		
 		string url = BaseUrl() + "Object/Transaction/" + mod  + "/" + auth;
+		
+		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		
+		if ( element && transaction && UCBX){
+			Post(url,transaction.ToJson(),UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Transaction " +  mod);
+		}
+	}
+	
+	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
+	static void GlobalsUpdate(string mod, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		
+		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
 		
 		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
 		
@@ -227,7 +273,7 @@ class UniversalRest
 		}
 		
 		
-		string url = BaseUrl() + "Object/Transaction/" + mod  + "/"+ objectId + "/" + auth;
+		string url = BaseUrl() + "Object/Transaction/" + objectId + "/"+ mod + "/" + auth;
 		
 		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
 		
@@ -238,6 +284,28 @@ class UniversalRest
 		}
 	}
 	
+	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
+	static void ObjectUpdate(string mod, string guid, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		
+		string url = BaseUrl() + "Object/Update/" + guid  + "/"+ mod + "/" + auth;
+		
+		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		
+		if ( element && transaction && UCBX){
+			Post(url,transaction.ToJson(),UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Transaction " +  mod);
+		}
+	}
 	
 	static void Request(ref UApiForwarder data, ref RestCallback UCBX = NULL, string auth = ""){
 		

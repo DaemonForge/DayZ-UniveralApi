@@ -10,7 +10,7 @@ const config = require('./configLoader');
 
 const router = express.Router();
 
-module.exports = router.post('/:mod/:id/:auth', (req, res)=>{
+module.exports = router.post('/:id/:mod/:auth', (req, res)=>{
     runTransaction(req, res, req.params.mod, req.params.id, req.params.auth, GetCollection(req.baseUrl));
 });
 
