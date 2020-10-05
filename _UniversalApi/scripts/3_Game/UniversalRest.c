@@ -126,10 +126,10 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
 		
-		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value);
 		
-		if ( element && transaction && UCBX){
-			Post(url,transaction.ToJson(),UCBX);
+		if ( element && updatedata && UCBX){
+			Post(url,updatedata.ToJson(),UCBX);
 		} else {
 			Print("[UPAI] [Api] Error Transaction " +  mod);
 		}
@@ -203,10 +203,10 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
 		
-		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value);
 		
-		if ( element && transaction && UCBX){
-			Post(url,transaction.ToJson(),UCBX);
+		if ( element && updatedata && UCBX){
+			Post(url,updatedata.ToJson(),UCBX);
 		} else {
 			Print("[UPAI] [Api] Error Transaction " +  mod);
 		}
@@ -275,6 +275,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Object/Transaction/" + objectId + "/"+ mod + "/" + auth;
 		
+		
 		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
 		
 		if ( element && transaction && UCBX){
@@ -298,10 +299,10 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Object/Update/" + guid  + "/"+ mod + "/" + auth;
 		
-		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value);
 		
-		if ( element && transaction && UCBX){
-			Post(url,transaction.ToJson(),UCBX);
+		if ( element && updatedata && UCBX){
+			Post(url,updatedata.ToJson(),UCBX);
 		} else {
 			Print("[UPAI] [Api] Error Transaction " +  mod);
 		}

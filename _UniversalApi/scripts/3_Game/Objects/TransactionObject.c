@@ -14,3 +14,20 @@ class UApiTransaction
 	}
 	
 };
+
+class UApiUpdateData
+{
+	string Element;
+	string Value;
+	
+	void UApiUpdateData(string element, string value){
+		Element = element;
+		Value = value;
+	}
+	
+	string ToJson(){
+		string jsonString = JsonFileLoader<UApiUpdateData>.JsonMakeData(this);;
+		return jsonString;
+	}
+	
+};
