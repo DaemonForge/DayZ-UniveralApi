@@ -52,7 +52,7 @@ async function runTransaction(req, res, mod, id, auth, COLL){
             var Results = await collection.updateOne(query, JSON.parse(stringData), options);
             if (Results.result.ok == 1 && Results.result.n > 0){
                 var Value = await collection.distinct(Element, query);
-                log("Transaction " + mod + " id " + id + " incermented " + Element + " by " + RawData.Value + " now " + Value[0], "warn");
+                log("Transaction " + mod + " id " + id + " incermented " + Element + " by " + RawData.Value + " now " + Value[0], "info");
                 res.json({Status: "Success", ID: id,  Value: Value[0], Element: RawData.Element})
             } else {
                 log("Error in Transaction:  " + mod + " id " + id + " for " + COLL + " error: Invaild ID", "warn");

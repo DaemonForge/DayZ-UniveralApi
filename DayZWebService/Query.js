@@ -63,10 +63,11 @@ async function runQuery(req, res, mod, auth, COLL) {
             if (RetrunData){
                 if (count == 0){
                     var simpleReturn = { Status: "NoResults", Count: 0, Results: [] }
+                    log("Query:  " + JSON.stringify(query) + " against " + COLL + " for " + ReturnCol + " Got 0 Results", "info");
                     res.json(simpleReturn);
                 } else {
                     var simpleReturn = {Status: "Success", Count: count, Results: RetrunData }
-                    log("Query:  " + JSON.stringify(query) + " against " + COLL + " for " + ReturnCol + " Got " + count + " Results", "warn");
+                    log("Query:  " + JSON.stringify(query) + " against " + COLL + " for " + ReturnCol + " Got " + count + " Results", "info");
                     res.json(simpleReturn);
                 }
             }
