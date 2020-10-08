@@ -27,6 +27,14 @@ class UniversalRest
 		ctx.POST(UCBX , "", jsonString);
 	}
 	
+	static void Get(string url, ref RestCallback UCBX = NULL)
+	{
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack
+		}
+		RestContext ctx =  Api().GetRestContext(url);
+		ctx.GET(UCBX , "");
+	}
 	
 	static string BaseUrl(){
 		if (m_BaseUrl != ""){
