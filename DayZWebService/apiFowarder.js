@@ -26,7 +26,7 @@ async function runFowarder(req, res, auth){
     if ( auth === config.ServerAuth || (await CheckAuth( auth )) ){
         log("Fowarded Called URL: " + RawData.URL );
         var strHeaders = "{";
-        
+        var json;
         for (var header of RawData.Headers) {
             strHeaders = strHeaders + " \"" + header.Key + "\": \"" + header.Value + "\",";
         }
@@ -35,11 +35,15 @@ async function runFowarder(req, res, auth){
         strHeaders = strHeaders + " }";
         var Headers = JSON.parse(strHeaders);
         //console.log(RawData.Body)
+        try {
         json = await fetch(RawData.URL, { 
             method: RawData.Method, 
             body: RawData.Body,
             headers: Headers
         }).then(response => response.json());
+        }catch(e) {
+            console.log('Catch an error: ', e)
+        }
         //console.log(json);
         var ReturnValue;
         if (RawData.ReturnValue != ""){

@@ -18,8 +18,10 @@ const RouterAuth = require('./Auth');
 const RouterStatus = require('./Status');
 const RouterQnA = require('./QnAMaker');
 const RouterFowarder = require("./apiFowarder");
+const RouterLogger = require("./logger");
 
-app.use(bodyParser.json());
+
+app.use(bodyParser.json({limit: '64mb'}));
 app.use('/Object', RouterItem);
 app.use('/Player', RouterPlayer);
 app.use('/Gobals', RouterGlobals);
@@ -27,6 +29,7 @@ app.use('/GetAuth', RouterAuth);
 app.use('/Status', RouterStatus);
 app.use('/QnAMaker', RouterQnA);
 app.use('/Forward', RouterFowarder);
+app.use('/Logger', RouterLogger);
 app.use('/', (req,res)=>{
     log("Error invalid or is not a post Requested URL is:" + req.url);
     res.status(501);

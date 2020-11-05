@@ -24,15 +24,21 @@ router.post('/:auth', (req, res)=>{
 
 async function runQnA(req, res, QnAconfig){
     if ( req.params.auth == config.ServerAuth || (await CheckAuth( req.params.auth )) ){
-        var EndpointKey = "EndpointKey " + QnAconfig.EndpointKey;
-        json = await fetch(QnAconfig.Endpoint, { 
-            method: 'post', 
-            body: JSON.stringify(req.body),
-            headers: { "Content-Type": "application/json",
-            "Authorization": EndpointKey
+        console.log(JSON.stringify(req.body));
+        var json;
+        try {
+            var EndpointKey = "EndpointKey " + QnAconfig.EndpointKey;
+            json = await fetch(QnAconfig.Endpoint, { 
+                method: 'post', 
+                body: JSON.stringify(req.body),
+                headers: { "Content-Type": "application/json",
+                "Authorization": EndpointKey
+            }
+            }).then(response => response.json())
+        }catch(e) {
+            console.log('Catch an error: ', e)
         }
-        }).then(response => response.json())
-        //console.log(json);
+        console.log(json);
         var answer = GetHighestAnwser(json.answers, QnAconfig, req.body.question);
         res.json(answer);
         if (answer.answer === "null" && QnAconfig.LogUnAnswerable){

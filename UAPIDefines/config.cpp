@@ -1,20 +1,18 @@
 class CfgPatches
 {
-	class UniversalApi
+	class UAPIDefines
 	{
 		requiredVersion=0.1;
 		requiredAddons[]={
-			"UAPIDefines",
-			"JM_CF_Scripts"
 		};
 	};
 };
 
 class CfgMods
 {
-	class UniversalApi
+	class UAPIDefines
 	{
-		dir = "_UniversalApi";
+		dir = "UAPIDefines";
 		picture = "";
 		action = "";
 		hideName = 1;
@@ -35,7 +33,7 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"_UniversalApi/scripts/3_Game"
+					"UAPIDefines/scripts/Common"
 					};
 			}
 			
@@ -43,7 +41,7 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"_UniversalApi/scripts/4_World"
+					"UAPIDefines/scripts/Common"
 					};
 			}
 
@@ -51,7 +49,7 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"_UniversalApi/scripts/5_Mission"
+					"UAPIDefines/scripts/Common"
 					};
 			};
 		};
