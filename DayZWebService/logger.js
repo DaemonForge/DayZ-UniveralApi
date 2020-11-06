@@ -23,7 +23,7 @@ async function runLoggerOne(req, res, id, auth) {
     var RawData = req.body;
     if (auth === config.ServerAuth || (await CheckAuth(auth, true))){  
         try{
-            console.log(RawData);
+            //console.log(RawData);
             // Connect the client to the server       
             await client.connect(); 
             const db = client.db(config.DB);
@@ -42,7 +42,6 @@ async function runLoggerOne(req, res, id, auth) {
                 log("ERROR: Database Write Error", "warn");
             }
         }catch(err){
-            console.log(err);
             res.status(500);
             res.json({Status: "error", Error: err});
             log("ERROR: " + err, "warn");
@@ -57,7 +56,6 @@ async function runLoggerMany(req, res, id, auth) {
     var RawData = req.body;
     if (auth === config.ServerAuth || (await CheckAuth(auth, true))){  
         try{
-            console.log(RawData);
             // Connect the client to the server       
             await client.connect(); 
             const db = client.db(config.DB);
@@ -67,7 +65,6 @@ async function runLoggerMany(req, res, id, auth) {
                 element.ServerId = id;
                 element.LoggedDateTime = datetime;
             });
-            console.log(RawData);
             const result = await collection.insertMany(RawData);
             if (result.result.ok == 1){
                 res.json({Status: "ok"});
@@ -77,7 +74,6 @@ async function runLoggerMany(req, res, id, auth) {
                 log("ERROR: Database Write Error", "warn");
             }
         }catch(err){
-            console.log(err);
             res.status(500);
             res.json({Status: "error", Error: err});
             log("ERROR: " + err, "warn");
