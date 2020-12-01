@@ -186,7 +186,7 @@ class UniversalRest
 		}
 		
 		
-		string url = BaseUrl() + "Object/Transaction/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Gobals/Transaction/" + mod  + "/" + auth;
 		
 		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
 		
