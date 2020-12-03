@@ -13,7 +13,7 @@ const config = require('./configLoader');
 
 const RouterItem = require('./Object');
 const RouterPlayer = require('./player');
-const RouterGlobals = require('./gobals');
+const RouterGlobals = require('./globals');
 const RouterAuth = require('./Auth');
 const RouterStatus = require('./Status');
 const RouterQnA = require('./QnAMaker');
@@ -24,7 +24,8 @@ const RouterLogger = require("./logger");
 app.use(bodyParser.json({limit: '64mb'}));
 app.use('/Object', RouterItem);
 app.use('/Player', RouterPlayer);
-app.use('/Gobals', RouterGlobals);
+app.use('/Gobals', RouterGlobals); //For Backwards Compatblity 
+app.use('/Globals', RouterGlobals);
 app.use('/GetAuth', RouterAuth);
 app.use('/Status', RouterStatus);
 app.use('/QnAMaker', RouterQnA);

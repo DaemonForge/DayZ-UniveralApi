@@ -209,7 +209,7 @@ class UniversalRest
 		}
 		
 		
-		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
+		string url = BaseUrl() + "Gobals/Update/" + mod + "/" + auth;
 		
 		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value);
 		
