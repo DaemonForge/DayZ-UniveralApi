@@ -162,7 +162,7 @@ async function runUpdate(req, res, mod, auth) {
             }
             // Connect the client to the server
             const db = client.db(config.DB);
-            var collection = db.collection("Objects");
+            var collection = db.collection("Globals");
             var query = { Mod: mod };
             const options = { upsert: false };
             const jsonString = "{ \"Data."+element+"\": "+ StringData + " }";
