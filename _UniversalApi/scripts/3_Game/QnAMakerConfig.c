@@ -1,6 +1,7 @@
 class UApiQnAMakerServerAnswers
 {
-	protected static string ConfigPATH = "$profile:UApi\\QnAMakerServerAnswers.json";
+	protected static string ConfigDIR = "$profile:UApi";
+	protected static string ConfigPATH = ConfigDIR + "\\QnAMakerServerAnswers.json";
 	string BotName = "Bot";
 	ref array<ref QnAMakerServerAnswer> ServerSpecificAnswers = new ref array<ref QnAMakerServerAnswer>;
 	
@@ -8,7 +9,8 @@ class UApiQnAMakerServerAnswers
 		if (GetGame().IsServer()){
 			if (FileExist(ConfigPATH)){ //If config exist load File
 			    JsonFileLoader<UApiQnAMakerServerAnswers>.JsonLoadFile(ConfigPATH, this);
-			}else{ //File does not exist create FileMode
+			}else{ //File does not exist create FileMode.
+				MakeDirectory(ConfigDIR);
 				ServerSpecificAnswers.Insert(new ref QnAMakerServerAnswer("#SERVERNAME#", "US1"));
 				Save();
 			}
