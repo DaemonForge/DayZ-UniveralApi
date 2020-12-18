@@ -98,6 +98,10 @@ class UniversalRest
 		}
 	}
 	
+	static void PlayerIncrement(string mod, string guid, string element, float value = 1){
+		PlayerTransaction(mod, guid, element, value, NULL, "");
+	}
+	
 	static void PlayerTransaction(string mod, string guid, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
@@ -173,6 +177,11 @@ class UniversalRest
 		} else {
 			Print("[UPAI] [Api] Error Loading Globals Data for " + mod);
 		}
+	}
+	
+	
+	static void GlobalsIncrement(string mod, string objectId, string element, float value = 1){
+		GlobalsTransaction(mod, objectId, element, value, NULL, "");
 	}
 	
 	static void GlobalsTransaction(string mod, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
@@ -268,6 +277,10 @@ class UniversalRest
 		} else {
 			Print("[UPAI] [Api] Error Querying " +  mod);
 		}
+	}
+	
+	static void ObjectIncrement(string mod, string objectId, string element, float value = 1){
+		ObjectTransaction(mod, objectId, element, value, NULL, "");
 	}
 	
 	static void ObjectTransaction(string mod, string objectId, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
