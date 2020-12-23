@@ -230,10 +230,7 @@ modded class PluginAdminLog extends PluginBase
 			foreach ( Man player: m_PlayerArray ) {
 				PlayerBase thePlayer = PlayerBase.Cast(player);
 				if (thePlayer && thePlayer.GetIdentity()) { 
-					Print("[UAPI]PlayerSpeed Debug GetSpeed: " + thePlayer.GetSpeed());
-					Print("[UAPI]PlayerSpeed Debug GetModelSpeed: " + thePlayer.GetModelSpeed());
-					
-					thePlayerList.Insert(new UApiLogPlayerPos(thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), vector.Distance(thePlayer.GetModelSpeed(), vector.Zero), thePlayer.IsInTransport()) );
+					thePlayerList.Insert(new UApiLogPlayerPos(thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), thePlayer.GetCommand_Move().GetCurrentMovementSpeed(), thePlayer.IsInTransport()) );
 				}					
 			}
 		}

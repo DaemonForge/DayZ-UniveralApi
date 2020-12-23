@@ -10,7 +10,6 @@ class UApiQnAMakerServerAnswers
 			if (FileExist(ConfigPATH)){ //If config exist load File
 			    JsonFileLoader<UApiQnAMakerServerAnswers>.JsonLoadFile(ConfigPATH, this);
 			}else{ //File does not exist create FileMode.
-				MakeDirectory(ConfigDIR);
 				ServerSpecificAnswers.Insert(new ref QnAMakerServerAnswer("#SERVERNAME#", "US1"));
 				Save();
 			}
