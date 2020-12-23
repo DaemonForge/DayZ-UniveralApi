@@ -225,12 +225,15 @@ modded class PluginAdminLog extends PluginBase
 	
 	void DoUApiPlayerListLog(){
 		GetGame().GetPlayers( m_PlayerArray );
-		autoptr array<ref UApiLogPlayerPos> thePlayerList = new array<ref UApiLogPlayerPos>;
+		array<ref UApiLogPlayerPos> thePlayerList = new array<ref UApiLogPlayerPos>;
 		if ( m_PlayerArray.Count() != 0 ) {	
 			foreach ( Man player: m_PlayerArray ) {
 				PlayerBase thePlayer = PlayerBase.Cast(player);
 				if (thePlayer && thePlayer.GetIdentity()) { 
-					thePlayerList.Insert(new ref UApiLogPlayerPos(thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), vector.Distance(thePlayer.GetSpeed(), vector.Zero), thePlayer.IsInTransport()) );
+					Print("[UAPI]PlayerSpeed Debug GetSpeed: " + thePlayer.GetSpeed());
+					Print("[UAPI]PlayerSpeed Debug GetModelSpeed: " + thePlayer.GetModelSpeed());
+					
+					thePlayerList.Insert(new UApiLogPlayerPos(thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), vector.Distance(thePlayer.GetModelSpeed(), vector.Zero), thePlayer.IsInTransport()) );
 				}					
 			}
 		}

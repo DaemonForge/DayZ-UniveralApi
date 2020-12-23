@@ -6,16 +6,14 @@ class UApiLogBase{
 	
 	string GUID = "";
 	
-	ref array<float> Position;
+	vector Position;
 	
 	
 	void UApiLogBase(string log, string playerGUID = "", vector pos = vector.Zero){
 		Log = log;
 		GUID = playerGUID;
 		if (pos != vector.Zero){
-			Position.Set(0,pos[0]);
-			Position.Set(1,pos[1]);
-			Position.Set(2,pos[2]);
+			Position = pos;
 		}
 	}
 	
@@ -35,7 +33,7 @@ class UApiLogPlayerPos {
 	
 	string GUID = "";
 	
-	ref array<float> Position;
+	vector Position;
 	float Speed;
 	
 	bool InTransport;
@@ -43,9 +41,7 @@ class UApiLogPlayerPos {
 	void UApiLogPlayerPos(string playerGUID, vector pos = vector.Zero, float speed = 0, bool inTransport = false) {
 		GUID = playerGUID;
 		if (pos != vector.Zero){
-			Position.Set(0,pos[0]);
-			Position.Set(1,pos[1]);
-			Position.Set(2,pos[2]);
+			Position = pos;
 		}
 		Speed = speed;
 		InTransport = inTransport;
@@ -63,12 +59,12 @@ class UApiLogKilled{
 	string Log = "PlayerKilled";
 	
 	string GUID = "";
-	ref array<float> Position;
+	vector Position;
 	float Distance;
 	
 	string KilledBy = "";
 	string KilledByGUID = "";
-	ref array<float> KilledByPosition;
+	vector KilledByPosition;
 	
 	float StatWater;
 	float StatEnergy;
@@ -77,21 +73,17 @@ class UApiLogKilled{
 	void UApiLogKilled(string playerGUID = "", vector pos = vector.Zero, string killedBy = "", vector killedByPos = vector.Zero){
 		GUID = playerGUID;
 		if (pos != vector.Zero){
-			Position.Set(0,pos[0]);
-			Position.Set(1,pos[1]);
-			Position.Set(2,pos[2]);
+			Position = pos;
 		}
 		KilledBy = killedBy;
-		if (killedByPos != Vector(0,0,0)){
-			KilledByPosition.Insert(killedByPos[0]);
-			KilledByPosition.Insert(killedByPos[1]);
-			KilledByPosition.Insert(killedByPos[2]);
+		if (killedByPos != vector.Zero){
+			KilledByPosition = killedByPos;
 		}
-		if (killedByPos != Vector(0,0,0) && pos != vector.Zero){
+		if (killedByPos != vector.Zero && pos != vector.Zero){
 			Distance = vector.Distance(pos, killedByPos);
 		}
 	}
-	
+
 	void AddStats(float statWater, float statEnergy, int bleedingSources = -1){
 		
 		StatWater = statWater;
