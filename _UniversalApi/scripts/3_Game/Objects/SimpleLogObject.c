@@ -6,16 +6,16 @@ class UApiLogBase{
 	
 	string GUID = "";
 	
-	array<float> Position;
+	ref array<float> Position;
 	
 	
 	void UApiLogBase(string log, string playerGUID = "", vector pos = vector.Zero){
 		Log = log;
 		GUID = playerGUID;
 		if (pos != vector.Zero){
-			Position.Insert(pos[0]);
-			Position.Insert(pos[1]);
-			Position.Insert(pos[2]);
+			Position.Set(0,pos[0]);
+			Position.Set(1,pos[1]);
+			Position.Set(2,pos[2]);
 		}
 	}
 	
@@ -35,7 +35,7 @@ class UApiLogPlayerPos {
 	
 	string GUID = "";
 	
-	array<float> Position;
+	ref array<float> Position;
 	float Speed;
 	
 	bool InTransport;
@@ -43,9 +43,9 @@ class UApiLogPlayerPos {
 	void UApiLogPlayerPos(string playerGUID, vector pos = vector.Zero, float speed = 0, bool inTransport = false) {
 		GUID = playerGUID;
 		if (pos != vector.Zero){
-			Position.Insert(pos[0]);
-			Position.Insert(pos[1]);
-			Position.Insert(pos[2]);
+			Position.Set(0,pos[0]);
+			Position.Set(1,pos[1]);
+			Position.Set(2,pos[2]);
 		}
 		Speed = speed;
 		InTransport = inTransport;
@@ -77,9 +77,9 @@ class UApiLogKilled{
 	void UApiLogKilled(string playerGUID = "", vector pos = vector.Zero, string killedBy = "", vector killedByPos = vector.Zero){
 		GUID = playerGUID;
 		if (pos != vector.Zero){
-			Position.Insert(pos[0]);
-			Position.Insert(pos[1]);
-			Position.Insert(pos[2]);
+			Position.Set(0,pos[0]);
+			Position.Set(1,pos[1]);
+			Position.Set(2,pos[2]);
 		}
 		KilledBy = killedBy;
 		if (killedByPos != Vector(0,0,0)){
