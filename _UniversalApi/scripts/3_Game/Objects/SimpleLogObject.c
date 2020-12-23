@@ -20,7 +20,7 @@ class UApiLogBase{
 	}
 	
 	string ToJson(){
-		return JsonFileLoader<UApiLogObject>.JsonMakeData(this);
+		return JsonFileLoader<UApiLogBase>.JsonMakeData(this);
 	}
 	
 }
@@ -52,7 +52,7 @@ class UApiLogPlayerPos {
 	}
 	
 	string ToJson(){
-		return JsonFileLoader<UApiLogObject>.JsonMakeData(this);
+		return JsonFileLoader<UApiLogPlayerPos>.JsonMakeData(this);
 	}
 	
 }

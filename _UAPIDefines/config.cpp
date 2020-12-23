@@ -12,7 +12,7 @@ class CfgMods
 {
 	class UAPIDefines
 	{
-		dir = "UAPIDefines";
+		dir = "_UAPIDefines";
 		picture = "";
 		action = "";
 		hideName = 1;
@@ -33,7 +33,7 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"UAPIDefines/scripts/Common"
+					"_UAPIDefines/scripts/Common"
 					};
 			}
 			
@@ -41,7 +41,7 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"UAPIDefines/scripts/Common"
+					"_UAPIDefines/scripts/Common"
 					};
 			}
 
@@ -49,7 +49,7 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"UAPIDefines/scripts/Common"
+					"_UAPIDefines/scripts/Common"
 					};
 			};
 		};

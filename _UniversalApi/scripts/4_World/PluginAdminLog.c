@@ -4,7 +4,7 @@ modded class PluginAdminLog extends PluginBase
 	{
 		super.PlayerKilled( player, source );
 		
-		if ( UApiConfig().EnableDefaultLogs && player && source && player.GetIdentity() )
+		if ( UApiConfig().EnableBuiltinLogging && player && source && player.GetIdentity() )
 		{
 			UApiLogKilled logobj;
 			if ( player == source ){ // deaths not caused by another object (starvation, dehydration)
@@ -177,7 +177,7 @@ modded class PluginAdminLog extends PluginBase
 	void Suicide( PlayerBase player )  // EmoteManager.c 
 	{
 		super.Suicide( player );
-		if ( UApiConfig().EnableDefaultLogs && player && player.GetIdentity() )
+		if ( UApiConfig().EnableBuiltinLogging && player && player.GetIdentity() )
 		{
 			UApiLogKilled logobj = new UApiLogKilled(player.GetIdentity().GetId(), player.GetPosition(), "Suicide");
 			
@@ -198,7 +198,7 @@ modded class PluginAdminLog extends PluginBase
 	void BleedingOut( PlayerBase player )  // Bleeding.c
 	{
 		super.BleedingOut( player );
-		if ( UApiConfig().EnableDefaultLogs &&  player && player.GetIdentity() )
+		if ( UApiConfig().EnableBuiltinLogging &&  player && player.GetIdentity() )
 		{
 			UApiLogKilled logobj = new UApiLogKilled(player.GetIdentity().GetId(), player.GetPosition(), "BleedingOut");
 			
@@ -218,19 +218,19 @@ modded class PluginAdminLog extends PluginBase
 	
 	void PlayerList() {
 		super.PlayerList();
-		if (UApiConfig().EnableDefaultLogs){
+		if (UApiConfig().EnableBuiltinLogging){
 			thread DoUApiPlayerListLog(); //To stop any extra server lag
 		}
 	}
 	
 	void DoUApiPlayerListLog(){
 		GetGame().GetPlayers( m_PlayerArray );
-		array<ref UApiLogPlayerPos> thePlayerList = new array<ref UApiLogPlayerPos>;
+		autoptr array<ref UApiLogPlayerPos> thePlayerList = new array<ref UApiLogPlayerPos>;
 		if ( m_PlayerArray.Count() != 0 ) {	
 			foreach ( Man player: m_PlayerArray ) {
-				thePlayer = PlayerBase.Cast(player);
-				if (thePlayer && thePlayer.GetIdentity()) {
-					thePlayerList.Insert(new UApiLogPlayerPos(thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), thePlayer.GetSpeed() , thePlayer.IsInTransport()) );
+				PlayerBase thePlayer = PlayerBase.Cast(player);
+				if (thePlayer && thePlayer.GetIdentity()) { 
+					thePlayerList.Insert(new ref UApiLogPlayerPos(thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), vector.Distance(thePlayer.GetSpeed(), vector.Zero), thePlayer.IsInTransport()) );
 				}					
 			}
 		}
