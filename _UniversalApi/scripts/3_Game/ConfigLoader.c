@@ -5,6 +5,7 @@ class UniversalApiConfig
 	string ServerID = "";
     string ServerAuth = "";
 	bool QnAEnabled = false;
+	bool EnableDefaultLogs = false;
 	
 	void Load(){
 		if (GetGame().IsServer()){
@@ -18,6 +19,10 @@ class UniversalApiConfig
 					}
 					if (QnAEnabled){
 						UApiQnAMaker();
+					}
+					if (EnableDefaultLogs == NULL){
+						EnableDefaultLogs = false;
+						Save();
 					}
 				}
 			}else{ //File does not exist create file	

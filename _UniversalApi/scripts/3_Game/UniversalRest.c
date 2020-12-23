@@ -20,7 +20,7 @@ class UniversalRest
 	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack
+			UCBX = new ref UApiSilentCallBack;
 		}
 		RestContext ctx =  Api().GetRestContext(url);
 		ctx.SetHeader("application/json");
@@ -30,7 +30,7 @@ class UniversalRest
 	static void Get(string url, ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack
+			UCBX = new ref UApiSilentCallBack;
 		}
 		RestContext ctx =  Api().GetRestContext(url);
 		ctx.GET(UCBX , "");
@@ -105,7 +105,7 @@ class UniversalRest
 	static void PlayerTransaction(string mod, string guid, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiTransactionCallBack
+			UCBX = new ref UApiTransactionCallBack;
 		}
 		
 		if (auth == "" ){
@@ -128,7 +128,7 @@ class UniversalRest
 	static void PlayerUpdate(string mod, string guid, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack
+			UCBX = new ref UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -180,14 +180,14 @@ class UniversalRest
 	}
 	
 	
-	static void GlobalsIncrement(string mod, string objectId, string element, float value = 1){
-		GlobalsTransaction(mod, objectId, element, value, NULL, "");
+	static void GlobalsIncrement(string mod, string element, float value = 1){
+		GlobalsTransaction(mod, element, value, NULL, "");
 	}
 	
 	static void GlobalsTransaction(string mod, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiTransactionCallBack
+			UCBX = new ref UApiTransactionCallBack;
 		}
 		
 		if (auth == "" ){
@@ -210,7 +210,7 @@ class UniversalRest
 	static void GlobalsUpdate(string mod, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack
+			UCBX = new ref UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -286,7 +286,7 @@ class UniversalRest
 	static void ObjectTransaction(string mod, string objectId, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiTransactionCallBack
+			UCBX = new ref UApiTransactionCallBack;
 		}
 		
 		if (auth == "" ){
@@ -310,7 +310,7 @@ class UniversalRest
 	static void ObjectUpdate(string mod, string guid, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack
+			UCBX = new ref UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -347,6 +347,43 @@ class UniversalRest
 			Print("[UPAI] [Api] Error Fowarding ");
 		}
 	}
+
+	static void Log(string jsonString, ref RestCallback UCBX = NULL, string auth = ""){
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack;
+		}
+		
+		string url = BaseUrl() + "Logger/One/" + UApiConfig().ServerID + "/"+ auth;
+		
+		if ( jsonString && UCBX){
+			Post(url,jsonString,UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Fowarding ");
+		}
+	}
 	
+	//JsonFileLoader<array<ref LogObject>>.JsonMakeData(AnArrayOfYourObjects);
+	static void LogBulk(string jsonString, ref RestCallback UCBX = NULL, string auth = ""){
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack;
+		}
+		
+		string url = BaseUrl() + "Logger/Many/" + UApiConfig().ServerID + "/"+ auth;
+		if (jsonString && UCBX){
+			Post(url,jsonString,UCBX);
+		} else {
+			Print("[UPAI] [Api] Error Fowarding ");
+		}
+	}
 	
 };

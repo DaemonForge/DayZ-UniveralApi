@@ -18,10 +18,13 @@ router.post('/One/:id/:auth', (req, res)=>{
 router.post('/Many/:id/:auth', (req, res)=>{
     runLoggerMany(req, res,req.params.id, req.params.auth);
 });
+
 async function runLoggerOne(req, res, id, auth) {
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     var RawData = req.body;
-    if (auth === config.ServerAuth || (await CheckAuth(auth, true))){  
+	var hasServerAuth = (auth === config.ServerAuth);
+	var hasClientAuth = await CheckAuth(auth, true);
+    if ( hasClientAuth || hasServerAuth ){  
         try{
             //console.log(RawData);
             // Connect the client to the server       
@@ -29,8 +32,16 @@ async function runLoggerOne(req, res, id, auth) {
             const db = client.db(config.DB);
             var collection = db.collection("Logs");
             var datetime = new Date();
+            var ClientId = GetClientID(req);
             RawData.ServerId = id;
             RawData.LoggedDateTime = datetime;
+            RawData.ClientId = ClientId;
+			if (hasServerAuth){
+				RawData.ClientType = "Server";
+			} else if (hasClientAuth){
+				RawData.ClientType = "Client";
+            }
+            
             console.log(RawData);
             const result = await collection.insertOne(RawData);
             if (result.result.ok == 1){
@@ -51,19 +62,29 @@ async function runLoggerOne(req, res, id, auth) {
         }
     }
 }
+
 async function runLoggerMany(req, res, id, auth) {
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     var RawData = req.body;
-    if (auth === config.ServerAuth || (await CheckAuth(auth, true))){  
+	var hasServerAuth = (auth === config.ServerAuth);
+	var hasClientAuth = await CheckAuth(auth, true);
+    if (hasClientAuth || hasServerAuth){  
         try{
             // Connect the client to the server       
             await client.connect(); 
             const db = client.db(config.DB);
             var collection = db.collection("Logs");
             var datetime = new Date();
+            var ClientId = GetClientID(req);
             RawData.forEach(element => {
                 element.ServerId = id;
                 element.LoggedDateTime = datetime;
+				if (hasServerAuth){
+					element.ClientType = "Server";
+				} else if (hasClientAuth){
+					element.ClientType = "Client";
+				}
+                element.ClientId = ClientId;
             });
             const result = await collection.insertMany(RawData);
             if (result.result.ok == 1){
@@ -83,5 +104,14 @@ async function runLoggerMany(req, res, id, auth) {
         }
     }
 }
+
+function GetClientID(req){
+    var ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    var  hash = crypto.createHash('sha512');
+    var theHash = hash.update(ip).digest('base64');
+    theHash.replace("/","");
+    return theHash.substr(64);
+}
+
 
 module.exports = router;
