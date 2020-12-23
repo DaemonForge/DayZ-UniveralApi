@@ -1,6 +1,7 @@
 class UniversalApiConfig
 {
-	protected static string ConfigPATH = "$profile:UApi\\UniversalApi.json";
+	protected static string ConfigDIR = "$profile:UApi";
+	protected static string ConfigPATH = ConfigDIR + "\\UniversalApi.json";
 	string ServerURL = "";
 	string ServerID = "";
     string ServerAuth = "";
@@ -26,6 +27,7 @@ class UniversalApiConfig
 					}
 				}
 			}else{ //File does not exist create file	
+				MakeDirectory(ConfigDIR);
 				Save();
 			}
 		}
@@ -39,7 +41,7 @@ class UniversalApiConfig
 	}
 	
 	void Save(){
-			JsonFileLoader<UniversalApiConfig>.JsonSaveFile(ConfigPATH, this);
+		JsonFileLoader<UniversalApiConfig>.JsonSaveFile(ConfigPATH, this);
 	}
 	
 	
