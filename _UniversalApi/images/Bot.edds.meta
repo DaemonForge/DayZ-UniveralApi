@@ -1,0 +1,16 @@
+MetaFileClass {
+ Name "{08B95A405912C6C4}New folder/new_ui/notifications/Bot.edds"
+ Author "desktop-tdpoqud"
+ ChangeDate 1086188071
+ Configurations {
+  TGAResourceClass PC {
+   SourceFile "Bot.tga"
+  }
+  TGAResourceClass XBOX_ONE : PC {
+  }
+  TGAResourceClass PS4 : PC {
+  }
+  TGAResourceClass LINUX : PC {
+  }
+ }
+}

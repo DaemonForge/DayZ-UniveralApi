@@ -9,23 +9,22 @@ class UApiQnACallBack : RestCallback
 	
 	override void OnError(int errorCode) {
 		if (m_AlwaysAnswer){
-			GetGame().Chat(UApiQnAMaker().BotName+": Sorry Something went wrong try asking again later", "colorImportant");
+			UApiQnAMaker().SendRespone("Sorry Something went wrong try asking again later");
 		}
 	};
 	
 	override void OnTimeout() {
 		if (m_AlwaysAnswer){
-			GetGame().Chat(UApiQnAMaker().BotName+": Sorry Something went wrong try asking again later", "colorImportant");
+			UApiQnAMaker().SendRespone("Sorry Something went wrong try asking again later");
 		}
 	};
 	override void OnSuccess(string data, int dataSize) {
 		ref QnAAnswer AnswerObj;
 		JsonFileLoader<QnAAnswer>.JsonLoadData(data, AnswerObj);
 		if (AnswerObj.get() != "null" && AnswerObj.get() != "error" &&  AnswerObj.get() != "ERROR" &&  AnswerObj.get() != ""){
-			string message = UApiQnAMaker().ProcessAnswer(AnswerObj.get());
-			GetGame().Chat(message, "");
+			UApiQnAMaker().ProcessAnswer(AnswerObj.get());
 		} else if (m_AlwaysAnswer) {
-			GetGame().Chat(UApiQnAMaker().BotName+": Sorry couldn't find the an answer to your question? Try rephrasing it or asking a real person", "colorImportant");
+			UApiQnAMaker().SendRespone("Sorry couldn't find the an answer to your question? Try rephrasing it or asking a real person");
 		}
 	};
 };

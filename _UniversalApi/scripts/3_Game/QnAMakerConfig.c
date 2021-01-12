@@ -2,6 +2,7 @@ class UApiQnAMakerServerAnswers
 {
 	protected static string ConfigDIR = "$profile:UApi";
 	protected static string ConfigPATH = ConfigDIR + "\\QnAMakerServerAnswers.json";
+	protected bool UseNotifcationsMod = false;
 	string BotName = "Bot";
 	ref array<ref QnAMakerServerAnswer> ServerSpecificAnswers = new ref array<ref QnAMakerServerAnswer>;
 	
@@ -16,17 +17,40 @@ class UApiQnAMakerServerAnswers
 		}
 	}
 	
-	string ProcessAnswer(string answer){
+	void ProcessAnswer(string answer){
 		string response = answer;
 		for (int i = 0; i < ServerSpecificAnswers.Count(); i++){
 			response.Replace(ServerSpecificAnswers.Get(i).ResponseCode, ServerSpecificAnswers.Get(i).Response); 
 		}
-		response = BotName + ": " + response;
-		return response;
+		SendRespone(response);
 	}
 	
 	void Save(){
 			JsonFileLoader<UApiQnAMakerServerAnswers>.JsonSaveFile(ConfigPATH, this);
+	}
+	
+	void SendRespone(string text){
+		if (!UseNotifcationsMod){
+			GetGame().Chat(BotName + ": " + text, "colorImportant");
+		} else {
+			
+			#ifdef NOTIFICATIONS 
+				float nTime = 5;
+				int strlen = text.Length();
+				if (strlen > 640){
+					nTime = 70
+				} else if (strlen > 400){
+					nTime = 50
+				} else if (strlen > 240){
+					nTime = 35
+				} else if (strlen > 120){
+					nTime = 25
+				} else if (strlen > 60){
+					nTime = 15
+				}
+				NotificationSystem.SimpleNoticiation(text, BotName, "_UniversalApi/images/Bot.edds", ARGB(230, 142, 180, 230), nTime, NULL);
+			#endif
+		}
 	}
 	
 }
