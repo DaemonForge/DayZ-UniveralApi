@@ -174,7 +174,7 @@ modded class PluginAdminLog extends PluginBase
 		}	
 	}
 	*/
-	void Suicide( PlayerBase player )  // EmoteManager.c 
+	override void Suicide( PlayerBase player )  // EmoteManager.c 
 	{
 		super.Suicide( player );
 		if ( UApiConfig().EnableBuiltinLogging && player && player.GetIdentity() )
@@ -195,7 +195,7 @@ modded class PluginAdminLog extends PluginBase
 		}
 	}
 	
-	void BleedingOut( PlayerBase player )  // Bleeding.c
+	override void BleedingOut( PlayerBase player )  // Bleeding.c
 	{
 		super.BleedingOut( player );
 		if ( UApiConfig().EnableBuiltinLogging &&  player && player.GetIdentity() )
@@ -216,7 +216,7 @@ modded class PluginAdminLog extends PluginBase
 		}
 	}
 	
-	void PlayerList() {
+	override void PlayerList() {
 		super.PlayerList();
 		if (UApiConfig().EnableBuiltinLogging){
 			thread DoUApiPlayerListLog(); //To stop any extra server lag
@@ -224,11 +224,12 @@ modded class PluginAdminLog extends PluginBase
 	}
 	
 	void DoUApiPlayerListLog(){
-		GetGame().GetPlayers( m_PlayerArray );
+		array<man> theManList = new array<man>;
+		GetGame().GetPlayers( theManList );
 		array<ref UApiLogPlayerPos> thePlayerList = new array<ref UApiLogPlayerPos>;
 		if ( m_PlayerArray.Count() != 0 ) {	
-			foreach ( Man player: m_PlayerArray ) {
-				PlayerBase thePlayer = PlayerBase.Cast(player);
+			for (int i = 0; i < theManList.Count(); i++ ) {
+				PlayerBase thePlayer = PlayerBase.Cast(theManList.Get(i));
 				if (thePlayer && thePlayer.GetIdentity()) { 
 					thePlayerList.Insert(new UApiLogPlayerPos(thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), thePlayer.GetCommand_Move().GetCurrentMovementSpeed(), thePlayer.IsInTransport()) );
 				}					
