@@ -23,6 +23,38 @@ class UApiLogBase{
 	
 }
 
+class UApiLogMisc{
+	
+
+	
+	string Log = "";
+	string Action = "";
+	string Item = "";
+	string Target = "";
+	string GUID = "";
+	
+	vector Position;
+	
+	
+	void UApiLogMisc(string log, string playerGUID = "", vector pos = vector.Zero, string action = "", string item = "", string target = ""){
+		Log = log;
+		GUID = playerGUID;
+		if (pos != vector.Zero){
+			Position = pos;
+		}
+		Item = item;
+		Action = action;
+		Target = target;
+	}
+	
+	string ToJson(){
+		return JsonFileLoader<UApiLogMisc>.JsonMakeData(this);
+	}
+	
+}
+
+
+
 static string GetLogPlayerPosArray(array<ref UApiLogPlayerPos> thePlayerlist){
 	return JsonFileLoader<array<ref UApiLogPlayerPos>>.JsonMakeData(thePlayerlist);
 }

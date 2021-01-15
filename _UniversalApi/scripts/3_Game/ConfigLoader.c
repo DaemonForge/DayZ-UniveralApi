@@ -6,7 +6,7 @@ class UniversalApiConfig
 	string ServerID = "";
     string ServerAuth = "";
 	bool QnAEnabled = false;
-	bool EnableBuiltinLogging = false;
+	int EnableBuiltinLogging = 0;
 	
 	void Load(){
 		if (GetGame().IsServer()){

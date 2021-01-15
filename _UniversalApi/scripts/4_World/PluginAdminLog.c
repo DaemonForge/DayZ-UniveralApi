@@ -2,9 +2,11 @@ modded class PluginAdminLog extends PluginBase
 {
 	override void PlayerKilled( PlayerBase player, Object source )  
 	{
-		super.PlayerKilled( player, source );
+		if (UApiConfig().EnableBuiltinLogging != 2){
+			super.PlayerKilled( player, source );
+		}
 		
-		if ( UApiConfig().EnableBuiltinLogging && player && source && player.GetIdentity() )
+		if ( UApiConfig().EnableBuiltinLogging != 0 && player && source && player.GetIdentity() )
 		{
 			UApiLogKilled logobj;
 			if ( player == source ){ // deaths not caused by another object (starvation, dehydration)
@@ -140,44 +142,70 @@ modded class PluginAdminLog extends PluginBase
 		} 
 	}
 	
+	*/
+	
 	void OnPlacementComplete( Man player, ItemBase item ) // ItemBase.c
 	{
-		if ( m_PlacementFilter == 1 )
-		{		
-			m_Source = PlayerBase.Cast( player ); 
-			m_PlayerPrefix = this.GetPlayerPrefix( m_Source , m_Source.GetIdentity() );		
-			m_DisplayName = item.GetDisplayName();
-			
-			if ( m_DisplayName == "" )
-			{
-				LogPrint( m_PlayerPrefix + " placed unknown object" );
-			} 
-			else
-			{
-				LogPrint( m_PlayerPrefix + " placed " + m_DisplayName );
+		if (UApiConfig().EnableBuiltinLogging != 2){
+			super.OnPlacementComplete( player, item);
+		}
+		
+		if ( UApiConfig().EnableBuiltinLogging != 0)
+		{
+			PlayerBase thePlayer = PlayerBase.Cast( player );
+			if (thePlayer && thePlayer.GetIdentity()){	
+				string Item = "";
+				ItemBase mainItem = ItemBase.Cast(item);
+				if (mainItem){
+					Item = mainItem.GetType();
+				}
+				
+				UApiLogMisc logobj = new UApiLogMisc("OnPlacementComplete", thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), "PlaceItem", Item);
+				if (logobj){
+					UApi().Rest().Log(logobj.ToJson());
+				}
 			}
 		}
 	}
 	
 	void OnContinouousAction( ActionData action_data )	// ActionContinouousBase.c
 	{
-		if ( m_ActionsFilter == 1 )
-		{						
-			m_Message = action_data.m_Action.GetAdminLogMessage(action_data);
-			
-			if(m_Message == "")
-				return;
-			
-			m_PlayerPrefix = this.GetPlayerPrefix( action_data.m_Player , action_data.m_Player.GetIdentity() );
-			
-			LogPrint( m_PlayerPrefix + m_Message );
-		}	
+		if (UApiConfig().EnableBuiltinLogging != 2){
+			super.OnContinouousAction(action_data);
+		}
+		
+		if ( UApiConfig().EnableBuiltinLogging != 0 && action_data)
+		{				
+			PlayerBase player = PlayerBase.Cast( action_data.m_Player );
+			if (player && player.GetIdentity()){
+				string ActionName = action_data.m_Action.Type().ToString();
+				string Target = "";
+				if (action_data.m_Target){
+					Object targetObj;
+					if (Class.CastTo(targetObj, action_data.m_Target.GetObject()) || Class.CastTo(targetObj, action_data.m_Target.GetParent())){
+						Target = targetObj.GetType();
+					}
+				}
+				string Item = "";
+				if (action_data.m_MainItem){
+					ItemBase mainItem = ItemBase.Cast(action_data.m_MainItem);
+					if (mainItem){
+						Item = mainItem.GetType();
+					}
+				}
+				UApiLogMisc logobj = new UApiLogMisc("OnContinouousAction", player.GetIdentity().GetId(), player.GetPosition(), ActionName, Item, Target);
+				if (logobj){
+					UApi().Rest().Log(logobj.ToJson());
+				}
+			}
+		}
 	}
-	*/
 	override void Suicide( PlayerBase player )  // EmoteManager.c 
 	{
-		super.Suicide( player );
-		if ( UApiConfig().EnableBuiltinLogging && player && player.GetIdentity() )
+		if (UApiConfig().EnableBuiltinLogging != 2){
+			super.Suicide( player );
+		}
+		if ( UApiConfig().EnableBuiltinLogging != 0 && player && player.GetIdentity() )
 		{
 			UApiLogKilled logobj = new UApiLogKilled(player.GetIdentity().GetId(), player.GetPosition(), "Suicide");
 			
@@ -197,8 +225,10 @@ modded class PluginAdminLog extends PluginBase
 	
 	override void BleedingOut( PlayerBase player )  // Bleeding.c
 	{
-		super.BleedingOut( player );
-		if ( UApiConfig().EnableBuiltinLogging &&  player && player.GetIdentity() )
+		if (UApiConfig().EnableBuiltinLogging != 2){
+			super.BleedingOut( player );
+		}
+		if ( UApiConfig().EnableBuiltinLogging != 0 &&  player && player.GetIdentity() )
 		{
 			UApiLogKilled logobj = new UApiLogKilled(player.GetIdentity().GetId(), player.GetPosition(), "BleedingOut");
 			
@@ -217,14 +247,16 @@ modded class PluginAdminLog extends PluginBase
 	}
 	
 	override void PlayerList() {
-		super.PlayerList();
-		if (UApiConfig().EnableBuiltinLogging){
+		if (UApiConfig().EnableBuiltinLogging != 2){
+			super.PlayerList();
+		}
+		if (UApiConfig().EnableBuiltinLogging != 0 ){
 			thread DoUApiPlayerListLog(); //To stop any extra server lag
 		}
 	}
 	
 	void DoUApiPlayerListLog(){
-		array<man> theManList = new array<man>;
+		array<Man> theManList = new array<Man>;
 		GetGame().GetPlayers( theManList );
 		array<ref UApiLogPlayerPos> thePlayerList = new array<ref UApiLogPlayerPos>;
 		if ( m_PlayerArray.Count() != 0 ) {	
