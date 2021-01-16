@@ -263,7 +263,11 @@ modded class PluginAdminLog extends PluginBase
 			for (int i = 0; i < theManList.Count(); i++ ) {
 				PlayerBase thePlayer = PlayerBase.Cast(theManList.Get(i));
 				if (thePlayer && thePlayer.GetIdentity()) { 
-					thePlayerList.Insert(new UApiLogPlayerPos(thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), thePlayer.GetCommand_Move().GetCurrentMovementSpeed(), thePlayer.IsInTransport()) );
+					float MovementSpeed = 0;
+					if (thePlayer.GetCommand_Move()){
+						MovementSpeed = thePlayer.GetCommand_Move().GetCurrentMovementSpeed();
+					}
+					thePlayerList.Insert(new UApiLogPlayerPos(thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), MovementSpeed, thePlayer.IsInTransport()) );
 				}					
 			}
 		}
