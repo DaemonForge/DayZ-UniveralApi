@@ -38,15 +38,15 @@ class UApiQnAMakerServerAnswers
 				float nTime = 5;
 				int strlen = text.Length();
 				if (strlen > 640){
-					nTime = 70
+					nTime = 70;
 				} else if (strlen > 400){
-					nTime = 50
+					nTime = 50;
 				} else if (strlen > 240){
-					nTime = 35
+					nTime = 35;
 				} else if (strlen > 120){
-					nTime = 25
+					nTime = 25;
 				} else if (strlen > 60){
-					nTime = 15
+					nTime = 15;
 				}
 				NotificationSystem.SimpleNoticiation(text, BotName, "_UniversalApi/images/Bot.edds", ARGB(230, 142, 180, 230), nTime, NULL);
 			#endif
