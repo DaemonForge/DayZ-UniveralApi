@@ -12,6 +12,9 @@
   "dependencies": {
     "body-parser": "^1.19.0",
     "crypto": "^1.0.1",
+    "discord.js": "^12.5.1",
+    "ejs": "^3.1.6",
+    "ejs-lint": "^1.1.0",
     "express": "^4.17.1",
     "https": "^1.0.0",
     "jsonwebtoken": "^8.5.1",
@@ -26,7 +29,6 @@
   },
   "pkg": {
     "assets": [
-      "node_modules/saslprep/code-points.mem"
       "node_modules/saslprep/code-points.mem",
       "public/favicon.ico"
     ]

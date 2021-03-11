@@ -6,5 +6,11 @@
     "Port": 443,
     "LogToFile": false,
     "Certificate": "",
-    "CertificateKey": ""
+    "CertificateKey": "",
+    "Discord_Client_Id": "",
+    "Discord_Client_Secret": "",
+    "Discord_Bot_Token": "",
+    "Discord_Guild_Id": "",
+    "Discord_Required_Role": "",
+    "Discord_BlackList_Role": ""
 }
