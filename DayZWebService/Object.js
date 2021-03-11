@@ -1,7 +1,7 @@
-const express = require('express');
+const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 const CheckAuth = require('./AuthChecker')
-var crypto = require('crypto');
+let {createHash} = require('crypto');
 
 const config = require('./configLoader');
  
@@ -11,7 +11,7 @@ const log = require("./log");
 const queryHandler = require("./Query");
 const TransactionHandler = require("./Transaction");
 
-const router = express.Router();
+const router = Router();
 
 router.use('/Query', queryHandler);
 router.use('/Transaction', TransactionHandler);
@@ -29,16 +29,16 @@ router.post('/Update/:ObjectId/:mod/:auth', (req, res)=>{
 async function runGet(req, res, ObjectId, mod, auth) {
     if (auth === config.ServerAuth || (await CheckAuth(auth)) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-        var StringData = JSON.stringify(req.body);
-        var RawData = req.body;
+        let StringData = JSON.stringify(req.body);
+        let RawData = req.body;
         try{
 
             // Connect the client to the server
             await client.connect();
             const db = client.db(config.DB);
-            var collection = db.collection("Objects");
-            var query = { ObjectId: ObjectId, Mod: mod };
-            var results = collection.find(query);
+            let collection = db.collection("Objects");
+            let query = { ObjectId: ObjectId, Mod: mod };
+            let results = collection.find(query);
             
             if ((await results.count()) == 0){
                 if (auth === config.ServerAuth || config.AllowClientWrite ){
@@ -49,14 +49,14 @@ async function runGet(req, res, ObjectId, mod, auth) {
                     }
                     console.log("Can't find Object for mod " + mod + " with ID " + ObjectId + " Creating it now");
                     const doc  = {ObjectId: ObjectId, Mod: mod, Data: RawData}
-                    var result = await collection.insertOne(doc);
-                    var Data = result.ops[0];
+                    let result = await collection.insertOne(doc);
+                    let Data = result.ops[0];
                 }
                 res.status(201);
                 res.json(RawData);
             } else {
-                var dataarr = await results.toArray(); 
-                var data = dataarr[0]; 
+                let dataarr = await results.toArray(); 
+                let data = dataarr[0]; 
                 if (typeof data.Data !== 'undefined' && data.Data){
                     res.status(200);
                     res.json(data.Data);
@@ -83,18 +83,18 @@ async function runGet(req, res, ObjectId, mod, auth) {
 async function runSave(req, res, ObjectId, mod, auth) {  
     if (auth === config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-        var RawData = req.body;
+        let RawData = req.body;
         try{
 
             // Connect the client to the server
             await client.connect();
             const db = client.db(config.DB);
-            var collection = db.collection("Objects");
+            let collection = db.collection("Objects");
             if (ObjectId == "NewObject"){
                 ObjectId = makeObjectId();
                 RawData.ObjectId = ObjectId;
             }
-            var query = { ObjectId: ObjectId, Mod: mod };
+            let query = { ObjectId: ObjectId, Mod: mod };
             const options = { upsert: true };
             const updateDocValue  =  {ObjectId: ObjectId, Mod: mod, Data: RawData};
             const updateDoc = { $set: updateDocValue, };
@@ -123,14 +123,14 @@ async function runSave(req, res, ObjectId, mod, auth) {
 };
 
 async function runUpdate(req, res, ObjectId, mod, auth) {
-    if ( auth == config.ServerAuth || ((await CheckPlayerAuth(GUID, auth)) && config.AllowClientWrite) ){
+    if ( auth == config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();
 
-            var RawData = req.body;
-            var element = RawData.Element;
-            var StringData;
+            let RawData = req.body;
+            let element = RawData.Element;
+            let StringData;
             if (isObject(RawData.Value)){
                 StringData = JSON.stringify(RawData.Value);
             } else if (isArray(RawData.Value)) {
@@ -140,11 +140,18 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
             }
             // Connect the client to the server
             const db = client.db(config.DB);
-            var collection = db.collection("Objects");
-            var query = { ObjectId: ObjectId, Mod: mod };
+            let collection = db.collection("Objects");
+            let query = { ObjectId: ObjectId, Mod: mod };
             const options = { upsert: false };
-            const jsonString = "{ \"Data."+element+"\": "+ StringData + " }";
-            const updateDocValue  = JSON.parse(jsonString);
+
+            let jsonString = "{ \"Data."+element+"\": "+ StringData + " }";
+            let updateDocValue;
+            try { //should use regex to check for a string without " but being lazy
+                updateDocValue  = JSON.parse(jsonString);
+            } catch (e){
+                jsonString = "{ \"Data."+element+"\": \""+ StringData + "\" }";
+                updateDocValue  = JSON.parse(jsonString);
+            }
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
             if (result.result.ok == 1 && result.result.n > 0){
@@ -159,6 +166,7 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
         }catch(err){
             res.status(203);
             res.json({ Status: "Error", Element: element, Mod: mod, ID: ObjectId});
+            console.log(err)
             log("ERROR: " + err, "warn");
         }finally{
             // Ensures that the client will close when you finish/error
@@ -171,28 +179,28 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
     }
 };
 function makeObjectId() {
-    var result           = '';
-    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.~()*:@,;';
-    var charactersLength = characters.length;
-    for ( var i = 0; i < 16; i++ ) {
+    let result           = '';
+    let characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.~()*:@,;';
+    let charactersLength = characters.length;
+    for ( let i = 0; i < 16; i++ ) {
        result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
-    var datetime = new Date();
-    var date = datetime.toISOString()
+    let datetime = new Date();
+    let date = datetime.toISOString()
     result += date;
-    var SaveToken = crypto.createHash('sha256').update(result).digest('base64');
+    let SaveToken = createHash('sha256').update(result).digest('base64');
     //Making it URLSafe
     SaveToken = SaveToken.replace(/\+/g, '-'); 
     SaveToken = SaveToken.replace(/\//g, '_');
     SaveToken = SaveToken.replace(/=+$/, '');
     return SaveToken;
  }
+ isObject = function(a) {
+     return (!!a) && (a.constructor === Object);
+ };
+ 
+ isArray = function(a) {
+     return (!!a) && (a.constructor === Array);
+ };
+
 module.exports = router;
-
-isObject = function(a) {
-    return (!!a) && (a.constructor === Object);
-};
-
-isArray = function(a) {
-    return (!!a) && (a.constructor === Array);
-};

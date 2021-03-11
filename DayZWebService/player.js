@@ -1,6 +1,6 @@
-const express = require('express');
+const {Router} = require('express');
 const { MongoClient } = require("mongodb");
-var crypto = require('crypto');
+let {createHash} = require('crypto');
 
 const log = require("./log");
 
@@ -13,7 +13,7 @@ const TransactionHandler = require("./Transaction");
 // Create a new MongoClient
 
 
-const router = express.Router();
+const router = Router();
 router.use('/Query', queryHandler);
 router.use('/Transaction', TransactionHandler);
 router.post('/Load/:GUID/:mod/:auth', (req, res)=>{
@@ -36,11 +36,11 @@ async function runGet(req, res, GUID, mod, auth) {
             await client.connect();
             // Connect the client to the server
             const db = client.db(config.DB);
-            var collection = db.collection("Players");
-            var query = { GUID: GUID };
-            var results = collection.find(query);
-            var StringData = JSON.stringify(req.body);
-            var RawData = req.body;
+            let collection = db.collection("Players");
+            let query = { GUID: GUID };
+            let results = collection.find(query);
+            let StringData = JSON.stringify(req.body);
+            let RawData = req.body;
             
             if ((await results.count()) == 0){
                 if (auth === config.ServerAuth || config.AllowClientWrite){
@@ -53,12 +53,12 @@ async function runGet(req, res, GUID, mod, auth) {
                 res.status(201);
                 res.json(RawData);
             } else {
-                var dataarr = await results.toArray(); 
-                var data = dataarr[0]; 
-                var sent = false;
+                let dataarr = await results.toArray(); 
+                let data = dataarr[0]; 
+                let sent = false;
                 for (const [key, value] of Object.entries(data)) {
                     if(key === mod){
-                        var sent = true;
+                        let sent = true;
                         res.json(value);
                         log("Retrieving "+ mod + " Data for GUID: " + GUID);
                     }
@@ -96,12 +96,12 @@ async function runSave(req, res, GUID, mod, auth) {
         try{
             await client.connect();
 
-            var StringData = JSON.stringify(req.body);
-            var RawData = req.body;
+            let StringData = JSON.stringify(req.body);
+            let RawData = req.body;
             // Connect the client to the server
             const db = client.db(config.DB);
-            var collection = db.collection("Players");
-            var query = { GUID: GUID };
+            let collection = db.collection("Players");
+            let query = { GUID: GUID };
             const options = { upsert: true };
             const jsonString = "{ \"GUID\": \""+GUID+"\", \""+mod+"\": "+ StringData + " }";
             const updateDocValue  = JSON.parse(jsonString);
@@ -137,9 +137,9 @@ async function runUpdate(req, res, GUID, mod, auth) {
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();
-            var RawData = req.body;
-            var element = RawData.Element;
-            var StringData;
+            let RawData = req.body;
+            let element = RawData.Element;
+            let StringData;
             if (isObject(RawData.Value)){
                 StringData = JSON.stringify(RawData.Value);
             } else if (isArray(RawData.Value)) {
@@ -149,11 +149,17 @@ async function runUpdate(req, res, GUID, mod, auth) {
             }
             // Connect the client to the server
             const db = client.db(config.DB);
-            var collection = db.collection("Players");
-            var query = { GUID: GUID };
+            let collection = db.collection("Players");
+            let query = { GUID: GUID };
             const options = { upsert: false };
-            const jsonString = "{ \""+mod+"."+element+"\": "+ StringData + " }";
-            const updateDocValue  = JSON.parse(jsonString);
+            let jsonString = "{ \"Data."+element+"\": "+ StringData + " }";
+            let updateDocValue;
+            try { //should use regex to check for a string without " but being lazy
+                updateDocValue  = JSON.parse(jsonString);
+            } catch (e){
+                jsonString = "{ \"Data."+element+"\": \""+ StringData + "\" }";
+                updateDocValue  = JSON.parse(jsonString);
+            }
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
             if (result.result.ok == 1 && Results.result.n > 0){
@@ -181,17 +187,17 @@ async function runUpdate(req, res, GUID, mod, auth) {
 };
 
 async function CheckPlayerAuth(guid, auth){
-    var isAuth = false;
+    let isAuth = false;
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     if ((await CheckAuth(auth))){
         try{
             await client.connect();
             // Connect the client to the server        
             const db = client.db(config.DB);
-            var collection = db.collection("Players");
-            var SavedAuth = crypto.createHash('sha256').update(auth).digest('base64');
-            var query = { GUID: guid, AUTH: SavedAuth };
-            var results = collection.find(query);
+            let collection = db.collection("Players");
+            let SavedAuth = createHash('sha256').update(auth).digest('base64');
+            let query = { GUID: guid, AUTH: SavedAuth };
+            let results = collection.find(query);
                 if ((await results.count()) != 0){
                     isAuth = true;
                 }
