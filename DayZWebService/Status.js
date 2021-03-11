@@ -1,10 +1,10 @@
-const express = require('express');
+const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 const CheckAuth = require('./AuthChecker');
 const log = require("./log");
 const config = require('./configLoader');
  
-const router = express.Router();
+const router = Router();
 
 // Create a new MongoClient
 router.post('/', (req, res)=>{

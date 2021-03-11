@@ -1,5 +1,6 @@
-const express = require('express');
+const { Router } = require('express');
 const { MongoClient } = require("mongodb");
+
 
 const log = require("./log");
 
@@ -8,7 +9,7 @@ const CheckAuth = require('./AuthChecker');
 
 const config = require('./configLoader');
 
-const router = express.Router();
+const router = Router();
 
 router.post('/:mod/:auth', (req, res)=>{
     runQuery(req, res, req.params.mod, req.params.auth, GetCollection(req.baseUrl));

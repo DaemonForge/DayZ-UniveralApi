@@ -1,13 +1,13 @@
-const express = require('express');
-const { MongoClient } = require("mongodb");
-const jwt = require('jsonwebtoken');
-var crypto = require('crypto');
+const {Router} = require('express');
+const { MongoClient, MongoError  } = require("mongodb");
+const {sign} = require('jsonwebtoken');
+let {createHash} = require('crypto');
 
 const log = require("./log");
 
 const config = require('./configLoader');
 
-const router = express.Router();
+const router = Router();
 
 router.post('/:GUID/:auth', (req, res)=>{
     if ( req.params.auth == config.ServerAuth ){
@@ -25,11 +25,11 @@ async function runGetAuth(req, res, GUID) {
         // Connect the client to the server       
         await client.connect(); 
         const db = client.db(config.DB);
-        var collection = db.collection("Players");
-        var query = { GUID: GUID };
+        let collection = db.collection("Players");
+        let query = { GUID: GUID };
         const options = { upsert: true };
-        var AuthToken = makeAuthToken(GUID);
-        var SaveToken = crypto.createHash('sha256').update(AuthToken).digest('base64');
+        let AuthToken = makeAuthToken(GUID);
+        let SaveToken = createHash('sha256').update(AuthToken).digest('base64');
         const updateDocValue  = { GUID: GUID, AUTH: SaveToken }
         const updateDoc = { $set: updateDocValue, };
         const result = await collection.updateOne(query, updateDoc, options);
@@ -50,7 +50,7 @@ async function runGetAuth(req, res, GUID) {
 
 function makeAuthToken(GUID) {
     const player = { GUID: GUID }; 
-    var result = jwt.sign(player, config.ServerAuth, { expiresIn: 2800 });
+    let result = sign(player, config.ServerAuth, { expiresIn: 2800 });
     return result;
  }
 

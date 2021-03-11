@@ -1,5 +1,4 @@
-const express = require('express');
-const { MongoClient } = require("mongodb");
+const {Router} = require('express');
 const fetch  = require('node-fetch');
 
 const log = require("./log");
@@ -9,31 +8,31 @@ const CheckAuth = require('./AuthChecker')
 const config = require('./configLoader');
 
 /*
-    var Request.URL
-    var Request.Headers[].Key 
-    var Request.Headers[].Value
-    var Request.Body
-    var Request.Method
-    var Request.ReturnValue = "" //Will look for this specific Key to return as the data
+    let Request.URL
+    let Request.Headers[].Key 
+    let Request.Headers[].Value
+    let Request.Body
+    let Request.Method
+    let Request.ReturnValue = "" //Will look for this specific Key to return as the data
 */
 
-const router = express.Router();
+const router = Router();
 router.post('/:auth', (req, res)=>{
     runFowarder(req, res, req.params.auth)
 });
 async function runFowarder(req, res, auth){
-    var RawData = req.body;
+    let RawData = req.body;
     if ( auth === config.ServerAuth || (await CheckAuth( auth )) ){
         log("Fowarded Called URL: " + RawData.URL );
-        var strHeaders = "{";
-        var json;
-        for (var header of RawData.Headers) {
+        let strHeaders = "{";
+        let json;
+        for (let header of RawData.Headers) {
             strHeaders = strHeaders + " \"" + header.Key + "\": \"" + header.Value + "\",";
         }
-        var strHeadersLen = strHeaders.length - 1; //Remove the last extra ','
+        let strHeadersLen = strHeaders.length - 1; //Remove the last extra ','
         strHeaders = strHeaders.substring(0,strHeadersLen);
         strHeaders = strHeaders + " }";
-        var Headers = JSON.parse(strHeaders);
+        let Headers = JSON.parse(strHeaders);
         //console.log(RawData.Body)
         try {
         json = await fetch(RawData.URL, { 
@@ -45,7 +44,7 @@ async function runFowarder(req, res, auth){
             console.log('Catch an error: ', e)
         }
         //console.log(json);
-        var ReturnValue;
+        let ReturnValue;
         if (RawData.ReturnValue != ""){
             try{
                 ReturnValue = json[RawData.ReturnValue];

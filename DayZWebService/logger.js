@@ -1,14 +1,14 @@
-const express = require('express');
+const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 const CheckAuth = require('./AuthChecker')
-var crypto = require('crypto');
+let {createHash} = require('crypto');
 
 const config = require('./configLoader');
  
 const log = require("./log");
 
 
-const router = express.Router();
+const router = Router();
 
 
 router.post('/One/:id/:auth', (req, res)=>{
@@ -21,18 +21,18 @@ router.post('/Many/:id/:auth', (req, res)=>{
 
 async function runLoggerOne(req, res, id, auth) {
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-    var RawData = req.body;
-	var hasServerAuth = (auth === config.ServerAuth);
-	var hasClientAuth = await CheckAuth(auth, true);
+    let RawData = req.body;
+	let hasServerAuth = (auth === config.ServerAuth);
+	let hasClientAuth = await CheckAuth(auth, true);
     if ( hasClientAuth || hasServerAuth ){  
         try{
             //console.log(RawData);
             // Connect the client to the server       
             await client.connect(); 
             const db = client.db(config.DB);
-            var collection = db.collection("Logs");
-            var datetime = new Date();
-            var ClientId = GetClientID(req);
+            let collection = db.collection("Logs");
+            let datetime = new Date();
+            let ClientId = GetClientID(req);
             RawData.ServerId = id;
             RawData.LoggedDateTime = datetime;
             RawData.ClientId = ClientId;
@@ -65,17 +65,17 @@ async function runLoggerOne(req, res, id, auth) {
 
 async function runLoggerMany(req, res, id, auth) {
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-    var RawData = req.body;
-	var hasServerAuth = (auth === config.ServerAuth);
-	var hasClientAuth = await CheckAuth(auth, true);
+    let RawData = req.body;
+	let hasServerAuth = (auth === config.ServerAuth);
+	let hasClientAuth = await CheckAuth(auth, true);
     if (hasClientAuth || hasServerAuth){  
         try{
             // Connect the client to the server       
             await client.connect(); 
             const db = client.db(config.DB);
-            var collection = db.collection("Logs");
-            var datetime = new Date();
-            var ClientId = GetClientID(req);
+            let collection = db.collection("Logs");
+            let datetime = new Date();
+            let ClientId = GetClientID(req);
             RawData.forEach(element => {
                 element.ServerId = id;
                 element.LoggedDateTime = datetime;
@@ -106,9 +106,9 @@ async function runLoggerMany(req, res, id, auth) {
 }
 
 function GetClientID(req){
-    var ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    var  hash = crypto.createHash('sha256');
-    var theHash = hash.update(ip).digest('base64');
+    let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    let  hash = createHash('sha256');
+    let theHash = hash.update(ip).digest('base64');
     return theHash.substr(0,32); //Cutting the last few digets to save a bit of data and make sure people don't mistake it for the GUIDS
 }
 
