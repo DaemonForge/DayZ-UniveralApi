@@ -6,6 +6,8 @@ class UniversalApi{
 	
 	protected ref UniversalRest m_UniversalRest;
 	
+	protected ref UniversalDiscordRest m_UniversalDiscordRest;
+	
 	
 	protected ref array<ref PlayerIdentity> QueuedPlayers = new ref array<ref PlayerIdentity>;
 	
@@ -30,6 +32,13 @@ class UniversalApi{
 			m_UniversalRest = new ref UniversalRest;
 		}
 		return m_UniversalRest;
+	}
+	
+	ref UniversalDiscordRest Discord(){
+		if (!m_UniversalDiscordRest){
+			m_UniversalDiscordRest = new ref UniversalDiscordRest;
+		}
+		return m_UniversalDiscordRest;
 	}
 	
 	void Init(){
