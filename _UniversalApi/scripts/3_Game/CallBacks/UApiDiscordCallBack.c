@@ -20,7 +20,7 @@ class UApiDiscordCallBack: RestCallback
 		}
 		if (user.Status && user.Status == "Success" && user.id && user.id != "0"){
 			OnDiscordUserReceived(UApiDiscordUser.Cast(user));
-		} else if (user.Status && user.Status == "UserNotFound"){
+		} else if (user.Status && (user.Status == "NotFound" || user.Status ==  "NotSetup")){
 			OnDiscordUserNotFound(UApiDiscordUser.Cast(user));
 			
 		} else {
