@@ -191,25 +191,29 @@ class UniversalDiscordRest
 		string url = BaseUrl() + "Discord/GetWithPlainId/" + plainId + "/" + auth;
 		
 		string Result = PostNow(url,"{}");
-		
+		Print(Result);
 		JsonSerializer js = new JsonSerializer();
 		string error;
 		
-		UApiDiscordUser user;
+		ref UApiDiscordUser user;
 		
+		Print("[UPAI] [GetUserWithPlainIdNow] Read from Sting");
 		js.ReadFromString(user, Result, error);
 		
 		if (error != ""){
 			Print("[UPAI] [GetUserWithPlainIdNow] Error: " + error);
 		}
 		if (user && (user.Status == "Success" || ReturnError)){
+			Print("[UPAI] [GetUserWithPlainIdNow] Returning User");
 			return user;
 		} else if (!user && ReturnError){
+			Print("[UPAI] [GetUserWithPlainIdNow] Returning Error");
 			user = new UApiDiscordUser;
 			user.Status = "Error";
 			user.Error = "Error Fetching Data";
 			return user;
 		}
+		Print("[UPAI] [GetUserWithPlainIdNow] Returning NULL");
 		
 		return NULL;		
 	}

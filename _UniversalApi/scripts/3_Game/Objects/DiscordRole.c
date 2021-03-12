@@ -15,6 +15,9 @@ class UApiDiscordUser{
 		return (Roles.Find(roleid) != -1);
 	}
 	
+	void ~UApiDiscordUser(){
+		Print("[UAPI] ~UApiDiscordUser");
+	}
 }
 
 class UApiDiscordRoleReq{

@@ -3,11 +3,10 @@ class UniversalApi{
 	protected bool UAPI_Init = false;
 	protected ref ApiAuthToken m_authToken;
 	
-	
 	protected ref UniversalRest m_UniversalRest;
 	
 	protected ref UniversalDiscordRest m_UniversalDiscordRest;
-	
+	protected ref UApiDiscordUser dsUser;
 	
 	protected ref array<ref PlayerIdentity> QueuedPlayers = new ref array<ref PlayerIdentity>;
 	
@@ -61,15 +60,18 @@ class UniversalApi{
 			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(NULL), true);
 		}
 		if (m_UniversalApiConfig.PromptDiscordOnConnect >= 1){
-			thread CheckAndPromptDiscord();
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.CheckAndPromptDiscordThread);
+			//Should run on thread but give access violation not sure why yet
 		}
 	}
-	
+	void CheckAndPromptDiscordThread(){
+		thread CheckAndPromptDiscord();
+	}
 	
 	protected void CheckAndPromptDiscord(){
 		if (GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
 			Print("[UPAI] PromtDiscordOnConnect enbabled Requesting Discord Info");
-			UApiDiscordUser dsUser = UApiDiscordUser.Cast(UApi().Discord().GetUserWithPlainIdNow(GetGame().GetUserManager().GetTitleInitiator().GetUid(), true));
+			dsUser = UApi().Discord().GetUserWithPlainIdNow(GetGame().GetUserManager().GetTitleInitiator().GetUid(), true);
 			if (dsUser && dsUser.Status == "Success"){
 				Print("[UPAI] PromtDiscordOnConnect Already Connected Continue");
 			} else if (dsUser && dsUser.Status == "NotSetup"){

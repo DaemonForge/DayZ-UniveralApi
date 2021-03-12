@@ -29,7 +29,7 @@ class UniversalApiConfig
 					PromptDiscordOnConnect = 0;
 					Save();
 				}
-			}else{ //File does not exist create file	
+			} else { //File does not exist create file	
 				MakeDirectory(ConfigDIR);
 				Save();
 			}
