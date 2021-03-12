@@ -104,8 +104,15 @@ router.post('/RemoveRole/:GUID/:auth', (req, res) => {
     RemoveRole(res,req, req.params.GUID, req.params.auth);
 });
 
-router.post('/GetRoles/:GUID/:auth', (req, res) => {
+router.post('/Get/:GUID/:auth', (req, res) => {
     GetRoles(res,req, req.params.GUID, req.params.auth);
+});
+
+router.post('/GetWithPlainId/:ID/:auth', (req, res) => {
+    let guid = createHash('sha256').update(req.params.ID).digest('base64');
+    guid = guid.replace(/\+/g, '-'); 
+    guid = guid.replace(/\//g, '_');
+    GetRoles(res,req, guid, req.params.auth);
 });
 
 router.get('/:id', (req, res) => {
@@ -277,7 +284,7 @@ async function AddRole(res, req, GUID, auth){
             let RawData = req.body;
             let Role = RawData.Role;
             if ((await results.count()) == 0){
-                log("Can't find Player with ID " + GUID, "warn");
+                log("Error: Discord AddRole Can't find Player with ID " + GUID, "warn");
                 res.status(201);
                 res.json({Status: "Error", Error: `Player with ${GUID} Not Found`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
             } else {
@@ -285,9 +292,10 @@ async function AddRole(res, req, GUID, auth){
                 let data = dataarr[0]; 
                 let resObj;
                 if (data.Discord === undefined || data.Discord === {} || data.Discord.id === undefined || data.Discord.id === "" || data.Discord.id === "0" ){
+                    log(`Error: Discord AddRole User(${GUID}) doesn't have discord set up`, "warn");
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
-                    resObj = {Status: "DiscordError", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" }
+                    resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" }
                     let guild = await client.guilds.fetch(config.Discord_Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
@@ -295,15 +303,18 @@ async function AddRole(res, req, GUID, auth){
                         resObj = { Status: "Success", Error: "", Roles: roles, id: data.Discord.id, Username: data.Discord.username, Discriminator: data.Discord.discriminator, Avatar: data.Discord.avatar };
                         
                         if (player.roles.cache.has(Role)) {
+                            log(`Warning: Discord AddRole User(${GUID}) Already Has Role ${Role}`);
                             resObj.Error = "Already Has Role";
                         } else {
                             let role = await guild.roles.fetch(Role);
                             await player.roles.add(role).catch((e) => log(`Error: ${e}`));
                             resObj.Roles.push(Role);
+                            log(`Discord AddRole User(${GUID}) Added ${Role}`);
                         }
                     } catch (e) {
-                            resObj.Error = "User not found in discord";
-                            resObj.Status = "UserNotFound";
+                        log(`Error: Discord AddRole User(${GUID}) not found in discord`, "warn");
+                        resObj.Error = "User not found in discord";
+                        resObj.Status = "NotFound";
                     }
                 }
                 res.status(202);
@@ -321,6 +332,7 @@ async function AddRole(res, req, GUID, auth){
     } else {
         res.status(401);
         res.json({Status: "Error", Error: `Invalid Auth Key`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
+        log("AUTH ERROR: " + req.url, "warn");
     }
 }
 
@@ -337,7 +349,7 @@ async function RemoveRole(res, req, GUID, auth){
             let RawData = req.body;
             let Role = RawData.Role;
             if ((await results.count()) == 0){
-                log("Can't find Player with ID " + GUID, "warn");
+                log("ERROR: Discord RemoveRole Can't find Player with ID " + GUID, "warn");
                 res.status(201);
                 res.json({Status: "Error", Error: `Player with ${GUID} Not Found`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
             } else {
@@ -345,9 +357,10 @@ async function RemoveRole(res, req, GUID, auth){
                 let data = dataarr[0]; 
                 let resObj;
                 if (data.Discord === undefined || data.Discord === {} || data.Discord.id === undefined || data.Discord.id === "" || data.Discord.id === "0" ){
+                    log(`ERROR: Discord RemoveRole User(${GUID}) Doesn't have discord set up`);
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
-                    resObj = {Status: "DiscordError", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" }
+                    resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" }
                     let guild = await client.guilds.fetch(config.Discord_Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
@@ -363,7 +376,7 @@ async function RemoveRole(res, req, GUID, auth){
                         }
                     } catch (e) {
                             resObj.Error = "User not found in discord";
-                            resObj.Status = "UserNotFound";
+                            resObj.Status = "NotFound";
                     }
                 }
                 res.status(202);
@@ -381,6 +394,7 @@ async function RemoveRole(res, req, GUID, auth){
     } else {
         res.status(401);
         res.json({Status: "Error", Error: `Invalid Auth Key`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
+        log("AUTH ERROR: " + req.url, "warn");
     }
 
 }
@@ -395,8 +409,6 @@ async function GetRoles(res, req, GUID, auth){
             let collection = db.collection("Players");
             let query = { GUID: GUID };
             let results = collection.find(query);
-            let RawData = req.body;
-            let Role = RawData.Role;
             if ((await results.count()) == 0){
                 log("Can't find Player with ID " + GUID, "warn");
                 res.status(201);
@@ -408,15 +420,18 @@ async function GetRoles(res, req, GUID, auth){
                 if (data.Discord === undefined || data.Discord === {} || data.Discord.id === undefined || data.Discord.id === "" || data.Discord.id === "0" ){
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
-                    resObj = {Status: "DiscordError", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" }
+                    resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" }
                     let guild = await client.guilds.fetch(config.Discord_Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
                         let roles = player._roles
                         resObj = { Status: "Success", Error: "", Roles: roles, id: data.Discord.id, Username: data.Discord.username, Discriminator: data.Discord.discriminator, Avatar: data.Discord.avatar };
+                    
+                        log(`Succefully found discord ID and Roles for ${GUID}`)
                     } catch (e) {
-                            resObj.Error = "User not found in discord";
-                            resObj.Status = "UserNotFound";
+                        log(`Found Discord ID but not roles for ${GUID} `)
+                        resObj.Error = "User not found in discord";
+                        resObj.Status = "NotFound";
                     }
                 }
                 res.status(200);
@@ -431,6 +446,7 @@ async function GetRoles(res, req, GUID, auth){
             mongo.close();
         }
     } else {
+        log("AUTH ERROR: " + req.url, "warn");
         res.status(401);
         res.json({Status: "Error", Error: `Invalid Auth Key`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
     }
