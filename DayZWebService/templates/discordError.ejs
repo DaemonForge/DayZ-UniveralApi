@@ -8,7 +8,7 @@
     <!-- Light Theme <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/light.css"> -->
     <!-- Auto Detect Theme <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"> -->
 
-    <title>Error</title>
+    <title>Error - <%= Type %></title>
 
     <!--
         https://github.com/daemonforge/DayZ-UniveralApi/wiki/EJS-Syntax-Reference
@@ -42,6 +42,10 @@
     <% } else if ( Type == "UserNotFound") { %>
 
         <h1>This discord account is already linked with another Steam Id</h1>
+
+    <% } else if ( Type == "RoleRequired") { %>
+    
+        <h1>You are required to have a specific role in Discord</h1>
 
     <% } else { %>
 
