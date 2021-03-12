@@ -42,10 +42,10 @@ async function runLoggerOne(req, res, id, auth) {
 				RawData.ClientType = "Client";
             }
             
-            console.log(RawData);
             const result = await collection.insertOne(RawData);
             if (result.result.ok == 1){
                 res.json({Status: "ok"});
+                log(`New Log Registered from ${ClientType} - Device ID: ${ClientId}`);
             // log("Status Check Called", "info"); 
             } else {
                 res.status(500);
@@ -89,6 +89,7 @@ async function runLoggerMany(req, res, id, auth) {
             const result = await collection.insertMany(RawData);
             if (result.result.ok == 1){
                 res.json({Status: "ok"});
+                log(`New Log Array Registered from ${ClientType} - Device ID: ${ClientId}`);
             } else {
                 res.status(500);
                 res.json({Status: "error", Error: "Database Write Error"});
