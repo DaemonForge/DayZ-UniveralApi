@@ -23,6 +23,9 @@ class UniversalDiscordRest
 			if ( player && player.GetIdentity() ){
 				return BaseUrl() + "Discord/" + player.GetIdentity().GetPlainId();
 			}
+			if (GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
+				return BaseUrl() + "Discord/" + GetGame().GetUserManager().GetTitleInitiator().GetUid();
+			}
 		}
 		return BaseUrl() + "Discord/" + PlainId;
 	}
