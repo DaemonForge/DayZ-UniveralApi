@@ -50,6 +50,13 @@ class UniversalDiscordRest
 		ctx.GET(UCBX , "");
 	}
 	
+	static string PostNow(string url, string jsonString = "{}")
+	{
+		RestContext ctx =  Api().GetRestContext(url);
+		ctx.SetHeader("application/json");
+		return ctx.POST_now("", jsonString);
+	}
+	
 	
 	static string BaseUrl(){
 		if (m_BaseUrl != ""){
@@ -104,17 +111,106 @@ class UniversalDiscordRest
 	}
 	
 	
-	static void GetRoles(string GUID, ref RestCallback UCBX, string auth = "") {
+	static void GetUser(string GUID, ref RestCallback UCBX, string auth = "") {
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
 		
-		string url = BaseUrl() + "Discord/GetRoles/" + GUID + "/" + auth;
+		string url = BaseUrl() + "Discord/Get/" + GUID + "/" + auth;
 		
-
 		Post(url,"{}",UCBX);
+	}
+	
+	static void GetUserWithPlainId(string plainId, ref RestCallback UCBX, string auth = "") {
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		string url = BaseUrl() + "Discord/GetWithPlainId/" + plainId + "/" + auth;
+		
+		Post(url,"{}",UCBX);
+	}
+	
+	
+	// !!!!!WARNING!!!!! 
+	
+	// ALL OF THE FOLLOWING FUCNTIONS ARE THREAD BLOCKING ONLY RUN in secondary Thread!
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	// !!!!!WARNING!!!!!
+	// THE FOLLOWING FUCNTION IS THREAD BLOCKING ONLY RUN in secondary Thread!
+	static ref UApiDiscordUser GetUserNow(string GUID, bool ReturnError = false, string auth = "") {
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		string url = BaseUrl() + "Discord/Get/" + GUID + "/" + auth;
+		
+		string Result = PostNow(url,"{}");
+		
+		
+		JsonSerializer js = new JsonSerializer();
+		string error;
+		
+		UApiDiscordUser user;
+		
+		js.ReadFromString(user, Result, error);
+		
+		if (error != ""){
+			Print("[UPAI] [GetUserNow] Error: " + error);
+		}
+		if (user && (user.Status == "Success" || ReturnError)){
+			return user;
+		} else if (!user && ReturnError){
+			user = new UApiDiscordUser;
+			user.Status = "Error";
+			user.Error = "Error Fetching Data";
+			return user;
+		}
+		
+		return NULL;
 		
 	}
 	
 	
+	// !!!!!WARNING!!!!!
+	// THE FOLLOWING FUCNTION IS THREAD BLOCKING ONLY RUN in secondary Thread!
+	static ref UApiDiscordUser GetUserWithPlainIdNow(string plainId, bool ReturnError = false, string auth = "") {
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		string url = BaseUrl() + "Discord/GetWithPlainId/" + plainId + "/" + auth;
+		
+		string Result = PostNow(url,"{}");
+		
+		JsonSerializer js = new JsonSerializer();
+		string error;
+		
+		UApiDiscordUser user;
+		
+		js.ReadFromString(user, Result, error);
+		
+		if (error != ""){
+			Print("[UPAI] [GetUserWithPlainIdNow] Error: " + error);
+		}
+		if (user && (user.Status == "Success" || ReturnError)){
+			return user;
+		} else if (!user && ReturnError){
+			user = new UApiDiscordUser;
+			user.Status = "Error";
+			user.Error = "Error Fetching Data";
+			return user;
+		}
+		
+		return NULL;		
+	}
 }

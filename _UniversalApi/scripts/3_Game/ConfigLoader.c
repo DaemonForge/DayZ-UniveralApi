@@ -2,11 +2,13 @@ class UniversalApiConfig
 {
 	protected static string ConfigDIR = "$profile:UApi";
 	protected static string ConfigPATH = ConfigDIR + "\\UniversalApi.json";
+	string ConfigVersion = "1";
 	string ServerURL = "";
 	string ServerID = "";
     string ServerAuth = "";
 	bool QnAEnabled = false;
 	int EnableBuiltinLogging = 0;
+	int PromptDiscordOnConnect = 0;
 	
 	void Load(){
 		if (GetGame().IsServer()){
@@ -21,6 +23,11 @@ class UniversalApiConfig
 					if (QnAEnabled){
 						UApiQnAMaker();
 					}
+				}
+				if (ConfigVersion != "1"){
+					ConfigVersion = "1";
+					PromptDiscordOnConnect = 0;
+					Save();
 				}
 			}else{ //File does not exist create file	
 				MakeDirectory(ConfigDIR);

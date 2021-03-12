@@ -60,6 +60,28 @@ class UniversalApi{
 		if (m_UniversalApiConfig.QnAEnabled){
 			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(NULL), true);
 		}
+		if (m_UniversalApiConfig.PromptDiscordOnConnect >= 1){
+			thread CheckAndPromptDiscord();
+		}
+	}
+	
+	
+	protected void CheckAndPromptDiscord(){
+		if (GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
+			Print("[UPAI] PromtDiscordOnConnect enbabled Requesting Discord Info");
+			UApiDiscordUser dsUser = UApiDiscordUser.Cast(UApi().Discord().GetUserWithPlainIdNow(GetGame().GetUserManager().GetTitleInitiator().GetUid(), true));
+			if (dsUser && dsUser.Status == "Success"){
+				Print("[UPAI] PromtDiscordOnConnect Already Connected Continue");
+			} else if (dsUser && dsUser.Status == "NotSetup"){
+				GetGame().OpenURL(UApi().Discord().Link());
+			} else if (dsUser){
+				Print("[UPAI] PromtDiscordOnConnect  " + dsUser.Status + " Error Occured - " + dsUser.Error);
+			} else {
+				Print("[UPAI] PromtDiscordOnConnect dsUser is Null");
+			}
+		} else {
+			Print("[UPAI] PromtDiscordOnConnect enbabled but Player/Id is null");
+		}
 	}
 	
 	
