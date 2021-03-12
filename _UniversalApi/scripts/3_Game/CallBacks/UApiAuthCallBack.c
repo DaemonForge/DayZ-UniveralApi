@@ -45,10 +45,13 @@ class UApiAuthCallBack : RestCallback
 		if (player){
 			Print("[UPAI] [UApiAuthCallBack] Auth of a Player Success PlayerFound");
 			UniversalApiConfig m_ClientConfig = new UniversalApiConfig;
+			m_ClientConfig.ConfigVersion = UApiConfig().ConfigVersion;
 			m_ClientConfig.ServerURL = UApiConfig().ServerURL;
 			m_ClientConfig.ServerID = UApiConfig().ServerID;
 			m_ClientConfig.ServerAuth = "null";
 			m_ClientConfig.QnAEnabled = UApiConfig().QnAEnabled;
+			m_ClientConfig.EnableBuiltinLogging = UApiConfig().EnableBuiltinLogging;
+			m_ClientConfig.PromptDiscordOnConnect = UApiConfig().PromptDiscordOnConnect;
 			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiConfig", new Param2<ApiAuthToken, UniversalApiConfig>(authToken, m_ClientConfig), true, player);
 			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiReady", new Param1<string>(authToken.GUID), true, player);
 			//Removing the Player from the Que About 3 Second Later to allow for other mods the possiblty to search the que as well.
