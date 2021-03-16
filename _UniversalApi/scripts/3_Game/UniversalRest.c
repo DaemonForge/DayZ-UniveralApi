@@ -65,7 +65,7 @@ class UniversalRest
 		if (jsonString){
 			Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Saving Player Data for " + mod);
+			Print("[UAPI] [Api] Error Saving Player Data for " + mod);
 		}
 	}
 	
@@ -80,7 +80,7 @@ class UniversalRest
 		if (UCBX){
 			Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Loading Player Data for " + mod);
+			Print("[UAPI] [Api] Error Loading Player Data for " + mod);
 		}
 	}
 	
@@ -94,7 +94,7 @@ class UniversalRest
 		if ( query && UCBX){
 			Post(url,query.ToJson(),UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Querying " +  mod);
+			Print("[UAPI] [Api] Error Querying " +  mod);
 		}
 	}
 	
@@ -120,7 +120,7 @@ class UniversalRest
 		if ( element && transaction && UCBX){
 			Post(url,transaction.ToJson(),UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Transaction " +  mod);
+			Print("[UAPI] [Api] Error Transaction " +  mod);
 		}
 	}
 	
@@ -143,7 +143,30 @@ class UniversalRest
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Transaction " +  mod);
+			Print("[UAPI] [Api] Error Transaction " +  mod);
+		}
+	}
+	
+	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
+	static void PlayerUpdateAdv(string mod, string guid, string element, string value, string operation, ref RestCallback UCBX = NULL, string auth = "") {
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack;
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		
+		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
+		
+		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value, operation);
+		
+		if ( element && updatedata && UCBX){
+			Post(url,updatedata.ToJson(),UCBX);
+		} else {
+			Print("[UAPI] [Api] Error Transaction " +  mod);
 		}
 	}
 	
@@ -161,7 +184,7 @@ class UniversalRest
 		if (jsonString){
 			Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Saving Globals Data for " + mod);
+			Print("[UAPI] [Api] Error Saving Globals Data for " + mod);
 		}
 	}
 	
@@ -175,7 +198,7 @@ class UniversalRest
 		if (UCBX){
 			Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Loading Globals Data for " + mod);
+			Print("[UAPI] [Api] Error Loading Globals Data for " + mod);
 		}
 	}
 	
@@ -202,7 +225,7 @@ class UniversalRest
 		if ( element && transaction && UCBX){
 			Post(url,transaction.ToJson(),UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Transaction " +  mod);
+			Print("[UAPI] [Api] Error Transaction " +  mod);
 		}
 	}
 	
@@ -225,9 +248,33 @@ class UniversalRest
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Transaction " +  mod);
+			Print("[UAPI] [Api] Error Transaction " +  mod);
 		}
 	}
+	
+	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
+	static void GlobalsUpdateAdv(string mod, string element, string value, string operation, ref RestCallback UCBX = NULL, string auth = "") {
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack;
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		
+		string url = BaseUrl() + "Gobals/Update/" + mod + "/" + auth;
+		
+		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value, operation);
+		
+		if ( element && updatedata && UCBX){
+			Post(url,updatedata.ToJson(),UCBX);
+		} else {
+			Print("[UAPI] [Api] Error Transaction " +  mod);
+		}
+	}
+	
 	
 	//Saving or loading an object with the ObjectId of "NewObject" will generate an Object ID for you, this Object ID will be returned
 	//in the ObjectId var of the Class so make sure your Class has the varible ObjectId if you plan on using this feature
@@ -245,7 +292,7 @@ class UniversalRest
 		if (jsonString){
 			Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Saving Object " + objectId + " Data for " + mod);
+			Print("[UAPI] [Api] Error Saving Object " + objectId + " Data for " + mod);
 		}
 	}
 	
@@ -260,7 +307,7 @@ class UniversalRest
 		if (UCBX){
 			Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Loading Object (" + objectId + ") Data for " + mod);
+			Print("[UAPI] [Api] Error Loading Object (" + objectId + ") Data for " + mod);
 		}
 	}
 	
@@ -275,7 +322,7 @@ class UniversalRest
 		if ( query && UCBX){
 			Post(url,query.ToJson(),UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Querying " +  mod);
+			Print("[UAPI] [Api] Error Querying " +  mod);
 		}
 	}
 	
@@ -302,7 +349,7 @@ class UniversalRest
 		if ( element && transaction && UCBX){
 			Post(url,transaction.ToJson(),UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Transaction " +  mod);
+			Print("[UAPI] [Api] Error Transaction " +  mod);
 		}
 	}
 	
@@ -325,7 +372,30 @@ class UniversalRest
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Transaction " +  mod);
+			Print("[UAPI] [Api] Error Transaction " +  mod);
+		}
+	}
+	
+	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
+	static void ObjectUpdateAdv(string mod, string guid, string element, string value, string operation = "set", ref RestCallback UCBX = NULL, string auth = "") {
+		
+		if (!UCBX){
+			UCBX = new ref UApiSilentCallBack;
+		}
+		
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		
+		string url = BaseUrl() + "Object/Update/" + guid  + "/" + mod + "/" + auth;
+		
+		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value, operation);
+		
+		if ( element && updatedata && UCBX){
+			Post(url,updatedata.ToJson(),UCBX);
+		} else {
+			Print("[UAPI] [Api] Error Transaction " +  mod);
 		}
 	}
 	
@@ -344,7 +414,7 @@ class UniversalRest
 		if ( data && UCBX){
 			Post(url,data.ToJson(),UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Fowarding ");
+			Print("[UAPI] [Api] Error Fowarding ");
 		}
 	}
 
@@ -363,7 +433,7 @@ class UniversalRest
 		if ( jsonString && UCBX){
 			Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Fowarding ");
+			Print("[UAPI] [Api] Error Fowarding ");
 		}
 	}
 	
@@ -382,16 +452,8 @@ class UniversalRest
 		if (jsonString && UCBX){
 			Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Fowarding ");
+			Print("[UAPI] [Api] Error Fowarding ");
 		}
-	}
-	
-	
-	
-	
-	
-	
-	
-	
+	}	
 	
 };

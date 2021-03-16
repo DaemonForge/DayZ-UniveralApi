@@ -18,11 +18,13 @@ class UApiTransaction
 class UApiUpdateData
 {
 	string Element;
+	string Operation = "set"; // set | push | pull | unset | mul | rename | pullAll
 	string Value;
 	
-	void UApiUpdateData(string element, string value){
+	void UApiUpdateData(string element, string value, string operation = "set"){
 		Element = element;
 		Value = value;
+		Operation = operation;
 	}
 	
 	string ToJson(){

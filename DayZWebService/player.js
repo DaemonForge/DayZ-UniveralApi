@@ -139,6 +139,7 @@ async function runUpdate(req, res, GUID, mod, auth) {
             await client.connect();
             let RawData = req.body;
             let element = RawData.Element;
+            let operation = RawData.Operation || "set";
             let StringData;
             if (isObject(RawData.Value)){
                 StringData = JSON.stringify(RawData.Value);
@@ -160,7 +161,23 @@ async function runUpdate(req, res, GUID, mod, auth) {
                 jsonString = "{ \"Data."+element+"\": \""+ StringData + "\" }";
                 updateDocValue  = JSON.parse(jsonString);
             }
-            const updateDoc = { $set: updateDocValue, };
+
+            let updateDoc = { $set: updateDocValue, };
+            
+            if (operation === "pull"){
+                updateDoc = { $pull: updateDocValue, };
+            } else if (operation === "push"){
+                updateDoc = { $push: updateDocValue, };
+            } else if (operation === "unset"){
+                updateDoc = { $unset: updateDocValue, };
+            } else if (operation === "mul"){
+                updateDoc = { $mul: updateDocValue, };
+            } else if (operation === "rename"){
+                updateDoc = { $rename: updateDocValue, };
+            } else if (operation === "pullAll"){
+                updateDoc = { $pullAll: updateDocValue, };
+            }
+
             const result = await collection.updateOne(query, updateDoc, options);
             if (result.result.ok == 1 && Results.result.n > 0){
                 log("Updated " + element +" for "+ mod + " Data for GUID: " + GUID);

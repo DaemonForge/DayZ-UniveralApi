@@ -130,6 +130,7 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
 
             let RawData = req.body;
             let element = RawData.Element;
+            let operation = RawData.Operation || "set";
             let StringData;
             if (isObject(RawData.Value)){
                 StringData = JSON.stringify(RawData.Value);
@@ -152,13 +153,32 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
                 jsonString = "{ \"Data."+element+"\": \""+ StringData + "\" }";
                 updateDocValue  = JSON.parse(jsonString);
             }
-            const updateDoc = { $set: updateDocValue, };
+            //console.log(updateDocValue);
+            let updateDoc = { $set: updateDocValue, };
+            
+            if (operation === "pull"){
+                updateDoc = { $pull: updateDocValue, };
+            } else if (operation === "push"){
+                updateDoc = { $push: updateDocValue, };
+            } else if (operation === "unset"){
+                updateDoc = { $unset: updateDocValue, };
+            } else if (operation === "mul"){
+                updateDoc = { $mul: updateDocValue, };
+            } else if (operation === "rename"){
+                updateDoc = { $rename: updateDocValue, };
+            } else if (operation === "pullAll"){
+                updateDoc = { $pullAll: updateDocValue, };
+            }
+            //console.log(updateDoc)
+            
             const result = await collection.updateOne(query, updateDoc, options);
+            //console.log(result.result)
             if (result.result.ok == 1 && result.result.n > 0){
                 log("Updated " + element +" for "+ mod + " Data for ObjectId: " + ObjectId);
                 res.status(200);
                 res.json({ Status: "Success", Element: element, Mod: mod, ID: ObjectId});
             } else {
+                //console.log(result.result)
                 log("Error with Updating " + element +" for "+ mod + " Data for ObjectId: " + ObjectId, "warn");
                 res.status(203);
                 res.json({ Status: "Error", Element: element, Mod: mod, ID: ObjectId});
@@ -166,7 +186,7 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
         }catch(err){
             res.status(203);
             res.json({ Status: "Error", Element: element, Mod: mod, ID: ObjectId});
-            console.log(err)
+            //console.log(err)
             log("ERROR: " + err, "warn");
         }finally{
             // Ensures that the client will close when you finish/error
