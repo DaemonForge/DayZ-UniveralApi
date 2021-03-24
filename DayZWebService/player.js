@@ -58,7 +58,7 @@ async function runGet(req, res, GUID, mod, auth) {
                 let sent = false;
                 for (const [key, value] of Object.entries(data)) {
                     if(key === mod){
-                        let sent = true;
+                        sent = true;
                         res.json(value);
                         log("Retrieving "+ mod + " Data for GUID: " + GUID);
                     }
