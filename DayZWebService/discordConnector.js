@@ -1,27 +1,27 @@
-const {Router} = require('express');
+const {Router, response} = require('express');
 const { MongoClient } = require("mongodb");
-const {createHash} = require('crypto')
+const {createHash} = require('crypto');
 const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
-const {render} = require('ejs')
+const {render} = require('ejs');
 const log = require("./log");
 const config = require('./configLoader');
 const {Client, GuildMember, Guild} = require("discord.js");
 const client = new Client();
 const fetch = require('node-fetch');
-const DefaultTemplates = require("./templates/defaultTemplates.json")
+const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
 const CheckAuth = require("./AuthChecker");
 const router = Router();
 try {
     if (config.Discord_Bot_Token !== "" && config.Discord_Bot_Token !== undefined){
         client.login(config.Discord_Bot_Token);
-        console.log("Logging in to discord bot")
+        console.log("Logging in to discord bot");
     } else {
-        log("Discord Bot Token not present you will not be able to use any discord functions")
+        log("Discord Bot Token not present you will not be able to use any discord functions");
     }
 } catch (e){
-    log("Discord Bot Token is invalid", "warn")
-    log(e, "warn")
+    log("Discord Bot Token is invalid", "warn");
+    log(e, "warn");
 }
 
 
@@ -35,9 +35,9 @@ function LoadLoginTemplate(){
         let error = ejsLint(LoginTemplate) ;
         if (error !== undefined){
             LoginTemplate = DefaultTemplates.Login;
-            log("============ ERROR IN LOGIN TEMPLATE ================", "warn")
-            log(error, "warn")
-            log("=====================================================", "warn")
+            log("============ ERROR IN LOGIN TEMPLATE ================", "warn");
+            log(error, "warn");
+            log("=====================================================", "warn");
         }
     } catch (e) {
         log("Login Template Missing Creating It Now");
@@ -55,9 +55,9 @@ function LoadSuccessTemplate(){
         if (error !== undefined){
             LoginTemplate = DefaultTemplates.Success;
         
-            log("=========== ERROR IN SUCCESS TEMPLATE ===============", "warn")
-            log(error, "warn")
-            log("=====================================================", "warn")
+            log("=========== ERROR IN SUCCESS TEMPLATE ===============", "warn");
+            log(error, "warn");
+            log("=====================================================", "warn");
         }
     } catch (e) {
         log("Success Template Missing Creating It Now");
@@ -120,24 +120,64 @@ router.get('/:id', (req, res) => {
     if (ErrorTemplate === undefined) LoadErrorTemplate();
     let id = req.params.id;
     if ( config.Discord_Client_Id === "" || config.Discord_Client_Secret === ""  || config.Discord_Bot_Token === ""  || config.Discord_Guild_Id === "" || config.Discord_Client_Id === undefined || config.Discord_Client_Secret === undefined  || config.Discord_Bot_Token === undefined  || config.Discord_Guild_Id === undefined )
-        res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}))
+        res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}));
     else if (id.match(/[1-9][0-9]{16,16}/)) 
-        res.send(render(LoginTemplate, {SteamId: id, Login_URL: `/discord/login/${id}`}))
+        res.send(render(LoginTemplate, {SteamId: id, Login_URL: `/discord/login/${id}`}));
     else
-        res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}))
+        res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}));
 });
 
 router.get('/login/:id', (req, res) => {
+   RenderLogin(req, res);
+});
+
+
+async function RenderLogin(req, res){
     if (ErrorTemplate === undefined) LoadErrorTemplate();
     let id = req.params.id;
+    let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    
+
     let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
-    if ( config.Discord_Client_Id === "" || config.Discord_Client_Secret === ""  || config.Discord_Bot_Token === ""  || config.Discord_Guild_Id === "" || config.Discord_Client_Id === undefined || config.Discord_Client_Secret === undefined  || config.Discord_Bot_Token === undefined  || config.Discord_Guild_Id === undefined )
-        res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}))
-    else if (config.Discord_Client_Id !== undefined && id.match(/[1-9][0-9]{16,16}/))
-        res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord_Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
-    else
-        res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}))
-});
+    if ( config.Discord_Client_Id === "" || config.Discord_Client_Secret === ""  || config.Discord_Bot_Token === ""  || config.Discord_Guild_Id === "" || config.Discord_Client_Id === undefined || config.Discord_Client_Secret === undefined  || config.Discord_Bot_Token === undefined  || config.Discord_Guild_Id === undefined ){
+        return res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}))
+    }
+    if (config.Discord_Client_Id === undefined && !id.match(/[1-9][0-9]{16,16}/)){
+        return res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}))
+    }
+    if (config.Discord_Restrict_Sign_Up === undefined || !config.Discord_Restrict_Sign_Up){
+        return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord_Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+    }
+    if (ip === undefined){
+        return res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}));
+    }
+    let responsejson;
+    try {
+        responsejson = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,countryCode,country,regionName,isp,org,as,proxy,hosting,query`).then((response)=>response.json())
+        if (responsejson.status === "success" && !responsejson.proxy && !responsejson.hosting){
+            if (config.Discord_Restrict_Sign_Up_Countries !== undefined && config.Discord_Restrict_Sign_Up_Countries[0] !== undefined){
+                let found = (config.Discord_Restrict_Sign_Up_Countries.find(element => element == responsejson.countryCode));
+                if (config.Discord_Restrict_Sign_Up_Countries[0] === 'blacklist' && !found){
+                    log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
+                   return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord_Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+                }
+                if (found){
+                   log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
+                    return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord_Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+                }
+            }
+            if (responsejson.status === "success" ){
+               log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
+               return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord_Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+           }
+        }
+    } catch (e) {            
+        log(`User Failed Singed up under restictive mode - ${id} - ${e}`, "warn");
+        return res.send(render(ErrorTemplate, {TheError: `Error Validating the signup proccess - ${e}`, Type: "ValidationError"}));
+    }
+    log(`User Failed Singed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`, "warn");
+    return res.send(render(ErrorTemplate, {TheError: `Error validating the signup proccess`, Type: "ValidationError"}));
+}
 
 async function HandleCallBack(req, res){
     if (ErrorTemplate === undefined) LoadErrorTemplate();
@@ -146,7 +186,7 @@ async function HandleCallBack(req, res){
     const state = req.query.state;
     //console.log(req.query)
     if (code === undefined || code === null || state === undefined || state === null){
-        res.send(render(ErrorTemplate, {TheError: "Invalid Response from Discord", Type: "Discord"}))
+        res.send(render(ErrorTemplate, {TheError: "Invalid Response from Discord", Type: "Discord"}));
         return;
     }
     const mongo = new MongoClient(config.DBServer, { useUnifiedTopology: true });
@@ -195,10 +235,10 @@ async function HandleCallBack(req, res){
             msg = "User is missing the role";
             errType = "RoleRequired";
             if (config.Discord_BlackList_Role !== "" && config.Discord_BlackList_Role !== undefined && roles.find(element => element === config.Discord_BlackList_Role) !== undefined){
-                msg = "You have a blacklisted role"
+                msg = "You have a blacklisted role";
                 errType = "Blacklisted";
             } else if (config.Discord_Required_Role === "" || config.Discord_Required_Role === undefined || roles.find(element => element === config.Discord_Required_Role) !== undefined){
-                msg = "Success"
+                msg = "Success";
             } 
         }
 
@@ -236,29 +276,29 @@ async function HandleCallBack(req, res){
                     log("Player: " + guid + " Connected to Discord ID: " + discordjson.id);
                     res.send(render(SuccessTemplate, {DiscordId: discordjson.id, DiscordUsername: discordjson.username, DiscordAvatar: discordjson.avatar, DiscordDiscriminator: discordjson.discriminator, SteamId: discordjson.steamid}))
                 } else {
-                    log("Error when trying to link player: " + guid + " to discord ID: " + discordjson.id, "warn")
+                    log("Error when trying to link player: " + guid + " to discord ID: " + discordjson.id, "warn");
                     res.send(render(ErrorTemplate, {TheError: "There was an error linking your discord account", Type: "Database"}));
                 }
             } else {
                 let dataarr = await results.toArray(); 
                 let querydata = dataarr[0]; 
                 if ( guid === querydata.GUID){
-                    log(`Player: ${guid} try to link to discord ID: ${discordjson.id} already in use with ${querydata.GUID}` , "warn")
+                    log(`Player: ${guid} try to link to discord ID: ${discordjson.id} already in use with ${querydata.GUID}` , "warn");
                     res.send( render(ErrorTemplate, {TheError: "It seems you already have your discord account Linked", Type: "AlreadyLinked"} ) );
                 } else {
-                    log(`Player: ${guid} try to link to discord ID: ${discordjson.id} already in use with ${querydata.GUID}` , "warn")
+                    log(`Player: ${guid} try to link to discord ID: ${discordjson.id} already in use with ${querydata.GUID}` , "warn");
                     res.send( render(ErrorTemplate, { TheError: "You already have your discord linked to another account", Type: "Conflict"} ) );
                 }
             }
         } else {
-            res.send(render(ErrorTemplate, {TheError: msg, Type: errType}))
+            res.send(render(ErrorTemplate, {TheError: msg, Type: errType}));
         }
     } catch (e){
         log(e, "warn")
         try {
-            res.send(render(ErrorTemplate, {TheError: e, Type: "System"}))
+            res.send(render(ErrorTemplate, {TheError: e, Type: "System"}));
         } catch(err){
-            log(err, "warn")
+            log(err, "warn");
             res.send(`<html><head><title>Invalid Link</title></head><body><h1>Error: Invalid Error Templates</h1></body></html>`);
         }
     } finally {
@@ -299,7 +339,7 @@ async function AddRole(res, req, GUID, auth){
                     let guild = await client.guilds.fetch(config.Discord_Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
-                        let roles = player._roles
+                        let roles = player._roles;
                         resObj = { Status: "Success", Error: "", Roles: roles, id: data.Discord.id, Username: data.Discord.username, Discriminator: data.Discord.discriminator, Avatar: data.Discord.avatar };
                         
                         if (player.roles.cache.has(Role)) {
@@ -321,7 +361,7 @@ async function AddRole(res, req, GUID, auth){
                 res.json(resObj);
             }
         }catch(err){
-            console.log(err)
+            console.log(err);
             res.status(203);
             res.json({Status: "Error", Error: `${err}`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
             log("ERROR: " + err, "warn");
@@ -360,11 +400,11 @@ async function RemoveRole(res, req, GUID, auth){
                     log(`ERROR: Discord RemoveRole User(${GUID}) Doesn't have discord set up`);
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
-                    resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" }
+                    resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                     let guild = await client.guilds.fetch(config.Discord_Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
-                        let roles = player._roles
+                        let roles = player._roles;
                         resObj = { Status: "Success", Error: "", Roles: roles, id: data.Discord.id, Username: data.Discord.username, Discriminator: data.Discord.discriminator, Avatar: data.Discord.avatar };
                         
                         if (player.roles.cache.has(Role)) {
@@ -383,7 +423,7 @@ async function RemoveRole(res, req, GUID, auth){
                 res.json(resObj);
             }
         }catch(err){
-            console.log(err)
+            console.log(err);
             res.status(203);
             res.json({Status: "Error", Error: `${err}`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
             log("ERROR: " + err, "warn");
@@ -420,16 +460,16 @@ async function GetRoles(res, req, GUID, auth){
                 if (data.Discord === undefined || data.Discord === {} || data.Discord.id === undefined || data.Discord.id === "" || data.Discord.id === "0" ){
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
-                    resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" }
+                    resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                     let guild = await client.guilds.fetch(config.Discord_Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
-                        let roles = player._roles
+                        let roles = player._roles;
                         resObj = { Status: "Success", Error: "", Roles: roles, id: data.Discord.id, Username: data.Discord.username, Discriminator: data.Discord.discriminator, Avatar: data.Discord.avatar };
                     
-                        log(`Succefully found discord ID and Roles for ${GUID}`)
+                        log(`Succefully found discord ID and Roles for ${GUID}`);
                     } catch (e) {
-                        log(`Found Discord ID but not roles for ${GUID} `)
+                        log(`Found Discord ID but not roles for ${GUID} `);
                         resObj.Error = "User not found in discord";
                         resObj.Status = "NotFound";
                     }

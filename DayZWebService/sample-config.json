@@ -12,5 +12,7 @@
     "Discord_Bot_Token": "",
     "Discord_Guild_Id": "",
     "Discord_Required_Role": "",
-    "Discord_BlackList_Role": ""
+    "Discord_BlackList_Role": "",
+    "Discord_Restrict_Sign_Up": true,
+    "Discord_Restrict_Sign_Up_Countries": ["blacklist", "china"]
 }
