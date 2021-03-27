@@ -25,7 +25,7 @@ class UApiQueryObject{
 	}
 	
 	string ToJson(){
-		return JsonFileLoader<UApiQueryObject>.JsonMakeData(this);;
+		return JsonFileLoader<UApiQueryObject>.JsonMakeData(this);
 	}
 	
 }

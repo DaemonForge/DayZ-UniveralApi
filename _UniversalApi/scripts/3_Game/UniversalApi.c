@@ -1,14 +1,24 @@
 class UniversalApi{
 
+	protected int m_CallId = 0;
+	
 	protected bool UAPI_Init = false;
 	protected ref ApiAuthToken m_authToken;
 	
 	protected ref UniversalRest m_UniversalRest;
 	
 	protected ref UniversalDiscordRest m_UniversalDiscordRest;
+	protected ref UniversalDSEndpoint m_UniversalDSEndpoint;
+	
 	protected ref UApiDiscordUser dsUser;
 	
 	protected ref array<ref PlayerIdentity> QueuedPlayers = new ref array<ref PlayerIdentity>;
+	
+	protected ref UApiDBEndpoint m_PlayerEndPoint;
+	
+	protected ref UApiDBEndpoint m_ObjectEndPoint;
+	//Can't Do Globals due to how globals work
+	
 	
 	string GetAuthToken(){
 		if (m_authToken && !GetGame().IsServer()){
@@ -25,6 +35,22 @@ class UniversalApi{
 		}
 		return false;
 	}
+	
+	ref UApiDBEndpoint db(int collection = OBJECT_DB){
+		if (collection == OBJECT_DB){
+			if (!m_ObjectEndPoint){
+				m_ObjectEndPoint = new UApiDBEndpoint("Object");
+			}
+			return m_ObjectEndPoint;
+		} else if (collection == PLAYER_DB){
+			if (!m_PlayerEndPoint){
+				m_PlayerEndPoint = new UApiDBEndpoint("Player");
+			}
+			return m_PlayerEndPoint;
+		}
+		return NULL;
+		
+	}
 		
 	ref UniversalRest Rest(){
 		if (!m_UniversalRest){
@@ -38,6 +64,13 @@ class UniversalApi{
 			m_UniversalDiscordRest = new ref UniversalDiscordRest;
 		}
 		return m_UniversalDiscordRest;
+	}
+	
+	ref UniversalDSEndpoint DS(){
+		if (!m_UniversalDSEndpoint){
+			m_UniversalDSEndpoint = new ref UniversalDSEndpoint;
+		}
+		return m_UniversalDSEndpoint;
 	}
 	
 	void Init(){
@@ -200,6 +233,40 @@ class UniversalApi{
 		} else {
 			Print("[UPAI] [Api] Error Asking Question ");
 		}
+	}
+	
+	
+	string ErrorToString(int ErrorCode){
+		switch ( ErrorCode )
+		{
+			case ERestResultState.EREST_EMPTY:
+				return "EREST_EMPTY";
+			case ERestResultState.EREST_PENDING:
+				return "EREST_PENDING";
+			case ERestResultState.EREST_FEEDING:
+				return "EREST_FEEDING";
+			case ERestResultState.EREST_SUCCESS:
+				return "EREST_SUCCESS";
+			case ERestResultState.EREST_ERROR:
+				return "EREST_ERROR";
+			case ERestResultState.EREST_ERROR_CLIENTERROR:
+				return "EREST_ERROR_CLIENTERROR";
+			case ERestResultState.EREST_ERROR_SERVERERROR:
+				return "EREST_ERROR_SERVERERROR";
+			case ERestResultState.EREST_ERROR_APPERROR:
+				return "EREST_ERROR_APPERROR";
+			case ERestResultState.EREST_ERROR_TIMEOUT:
+				return "EREST_ERROR_TIMEOUT";
+			case ERestResultState.EREST_ERROR_NOTIMPLEMENTED:
+				return "EREST_ERROR_NOTIMPLEMENTED";
+			case ERestResultState.EREST_ERROR_UNKNOWN:
+				return "EREST_ERROR_UNKNOWN";
+		}
+		return "UNDEFINED_ERROR";
+	}
+	
+	int CallId(){
+		return ++m_CallId;
 	}
 };
 

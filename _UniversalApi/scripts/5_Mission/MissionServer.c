@@ -9,6 +9,5 @@ modded class MissionServer extends MissionBase
 	override void UniversalApiReady(){
 		//You requests for after the AuthToken Is received for server side code
 		super.UniversalApiReady();
-		
 	}
 }
