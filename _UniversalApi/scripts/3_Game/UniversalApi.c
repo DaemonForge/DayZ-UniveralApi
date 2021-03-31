@@ -12,7 +12,7 @@ class UniversalApi{
 	
 	protected ref UApiDiscordUser dsUser;
 	
-	protected ref array<ref PlayerIdentity> QueuedPlayers = new ref array<ref PlayerIdentity>;
+	protected ref array<ref PlayerIdentity> QueuedPlayers = new array<ref PlayerIdentity>;
 	
 	protected ref UApiDBEndpoint m_PlayerEndPoint;
 	
@@ -54,21 +54,21 @@ class UniversalApi{
 		
 	ref UniversalRest Rest(){
 		if (!m_UniversalRest){
-			m_UniversalRest = new ref UniversalRest;
+			m_UniversalRest = new UniversalRest;
 		}
 		return m_UniversalRest;
 	}
 	
 	ref UniversalDiscordRest Discord(){
 		if (!m_UniversalDiscordRest){
-			m_UniversalDiscordRest = new ref UniversalDiscordRest;
+			m_UniversalDiscordRest = new UniversalDiscordRest;
 		}
 		return m_UniversalDiscordRest;
 	}
 	
 	ref UniversalDSEndpoint DS(){
 		if (!m_UniversalDSEndpoint){
-			m_UniversalDSEndpoint = new ref UniversalDSEndpoint;
+			m_UniversalDSEndpoint = new UniversalDSEndpoint;
 		}
 		return m_UniversalDSEndpoint;
 	}
@@ -212,11 +212,11 @@ class UniversalApi{
 	void QnA(string question, bool alwaysAnswer = true, ref RestCallback UCBX = NULL, string jsonString = "{}", string auth = ""){
 		
 		if (!UCBX && alwaysAnswer){
-			ref UApiQnACallBack QnACBX = new ref UApiQnACallBack;
+			ref UApiQnACallBack QnACBX = new UApiQnACallBack;
 			QnACBX.SetAlwaysAnswer();
 			UCBX = QnACBX;
 		} else if (!UCBX) {
-			UCBX = new ref UApiQnACallBack;
+			UCBX = new UApiQnACallBack;
 		}
 		
 		if (auth == "" ){
@@ -277,7 +277,7 @@ static ref UniversalApi UApi()
 	if ( !g_UniversalApi )
 	{
 		Print("[UPAI] Init");
-		g_UniversalApi = new ref UniversalApi;
+		g_UniversalApi = new UniversalApi;
 		g_UniversalApi.Init();
 	}
 

@@ -2,7 +2,7 @@ class UApiDiscordObject{
 	string username = "";
 	string avatar_url = "";
 	string content = "";
-	ref array<ref UApiDiscordEmbed> embeds = new ref array<ref UApiDiscordEmbed>;
+	ref array<ref UApiDiscordEmbed> embeds = new array<ref UApiDiscordEmbed>;
 	
 	string ToJson(){
 		string jsonString = JsonFileLoader<UApiDiscordObject>.JsonMakeData(this);
@@ -17,7 +17,7 @@ class UApiDiscordEmbed{
 	string url = "";
 	string description = "";
 	int color = 0;
-	ref array<ref UApiDiscordField> embeds = new ref array<ref UApiDiscordField>;
+	ref array<ref UApiDiscordField> embeds = new array<ref UApiDiscordField>;
 	ref UApiDiscordImage thumbnail; 
 	ref UApiDiscordImage image; 
 	ref UApiDiscordFooter footer; 

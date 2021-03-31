@@ -52,12 +52,12 @@ class UniversalApiConfig
 ref UniversalApiConfig m_UniversalApiConfig;
 
 //Helper function to return Config
-static ref UniversalApiConfig UApiConfig()
+static UniversalApiConfig UApiConfig()
 {
 	if ( GetGame().IsServer()){
 		if (!m_UniversalApiConfig)
 		{
-			m_UniversalApiConfig = new ref UniversalApiConfig;
+			m_UniversalApiConfig = new UniversalApiConfig;
 			m_UniversalApiConfig.Load();
 		}
 	}

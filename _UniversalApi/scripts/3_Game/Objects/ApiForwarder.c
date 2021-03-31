@@ -1,7 +1,7 @@
 class UApiForwarder{
 
 	string URL = "";
-    ref array<ref UApiHeaders> Headers = new ref array<ref UApiHeaders>;
+    ref array<ref UApiHeaders> Headers = new array<ref UApiHeaders>;
     string Method = "post";
     string Body = "";
     string ReturnValue = "";
@@ -10,13 +10,13 @@ class UApiForwarder{
 	void UApiForwarder( string url, string body = "{}", ref array<ref UApiHeaders> headers = NULL ){
 		URL = url;
 		if (headers == NULL){
-			Headers.Insert(new ref UApiHeaders("Content-Type", "application/json"));
+			Headers.Insert(new UApiHeaders("Content-Type", "application/json"));
 		}
 		Body = body;
 	}
 	
 	void AddHeader(string key, string value){
-		Headers.Insert(new ref UApiHeaders(key, value));
+		Headers.Insert(new UApiHeaders(key, value));
 	} 
 	
 	string ToJson(){

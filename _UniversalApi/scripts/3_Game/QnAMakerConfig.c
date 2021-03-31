@@ -4,14 +4,14 @@ class UApiQnAMakerServerAnswers
 	protected static string ConfigPATH = ConfigDIR + "\\QnAMakerServerAnswers.json";
 	protected bool UseNotifcationsMod = false;
 	string BotName = "Bot";
-	ref array<ref QnAMakerServerAnswer> ServerSpecificAnswers = new ref array<ref QnAMakerServerAnswer>;
+	ref array<ref QnAMakerServerAnswer> ServerSpecificAnswers = new array<ref QnAMakerServerAnswer>;
 	
 	void Load(){
 		if (GetGame().IsServer()){
 			if (FileExist(ConfigPATH)){ //If config exist load File
 			    JsonFileLoader<UApiQnAMakerServerAnswers>.JsonLoadFile(ConfigPATH, this);
 			}else{ //File does not exist create FileMode.
-				ServerSpecificAnswers.Insert(new ref QnAMakerServerAnswer("#SERVERNAME#", "US1"));
+				ServerSpecificAnswers.Insert(new QnAMakerServerAnswer("#SERVERNAME#", "US1"));
 				Save();
 			}
 		}
@@ -74,7 +74,7 @@ static ref UApiQnAMakerServerAnswers UApiQnAMaker()
 	if ( GetGame().IsServer()){
 		if (!m_QnAMakerServerAnswers)
 		{
-			m_QnAMakerServerAnswers = new ref UApiQnAMakerServerAnswers;
+			m_QnAMakerServerAnswers = new UApiQnAMakerServerAnswers;
 			m_QnAMakerServerAnswers.Load();
 		}
 	}

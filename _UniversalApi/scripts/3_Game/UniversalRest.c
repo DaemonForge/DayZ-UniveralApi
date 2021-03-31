@@ -20,7 +20,7 @@ class UniversalRest
 	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		RestContext ctx =  Api().GetRestContext(url);
 		ctx.SetHeader("application/json");
@@ -30,7 +30,7 @@ class UniversalRest
 	static void Get(string url, ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		RestContext ctx =  Api().GetRestContext(url);
 		ctx.GET(UCBX , "");
@@ -49,7 +49,7 @@ class UniversalRest
 		}
 		string url = BaseUrl() + "GetAuth/" + guid + "/" + auth;
 		
-		Post(url, "{}", new ref UApiAuthCallBack(guid));
+		Post(url, "{}", new UApiAuthCallBack(guid));
 	}
 	
 	static void PlayerSave(string mod, string guid, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {		
@@ -59,7 +59,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Player/Save/" + guid + "/" + mod  + "/" + auth;
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (jsonString){
@@ -105,7 +105,7 @@ class UniversalRest
 	static void PlayerTransaction(string mod, string guid, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiTransactionCallBack;
+			UCBX = new UApiTransactionCallBack;
 		}
 		
 		if (auth == "" ){
@@ -115,7 +115,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Player/Transaction/" + guid   + "/"+ mod + "/" + auth;
 		
-		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		ref UApiTransaction transaction = new UApiTransaction(element, value);
 		
 		if ( element && transaction && UCBX){
 			Post(url,transaction.ToJson(),UCBX);
@@ -128,7 +128,7 @@ class UniversalRest
 	static void PlayerUpdate(string mod, string guid, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -138,7 +138,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value);
+		ref UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -151,7 +151,7 @@ class UniversalRest
 	static void PlayerUpdateAdv(string mod, string guid, string element, string value, string operation, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -161,7 +161,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value, operation);
+		ref UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -178,7 +178,7 @@ class UniversalRest
 		string url = BaseUrl() + "Gobals/Save/" + mod  + "/" + auth;
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (jsonString){
@@ -210,7 +210,7 @@ class UniversalRest
 	static void GlobalsTransaction(string mod, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiTransactionCallBack;
+			UCBX = new UApiTransactionCallBack;
 		}
 		
 		if (auth == "" ){
@@ -220,7 +220,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Gobals/Transaction/" + mod  + "/" + auth;
 		
-		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		ref UApiTransaction transaction = new UApiTransaction(element, value);
 		
 		if ( element && transaction && UCBX){
 			Post(url,transaction.ToJson(),UCBX);
@@ -233,7 +233,7 @@ class UniversalRest
 	static void GlobalsUpdate(string mod, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -243,7 +243,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Gobals/Update/" + mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value);
+		ref UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -256,7 +256,7 @@ class UniversalRest
 	static void GlobalsUpdateAdv(string mod, string element, string value, string operation, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -266,7 +266,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Gobals/Update/" + mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value, operation);
+		ref UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -281,7 +281,7 @@ class UniversalRest
 	static void ObjectSave(string mod, string objectId, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -333,7 +333,7 @@ class UniversalRest
 	static void ObjectTransaction(string mod, string objectId, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiTransactionCallBack;
+			UCBX = new UApiTransactionCallBack;
 		}
 		
 		if (auth == "" ){
@@ -344,7 +344,7 @@ class UniversalRest
 		string url = BaseUrl() + "Object/Transaction/" + objectId + "/"+ mod + "/" + auth;
 		
 		
-		ref UApiTransaction transaction = new ref UApiTransaction(element, value);
+		ref UApiTransaction transaction = new UApiTransaction(element, value);
 		
 		if ( element && transaction && UCBX){
 			Post(url,transaction.ToJson(),UCBX);
@@ -357,7 +357,7 @@ class UniversalRest
 	static void ObjectUpdate(string mod, string guid, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -367,7 +367,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Object/Update/" + guid  + "/"+ mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value);
+		ref UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -380,7 +380,7 @@ class UniversalRest
 	static void ObjectUpdateAdv(string mod, string guid, string element, string value, string operation = "set", ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -390,7 +390,7 @@ class UniversalRest
 		
 		string url = BaseUrl() + "Object/Update/" + guid  + "/" + mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new ref UApiUpdateData(element, value, operation);
+		ref UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -406,7 +406,7 @@ class UniversalRest
 		}
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		string url = BaseUrl() + "Forward/" + auth;
@@ -425,7 +425,7 @@ class UniversalRest
 		}
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		string url = BaseUrl() + "Logger/One/" + UApiConfig().ServerID + "/"+ auth;
@@ -445,7 +445,7 @@ class UniversalRest
 		}
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		string url = BaseUrl() + "Logger/Many/" + UApiConfig().ServerID + "/"+ auth;

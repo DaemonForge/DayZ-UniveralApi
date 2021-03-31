@@ -31,20 +31,20 @@ class UniversalDiscordRest
 	}
 	
 	
-	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL)
+	static void Post(string url, string jsonString = "{}", RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		RestContext ctx =  Api().GetRestContext(url);
 		ctx.SetHeader("application/json");
 		ctx.POST(UCBX , "", jsonString);
 	}
 	
-	static void Get(string url, ref RestCallback UCBX = NULL)
+	static void Get(string url, RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		RestContext ctx =  Api().GetRestContext(url);
 		ctx.GET(UCBX , "");
@@ -68,7 +68,7 @@ class UniversalDiscordRest
 	static void AddRole(string GUID, string RoleId, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){
@@ -90,7 +90,7 @@ class UniversalDiscordRest
 	static void RemoveRole(string GUID, string RoleId, ref RestCallback UCBX = NULL, string auth = "") {
 		
 		if (!UCBX){
-			UCBX = new ref UApiSilentCallBack;
+			UCBX = new UApiSilentCallBack;
 		}
 		
 		if (auth == "" ){

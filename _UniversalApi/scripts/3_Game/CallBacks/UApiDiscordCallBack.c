@@ -10,7 +10,7 @@ class UApiDiscordCallBack: RestCallback
 	};
 	
 	override void OnSuccess(string data, int dataSize) {
-		ref UApiDiscordUser user;
+		UApiDiscordUser user;
 		
 		JsonSerializer js = new JsonSerializer();
 		string error;
@@ -28,18 +28,18 @@ class UApiDiscordCallBack: RestCallback
 		}
 	};
 	
-	void OnDiscordUserReceived(ref UApiDiscordUser user){
+	void OnDiscordUserReceived(UApiDiscordUser user){
 		//Do Stuff Here
 		Print("[UPAI] [UApiDiscordCallBack] Success: " + user.id );
 		
 	}
 	
-	void OnDiscordUserNotFound(ref UApiDiscordUser user){
+	void OnDiscordUserNotFound(UApiDiscordUser user){
 		//Do Stuff Here
 		Print("[UPAI] [UApiDiscordCallBack] User not found");
 	}
 	
-	void OnDiscordUserError(ref UApiDiscordUser user){
+	void OnDiscordUserError(UApiDiscordUser user){
 		//Do Stuff Here
 		Print("[UPAI] [UApiDiscordCallBack] Error: " + user.Error);
 		
