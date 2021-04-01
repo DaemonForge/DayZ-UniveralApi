@@ -31,7 +31,7 @@ class UniversalDiscordRest
 	}
 	
 	
-	static void Post(string url, string jsonString = "{}", RestCallback UCBX = NULL)
+	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -41,7 +41,7 @@ class UniversalDiscordRest
 		ctx.POST(UCBX , "", jsonString);
 	}
 	
-	static void Get(string url, RestCallback UCBX = NULL)
+	static void Get(string url, ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;

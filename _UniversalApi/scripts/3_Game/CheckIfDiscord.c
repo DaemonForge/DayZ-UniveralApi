@@ -1,12 +1,12 @@
 class CheckIfHasDiscord extends UApiDiscordCallBack {
 
-	override void OnDiscordUserReceived(ref UApiDiscordUser user){
+	override void OnDiscordUserReceived(UApiDiscordUser user){
 		//Do Stuff Here
 		Print("[UPAI] [CheckIfHasDiscord] Success: " + user.id );
 		
 	}
 	
-	override void OnDiscordUserNotFound(ref UApiDiscordUser user){
+	override void OnDiscordUserNotFound(UApiDiscordUser user){
 		//Do Stuff Here
 		Print("[UPAI] [CheckIfHasDiscord] User not found");
 		if (GetGame().IsClient()){
