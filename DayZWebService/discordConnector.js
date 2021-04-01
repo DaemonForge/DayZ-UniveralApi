@@ -552,7 +552,6 @@ async function CheckId(res,req, id, guid){
         } catch(err){
             log("Error Checking for ID " + guid + " err" + err, "warn");
             res.status(200);
-            res.json({Status: "Error" });
             res.json({Status: "Error", Error: err });
         } finally{
             await client.close();
