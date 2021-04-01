@@ -31,7 +31,7 @@ let LoginTemplate;
 //User Facing Code
 function LoadLoginTemplate(){
     try{
-        LoginTemplate = readFileSync("templates/discordLogin.ejs","utf8");
+        LoginTemplate = readFileSync("./templates/discordLogin.ejs","utf8");
         let error = ejsLint(LoginTemplate) ;
         if (error !== undefined){
             LoginTemplate = DefaultTemplates.Login;
@@ -40,7 +40,7 @@ function LoadLoginTemplate(){
             log("=====================================================", "warn");
         }
     } catch (e) {
-        log("Login Template Missing Creating It Now");
+        log("Login Template Missing Creating It Now - " + e);
         LoginTemplate = DefaultTemplates.Login;
         writeFileSync("./templates/discordLogin.ejs", LoginTemplate);
     }
@@ -50,7 +50,7 @@ LoadLoginTemplate();
 let SuccessTemplate;
 function LoadSuccessTemplate(){
     try{
-        SuccessTemplate = readFileSync("templates/discordSuccess.ejs","utf8");
+        SuccessTemplate = readFileSync("./templates/discordSuccess.ejs","utf8");
         let error = ejsLint(SuccessTemplate) ;
         if (error !== undefined){
             LoginTemplate = DefaultTemplates.Success;
@@ -60,7 +60,7 @@ function LoadSuccessTemplate(){
             log("=====================================================", "warn");
         }
     } catch (e) {
-        log("Success Template Missing Creating It Now");
+        log("Success Template Missing Creating It Now - " + e);
         SuccessTemplate = DefaultTemplates.Success;
         writeFileSync("./templates/discordSuccess.ejs", SuccessTemplate);
     }
@@ -70,7 +70,7 @@ LoadSuccessTemplate();
 let ErrorTemplate;
 function LoadErrorTemplate(){
     try{
-        ErrorTemplate = readFileSync("templates/discordError.ejs","utf8");
+        ErrorTemplate = readFileSync("./templates/discordError.ejs","utf8");
         let error = ejsLint(ErrorTemplate) ;
         if (error !== undefined){
             ErrorTemplate = DefaultTemplates.Error;
@@ -80,7 +80,7 @@ function LoadErrorTemplate(){
             log("=====================================================", "warn")
         }
     } catch (e) {
-        log("Error Template Missing Creating It Now");
+        log("Error Template Missing Creating It Now - " + e);
         ErrorTemplate = DefaultTemplates.Error;
         writeFileSync("./templates/discordError.ejs", ErrorTemplate);
     }
@@ -113,6 +113,13 @@ router.post('/GetWithPlainId/:ID/:auth', (req, res) => {
     guid = guid.replace(/\+/g, '-'); 
     guid = guid.replace(/\//g, '_');
     GetRoles(res,req, guid, req.params.auth);
+});
+
+router.post('/Check/:ID/', (req, res) => {
+    let guid = createHash('sha256').update(req.params.ID).digest('base64');
+    guid = guid.replace(/\+/g, '-'); 
+    guid = guid.replace(/\//g, '_');
+    CheckId(res,req, req.params.ID, guid);
 });
 
 router.get('/:id', (req, res) => {
@@ -507,7 +514,7 @@ async function CheckPlayerAuth(guid, auth){
             let query = { GUID: guid, AUTH: SavedAuth };
             let results = collection.find(query);
                 if ((await results.count()) != 0){
-                    isAuth = true;
+                    res.status(203);
                 }
         } catch(err){
             log("ID " + guid + " err" + err, "warn");
@@ -519,4 +526,39 @@ async function CheckPlayerAuth(guid, auth){
     return isAuth;
 }
 
+async function CheckId(res,req, id, guid){
+    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+        try{
+            await client.connect();
+            // Connect the client to the server        
+            const db = client.db(config.DB);
+            let collection = db.collection("Players");
+            let query = { GUID: guid };
+            let results = collection.find(query);
+            if ((await results.count()) > 0){
+                let dataarr = await results.toArray(); 
+                let data = dataarr[0]; 
+                if (data.Discord?.id !== undefined){
+                    res.status(200);
+                    res.json({Status: "Success" });
+                } else {
+                    res.status(200);
+                    res.json({Status: "NoDiscord" });
+                }
+            } else {
+                res.status(200);
+                res.json({Status: "NoUser" });
+            }
+        } catch(err){
+            log("Error Checking for ID " + guid + " err" + err, "warn");
+            res.status(200);
+            res.json({Status: "Error" });
+        } finally{
+            await client.close();
+        }
+}
+
+
 module.exports = router;
+
+
