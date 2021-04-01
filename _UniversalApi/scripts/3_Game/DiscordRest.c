@@ -56,7 +56,7 @@ class UniversalDiscordRest
 		ctx.SetHeader("application/json");
 		return ctx.POST_now("", jsonString);
 	}
-	
+
 	
 	static string BaseUrl(){
 		if (m_BaseUrl != ""){
@@ -147,7 +147,7 @@ class UniversalDiscordRest
 	
 	// !!!!!WARNING!!!!!
 	// THE FOLLOWING FUCNTION IS THREAD BLOCKING ONLY RUN in secondary Thread!
-	static ref UApiDiscordUser GetUserNow(string GUID, bool ReturnError = false, string auth = "") {
+	static UApiDiscordUser GetUserNow(string GUID, bool ReturnError = false, string auth = "") {
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
@@ -183,7 +183,7 @@ class UniversalDiscordRest
 	
 	// !!!!!WARNING!!!!!
 	// THE FOLLOWING FUCNTION IS THREAD BLOCKING ONLY RUN in secondary Thread!
-	static ref UApiDiscordUser GetUserWithPlainIdNow(string plainId, bool ReturnError = false, string auth = "") {
+	static UApiDiscordUser GetUserWithPlainIdNow(string plainId, bool ReturnError = false, string auth = "") {
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
@@ -195,7 +195,7 @@ class UniversalDiscordRest
 		JsonSerializer js = new JsonSerializer();
 		string error;
 		
-		ref UApiDiscordUser user;
+		UApiDiscordUser user;
 		
 		Print("[UPAI] [GetUserWithPlainIdNow] Read from Sting");
 		js.ReadFromString(user, Result, error);
@@ -216,6 +216,17 @@ class UniversalDiscordRest
 		Print("[UPAI] [GetUserWithPlainIdNow] Returning NULL");
 		
 		return NULL;		
+	}
+	
+	
+	
+	static void CheckDiscord(string PlainId, ref RestCallback UCBX,  string baseUrl = ""){		
+		if (baseUrl == ""){
+			baseUrl = BaseUrl();
+		}
+		string url = baseUrl + "Discord/Check/" + plainId;
+		
+		Post(url,"{}",UCBX);
 	}
 }
 

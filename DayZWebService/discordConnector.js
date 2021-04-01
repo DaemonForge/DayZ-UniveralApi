@@ -540,19 +540,20 @@ async function CheckId(res,req, id, guid){
                 let data = dataarr[0]; 
                 if (data.Discord?.id !== undefined){
                     res.status(200);
-                    res.json({Status: "Success" });
+                    res.json({Status: "Success", Error: "" });
                 } else {
                     res.status(200);
-                    res.json({Status: "NoDiscord" });
+                    res.json({Status: "NoDiscord", Error: "Discord found for user"  });
                 }
             } else {
                 res.status(200);
-                res.json({Status: "NoUser" });
+                res.json({Status: "NoUser", Error: "No User Found"  });
             }
         } catch(err){
             log("Error Checking for ID " + guid + " err" + err, "warn");
             res.status(200);
             res.json({Status: "Error" });
+            res.json({Status: "Error", Error: err });
         } finally{
             await client.close();
         }
