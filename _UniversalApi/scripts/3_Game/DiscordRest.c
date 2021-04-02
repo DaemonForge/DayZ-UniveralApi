@@ -30,7 +30,6 @@ class UniversalDiscordRest
 		return BaseUrl() + "Discord/" + PlainId;
 	}
 	
-	
 	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
@@ -224,7 +223,7 @@ class UniversalDiscordRest
 		if (baseUrl == ""){
 			baseUrl = BaseUrl();
 		}
-		string url = baseUrl + "Discord/Check/" + plainId;
+		string url = baseUrl + "Discord/Check/" + PlainId;
 		
 		Post(url,"{}",UCBX);
 	}
