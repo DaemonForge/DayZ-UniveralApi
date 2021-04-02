@@ -32,6 +32,12 @@ let LoginTemplate;
 function LoadLoginTemplate(){
     try{
         LoginTemplate = readFileSync("./templates/discordLogin.ejs","utf8");
+    } catch (e) {
+        log("Login Template Missing Creating It Now - " + e);
+        LoginTemplate = DefaultTemplates.Login;
+        writeFileSync("./templates/discordLogin.ejs", LoginTemplate);
+    }
+    try {
         let error = ejsLint(LoginTemplate) ;
         if (error !== undefined){
             LoginTemplate = DefaultTemplates.Login;
@@ -40,17 +46,20 @@ function LoadLoginTemplate(){
             log("=====================================================", "warn");
         }
     } catch (e) {
-        log("Login Template Missing Creating It Now - " + e);
-        LoginTemplate = DefaultTemplates.Login;
-        writeFileSync("./templates/discordLogin.ejs", LoginTemplate);
+        console.log(e);
     }
-
 }
 LoadLoginTemplate();
 let SuccessTemplate;
 function LoadSuccessTemplate(){
     try{
         SuccessTemplate = readFileSync("./templates/discordSuccess.ejs","utf8");
+    } catch (e) {
+        log("Success Template Missing Creating It Now - " + e);
+        SuccessTemplate = DefaultTemplates.Success;
+        writeFileSync("./templates/discordSuccess.ejs", SuccessTemplate);
+    }
+    try {
         let error = ejsLint(SuccessTemplate) ;
         if (error !== undefined){
             LoginTemplate = DefaultTemplates.Success;
@@ -60,17 +69,20 @@ function LoadSuccessTemplate(){
             log("=====================================================", "warn");
         }
     } catch (e) {
-        log("Success Template Missing Creating It Now - " + e);
-        SuccessTemplate = DefaultTemplates.Success;
-        writeFileSync("./templates/discordSuccess.ejs", SuccessTemplate);
+        console.log(e);
     }
-
 }
 LoadSuccessTemplate();
 let ErrorTemplate;
 function LoadErrorTemplate(){
     try{
         ErrorTemplate = readFileSync("./templates/discordError.ejs","utf8");
+    } catch (e) {
+        log("Error Template Missing Creating It Now - " + e);
+        ErrorTemplate = DefaultTemplates.Error;
+        writeFileSync("./templates/discordError.ejs", ErrorTemplate);
+    }
+    try {
         let error = ejsLint(ErrorTemplate) ;
         if (error !== undefined){
             ErrorTemplate = DefaultTemplates.Error;
@@ -80,9 +92,7 @@ function LoadErrorTemplate(){
             log("=====================================================", "warn")
         }
     } catch (e) {
-        log("Error Template Missing Creating It Now - " + e);
-        ErrorTemplate = DefaultTemplates.Error;
-        writeFileSync("./templates/discordError.ejs", ErrorTemplate);
+        console.log(e);
     }
 
 }
