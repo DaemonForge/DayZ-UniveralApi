@@ -1,4 +1,4 @@
-const {Router, response} = require('express');
+const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 const {createHash} = require('crypto');
 const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
@@ -46,7 +46,7 @@ function LoadLoginTemplate(){
             log("=====================================================", "warn");
         }
     } catch (e) {
-        console.log(e);
+        //console.log(e);
     }
 }
 LoadLoginTemplate();
@@ -69,7 +69,7 @@ function LoadSuccessTemplate(){
             log("=====================================================", "warn");
         }
     } catch (e) {
-        console.log(e);
+        //console.log(e);
     }
 }
 LoadSuccessTemplate();
@@ -92,7 +92,7 @@ function LoadErrorTemplate(){
             log("=====================================================", "warn")
         }
     } catch (e) {
-        console.log(e);
+        //console.log(e);
     }
 
 }
@@ -124,6 +124,31 @@ router.post('/GetWithPlainId/:ID/:auth', (req, res) => {
     guid = guid.replace(/\//g, '_');
     GetRoles(res,req, guid, req.params.auth);
 });
+
+router.post('/Channel/Create/:auth', (req, res) => {
+    CreateChannel(res, req, req.params.auth);
+});
+
+router.post('/Channel/Delete/:id/:auth', (req, res) => {
+    DeleteChannel(res, req, req.params.id, req.params.auth);
+});
+
+router.post('/Channel/Edit/:id/:auth', (req, res) => {
+    EditChannel(res, req, req.params.id, req.params.auth);
+});
+
+router.post('/Channel/Invite/:id/:auth', (req, res) => {
+    InviteChannel(res, req, req.params.id, req.params.auth);
+});
+
+router.post('/Channel/Send/:id/:auth', (req, res) => {
+    SendMessageChannel(res, req, req.params.id, req.params.auth);
+});
+
+router.post('/Channel/Messages/:id/:auth', (req, res) => {
+    GetMessagesChannel(res, req, req.params.id, req.params.auth);
+});
+
 
 router.post('/Check/:ID/', (req, res) => {
     let guid = createHash('sha256').update(req.params.ID).digest('base64');
@@ -511,29 +536,249 @@ async function GetRoles(res, req, GUID, auth){
 }
 
 
-async function CheckPlayerAuth(guid, auth){
-    let isAuth = false;
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-    if ((await CheckAuth(auth))){
+
+async function CreateChannel(res, req, auth){
+    if ((auth === config.ServerAuth) || (await CheckAuth(GUID, auth) && config.AllowClientWrite)){
         try{
-            await client.connect();
-            // Connect the client to the server        
-            const db = client.db(config.DB);
-            let collection = db.collection("Players");
-            let SavedAuth = createHash('sha256').update(auth).digest('base64');
-            let query = { GUID: guid, AUTH: SavedAuth };
-            let results = collection.find(query);
-                if ((await results.count()) != 0){
-                    res.status(203);
+            let RawData = req.body; 
+            let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+            let options = RawData.Options;
+            let channel = await guild.channels.create(RawData.Name, options)
+            let id = channel.id;
+
+            res.status(201);
+            res.json({Status: "Success", Error: ``, oid: `${id}`});
+
+        } catch(e){
+
+            res.status(400);
+            res.json({Status: "Error", Error: `${e}`, oid: "0"});
+            log("AUTH ERROR: " + req.url, "warn");
+
+        }
+    } else {
+        res.status(401);
+        res.json({Status: "Error", Error: `Invalid Auth Key`, oid: "0"});
+        log("AUTH ERROR: " + req.url, "warn");
+    }
+}
+
+
+async function DeleteChannel(res, req, id, auth){
+    if ((auth === config.ServerAuth) || (await CheckAuth(auth) && config.AllowClientWrite)){
+        try{
+            let RawData = req.body; 
+            let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+            let reason = RawData.reason;
+            try {
+                let channel = await guild.channels.cache.get(id);
+                if (channel){
+                    channel.delete(reason).then(()=>{
+                        log(`Deleted channel ${id} for ${reason}`);
+                        res.status(200);
+                        res.json({Status: "Success", Error: ``, oid: `${id}`});
+                    }).catch((e)=>{
+                        log(`Error Deleteing channel ${id} for ${reason} Error - ${e}`, "warn");
+                        res.status(200);
+                        res.json({Status: "Error", Error: `${e}`, oid: `${id}`});
+                    })
+                } else {
+                    log(`Cloudn't delete channel ${id} for ${reason} as it does not exsit`, "warn");
+                    res.status(200);
+                    res.json({Status: "NotFound", Error: ``, oid: `${id}`});
                 }
-        } catch(err){
-            log("ID " + guid + " err" + err, "warn");
-        } finally{
-            await client.close();
-            return isAuth;
+            } catch (e){
+                res.status(200);
+                res.json({Status: "NotFound", Error: `${e}`, oid: `${id}`});
+                log(`Error Deleteing channel ${id} for ${reason} Error - ${e}`, "warn");
+            }
+        } catch(e){
+            res.status(400);
+            res.json({Status: "Error", Error: `${e}`, oid: "0"});
+            log(`Error Deleteing channel ${id} for ${reason} Error - ${e}`, "warn");
+        }
+    } else {
+        res.status(401);
+        res.json({Status: "Error", Error: `Invalid Auth Key`, oid: "0"});
+        log("AUTH ERROR: " + req.url, "warn");
+    }
+}
+
+async function EditChannel(res, req, id, auth){
+    if ((auth === config.ServerAuth) || (await CheckAuth(auth) && config.AllowClientWrite)){
+        try{
+            let RawData = req.body; 
+            let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+            let reason = RawData.Reason;
+            let options = RawData.Options;
+            try {
+                let channel = await guild.channels.cache.get(id);
+                if (channel){
+                    channel.edit(options, reason).then(()=>{
+                        log(`Edited channel ${id} for ${reason}`);
+                        res.status(200);
+                        res.json({Status: "Success", Error: ``, oid: `${id}`});
+                    }).catch((e)=>{
+                        log(`Error editing channel ${id} for ${reason} Error - ${e}`, "warn");
+                        res.status(200);
+                        res.json({Status: "Error", Error: `${e}`, oid: `${id}`});
+                    })
+                } else {
+                    log(`Cloudn't edit channel ${id} for ${reason} as it does not exsit`, "warn");
+                    res.status(200);
+                    res.json({Status: "NotFound", Error: ``, oid: `${id}`});
+                }
+            } catch (e){
+                res.status(200);
+                res.json({Status: "NotFound", Error: `${e}`, oid: `${id}`});
+                log(`Error editing channel ${id} for ${reason} Error - ${e}`, "warn");
+            }
+        } catch(e){
+            res.status(400);
+            res.json({Status: "Error", Error: `${e}`, oid: "0"});
+            log(`Error editing channel ${id} for ${reason} Error - ${e}`, "warn");
+        }
+    } else {
+        res.status(401);
+        res.json({Status: "Error", Error: `Invalid Auth Key`, oid: "0"});
+        log("AUTH ERROR: " + req.url, "warn");
+    }
+}
+
+async function SendMessageChannel(res, req, id, auth){
+    let isServerAuth = (auth === config.ServerAuth);
+    let isClientAuth = false;
+    let GUID = "";
+    let did = "";
+    if (!isServerAuth){
+        isClientAuth = (await CheckAuth(auth));
+       // console.log(isClientAuth)
+        if (isClientAuth){
+            GUID = AuthPlayerGuid(auth);
+            //console.log(GUID)
+            isClientAuth = (CheckPlayerAuth(GUID, auth));
+            did = GetDiscordObj(GUID);
+            isClientAuth = await isClientAuth;
+            //console.log(isClientAuth)
+            did = (await GetDiscordObj(GUID)).id;
+            //console.log(did)
         }
     }
-    return isAuth;
+    if ( isServerAuth || isClientAuth){
+        try{
+            let RawData = req.body; 
+            let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+            let cid = id;
+            let message = {embed: RawData};
+            if (RawData.Message !== undefined)
+                message = RawData.Message;
+            
+            try {
+                let channel = await guild.channels.cache.get(cid);
+                let user = await guild.members.fetch(did);
+                //console.log(channel)
+                if (channel && user){
+                    let perms = (channel.permissionsFor(user).has('VIEW_CHANNEL') && channel.permissionsFor(user).has('SEND_MESSAGES'));
+                    //console.log(perms)
+                    if (isServerAuth || (isClientAuth && perms)){
+                        let msg = await channel.send(message);
+                        log(`Sent Message to channel ${cid} id: ${msg.id}`);
+                        res.status(200);
+                        res.json({Status: "Success", Error: ``, oid: `${msg.id}`});
+                    } else {
+                        log(`Error couldn't send message to channel ${cid} as user ${GUID} doesn't have permissions to send messagaes in the channel`, "warn");
+                        res.status(200);
+                        res.json({Status: "NoPerms", Error: `User does not have permissions to use this channel`, oid: `0`});
+                    }
+                } else {
+                    log(`Error couldn't send message to channel ${cid} as it does not exsit`, "warn");
+                    res.status(200);
+                    res.json({Status: "NotFound", Error: `Channel not found in discord`, oid: `0`});
+                }
+            } catch (e){
+                res.status(200);
+                res.json({Status: "NotFound", Error: `${e}`, oid: `0`});
+                log(`Error couldn't send message to channel ${id} Error - ${e}`, "warn");
+            }
+        } catch(e){
+            res.status(400);
+            res.json({Status: "Error", Error: `${e}`, oid: "0"});
+            log(`Error couldn't send message to channel  ${id}  Error - ${e}`, "warn");
+        }
+    } else {
+        res.status(401);
+        res.json({Status: "Error", Error: `Invalid Auth Key`, oid: "0"});
+        log("AUTH ERROR: " + req.url, "warn");
+    }
+}
+
+
+async function GetMessagesChannel(res, req, id, auth){
+    let isServerAuth = (auth === config.ServerAuth);
+    let isClientAuth = false;
+    let GUID = "";
+    let did = "";
+    if (!isServerAuth){
+        isClientAuth = (await CheckAuth(auth));
+       // console.log(isClientAuth)
+        if (isClientAuth){
+            GUID = AuthPlayerGuid(auth);
+            //console.log(GUID)
+            isClientAuth = (CheckPlayerAuth(GUID, auth));
+            did = GetDiscordObj(GUID);
+            isClientAuth = await isClientAuth;
+            //console.log(isClientAuth)
+            did = (await GetDiscordObj(GUID)).id;
+            //console.log(did)
+        }
+    }
+    if ( isServerAuth || isClientAuth){
+        try{
+            let RawData = req.body; 
+            let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+            let cid = id;
+            let filter = {};
+            if (RawData.Limit > 0){ filter.limit = RawData.Limit; }
+            if (RawData.Before !== undefined && RawData.Before !== ""){filter.before = RawData.Before;}
+            if (RawData.After !== undefined && RawData.After !== ""){filter.after = RawData.After;}
+            try {
+                let channel = await guild.channels.cache.get(cid);
+                let user = await guild.members.fetch(did);
+                //console.log(channel)
+                if (channel && user){
+                    let perms = (channel.permissionsFor(user).has('VIEW_CHANNEL') && channel.permissionsFor(user).has('READ_MESSAGE_HISTORY')); 
+                    
+                    if (isServerAuth || (isClientAuth && perms)){
+                        let messages = (await channel.messages.fetch(filter)).array();
+                        //console.log(messages);
+                        let msgs = messages.map(obj => ({id: obj.id, Author: obj.author.id, Embed: obj.embeds[0], Content: obj.content, Channel: obj.channel.id, TimeStamp: obj.createdTimestamp}));
+                        res.status(200);
+                        res.json({Status: "Success", Error: ``, Messages: msgs});
+                    } else {
+                        log(`Error couldn't get messages from channel ${cid} as user ${GUID} doesn't have permissions to read message history in the channel`, "warn");
+                        res.status(200);
+                        res.json({Status: "NoPerms", Error: `User does not have permissions to use this channel`, Messages: []});
+                    }
+                } else {
+                    log(`Error couldn't get messages from channel ${cid} as it does not exsit`, "warn");
+                    res.status(200);
+                    res.json({Status: "NotFound", Error: `Channel not found in discord`, Messages: []});
+                }
+            } catch (e){
+                res.status(200);
+                res.json({Status: "NotFound", Error: `${e}`, Messages: []});
+                log(`Error couldn't get messages from channel ${id} Error - ${e}`);
+            }
+        } catch(e){
+            res.status(400);
+            res.json({Status: "Error", Error: `${e}`, Messages: []});
+            log(`Error couldn't get messages from channel  ${id}  Error - ${e}`);
+        }
+    } else {
+        res.status(401);
+        res.json({Status: "Error", Error: `Invalid Auth Key`, Messages: []});
+        log("AUTH ERROR: " + req.url, "warn");
+    }
 }
 
 async function CheckId(res,req, id, guid){
@@ -568,7 +813,45 @@ async function CheckId(res,req, id, guid){
         }
 }
 
+async function GetDiscordObj(guid){
+    const mongo = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    let obj = {
+        id:"0",
+        Username: "", 
+        Discriminator: "", 
+        Avatar: ""
+    }
+    try{
+        await mongo.connect();
+        // Connect the client to the server
+        const db = mongo.db(config.DB);
+        let collection = db.collection("Players");
+        let query = { GUID: guid };
+        let results = collection.find(query);
+        if ((await results.count()) == 0){
+            log("Can't find Player with ID " + guid, "warn"); 
+        } else {
+            let dataarr = await results.toArray(); 
+            let data = dataarr[0]; 
+            if (data.Discord === undefined || data.Discord === {} || data.Discord.id === undefined || data.Discord.id === "" || data.Discord.id === "0" ){
+            } else {
+                obj = data.Discord;
+            }
+        }
+    }catch(err){
+        log(`Error Fetching Discord Obj ${err}`, "warn");
+    }finally{
+        // Ensures that the client will close when you finish/error
+        mongo.close();
+        return obj;
+    }
+
+}
 
 module.exports = router;
 
 
+
+isObject = function(a) {
+    return (!!a) && (a.constructor === Object);
+};
