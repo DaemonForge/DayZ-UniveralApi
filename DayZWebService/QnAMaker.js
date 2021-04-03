@@ -6,7 +6,7 @@ const fetch  = require('node-fetch');
 
 const {readFileSync} = require('fs');
 
-const CheckAuth = require('./AuthChecker')
+const {CheckAuth} = require('./AuthChecker')
 const config = require('./configLoader');
 
 

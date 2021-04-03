@@ -4,7 +4,7 @@ const { MongoClient } = require("mongodb");
 
 const log = require("./log");
 
-const CheckAuth = require('./AuthChecker');
+const {CheckAuth} = require('./AuthChecker');
 
 
 const config = require('./configLoader');

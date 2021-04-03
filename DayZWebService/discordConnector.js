@@ -10,7 +10,7 @@ const client = new Client();
 const fetch = require('node-fetch');
 const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
-const CheckAuth = require("./AuthChecker");
+const {CheckAuth, CheckPlayerAuth,AuthPlayerGuid} = require("./AuthChecker");
 const router = Router();
 try {
     if (config.Discord_Bot_Token !== "" && config.Discord_Bot_Token !== undefined){

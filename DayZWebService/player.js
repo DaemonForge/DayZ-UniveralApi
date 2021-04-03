@@ -4,7 +4,7 @@ let {createHash} = require('crypto');
 
 const log = require("./log");
 
-const CheckAuth = require('./AuthChecker')
+const {CheckAuth, CheckPlayerAuth} = require('./AuthChecker')
 
 const config = require('./configLoader');
 
@@ -203,30 +203,6 @@ async function runUpdate(req, res, GUID, mod, auth) {
     }
 };
 
-async function CheckPlayerAuth(guid, auth){
-    let isAuth = false;
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
-    if ((await CheckAuth(auth))){
-        try{
-            await client.connect();
-            // Connect the client to the server        
-            const db = client.db(config.DB);
-            let collection = db.collection("Players");
-            let SavedAuth = createHash('sha256').update(auth).digest('base64');
-            let query = { GUID: guid, AUTH: SavedAuth };
-            let results = collection.find(query);
-                if ((await results.count()) != 0){
-                    isAuth = true;
-                }
-        } catch(err){
-            log("ID " + guid + " err" + err, "warn");
-        } finally{
-            await client.close();
-            return isAuth;
-        }
-    }
-    return isAuth;
-}
  
 module.exports = router;
 

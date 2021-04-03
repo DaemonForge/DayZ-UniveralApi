@@ -1,6 +1,6 @@
 const {Router} = require('express');
 const { MongoClient } = require("mongodb");
-const CheckAuth = require('./AuthChecker')
+const {CheckAuth} = require('./AuthChecker')
 let {createHash} = require('crypto');
 
 const config = require('./configLoader');
