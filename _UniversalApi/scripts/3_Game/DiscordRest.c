@@ -130,9 +130,109 @@ class UniversalDiscordRest extends Managed {
 	}
 	
 	
+	static void CheckDiscord(string PlainId, ref RestCallback UCBX,  string baseUrl = ""){		
+		if (baseUrl == ""){
+			baseUrl = BaseUrl();
+		}
+		string url = baseUrl + "Discord/Check/" + PlainId;
+		
+		Post(url,"{}",UCBX);
+	}
+	
+	
+	
+	
+	static void ChannelCreate(string Name, ref RestCallback UCBX, UApiChannelOptions Options = NULL, string auth = "") {
+		
+		if (auth == "" ) {
+			auth = UApi().GetAuthToken();
+		}
+		
+		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, Options);
+		
+		if (obj){
+			string url = BaseUrl() + "Discord/Channel/Create/" + auth;
+			
+			Post(url,obj.ToJson(),UCBX);		
+		}
+	}
+	
+	static void ChannelDelete(string id, string reason,  ref RestCallback UCBX = NULL, string auth = ""){
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		if (!UCBX){
+			UCBX = new UApiSilentCallBack;
+		}
+		
+		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, NULL);
+		
+		if (obj){
+			string url = BaseUrl() + "Discord/Channel/Delete/" + id + "/" + auth;
+			
+			Post(url,obj.ToJson(),UCBX);		
+		}
+	}
+	
+	
+	static void ChannelEdit(string id, string reason, ref UApiChannelUpdateOptions options, ref RestCallback UCBX = NULL, string auth = ""){
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		if (!UCBX){
+			UCBX = new UApiSilentCallBack;
+		}
+		
+		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, UApiChannelUpdateOptions.Cast(options));
+		
+		if (obj){
+			string url = BaseUrl() + "Discord/Channel/Edit/" + id + "/" + auth;
+			
+			Post(url,obj.ToJson(),UCBX);		
+		}
+	}
+	
+	
+	static void ChannelSend(string id, string message, ref RestCallback UCBX = NULL, string auth = ""){
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		if (!UCBX){
+			UCBX = new UApiSilentCallBack;
+		}
+		
+		UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
+		
+		if (obj){
+			string url = BaseUrl() + "Discord/Channel/Send/" + id + "/" + auth;
+			
+			Post(url,obj.ToJson(),UCBX);		
+		}
+	}
+	
+	
+	static void ChannelSendEmbed(string id, UApiDiscordEmbed message, ref RestCallback UCBX = NULL, string auth = ""){
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+		
+		if (!UCBX){
+			UCBX = new UApiSilentCallBack;
+		}
+				
+		if (message){
+			string url = BaseUrl() + "Discord/Channel/Send/" + id + "/" + auth;
+			
+			Post(url,message.ToJson(),UCBX);		
+		}
+	}
+	
 	// !!!!!WARNING!!!!! 
 	
-	// ALL OF THE FOLLOWING FUCNTIONS ARE THREAD BLOCKING ONLY RUN in secondary Thread!
+	// ALL OF THE FOLLOWING FUCNTIONS ARE THREAD BLOCKING ONLY RUN in Secondary Thread!
 	
 	
 	
@@ -218,13 +318,7 @@ class UniversalDiscordRest extends Managed {
 	
 	
 	
-	static void CheckDiscord(string PlainId, ref RestCallback UCBX,  string baseUrl = ""){		
-		if (baseUrl == ""){
-			baseUrl = BaseUrl();
-		}
-		string url = baseUrl + "Discord/Check/" + PlainId;
-		
-		Post(url,"{}",UCBX);
-	}
+	
+	
 }
 

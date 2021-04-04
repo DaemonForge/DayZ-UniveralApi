@@ -1,8 +1,5 @@
-class UApiDiscordUser{
-	
-	string Status;
-	string Error;
-	
+class UApiDiscordUser extends StatusObject{
+		
 	string id;
 	string Username;
 	
@@ -20,13 +17,13 @@ class UApiDiscordUser{
 	}
 }
 
-class UApiDiscordRoleReq{
+class UApiDiscordRoleReq extends UApiDiscordObject_Base{
 	string Role;
 	void UApiDiscordRoleReq(string role){
 		Role = role;
 	}
 	
-	string ToJson(){
+	override string ToJson(){
 		return JsonFileLoader<UApiDiscordRoleReq>.JsonMakeData(this);;
 	}
 	
