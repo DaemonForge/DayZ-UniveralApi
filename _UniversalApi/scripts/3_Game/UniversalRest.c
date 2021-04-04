@@ -1,4 +1,4 @@
-class UniversalRest
+class UniversalRest extends Managed
 {	
 	static protected string m_BaseUrl = "";
 	

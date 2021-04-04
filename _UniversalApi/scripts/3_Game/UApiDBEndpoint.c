@@ -1,4 +1,4 @@
-class UApiDBEndpoint{
+class UApiDBEndpoint extends Managed {
 	
 	static protected string m_BaseUrl = "";
 	

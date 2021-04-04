@@ -1,5 +1,5 @@
-class UniversalApiConfig
-{
+class UniversalApiConfig extends Managed {
+	
 	protected static string ConfigDIR = "$profile:UApi";
 	protected static string ConfigPATH = ConfigDIR + "\\UniversalApi.json";
 	string ConfigVersion = "1";
@@ -49,6 +49,7 @@ class UniversalApiConfig
 	
 	
 }
+
 ref UniversalApiConfig m_UniversalApiConfig;
 
 //Helper function to return Config

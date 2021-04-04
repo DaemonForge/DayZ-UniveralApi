@@ -1,4 +1,4 @@
-class UniversalDSEndpoint
+class UniversalDSEndpoint extends Managed
 {	
 	
 	static protected string m_BaseUrl = "";

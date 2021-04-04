@@ -1,5 +1,4 @@
-class UniversalDiscordRest
-{	
+class UniversalDiscordRest extends Managed {	
 	static protected string m_BaseUrl = "";
 	
 	static void SetBaseUrl(string new_BaseUrl){

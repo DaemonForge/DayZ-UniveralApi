@@ -1,4 +1,4 @@
-class UApiForwarder{
+class UApiForwarder extends Managed{
 
 	string URL = "";
     ref array<ref UApiHeaders> Headers = new array<ref UApiHeaders>;

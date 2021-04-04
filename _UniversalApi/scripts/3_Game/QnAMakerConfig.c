@@ -1,4 +1,4 @@
-class UApiQnAMakerServerAnswers
+class UApiQnAMakerServerAnswers extends Managed
 {
 	protected static string ConfigDIR = "$profile:UApi";
 	protected static string ConfigPATH = ConfigDIR + "\\QnAMakerServerAnswers.json";
@@ -56,7 +56,7 @@ class UApiQnAMakerServerAnswers
 }
 
 
-class QnAMakerServerAnswer{
+class QnAMakerServerAnswer {
 	string ResponseCode = "";
 	string Response = "";
 	void QnAMakerServerAnswer( string code, string response){

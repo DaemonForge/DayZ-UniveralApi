@@ -1,4 +1,4 @@
-class UniversalApi{
+class UniversalApi extends Managed{
 
 	protected int m_CallId = 0;
 	
