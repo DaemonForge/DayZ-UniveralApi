@@ -545,7 +545,7 @@ async function CreateChannel(res, req, auth){
             let options = RawData.Options;
             let channel = await guild.channels.create(RawData.Name, options)
             let id = channel.id;
-
+                
             res.status(201);
             res.json({Status: "Success", Error: ``, oid: `${id}`});
 
@@ -569,7 +569,7 @@ async function DeleteChannel(res, req, id, auth){
         try{
             let RawData = req.body; 
             let guild = await client.guilds.fetch(config.Discord_Guild_Id);
-            let reason = RawData.reason;
+            let reason = RawData.Reason;
             try {
                 let channel = await guild.channels.cache.get(id);
                 if (channel){
@@ -751,7 +751,7 @@ async function GetMessagesChannel(res, req, id, auth){
                     if (isServerAuth || (isClientAuth && perms)){
                         let messages = (await channel.messages.fetch(filter)).array();
                         //console.log(messages);
-                        let msgs = messages.map(obj => ({id: obj.id, Author: obj.author.id, Embed: obj.embeds[0], Content: obj.content, Channel: obj.channel.id, TimeStamp: obj.createdTimestamp}));
+                        let msgs = messages.map(obj => ({id: obj.id, AuthorId: obj.author.id, Embed: obj.embeds[0], Content: obj.content, ChannelId: obj.channel.id, TimeStamp: obj.createdTimestamp}));
                         res.status(200);
                         res.json({Status: "Success", Error: ``, Messages: msgs});
                     } else {
