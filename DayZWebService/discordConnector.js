@@ -738,7 +738,7 @@ async function GetMessagesChannel(res, req, id, auth){
             let guild = await client.guilds.fetch(config.Discord_Guild_Id);
             let cid = id;
             let filter = {};
-            if (RawData.Limit > 0){ filter.limit = RawData.Limit; }
+            if (RawData.Limit !== undefined && RawData.Limit > 0){ filter.limit = RawData.Limit; }
             if (RawData.Before !== undefined && RawData.Before !== ""){filter.before = RawData.Before;}
             if (RawData.After !== undefined && RawData.After !== ""){filter.after = RawData.After;}
             try {
@@ -781,7 +781,7 @@ async function GetMessagesChannel(res, req, id, auth){
     }
 }
 
-async function CheckId(res,req, id, guid){
+async function CheckId(res, req, id, guid){
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();
