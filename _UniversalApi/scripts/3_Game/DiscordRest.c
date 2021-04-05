@@ -230,6 +230,27 @@ class UniversalDiscordRest extends Managed {
 		}
 	}
 	
+	
+	
+	
+	static void ChannelMessages(string id,  ref RestCallback UCBX, ref UApiDiscordChannelFilter filter = NULL,  string auth = ""){
+		if (auth == "" ){
+			auth = UApi().GetAuthToken();
+		}
+				
+		if (!filter){
+			filter = new UApiDiscordChannelFilter();
+		}
+		
+		string url = BaseUrl() + "Discord/Channel/Messages/" + id + "/" + auth;
+		
+		if (filter && UCBX){
+			Post(url,filter.ToJson(),UCBX);	
+		} else if (UCBX) {
+			Post(url, "{}",UCBX);
+		}
+	}
+	
 	// !!!!!WARNING!!!!! 
 	
 	// ALL OF THE FOLLOWING FUCNTIONS ARE THREAD BLOCKING ONLY RUN in Secondary Thread!
