@@ -443,7 +443,7 @@ class UniversalDSEndpoint extends Managed
 	
 	
 	
-	int ChannelMessages(string id,  Class instance, string function, ref UApiDiscordChannelFilter filter = NULL,  string auth = ""){
+	int ChannelMessages(string id,  Class instance, string function, ref UApiDiscordChannelFilter filter = NULL){
 		int cid = UApi().CallId();
 		
 		if (!filter){
@@ -466,7 +466,7 @@ class UniversalDSEndpoint extends Managed
 		return -1;
 	}
 	
-	int ChannelMessagesObj(string id,  Class instance, string function, ref UApiDiscordChannelFilter filter = NULL,  string auth = ""){
+	int ChannelMessagesObj(string id,  Class instance, string function, ref UApiDiscordChannelFilter filter = NULL){
 		int cid = UApi().CallId();
 		
 		if (!filter){
