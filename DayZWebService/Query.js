@@ -40,6 +40,12 @@ async function runQuery(req, res, mod, auth, COLL) {
             var ReturnCol = "Data";
             if (COLL == "Players"){
                 ReturnCol = mod;
+                if (query && Object.keys(query).length === 0 && query.constructor === Object){
+                    query[mod] = { "$exists": true };
+                }
+            }
+            if (COLL == "Objects"){
+                query.Mod = mod;
             }
             var results = collection.find(query).sort(orderBy);
             if (RawData.MaxResults >= 1){
