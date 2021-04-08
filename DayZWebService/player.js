@@ -1,7 +1,7 @@
 const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 let {createHash} = require('crypto');
-
+const {isArray, isObject} = require('./utils')
 const log = require("./log");
 
 const {CheckAuth, CheckPlayerAuth} = require('./AuthChecker')
@@ -206,11 +206,3 @@ async function runUpdate(req, res, GUID, mod, auth) {
  
 module.exports = router;
 
-isObject = function(a) {
-    return (!!a) && (a.constructor === Object);
-};
-
-
-isArray = function(a) {
-    return (!!a) && (a.constructor === Array);
-};

@@ -1,5 +1,6 @@
 
 const {readFileSync,writeFileSync} = require('fs');
+const {makeAuthToken} = require('./utils')
 
 const Defaultconfig = require('./sample-config.json');
 const ConfigPath = "config.json"
@@ -17,13 +18,5 @@ try{
   console.log("   AllowClientWrite: "  + config.AllowClientWrite);
   console.log("   Port: "  + config.Port);
 }
-function makeAuthToken() {
-    let result           = '';
-    let characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.!~';
-    let charactersLength = characters.length;
-    for ( let i = 0; i < 48; i++ ) {
-       result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
- }
+
 module.exports = config;

@@ -3,6 +3,8 @@ const { MongoClient } = require("mongodb");
 const {CheckAuth} = require('./AuthChecker')
 let {createHash} = require('crypto');
 
+const {isArray, isObject, makeObjectId} = require('./utils')
+
 const config = require('./configLoader');
  
 const log = require("./log");
@@ -198,29 +200,5 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
         log("AUTH ERROR: " + req.url, "warn");
     }
 };
-function makeObjectId() {
-    let result           = '';
-    let characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.~()*:@,;';
-    let charactersLength = characters.length;
-    for ( let i = 0; i < 16; i++ ) {
-       result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    let datetime = new Date();
-    let date = datetime.toISOString()
-    result += date;
-    let SaveToken = createHash('sha256').update(result).digest('base64');
-    //Making it URLSafe
-    SaveToken = SaveToken.replace(/\+/g, '-'); 
-    SaveToken = SaveToken.replace(/\//g, '_');
-    SaveToken = SaveToken.replace(/=+$/, '');
-    return SaveToken;
- }
- isObject = function(a) {
-     return (!!a) && (a.constructor === Object);
- };
- 
- isArray = function(a) {
-     return (!!a) && (a.constructor === Array);
- };
 
 module.exports = router;

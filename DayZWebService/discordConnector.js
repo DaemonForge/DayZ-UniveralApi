@@ -1,4 +1,6 @@
 const {Router} = require('express');
+const {isArray, isObject} = require('./utils')
+const {CheckAuth, CheckPlayerAuth,AuthPlayerGuid} = require("./AuthChecker");
 const { MongoClient } = require("mongodb");
 const {createHash} = require('crypto');
 const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
@@ -10,7 +12,6 @@ const client = new Client();
 const fetch = require('node-fetch');
 const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
-const {CheckAuth, CheckPlayerAuth,AuthPlayerGuid} = require("./AuthChecker");
 const router = Router();
 try {
     if (config.Discord_Bot_Token !== "" && config.Discord_Bot_Token !== undefined){
@@ -849,9 +850,3 @@ async function GetDiscordObj(guid){
 }
 
 module.exports = router;
-
-
-
-isObject = function(a) {
-    return (!!a) && (a.constructor === Object);
-};
