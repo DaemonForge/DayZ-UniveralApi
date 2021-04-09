@@ -18,6 +18,7 @@ const RouterQnA = require('./QnAMaker');
 const RouterFowarder = require("./apiFowarder");
 const RouterLogger = require("./logger");
 const RouterDiscordConnector = require("./discordConnector");
+const RouterWit = require("./witConnector");
 
 
 
@@ -45,6 +46,7 @@ app.use('/QnAMaker', RouterQnA);
 app.use('/Forward', RouterFowarder);
 app.use('/Logger', RouterLogger);
 app.use('/Discord', RouterDiscordConnector);
+app.use('/Wit', RouterWit);
 app.use('/', (req,res)=>{
     log("Error invalid or is not a post Requested URL is:" + req.url);
     res.status(501);
