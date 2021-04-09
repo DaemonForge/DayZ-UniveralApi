@@ -6,7 +6,7 @@ const fetch  = require('node-fetch');
 
 const {readFileSync} = require('fs');
 
-const {CheckAuth} = require('./AuthChecker')
+const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
 const config = require('./configLoader');
 
 
@@ -23,7 +23,7 @@ router.post('/:auth', (req, res)=>{
 });
 
 async function runQnA(req, res, QnAconfig){
-    if ( req.params.auth == config.ServerAuth || (await CheckAuth( req.params.auth )) ){
+    if ( CheckServerAuth(auth) || (await CheckAuth( req.params.auth )) ){
         console.log(JSON.stringify(req.body));
         let json;
         try {

@@ -5,7 +5,8 @@ module.exports ={
     isObject,
     isArray,
     makeAuthToken,
-    makeObjectId
+    makeObjectId,
+    RemoveBadProperties
 }
 
 
@@ -80,3 +81,29 @@ function makeAuthToken() {
     SaveToken = SaveToken.replace(/=+$/, '');
     return SaveToken;
  }
+
+
+ function RemoveBadProperties(obj){
+    let replace = /[\!\@\#\$\%\^\&\*\(\)\+\=\\\|\]\[\"\?\>\<\.\,\;\:\- ]/g;
+    Object.keys(obj).forEach(function (k) {
+        if (isObject(obj[k])) {
+            obj[k] = RemoveBadProperties(obj[k]);
+            return;
+        }
+        if (isArray(obj[k])){
+            obj[k].forEach(j =>{
+                if (isObject(j)){
+                    j = RemoveBadProperties(j);
+                }
+            });
+        }
+        let K = k.replace(replace, "_");
+        if (K !== k){
+            obj[K] = obj[k];
+            delete obj[k];
+        }
+    })
+    return obj;
+}
+
+

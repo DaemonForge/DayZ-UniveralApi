@@ -4,7 +4,7 @@ const { MongoClient } = require("mongodb");
 
 const log = require("./log");
 
-const {CheckAuth} = require('./AuthChecker');
+const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
 
 
 const config = require('./configLoader');
@@ -25,7 +25,7 @@ function GetCollection(URL){
 }
 
 async function runQuery(req, res, mod, auth, COLL) {
-    if (auth === config.ServerAuth || ((await CheckAuth(auth)) && COLL === "Objects") ){
+    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && COLL === "Objects") ){
         var RawData = req.body;
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{

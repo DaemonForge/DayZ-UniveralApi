@@ -3,7 +3,7 @@ const { MongoClient } = require("mongodb");
 
 const log = require("./log");
 
-const {CheckAuth} = require('./AuthChecker');
+const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
 
 
 const config = require('./configLoader');
@@ -26,7 +26,7 @@ function GetCollection(URL){
 
 async function runTransaction(req, res, mod, id, auth, COLL){
 
-    if (auth === config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
+    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         var RawData = req.body;
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{

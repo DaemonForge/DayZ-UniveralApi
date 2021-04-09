@@ -1,6 +1,6 @@
 const {Router} = require('express');
 const { MongoClient } = require("mongodb");
-const {CheckAuth} = require('./AuthChecker')
+const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
 let {createHash} = require('crypto');
 
 const {isArray, isObject, makeObjectId} = require('./utils')
@@ -29,7 +29,7 @@ router.post('/Update/:ObjectId/:mod/:auth', (req, res)=>{
     runUpdate(req, res, req.params.ObjectId, req.params.mod, req.params.auth);
 });
 async function runGet(req, res, ObjectId, mod, auth) {
-    if (auth === config.ServerAuth || (await CheckAuth(auth)) ){
+    if (CheckServerAuth(auth) || (await CheckAuth(auth)) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         let StringData = JSON.stringify(req.body);
         let RawData = req.body;
@@ -43,7 +43,7 @@ async function runGet(req, res, ObjectId, mod, auth) {
             let results = collection.find(query);
             
             if ((await results.count()) == 0){
-                if (auth === config.ServerAuth || config.AllowClientWrite ){
+                if (CheckServerAuth(auth) || config.AllowClientWrite ){
                     if (ObjectId == "NewObject"){
                         ObjectId = makeObjectId();
                         RawData.ObjectId = ObjectId;
@@ -83,7 +83,7 @@ async function runGet(req, res, ObjectId, mod, auth) {
 };
 
 async function runSave(req, res, ObjectId, mod, auth) {  
-    if (auth === config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
+    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         let RawData = req.body;
         try{
@@ -125,7 +125,7 @@ async function runSave(req, res, ObjectId, mod, auth) {
 };
 
 async function runUpdate(req, res, ObjectId, mod, auth) {
-    if ( auth == config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
+    if ( CheckServerAuth(auth) || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();

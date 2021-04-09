@@ -1,7 +1,7 @@
 const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 
-const {CheckAuth} = require('./AuthChecker')
+const {CheckAuth, CheckServerAuth} = require('./AuthChecker')
 const {isArray, isObject} = require('./utils')
 
 const log = require("./log");
@@ -27,7 +27,7 @@ router.post('/Update/:mod/:auth', (req, res)=>{
 });
 async function runGet(req, res, mod, auth) {
     let RawData = req.body;
-    if (auth == config.ServerAuth || (await CheckAuth(auth)) ){
+    if (CheckServerAuth(auth)|| (await CheckAuth(auth)) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
 
@@ -39,7 +39,7 @@ async function runGet(req, res, mod, auth) {
             let query = { Mod: mod };
             let results = collection.find(query);
             if ((await results.count()) == 0){
-                if (auth == config.ServerAuth || config.AllowClientWrite){
+                if (CheckServerAuth(auth) || config.AllowClientWrite){
                     let doc = { Mod: mod, Data: RawData };
                     let result = await collection.insertOne(doc);
                     if (result.result.ok == 1){ 
@@ -69,7 +69,7 @@ async function runGet(req, res, mod, auth) {
 };
 async function runSave(req, res, mod, auth) {
     let RawData = req.body;
-    if (auth == config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
+    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();
@@ -108,7 +108,7 @@ async function runSave(req, res, mod, auth) {
 
 async function runTransaction(req, res, mod, auth){
 
-    if (auth === config.ServerAuth || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
+    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
         let RawData = req.body;
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
@@ -146,7 +146,7 @@ async function runTransaction(req, res, mod, auth){
 
 }
 async function runUpdate(req, res, mod, auth) {
-    if ( auth == config.ServerAuth || ((await CheckPlayerAuth(GUID, auth)) && config.AllowClientWrite) ){
+    if ( CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && config.AllowClientWrite) ){
         const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();

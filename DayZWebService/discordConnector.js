@@ -1,6 +1,6 @@
 const {Router} = require('express');
 const {isArray, isObject} = require('./utils')
-const {CheckAuth, CheckPlayerAuth,AuthPlayerGuid} = require("./AuthChecker");
+const {CheckAuth, CheckPlayerAuth,AuthPlayerGuid,CheckServerAuth} = require("./AuthChecker");
 const { MongoClient } = require("mongodb");
 const {createHash} = require('crypto');
 const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
@@ -355,7 +355,7 @@ async function HandleCallBack(req, res){
 //API Call Functions
 
 async function AddRole(res, req, GUID, auth){
-    if ((auth === config.ServerAuth) || (await CheckPlayerAuth(GUID, auth) && config.AllowClientWrite)){
+    if (CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth) && config.AllowClientWrite)){
         const mongo = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
             await mongo.connect();
@@ -420,7 +420,7 @@ async function AddRole(res, req, GUID, auth){
 }
 
 async function RemoveRole(res, req, GUID, auth){
-    if ((auth === config.ServerAuth) || (await CheckPlayerAuth(GUID, auth) && config.AllowClientWrite)){
+    if (CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth) && config.AllowClientWrite)){
         const mongo = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
             await mongo.connect();
@@ -483,7 +483,7 @@ async function RemoveRole(res, req, GUID, auth){
 }
 
 async function GetRoles(res, req, GUID, auth){
-    if ((auth === config.ServerAuth) || (await CheckPlayerAuth(GUID, auth))){
+    if (CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth))){
         const mongo = new MongoClient(config.DBServer, { useUnifiedTopology: true });
         try{
             await mongo.connect();
@@ -539,7 +539,7 @@ async function GetRoles(res, req, GUID, auth){
 
 
 async function CreateChannel(res, req, auth){
-    if ((auth === config.ServerAuth) || (await CheckAuth(GUID, auth) && config.AllowClientWrite)){
+    if (CheckServerAuth(auth) || (await CheckAuth(GUID, auth) && config.AllowClientWrite)){
         try{
             let RawData = req.body; 
             let guild = await client.guilds.fetch(config.Discord_Guild_Id);
@@ -566,7 +566,7 @@ async function CreateChannel(res, req, auth){
 
 
 async function DeleteChannel(res, req, id, auth){
-    if ((auth === config.ServerAuth) || (await CheckAuth(auth) && config.AllowClientWrite)){
+    if (CheckServerAuth(auth) || (await CheckAuth(auth) && config.AllowClientWrite)){
         try{
             let RawData = req.body; 
             let guild = await client.guilds.fetch(config.Discord_Guild_Id);
@@ -606,7 +606,7 @@ async function DeleteChannel(res, req, id, auth){
 }
 
 async function EditChannel(res, req, id, auth){
-    if ((auth === config.ServerAuth) || (await CheckAuth(auth) && config.AllowClientWrite)){
+    if (CheckServerAuth(auth) || (await CheckAuth(auth) && config.AllowClientWrite)){
         try{
             let RawData = req.body; 
             let guild = await client.guilds.fetch(config.Discord_Guild_Id);
@@ -647,7 +647,7 @@ async function EditChannel(res, req, id, auth){
 }
 
 async function SendMessageChannel(res, req, id, auth){
-    let isServerAuth = (auth === config.ServerAuth);
+    let isServerAuth = CheckServerAuth(auth);
     let isClientAuth = false;
     let GUID = "";
     let did = "";
@@ -715,7 +715,7 @@ async function SendMessageChannel(res, req, id, auth){
 
 
 async function GetMessagesChannel(res, req, id, auth){
-    let isServerAuth = (auth === config.ServerAuth);
+    let isServerAuth = CheckServerAuth(auth);
     let isClientAuth = false;
     let GUID = "";
     let did = "";

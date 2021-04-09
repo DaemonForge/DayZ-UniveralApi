@@ -1,7 +1,7 @@
 const {Router} = require('express');
 const { MongoClient, MongoError  } = require("mongodb");
-const {sign} = require('jsonwebtoken');
 let {createHash} = require('crypto');
+const {makeAuthToken, CheckServerAuth} = require('./AuthChecker')
 
 const log = require("./log");
 
@@ -10,7 +10,7 @@ const config = require('./configLoader');
 const router = Router();
 
 router.post('/:GUID/:auth', (req, res)=>{
-    if ( req.params.auth == config.ServerAuth ){
+    if ( CheckServerAuth(req.params.auth) ){
         runGetAuth(req, res, req.params.GUID);
     }else{
         res.status(401);
@@ -48,10 +48,5 @@ async function runGetAuth(req, res, GUID) {
     }
 };
 
-function makeAuthToken(GUID) {
-    const player = { GUID: GUID }; 
-    let result = sign(player, config.ServerAuth, { expiresIn: 2800 });
-    return result;
- }
 
 module.exports = router;

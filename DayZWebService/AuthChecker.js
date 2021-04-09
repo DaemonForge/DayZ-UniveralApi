@@ -1,7 +1,8 @@
-const {verify} = require('jsonwebtoken');
+const {verify, sign} = require('jsonwebtoken');
 const config = require('./configLoader');
 const { MongoClient } = require("mongodb");
 const {createHash} = require('crypto');
+const {isArray} = require('./utils');
 
 const log = require("./log");
 
@@ -9,11 +10,14 @@ module.exports = {
     CheckAuth, 
     CheckAuthAgainstGUID,
     CheckPlayerAuth,
-    AuthPlayerGuid
+    AuthPlayerGuid,
+    CheckServerAuth,
+    GetSigningAuth,
+    makeAuthToken
 }
 
 async function CheckAuth(auth, ignoreError = false){
-    return verify(auth, config.ServerAuth, function(err, decoded) {
+    return verify(auth, GetSigningAuth(), function(err, decoded) {
         if (err) {
             if (err.name == "TokenExpiredError"){
                 log("Error: Auth Token is expired, it expired at " + err.expiredAt, "warn");
@@ -33,7 +37,7 @@ async function CheckAuth(auth, ignoreError = false){
 
 }
 async function CheckAuthAgainstGUID(auth, guid, ignoreError = false){
-    return verify(auth, config.ServerAuth, function(err, decoded) {
+    return verify(auth, GetSigningAuth(), function(err, decoded) {
         if (err) {
             if (err.name == "TokenExpiredError"){
                 log("Error: Auth Token for " + decoded.GUID + "is expired, it expired at " + err.expiredAt, "warn");
@@ -54,7 +58,7 @@ async function CheckAuthAgainstGUID(auth, guid, ignoreError = false){
 }
 
 function AuthPlayerGuid(auth, ignoreError = false){
-    let guid = verify(auth, config.ServerAuth, function(err, decoded) {
+    let guid = verify(auth, GetSigningAuth(), function(err, decoded) {
         if (err) {
             if (err.name == "TokenExpiredError"){
                 log("Error: Auth Token for " + decoded.GUID + "is expired, it expired at " + err.expiredAt, "warn");
@@ -99,3 +103,23 @@ async function CheckPlayerAuth(guid, auth){
     }
     return isAuth;
 }
+
+function CheckServerAuth(auth){
+    return ((isArray(config.ServerAuth) && (config.ServerAuth.find(element => element === auth) === auth)) || (!isArray(config.ServerAuth) && config.ServerAuth === auth));
+}
+
+function GetSigningAuth(){
+    if(isArray(config.ServerAuth)){
+        return config.ServerAuth[0];
+    } else {
+        return config.ServerAuth;
+    }
+}
+
+
+
+function makeAuthToken(GUID) {
+    const player = { GUID: GUID }; 
+    let result = sign(player, GetSigningAuth(), { expiresIn: 2800 });
+    return result;
+ }

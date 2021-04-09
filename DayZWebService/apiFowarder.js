@@ -3,7 +3,7 @@ const fetch  = require('node-fetch');
 
 const log = require("./log");
 
-const {CheckAuth} = require('./AuthChecker')
+const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
 
 const config = require('./configLoader');
 
@@ -22,7 +22,7 @@ router.post('/:auth', (req, res)=>{
 });
 async function runFowarder(req, res, auth){
     let RawData = req.body;
-    if ( auth === config.ServerAuth || (await CheckAuth( auth )) ){
+    if ( CheckServerAuth(auth) || (await CheckAuth( auth )) ){
         log("Fowarded Called URL: " + RawData.URL );
         let strHeaders = "{";
         let json;

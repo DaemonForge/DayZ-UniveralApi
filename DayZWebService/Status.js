@@ -1,6 +1,6 @@
 const {Router} = require('express');
 const { MongoClient } = require("mongodb");
-const {CheckAuth} = require('./AuthChecker');
+const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
 const log = require("./log");
 const config = require('./configLoader');
  
@@ -25,7 +25,7 @@ router.get('/', (req, res)=>{
 async function runStatusCheck(req, res, auth) {
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     var returnError = "noauth"
-    if (auth === config.ServerAuth || (await CheckAuth(auth, true))){
+    if (CheckServerAuth(auth) || (await CheckAuth(auth, true))){
         returnError = "noerror"
     }
     try{

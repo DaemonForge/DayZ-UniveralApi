@@ -1,6 +1,6 @@
 const {Router} = require('express');
 const { MongoClient } = require("mongodb");
-const {CheckAuth} = require('./AuthChecker')
+const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
 let {createHash} = require('crypto');
 
 const config = require('./configLoader');
@@ -22,7 +22,7 @@ router.post('/Many/:id/:auth', (req, res)=>{
 async function runLoggerOne(req, res, id, auth) {
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     let RawData = req.body;
-	let hasServerAuth = (auth === config.ServerAuth);
+	let hasServerAuth = CheckServerAuth(auth);
 	let hasClientAuth = await CheckAuth(auth, true);
     if ( hasClientAuth || hasServerAuth ){  
         try{
@@ -66,7 +66,7 @@ async function runLoggerOne(req, res, id, auth) {
 async function runLoggerMany(req, res, id, auth) {
     const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
     let RawData = req.body;
-	let hasServerAuth = (auth === config.ServerAuth);
+	let hasServerAuth = CheckServerAuth(auth);
 	let hasClientAuth = await CheckAuth(auth, true);
     if (hasClientAuth || hasServerAuth){  
         try{
