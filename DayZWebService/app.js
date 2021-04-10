@@ -1,3 +1,6 @@
+
+global.APIVERSION = '0.9.0';
+
 const express = require('express');
 const favicon = require("serve-favicon")
 const {existsSync,readFileSync} = require('fs');

@@ -1,3 +1,4 @@
+
 const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
@@ -20,6 +21,34 @@ router.get('/', (req, res)=>{
     runStatusCheck(req, res);
 });
 
+let WitsEnabled = [];
+let TranslatesEnabled  = "Disabled";
+let QnAEnabled = [];
+let LUISEnabled = [];
+if (config.Wit !== undefined){
+    Object.keys(config.Wit).forEach(function (k) {
+        WitsEnabled.push(k);
+    })
+}
+if (config.LUIS !== undefined){
+    Object.keys(config.LUIS).forEach(function (k) {
+        if (config.LUIS[k].SubscriptionKey !== ""){
+            LUISEnabled.push(k);
+        }
+    })
+}
+if (config.QnA !== undefined){
+    Object.keys(config.QnA).forEach(function (k) {
+        if (config.QnA[k].EndpointKey !== ""){
+            QnAEnabled.push(k);
+        }
+    })
+}
+if (config.Translate !== undefined){
+    if (config.Translate.SubscriptionKey !== "" &&  config.Translate.SubscriptionRegion !== "" ){
+        TranslatesEnabled = "Enabled";
+    }
+}
 
 
 async function runStatusCheck(req, res, auth) {
@@ -40,17 +69,17 @@ async function runStatusCheck(req, res, auth) {
         const updateDoc = { $set: updateDocValue, };
         const result = await collection.updateOne(query, updateDoc, options);
         if (result.result.ok == 1){
-            res.json({Status: "ok", Error: returnError});
+            res.json({Status: "Success", Error: returnError, Version: global.APIVERSION, Discord: global.DISCORDSTATUS, Translate: TranslatesEnabled, Wit: WitsEnabled, QnA: QnAEnabled, LUIS: LUISEnabled });
            // log("Status Check Called", "info"); 
         } else {
             res.status(500);
-            res.json({Status: "error", Error: "Database Write Error"});
+            res.json({Status: "Error", Error: "Database Write Error", Version: global.APIVERSION, Discord: global.DISCORDSTATUS, Translate: TranslatesEnabled, Wit: WitsEnabled, QnA: QnAEnabled, LUIS: LUISEnabled });
             log("ERROR: Database Write Error", "warn");
         }
     }catch(err){
         console.log(err);
         res.status(500);
-        res.json({Status: "error", Error: err});
+        res.json({Status: "Error", Error: err, Version: global.APIVERSION, Discord: global.DISCORDSTATUS, Translate: TranslatesEnabled, Wit: WitsEnabled, QnA: QnAEnabled, LUIS: LUISEnabled });
         log("ERROR: " + err, "warn");
     }finally{
         // Ensures that the client will close when you finish/error
