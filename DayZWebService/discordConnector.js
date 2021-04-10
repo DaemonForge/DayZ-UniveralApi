@@ -1,3 +1,4 @@
+global.DISCORDSTATUS = "Pending";
 const {Router} = require('express');
 const {isArray, isObject} = require('./utils')
 const {CheckAuth, CheckPlayerAuth,AuthPlayerGuid,CheckServerAuth} = require("./AuthChecker");
@@ -14,17 +15,22 @@ const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
 const router = Router();
 try {
-    if (config.Discord_Bot_Token !== "" && config.Discord_Bot_Token !== undefined){
-        client.login(config.Discord_Bot_Token);
+    if (config.Discord?.Bot_Token !== "" && config.Discord?.Bot_Token !== undefined){
+        client.login(config.Discord.Bot_Token);
         console.log("Logging in to discord bot");
     } else {
         log("Discord Bot Token not present you will not be able to use any discord functions");
+        global.DISCORDSTATUS = "Disabled";
     }
 } catch (e){
     log("Discord Bot Token is invalid", "warn");
     log(e, "warn");
 }
 
+client.on('ready', () => {
+    global.DISCORDSTATUS = "Enabled";
+    log(`Discord Intergration Ready and is Logged in as ${client.user.tag}!`);
+  });
 
 if (!existsSync('templates')) mkdirSync('templates');
 
@@ -162,7 +168,7 @@ router.get('/:id', (req, res) => {
     if (LoginTemplate === undefined) LoadLoginTemplate();
     if (ErrorTemplate === undefined) LoadErrorTemplate();
     let id = req.params.id;
-    if ( config.Discord_Client_Id === "" || config.Discord_Client_Secret === ""  || config.Discord_Bot_Token === ""  || config.Discord_Guild_Id === "" || config.Discord_Client_Id === undefined || config.Discord_Client_Secret === undefined  || config.Discord_Bot_Token === undefined  || config.Discord_Guild_Id === undefined )
+    if ( config.Discord.Client_Id === "" || config.Discord.Client_Secret === ""  || config.Discord.Bot_Token === ""  || config.Discord.Guild_Id === "" || config.Discord.Client_Id === undefined || config.Discord.Client_Secret === undefined  || config.Discord.Bot_Token === undefined  || config.Discord.Guild_Id === undefined )
         res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}));
     else if (id.match(/[1-9][0-9]{16,16}/)) 
         res.send(render(LoginTemplate, {SteamId: id, Login_URL: `/discord/login/${id}`}));
@@ -182,14 +188,14 @@ async function RenderLogin(req, res){
     
 
     let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
-    if ( config.Discord_Client_Id === "" || config.Discord_Client_Secret === ""  || config.Discord_Bot_Token === ""  || config.Discord_Guild_Id === "" || config.Discord_Client_Id === undefined || config.Discord_Client_Secret === undefined  || config.Discord_Bot_Token === undefined  || config.Discord_Guild_Id === undefined ){
+    if ( config.Discord.Client_Id === "" || config.Discord.Client_Secret === ""  || config.Discord.Bot_Token === ""  || config.Discord.Guild_Id === "" || config.Discord.Client_Id === undefined || config.Discord.Client_Secret === undefined  || config.Discord.Bot_Token === undefined  || config.Discord.Guild_Id === undefined ){
         return res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}))
     }
-    if (config.Discord_Client_Id === undefined && !id.match(/[1-9][0-9]{16,16}/)){
+    if (config.Discord?.Client_Id === undefined && !id.match(/[1-9][0-9]{16,16}/)){
         return res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}))
     }
-    if (config.Discord_Restrict_Sign_Up === undefined || !config.Discord_Restrict_Sign_Up){
-        return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord_Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+    if (config.Discord.Restrict_Sign_Up === undefined || !config.Discord.Restrict_Sign_Up){
+        return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
     }
     if (ip === undefined){
         return res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}));
@@ -198,20 +204,20 @@ async function RenderLogin(req, res){
     try {
         responsejson = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,countryCode,country,regionName,isp,org,as,proxy,hosting,query`).then((response)=>response.json())
         if (responsejson.status === "success" && !responsejson.proxy && !responsejson.hosting){
-            if (config.Discord_Restrict_Sign_Up_Countries !== undefined && config.Discord_Restrict_Sign_Up_Countries[0] !== undefined){
-                let found = (config.Discord_Restrict_Sign_Up_Countries.find(element => element == responsejson.countryCode));
-                if (config.Discord_Restrict_Sign_Up_Countries[0] === 'blacklist' && !found){
+            if (config.Discord.Restrict_Sign_Up_Countries !== undefined && config.Discord.Restrict_Sign_Up_Countries[0] !== undefined){
+                let found = (config.Discord.Restrict_Sign_Up_Countries.find(element => element == responsejson.countryCode));
+                if (config.Discord.Restrict_Sign_Up_Countries[0] === 'blacklist' && !found){
                     log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
-                   return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord_Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+                   return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
                 }
                 if (found){
                    log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
-                    return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord_Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+                    return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
                 }
             }
             if (responsejson.status === "success" ){
                log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
-               return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord_Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+               return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
            }
         }
     } catch (e) {            
@@ -240,8 +246,8 @@ async function HandleCallBack(req, res){
             headers: {
             },
             body: new URLSearchParams({
-                client_id: config.Discord_Client_Id,
-                client_secret: config.Discord_Client_Secret,
+                client_id: config.Discord.Client_Id,
+                client_secret: config.Discord.Client_Secret,
                 grant_type: 'authorization_code',
                 code: code,
                 redirect_uri: `https://${req.headers.host}/discord/callback`
@@ -258,7 +264,7 @@ async function HandleCallBack(req, res){
         let discordjson = await discordres.json();
         //console.log(discordjson)
         discordjson.steamid = state;
-        let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+        let guild = await client.guilds.fetch(config.Discord.Guild_Id);
         let msg = "Unknown Error";
         let errType = "System";
         let player;
@@ -277,10 +283,10 @@ async function HandleCallBack(req, res){
             //console.log(roles)
             msg = "User is missing the role";
             errType = "RoleRequired";
-            if (config.Discord_BlackList_Role !== "" && config.Discord_BlackList_Role !== undefined && roles.find(element => element === config.Discord_BlackList_Role) !== undefined){
+            if (config.Discord.BlackList_Role !== "" && config.Discord.BlackList_Role !== undefined && roles.find(element => element === config.Discord.BlackList_Role) !== undefined){
                 msg = "You have a blacklisted role";
                 errType = "Blacklisted";
-            } else if (config.Discord_Required_Role === "" || config.Discord_Required_Role === undefined || roles.find(element => element === config.Discord_Required_Role) !== undefined){
+            } else if (config.Discord.Required_Role === "" || config.Discord.Required_Role === undefined || roles.find(element => element === config.Discord.Required_Role) !== undefined){
                 msg = "Success";
             } 
         }
@@ -379,7 +385,7 @@ async function AddRole(res, req, GUID, auth){
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
                     resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" }
-                    let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+                    let guild = await client.guilds.fetch(config.Discord.Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
                         let roles = player._roles;
@@ -444,7 +450,7 @@ async function RemoveRole(res, req, GUID, auth){
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
                     resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
-                    let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+                    let guild = await client.guilds.fetch(config.Discord.Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
                         let roles = player._roles;
@@ -504,7 +510,7 @@ async function GetRoles(res, req, GUID, auth){
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
                     resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
-                    let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+                    let guild = await client.guilds.fetch(config.Discord.Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
                         let roles = player._roles;
@@ -542,7 +548,7 @@ async function CreateChannel(res, req, auth){
     if (CheckServerAuth(auth) || (await CheckAuth(GUID, auth) && config.AllowClientWrite)){
         try{
             let RawData = req.body; 
-            let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+            let guild = await client.guilds.fetch(config.Discord.Guild_Id);
             let options = RawData.Options;
             let channel = await guild.channels.create(RawData.Name, options)
             let id = channel.id;
@@ -569,7 +575,7 @@ async function DeleteChannel(res, req, id, auth){
     if (CheckServerAuth(auth) || (await CheckAuth(auth) && config.AllowClientWrite)){
         try{
             let RawData = req.body; 
-            let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+            let guild = await client.guilds.fetch(config.Discord.Guild_Id);
             let reason = RawData.Reason;
             try {
                 let channel = await guild.channels.cache.get(id);
@@ -609,7 +615,7 @@ async function EditChannel(res, req, id, auth){
     if (CheckServerAuth(auth) || (await CheckAuth(auth) && config.AllowClientWrite)){
         try{
             let RawData = req.body; 
-            let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+            let guild = await client.guilds.fetch(config.Discord.Guild_Id);
             let reason = RawData.Reason;
             let options = RawData.Options;
             try {
@@ -668,7 +674,7 @@ async function SendMessageChannel(res, req, id, auth){
     if ( isServerAuth || isClientAuth){
         try{
             let RawData = req.body; 
-            let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+            let guild = await client.guilds.fetch(config.Discord.Guild_Id);
             let cid = id;
             let message = {embed: RawData};
             if (RawData.Message !== undefined)
@@ -736,7 +742,7 @@ async function GetMessagesChannel(res, req, id, auth){
     if ( isServerAuth || isClientAuth){
         try{
             let RawData = req.body; 
-            let guild = await client.guilds.fetch(config.Discord_Guild_Id);
+            let guild = await client.guilds.fetch(config.Discord.Guild_Id);
             let cid = id;
             let filter = {};
             if (RawData.Limit !== undefined && RawData.Limit > 0){ filter.limit = RawData.Limit; }

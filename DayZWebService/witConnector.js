@@ -18,8 +18,8 @@ router.post('/:key/:auth', (req, res)=>{
     //console.log(key);
     if (clients[key] === undefined || clients[key] === null) {
         let token = key;
-        if (config.wits !== undefined && config.wits[key] !== undefined){
-            token = config.wits[req.params.key];
+        if (config.Wit !== undefined && config.Wit[key] !== undefined){
+            token = config.Wit[req.params.key];
         }
         log(`Adding New Wit(${key}) to Cache`);
         clients[key] = new Wit({accessToken: token});

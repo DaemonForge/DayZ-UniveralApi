@@ -9,22 +9,36 @@ const {readFileSync} = require('fs');
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
 const config = require('./configLoader');
 
-
 const router = Router();
+
+let QnAconf;
 router.post('/:auth', (req, res)=>{
     try{
         //Use this meathod to find the file so that way the config file can be outside of the packaged Applications
-        QnAconfig = JSON.parse(readFileSync("QnAMaker.json")); 
-        runQnA(req, res, QnAconfig);
+        if (QnAconf === undefined && config.QnA !== undefined && config.QnA["main"] !== undefined){
+            QnAconf = config.QnA["main"];
+        } else if (config.QnA === undefined || config.QnA["main"] === undefined){
+            log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
+            return res.json({answer: "error", score: 0});
+        }
+        runQnA(req, res, QnAconf);
     } catch (err){ //If the file doesn't exsit give a nice usable json for DayZ
-        console.log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
+        log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
         res.json({answer: "error", score: 0});
+    }
+});
+router.post('/:key/:auth', (req, res)=>{
+    let key = req.params.key;
+    if (config.QnA !== undefined && config.QnA[key] !== undefined){
+        runQnA(req, res, config.QnA[key]);
+    } else { //If the file doesn't exsit give a nice usable json for DayZ
+        log(`A QnA Request came in but it seems QnAMaker for ${key} is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up`);
+        res.json({Status: "Error", Error: "Key not configured", answer: "error", score: 0});
     }
 });
 
 async function runQnA(req, res, QnAconfig){
-    if ( CheckServerAuth(auth) || (await CheckAuth( req.params.auth )) ){
-        console.log(JSON.stringify(req.body));
+    if ( CheckServerAuth(req.params.auth) || (await CheckAuth( req.params.auth )) ){
         let json;
         try {
             let EndpointKey = "EndpointKey " + QnAconfig.EndpointKey;
@@ -36,9 +50,8 @@ async function runQnA(req, res, QnAconfig){
             }
             }).then(response => response.json())
         }catch(e) {
-            console.log('Catch an error: ', e)
+            log('Catch an error: ', e)
         }
-        console.log(json);
         let answer = GetHighestAnwser(json.answers, QnAconfig, req.body.question);
         res.json(answer);
         if (answer.answer === "null" && QnAconfig.LogUnAnswerable){
@@ -46,18 +59,20 @@ async function runQnA(req, res, QnAconfig){
         }
     }else{
         res.status(401);
-        res.json({ Message: "Error"});
+        res.json({Status: "Error", answer: "Error", score: 0, Error: ""});
         log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
     }
 }
 
 function GetHighestAnwser(answers, QnAconfig, question){
     let highestScore = QnAconfig.MinScore;
-    let answer = {answer: "null", score: 0};
+    let answer = {Status: "NoAnswer", Error: "No Anwser found above the min score", answer: "null", score: 0};
     for (let value of answers) {
-        console.log("QnA Maker: Question: \"" + question + "\" Possible Anwser: \"" + value.answer + "\" Score: " + value.score);
+        log("QnA Maker: Question: \"" + question + "\" Possible Anwser: \"" + value.answer + "\" Score: " + value.score);
         if(value.score > highestScore){
             highestScore = value.score;
+            answer.Status = "Success";
+            answer.Error = "";
             answer.answer = value.answer;
             answer.score = value.score;
         }

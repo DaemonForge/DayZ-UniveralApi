@@ -19,7 +19,8 @@ const RouterFowarder = require("./apiFowarder");
 const RouterLogger = require("./logger");
 const RouterDiscordConnector = require("./discordConnector");
 const RouterWit = require("./witConnector");
-
+const RouterLUIS = require("./luisConnector");
+const RouterTranslate = require("./TranslateConnector");
 
 
 app.use((req, res, next) => {
@@ -43,10 +44,14 @@ app.use('/Globals', RouterGlobals);
 app.use('/GetAuth', RouterAuth);
 app.use('/Status', RouterStatus);
 app.use('/QnAMaker', RouterQnA);
+app.use('/QnA', RouterQnA); //Switching to /QnA for new ai interface
 app.use('/Forward', RouterFowarder);
 app.use('/Logger', RouterLogger);
 app.use('/Discord', RouterDiscordConnector);
 app.use('/Wit', RouterWit);
+app.use('/LUIS', RouterLUIS);
+app.use('/Translate', RouterTranslate);
+
 app.use('/', (req,res)=>{
     log("Error invalid or is not a post Requested URL is:" + req.url);
     res.status(501);

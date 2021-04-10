@@ -7,14 +7,38 @@
     "LogToFile": false,
     "Certificate": "",
     "CertificateKey": "",
-    "Discord_Client_Id": "",
-    "Discord_Client_Secret": "",
-    "Discord_Bot_Token": "",
-    "Discord_Guild_Id": "",
-    "Discord_Required_Role": "",
-    "Discord_BlackList_Role": "",
-    "Discord_Restrict_Sign_Up": true,
-    "Discord_Restrict_Sign_Up_Countries": ["blacklist", "CN"],
-    "wits":{
+    "Discord" :{
+        "Client_Id": "",
+        "Client_Secret": "",
+        "Bot_Token": "",
+        "Guild_Id": "",
+        "Required_Role": "",
+        "BlackList_Role": "",
+        "Restrict_Sign_Up": true,
+        "Restrict_Sign_Up_Countries": ["blacklist", "CN"]
+    },
+    "Wit":{
+    },
+    "LUIS":{
+        "sample": {
+            "Endpoint": "https://westus.api.cognitive.microsoft.com/luis/prediction/v3.0/apps/!!{THIS NEEDS TO BE CHANGED}!!/slots/production/predict",
+            "SubscriptionKey": "",
+            "Verbose": true,
+            "Log": true
+        }
+    },
+    "QnA":{
+        "sample": {
+            "Endpoint": "https://thoaz-qna.azurewebsites.net/qnamaker/knowledgebases/!!{THIS NEEDS TO BE CHANGED}!!/generateAnswer",
+            "EndpointKey": "",
+            "MinScore": 65,
+            "LogUnAnswerable": true
+        }
+    },
+    "Translate":{
+        "Endpoint": "https://api.cognitive.microsofttranslator.com/translate",
+        "SubscriptionRegion": "canadacentral",
+        "SubscriptionKey":""
     }
+
 }
