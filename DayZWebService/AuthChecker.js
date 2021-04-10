@@ -105,7 +105,10 @@ async function CheckPlayerAuth(guid, auth){
 }
 
 function CheckServerAuth(auth){
-    return ((isArray(config.ServerAuth) && (config.ServerAuth.find(element => element === auth) === auth)) || (!isArray(config.ServerAuth) && config.ServerAuth === auth));
+    if (auth === undefined || auth === null) return false;
+    if (isArray(config.ServerAuth) && (config.ServerAuth.find(element => element === auth) === auth)) return true;
+    if (!isArray(config.ServerAuth) && config.ServerAuth === auth) return true;
+    return false; 
 }
 
 function GetSigningAuth(){
