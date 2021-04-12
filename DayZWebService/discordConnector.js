@@ -18,7 +18,7 @@ try {
         client.login(global.config.Discord.Bot_Token);
         log("Logging in to discord bot");
     } else {
-        log("Discord Bot Token not present you will not be able to use any discord functions");
+        log("Discord Bot Token not present you will not be able to use any discord functions", "warn");
         global.DISCORDSTATUS = "Disabled";
     }
 } catch (e){
@@ -39,7 +39,7 @@ function LoadLoginTemplate(){
     try{
         LoginTemplate = readFileSync("./templates/discordLogin.ejs","utf8");
     } catch (e) {
-        log("Login Template Missing Creating It Now - " + e);
+        log("Login Template Missing Creating It Now - " + e), "warn";
         LoginTemplate = DefaultTemplates.Login;
         writeFileSync("./templates/discordLogin.ejs", LoginTemplate);
     }
@@ -61,7 +61,7 @@ function LoadSuccessTemplate(){
     try{
         SuccessTemplate = readFileSync("./templates/discordSuccess.ejs","utf8");
     } catch (e) {
-        log("Success Template Missing Creating It Now - " + e);
+        log("Success Template Missing Creating It Now - " + e, "warn");
         SuccessTemplate = DefaultTemplates.Success;
         writeFileSync("./templates/discordSuccess.ejs", SuccessTemplate);
     }
@@ -84,7 +84,7 @@ function LoadErrorTemplate(){
     try{
         ErrorTemplate = readFileSync("./templates/discordError.ejs","utf8");
     } catch (e) {
-        log("Error Template Missing Creating It Now - " + e);
+        log("Error Template Missing Creating It Now - " + e, "warn");
         ErrorTemplate = DefaultTemplates.Error;
         writeFileSync("./templates/discordError.ejs", ErrorTemplate);
     }
@@ -188,15 +188,18 @@ async function RenderLogin(req, res){
 
     let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
     if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined ){
+        log("User tried to sign up for discord but Intergration is not setup for this server", "warn");
         return res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}))
     }
     if (global.config.Discord?.Client_Id === undefined && !id.match(/[1-9][0-9]{16,16}/)){
+        log("User tried to sign up for discord but steam id isn't a valid id", "warn");
         return res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}))
     }
     if (global.config.Discord.Restrict_Sign_Up === undefined || !global.config.Discord.Restrict_Sign_Up){
         return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${global.config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
     }
     if (ip === undefined){
+        log("User tried to sign up for discord but ip isn't valid", "warn");
         return res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}));
     }
     let responsejson;
@@ -206,16 +209,16 @@ async function RenderLogin(req, res){
             if (global.config.Discord.Restrict_Sign_Up_Countries !== undefined && global.config.Discord.Restrict_Sign_Up_Countries[0] !== undefined){
                 let found = (global.config.Discord.Restrict_Sign_Up_Countries.find(element => element == responsejson.countryCode));
                 if (global.config.Discord.Restrict_Sign_Up_Countries[0] === 'blacklist' && !found){
-                    log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
+                    log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`, "warn");
                    return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${global.config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
                 }
                 if (found){
-                   log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
+                   log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`, "warn");
                     return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${global.config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
                 }
             }
             if (responsejson.status === "success" ){
-               log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
+               log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`, "warn");
                return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${global.config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
            }
         }
@@ -234,6 +237,7 @@ async function HandleCallBack(req, res){
     const state = req.query.state;
     //console.log(req.query)
     if (code === undefined || code === null || state === undefined || state === null){
+        log(`HandleCallBack - Invalid Response from Discord`, "warn");
         res.send(render(ErrorTemplate, {TheError: "Invalid Response from Discord", Type: "Discord"}));
         return;
     }
