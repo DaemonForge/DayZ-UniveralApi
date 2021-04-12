@@ -6,8 +6,6 @@ const log = require("./log");
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
 
 
-const config = require('./configLoader');
-
 const router = Router();
 
 module.exports = router.post('/:id/:mod/:auth', (req, res)=>{
@@ -26,15 +24,15 @@ function GetCollection(URL){
 
 async function runTransaction(req, res, mod, id, auth, COLL){
 
-    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
+    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && global.config.AllowClientWrite) ){
         var RawData = req.body;
-        const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
 
             // Connect the client to the server
             await client.connect();
             
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             var collection = db.collection(COLL);
             var query;
             var base;

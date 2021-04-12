@@ -1,5 +1,4 @@
 const {verify, sign} = require('jsonwebtoken');
-const config = require('./configLoader');
 const { MongoClient } = require("mongodb");
 const {createHash} = require('crypto');
 const {isArray} = require('./utils');
@@ -81,12 +80,12 @@ function AuthPlayerGuid(auth, ignoreError = false){
 
 async function CheckPlayerAuth(guid, auth){
     let isAuth = false;
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     if ((await CheckAuthAgainstGUID(auth, guid, true))){
         try{
             await client.connect();
             // Connect the client to the server        
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             let collection = db.collection("Players");
             let SavedAuth = createHash('sha256').update(auth).digest('base64');
             let query = { GUID: guid, AUTH: SavedAuth };
@@ -106,16 +105,16 @@ async function CheckPlayerAuth(guid, auth){
 
 function CheckServerAuth(auth){
     if (auth === undefined || auth === null) return false;
-    if (isArray(config.ServerAuth) && (config.ServerAuth.find(element => element === auth) === auth)) return true;
-    if (!isArray(config.ServerAuth) && config.ServerAuth === auth) return true;
+    if (isArray(global.config.ServerAuth) && (global.config.ServerAuth.find(element => element === auth) === auth)) return true;
+    if (!isArray(global.config.ServerAuth) && global.config.ServerAuth === auth) return true;
     return false; 
 }
 
 function GetSigningAuth(){
-    if(isArray(config.ServerAuth)){
-        return config.ServerAuth[0];
+    if(isArray(global.config.ServerAuth)){
+        return global.config.ServerAuth[0];
     } else {
-        return config.ServerAuth;
+        return global.config.ServerAuth;
     }
 }
 

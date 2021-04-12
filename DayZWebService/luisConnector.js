@@ -13,7 +13,7 @@ const router = Router();
 
 router.post('/:key/:auth', (req, res)=>{
     let key = req.params.key;
-    if (config.LUIS !== undefined && config.LUIS[key] !== undefined){
+    if (global.config.LUIS !== undefined && global.config.LUIS[key] !== undefined){
         runLUIS(req, res, req.params.auth, key);
     } else { //If the file doesn't exsit give a nice usable json for DayZ
         log(`A LUIS Request for ${key} is not set up yet`);
@@ -24,7 +24,7 @@ router.post('/:key/:auth', (req, res)=>{
 async function runLUIS(req, res, auth, key){
     if ( CheckServerAuth( auth ) || (await CheckAuth( auth )) ){
         try {
-            let luisconfig = config.LUIS[key];
+            let luisconfig = global.config.LUIS[key];
             let query = req.body.Query;
             let showall = (req.body.showall === 1);
             let querystr = querystring.stringify({

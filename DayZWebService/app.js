@@ -1,16 +1,20 @@
 
 global.APIVERSION = '0.9.0';
-
+global.STABLEVERSION = '0.0.0';
 const express = require('express');
 const favicon = require("serve-favicon")
 const {existsSync,readFileSync} = require('fs');
 const https = require('https')
+const fetch  = require('node-fetch');
 const {json} = require('body-parser');
 const DefaultCert = require('./defaultkeys.json');
 const app = express();
-const log = require("./log");
+const {versionCompare} = require('./utils');
+
 /* Config File */
-const config = require('./configLoader');
+global.config = require('./configLoader');
+
+const log = require("./log");
 
 const RouterItem = require('./Object');
 const RouterPlayer = require('./player');
@@ -62,20 +66,45 @@ app.use('/', (req,res)=>{
 });
 let ServerKey = DefaultCert.Key;
 let ServerCert = DefaultCert.Cert;
-if (config.Certificate != "" && config.CertificateKey != ""){
-  if (existsSync(config.Certificate) && existsSync(config.CertificateKey)){
-    ServerKey = readFileSync(config.Certificate);
-    ServerCert = readFileSync(config.CertificateKey);
+if (global.config.Certificate != "" && global.config.CertificateKey != ""){
+  if (existsSync(global.config.Certificate) && existsSync(global.config.CertificateKey)){
+    ServerKey = readFileSync(global.config.Certificate);
+    ServerCert = readFileSync(global.config.CertificateKey);
   }
 }
-
+let Port = process.env.PORT || global.config.Port || 8443
 https.createServer({
     key: ServerKey,
     cert: ServerCert
   }, app)
-  .listen(config.Port, function () {
-    console.log('API Webservice started and is now listening on port "' + config.Port +'"!')
+  .listen(Port, function () {
+    log('API Webservice started and is now listening on port "' + Port +'"!')
   });
 
+
+async function CheckRecentVersion(){
+  try {
+    const data = await fetch("https://api.github.com/repos/daemonforge/DayZ-UniveralApi/releases").then( response => response.json()).catch(e => console.log(e));
+    if (data[0] !== undefined && data[0].tag_name !== undefined ){
+      global.STABLEVERSION = data[0].tag_name;
+    }
+    let vc = versionCompare(global.APIVERSION, global.STABLEVERSION);
+    if (global.STABLEVERSION === "0.0.0"){
+      log(`WARNING!!! Could check for the current stable version`, "warn");
+    } else if (vc > 0){
+      log(`WARNING!!! You are running a unpublished version, note it may not work as expected, Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION} `, "warn");
+    } else if (vc < 0){
+      log(`WARNING!!! You're API is currently out of date, your currently Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION}`, "warn");
+    } else {
+      log(`API Is currently running the most recent Stable Version: ${global.APIVERSION}`);
+    }
+  } catch (err){
+    log(`WARNING!!! Could check for the current stable version`, "warn");
+    console.log(err);
+  }
+}
+if (global.config?.CheckForNewVersion){
+  CheckRecentVersion();
+}
 
 module.exports = https;

@@ -5,7 +5,6 @@ const log = require("./log")
 const fetch  = require('node-fetch');
 
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
-const config = require('./configLoader');
 
 const router = Router();
 
@@ -13,9 +12,9 @@ let QnAconf;
 router.post('/:auth', (req, res)=>{
     try{
         //Use this meathod to find the file so that way the config file can be outside of the packaged Applications
-        if (QnAconf === undefined && config.QnA !== undefined && config.QnA["main"] !== undefined){
-            QnAconf = config.QnA["main"];
-        } else if (config.QnA === undefined || config.QnA["main"] === undefined){
+        if (QnAconf === undefined && global.config.QnA !== undefined && global.config.QnA["main"] !== undefined){
+            QnAconf = global.config.QnA["main"];
+        } else if (global.config.QnA === undefined || global.config.QnA["main"] === undefined){
             log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
             return res.json({answer: "error", score: 0});
         }
@@ -27,8 +26,8 @@ router.post('/:auth', (req, res)=>{
 });
 router.post('/:key/:auth', (req, res)=>{
     let key = req.params.key;
-    if (config.QnA !== undefined && config.QnA[key] !== undefined){
-        runQnA(req, res, config.QnA[key]);
+    if (global.config.QnA !== undefined && global.config.QnA[key] !== undefined){
+        runQnA(req, res, global.config.QnA[key]);
     } else { //If the file doesn't exsit give a nice usable json for DayZ
         log(`A QnA Request came in but it seems QnAMaker for ${key} is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up`);
         res.json({Status: "Error", Error: "Key not configured", answer: "error", score: 0});
@@ -79,11 +78,11 @@ function GetHighestAnwser(answers, QnAconfig, question){
 }
 
 async function WriteQuestionToDataBase(question){
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     try{
         // Connect the client to the server       
         await client.connect(); 
-        const db = client.db(config.DB);
+        const db = client.db(global.config.DB);
         let collection = db.collection("QnAMaker");
         const Doc  = { UnAnweredAbleQuestion: question }
         const result = await collection.insertOne(Doc);

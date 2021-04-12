@@ -98,6 +98,14 @@ if (config.Discord === undefined){
  }
 }
 
+if (config.CheckForNewVersion === undefined || config.CheckForNewVersion === null){
+  config.CheckForNewVersion = true;
+  try {
+   writeFileSync("./config.json", JSON.stringify(config, undefined, 4))
+  } catch(e) {
+    console.log(e)
+  }
+}
 
 
 module.exports = config;

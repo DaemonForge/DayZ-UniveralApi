@@ -7,7 +7,6 @@ const {createHash} = require('crypto');
 const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
 const {render} = require('ejs');
 const log = require("./log");
-const config = require('./configLoader');
 const {Client, GuildMember, Guild} = require("discord.js");
 const client = new Client();
 const fetch = require('node-fetch');
@@ -15,9 +14,9 @@ const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
 const router = Router();
 try {
-    if (config.Discord?.Bot_Token !== "" && config.Discord?.Bot_Token !== undefined){
-        client.login(config.Discord.Bot_Token);
-        console.log("Logging in to discord bot");
+    if (global.config.Discord?.Bot_Token !== "" && global.config.Discord?.Bot_Token !== undefined){
+        client.login(global.config.Discord.Bot_Token);
+        log("Logging in to discord bot");
     } else {
         log("Discord Bot Token not present you will not be able to use any discord functions");
         global.DISCORDSTATUS = "Disabled";
@@ -168,7 +167,7 @@ router.get('/:id', (req, res) => {
     if (LoginTemplate === undefined) LoadLoginTemplate();
     if (ErrorTemplate === undefined) LoadErrorTemplate();
     let id = req.params.id;
-    if ( config.Discord.Client_Id === "" || config.Discord.Client_Secret === ""  || config.Discord.Bot_Token === ""  || config.Discord.Guild_Id === "" || config.Discord.Client_Id === undefined || config.Discord.Client_Secret === undefined  || config.Discord.Bot_Token === undefined  || config.Discord.Guild_Id === undefined )
+    if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined )
         res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}));
     else if (id.match(/[1-9][0-9]{16,16}/)) 
         res.send(render(LoginTemplate, {SteamId: id, Login_URL: `/discord/login/${id}`}));
@@ -188,14 +187,14 @@ async function RenderLogin(req, res){
     
 
     let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
-    if ( config.Discord.Client_Id === "" || config.Discord.Client_Secret === ""  || config.Discord.Bot_Token === ""  || config.Discord.Guild_Id === "" || config.Discord.Client_Id === undefined || config.Discord.Client_Secret === undefined  || config.Discord.Bot_Token === undefined  || config.Discord.Guild_Id === undefined ){
+    if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined ){
         return res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}))
     }
-    if (config.Discord?.Client_Id === undefined && !id.match(/[1-9][0-9]{16,16}/)){
+    if (global.config.Discord?.Client_Id === undefined && !id.match(/[1-9][0-9]{16,16}/)){
         return res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}))
     }
-    if (config.Discord.Restrict_Sign_Up === undefined || !config.Discord.Restrict_Sign_Up){
-        return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+    if (global.config.Discord.Restrict_Sign_Up === undefined || !global.config.Discord.Restrict_Sign_Up){
+        return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${global.config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
     }
     if (ip === undefined){
         return res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}));
@@ -204,20 +203,20 @@ async function RenderLogin(req, res){
     try {
         responsejson = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,countryCode,country,regionName,isp,org,as,proxy,hosting,query`).then((response)=>response.json())
         if (responsejson.status === "success" && !responsejson.proxy && !responsejson.hosting){
-            if (config.Discord.Restrict_Sign_Up_Countries !== undefined && config.Discord.Restrict_Sign_Up_Countries[0] !== undefined){
-                let found = (config.Discord.Restrict_Sign_Up_Countries.find(element => element == responsejson.countryCode));
-                if (config.Discord.Restrict_Sign_Up_Countries[0] === 'blacklist' && !found){
+            if (global.config.Discord.Restrict_Sign_Up_Countries !== undefined && global.config.Discord.Restrict_Sign_Up_Countries[0] !== undefined){
+                let found = (global.config.Discord.Restrict_Sign_Up_Countries.find(element => element == responsejson.countryCode));
+                if (global.config.Discord.Restrict_Sign_Up_Countries[0] === 'blacklist' && !found){
                     log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
-                   return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+                   return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${global.config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
                 }
                 if (found){
                    log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
-                    return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+                    return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${global.config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
                 }
             }
             if (responsejson.status === "success" ){
                log(`User signed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`);
-               return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
+               return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${global.config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
            }
         }
     } catch (e) {            
@@ -238,7 +237,7 @@ async function HandleCallBack(req, res){
         res.send(render(ErrorTemplate, {TheError: "Invalid Response from Discord", Type: "Discord"}));
         return;
     }
-    const mongo = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     try {
         let connect = mongo.connect();
         const response = await fetch(`https://discordapp.com/api/oauth2/token`,{
@@ -246,8 +245,8 @@ async function HandleCallBack(req, res){
             headers: {
             },
             body: new URLSearchParams({
-                client_id: config.Discord.Client_Id,
-                client_secret: config.Discord.Client_Secret,
+                client_id: global.config.Discord.Client_Id,
+                client_secret: global.config.Discord.Client_Secret,
                 grant_type: 'authorization_code',
                 code: code,
                 redirect_uri: `https://${req.headers.host}/discord/callback`
@@ -264,7 +263,7 @@ async function HandleCallBack(req, res){
         let discordjson = await discordres.json();
         //console.log(discordjson)
         discordjson.steamid = state;
-        let guild = await client.guilds.fetch(config.Discord.Guild_Id);
+        let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
         let msg = "Unknown Error";
         let errType = "System";
         let player;
@@ -283,10 +282,10 @@ async function HandleCallBack(req, res){
             //console.log(roles)
             msg = "User is missing the role";
             errType = "RoleRequired";
-            if (config.Discord.BlackList_Role !== "" && config.Discord.BlackList_Role !== undefined && roles.find(element => element === config.Discord.BlackList_Role) !== undefined){
+            if (global.config.Discord.BlackList_Role !== "" && global.config.Discord.BlackList_Role !== undefined && roles.find(element => element === global.config.Discord.BlackList_Role) !== undefined){
                 msg = "You have a blacklisted role";
                 errType = "Blacklisted";
-            } else if (config.Discord.Required_Role === "" || config.Discord.Required_Role === undefined || roles.find(element => element === config.Discord.Required_Role) !== undefined){
+            } else if (global.config.Discord.Required_Role === "" || global.config.Discord.Required_Role === undefined || roles.find(element => element === global.config.Discord.Required_Role) !== undefined){
                 msg = "Success";
             } 
         }
@@ -310,7 +309,7 @@ async function HandleCallBack(req, res){
                 }
             }
             // Connect the client to the server
-            const db = mongo.db(config.DB);
+            const db = mongo.db(global.config.DB);
             let collection = db.collection("Players");
             
             let query = { "Discord.id": discordjson.id };
@@ -361,12 +360,12 @@ async function HandleCallBack(req, res){
 //API Call Functions
 
 async function AddRole(res, req, GUID, auth){
-    if (CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth) && config.AllowClientWrite)){
-        const mongo = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    if (CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth) && global.config.AllowClientWrite)){
+        const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
             await mongo.connect();
             // Connect the client to the server
-            const db = mongo.db(config.DB);
+            const db = mongo.db(global.config.DB);
             let collection = db.collection("Players");
             let query = { GUID: GUID };
             let results = collection.find(query);
@@ -385,7 +384,7 @@ async function AddRole(res, req, GUID, auth){
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
                     resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" }
-                    let guild = await client.guilds.fetch(config.Discord.Guild_Id);
+                    let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
                         let roles = player._roles;
@@ -426,12 +425,12 @@ async function AddRole(res, req, GUID, auth){
 }
 
 async function RemoveRole(res, req, GUID, auth){
-    if (CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth) && config.AllowClientWrite)){
-        const mongo = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    if (CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth) && global.config.AllowClientWrite)){
+        const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
             await mongo.connect();
             // Connect the client to the server
-            const db = mongo.db(config.DB);
+            const db = mongo.db(global.config.DB);
             let collection = db.collection("Players");
             let query = { GUID: GUID };
             let results = collection.find(query);
@@ -450,7 +449,7 @@ async function RemoveRole(res, req, GUID, auth){
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
                     resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
-                    let guild = await client.guilds.fetch(config.Discord.Guild_Id);
+                    let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
                         let roles = player._roles;
@@ -490,11 +489,11 @@ async function RemoveRole(res, req, GUID, auth){
 
 async function GetRoles(res, req, GUID, auth){
     if (CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth))){
-        const mongo = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+        const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
             await mongo.connect();
             // Connect the client to the server
-            const db = mongo.db(config.DB);
+            const db = mongo.db(global.config.DB);
             let collection = db.collection("Players");
             let query = { GUID: GUID };
             let results = collection.find(query);
@@ -510,7 +509,7 @@ async function GetRoles(res, req, GUID, auth){
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {
                     resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
-                    let guild = await client.guilds.fetch(config.Discord.Guild_Id);
+                    let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.Discord.id);
                         let roles = player._roles;
@@ -545,10 +544,10 @@ async function GetRoles(res, req, GUID, auth){
 
 
 async function CreateChannel(res, req, auth){
-    if (CheckServerAuth(auth) || (await CheckAuth(GUID, auth) && config.AllowClientWrite)){
+    if (CheckServerAuth(auth) || (await CheckAuth(GUID, auth) && global.config.AllowClientWrite)){
         try{
             let RawData = req.body; 
-            let guild = await client.guilds.fetch(config.Discord.Guild_Id);
+            let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
             let options = RawData.Options;
             let channel = await guild.channels.create(RawData.Name, options)
             let id = channel.id;
@@ -572,10 +571,10 @@ async function CreateChannel(res, req, auth){
 
 
 async function DeleteChannel(res, req, id, auth){
-    if (CheckServerAuth(auth) || (await CheckAuth(auth) && config.AllowClientWrite)){
+    if (CheckServerAuth(auth) || (await CheckAuth(auth) && global.config.AllowClientWrite)){
         try{
             let RawData = req.body; 
-            let guild = await client.guilds.fetch(config.Discord.Guild_Id);
+            let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
             let reason = RawData.Reason;
             try {
                 let channel = await guild.channels.cache.get(id);
@@ -612,10 +611,10 @@ async function DeleteChannel(res, req, id, auth){
 }
 
 async function EditChannel(res, req, id, auth){
-    if (CheckServerAuth(auth) || (await CheckAuth(auth) && config.AllowClientWrite)){
+    if (CheckServerAuth(auth) || (await CheckAuth(auth) && global.config.AllowClientWrite)){
         try{
             let RawData = req.body; 
-            let guild = await client.guilds.fetch(config.Discord.Guild_Id);
+            let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
             let reason = RawData.Reason;
             let options = RawData.Options;
             try {
@@ -674,7 +673,7 @@ async function SendMessageChannel(res, req, id, auth){
     if ( isServerAuth || isClientAuth){
         try{
             let RawData = req.body; 
-            let guild = await client.guilds.fetch(config.Discord.Guild_Id);
+            let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
             let cid = id;
             let message = {embed: RawData};
             if (RawData.Message !== undefined)
@@ -742,7 +741,7 @@ async function GetMessagesChannel(res, req, id, auth){
     if ( isServerAuth || isClientAuth){
         try{
             let RawData = req.body; 
-            let guild = await client.guilds.fetch(config.Discord.Guild_Id);
+            let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
             let cid = id;
             let filter = {};
             if (RawData.Limit !== undefined && RawData.Limit > 0){ filter.limit = RawData.Limit; }
@@ -789,11 +788,11 @@ async function GetMessagesChannel(res, req, id, auth){
 }
 
 async function CheckId(res, req, id, guid){
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();
             // Connect the client to the server        
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             let collection = db.collection("Players");
             let query = { GUID: guid };
             let results = collection.find(query);
@@ -821,7 +820,7 @@ async function CheckId(res, req, id, guid){
 }
 
 async function GetDiscordObj(guid){
-    const mongo = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     let obj = {
         id:"0",
         Username: "", 
@@ -831,7 +830,7 @@ async function GetDiscordObj(guid){
     try{
         await mongo.connect();
         // Connect the client to the server
-        const db = mongo.db(config.DB);
+        const db = mongo.db(global.config.DB);
         let collection = db.collection("Players");
         let query = { GUID: guid };
         let results = collection.find(query);

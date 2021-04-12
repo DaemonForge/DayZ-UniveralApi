@@ -5,8 +5,6 @@ const {makeAuthToken, CheckServerAuth} = require('./AuthChecker')
 
 const log = require("./log");
 
-const config = require('./configLoader');
-
 const router = Router();
 
 router.post('/:GUID/:auth', (req, res)=>{
@@ -20,11 +18,11 @@ router.post('/:GUID/:auth', (req, res)=>{
 });
 
 async function runGetAuth(req, res, GUID) {
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     try{
         // Connect the client to the server       
         await client.connect(); 
-        const db = client.db(config.DB);
+        const db = client.db(global.config.DB);
         let collection = db.collection("Players");
         let query = { GUID: GUID };
         const options = { upsert: true };

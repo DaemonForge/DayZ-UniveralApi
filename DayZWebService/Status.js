@@ -25,34 +25,34 @@ let WitsEnabled = [];
 let TranslatesEnabled  = "Disabled";
 let QnAEnabled = [];
 let LUISEnabled = [];
-if (config.Wit !== undefined){
-    Object.keys(config.Wit).forEach(function (k) {
+if (global.config.Wit !== undefined){
+    Object.keys(global.config.Wit).forEach(function (k) {
         WitsEnabled.push(k);
     })
 }
-if (config.LUIS !== undefined){
-    Object.keys(config.LUIS).forEach(function (k) {
-        if (config.LUIS[k].SubscriptionKey !== ""){
+if (global.config.LUIS !== undefined){
+    Object.keys(global.config.LUIS).forEach(function (k) {
+        if (global.config.LUIS[k].SubscriptionKey !== ""){
             LUISEnabled.push(k);
         }
     })
 }
-if (config.QnA !== undefined){
-    Object.keys(config.QnA).forEach(function (k) {
-        if (config.QnA[k].EndpointKey !== ""){
+if (global.config.QnA !== undefined){
+    Object.keys(global.config.QnA).forEach(function (k) {
+        if (global.config.QnA[k].EndpointKey !== ""){
             QnAEnabled.push(k);
         }
     })
 }
-if (config.Translate !== undefined){
-    if (config.Translate.SubscriptionKey !== "" &&  config.Translate.SubscriptionRegion !== "" ){
+if (global.config.Translate !== undefined){
+    if (global.config.Translate.SubscriptionKey !== "" &&  global.config.Translate.SubscriptionRegion !== "" ){
         TranslatesEnabled = "Enabled";
     }
 }
 
 
 async function runStatusCheck(req, res, auth) {
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     var returnError = "noauth"
     if (CheckServerAuth(auth) || (await CheckAuth(auth, true))){
         returnError = "noerror"
@@ -60,7 +60,7 @@ async function runStatusCheck(req, res, auth) {
     try{
         // Connect the client to the server       
         await client.connect(); 
-        const db = client.db(config.DB);
+        const db = client.db(global.config.DB);
         var collection = db.collection("Globals");
         var query = { Mod: "UniversalApiStatus"};
         const options = { upsert: true };

@@ -6,7 +6,6 @@ const log = require("./log");
 
 const {CheckAuth, CheckPlayerAuth,CheckServerAuth} = require('./AuthChecker')
 
-const config = require('./configLoader');
 
 const queryHandler = require("./Query");
 const TransactionHandler = require("./Transaction");
@@ -30,12 +29,12 @@ router.post('/Update/:GUID/:mod/:auth', (req, res)=>{
 
 async function runGet(req, res, GUID, mod, auth) {
     if (  CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth))){
-        const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
 
             await client.connect();
             // Connect the client to the server
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             let collection = db.collection("Players");
             let query = { GUID: GUID };
             let results = collection.find(query);
@@ -43,7 +42,7 @@ async function runGet(req, res, GUID, mod, auth) {
             let RawData = req.body;
             
             if ((await results.count()) == 0){
-                if (CheckServerAuth(auth) || config.AllowClientWrite){
+                if (CheckServerAuth(auth) || global.config.AllowClientWrite){
                     log("Can't find Player with ID " + GUID + "Creating it now");
                     const doc  = JSON.parse("{ \"GUID\": \"" + GUID + "\", \""+mod+"\": "+ StringData + " }");
                     await collection.insertOne(doc);
@@ -64,7 +63,7 @@ async function runGet(req, res, GUID, mod, auth) {
                     }
                 }
                 if (sent != true){
-                    if (CheckServerAuth(auth) || config.AllowClientWrite){
+                    if (CheckServerAuth(auth) || global.config.AllowClientWrite){
                         const updateDocValue  = JSON.parse("{ \""+mod+"\": "+ StringData + " }");
                         const updateDoc = { $set: updateDocValue, };
                         const options = { upsert: false };
@@ -91,15 +90,15 @@ async function runGet(req, res, GUID, mod, auth) {
     }
 };
 async function runSave(req, res, GUID, mod, auth) {
-    if ( CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && config.AllowClientWrite) ){
-        const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    if ( CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite) ){
+        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();
 
             let StringData = JSON.stringify(req.body);
             let RawData = req.body;
             // Connect the client to the server
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             let collection = db.collection("Players");
             let query = { GUID: GUID };
             const options = { upsert: true };
@@ -133,8 +132,8 @@ async function runSave(req, res, GUID, mod, auth) {
 
 
 async function runUpdate(req, res, GUID, mod, auth) {
-    if ( CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && config.AllowClientWrite) ){
-        const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    if ( CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite) ){
+        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();
             let RawData = req.body;
@@ -149,7 +148,7 @@ async function runUpdate(req, res, GUID, mod, auth) {
                 StringData = RawData.Value;
             }
             // Connect the client to the server
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             let collection = db.collection("Players");
             let query = { GUID: GUID };
             const options = { upsert: false };

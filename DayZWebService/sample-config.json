@@ -7,6 +7,7 @@
     "LogToFile": false,
     "Certificate": "",
     "CertificateKey": "",
+    "CheckForNewVersion": true,
     "Discord" :{
         "Client_Id": "",
         "Client_Secret": "",

@@ -4,7 +4,6 @@ const log = require("./log")
 const fetch  = require('node-fetch');
 
 const { CheckAuth, CheckServerAuth } = require('./AuthChecker')
-const config = require('./configLoader');
 
 const querystring = require('querystring');
 
@@ -16,7 +15,7 @@ const router = Router();
 
 router.post('/:key/:auth', (req, res)=>{
     let key = req.params.key;
-    if (config.Translate !== undefined && config.Translate[key] !== undefined){
+    if (global.config.Translate !== undefined && global.config.Translate[key] !== undefined){
         runTranslate(req, res, req.params.auth, key);
     } else { //If the file doesn't exsit give a nice usable json for DayZ
         log(`A Tranlation Request for ${key} is not set up yet`);
@@ -27,7 +26,7 @@ router.post('/:key/:auth', (req, res)=>{
 async function runTranslate(req, res, auth, key){
     if ( CheckServerAuth( auth ) || (await CheckAuth( auth )) ){
         try {
-            let Tconfig = config.Translate[key];
+            let Tconfig = global.config.Translate[key];
             let text = req.body.Text;
             let querystr = querystring.stringify({
                 "api-version": '3.0',

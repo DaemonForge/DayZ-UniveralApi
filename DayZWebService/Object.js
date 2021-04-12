@@ -4,8 +4,6 @@ const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
 let {createHash} = require('crypto');
 
 const {isArray, isObject, makeObjectId} = require('./utils')
-
-const config = require('./configLoader');
  
 const log = require("./log");
 // Create a new MongoClient
@@ -30,20 +28,20 @@ router.post('/Update/:ObjectId/:mod/:auth', (req, res)=>{
 });
 async function runGet(req, res, ObjectId, mod, auth) {
     if (CheckServerAuth(auth) || (await CheckAuth(auth)) ){
-        const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         let StringData = JSON.stringify(req.body);
         let RawData = req.body;
         try{
 
             // Connect the client to the server
             await client.connect();
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             let collection = db.collection("Objects");
             let query = { ObjectId: ObjectId, Mod: mod };
             let results = collection.find(query);
             
             if ((await results.count()) == 0){
-                if (CheckServerAuth(auth) || config.AllowClientWrite ){
+                if (CheckServerAuth(auth) || global.config.AllowClientWrite ){
                     if (ObjectId == "NewObject"){
                         ObjectId = makeObjectId();
                         RawData.ObjectId = ObjectId;
@@ -83,14 +81,14 @@ async function runGet(req, res, ObjectId, mod, auth) {
 };
 
 async function runSave(req, res, ObjectId, mod, auth) {  
-    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
-        const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && global.config.AllowClientWrite) ){
+        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         let RawData = req.body;
         try{
 
             // Connect the client to the server
             await client.connect();
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             let collection = db.collection("Objects");
             if (ObjectId == "NewObject"){
                 ObjectId = makeObjectId();
@@ -125,8 +123,8 @@ async function runSave(req, res, ObjectId, mod, auth) {
 };
 
 async function runUpdate(req, res, ObjectId, mod, auth) {
-    if ( CheckServerAuth(auth) || ((await CheckAuth(auth)) && config.AllowClientWrite) ){
-        const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    if ( CheckServerAuth(auth) || ((await CheckAuth(auth)) && global.config.AllowClientWrite) ){
+        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();
 
@@ -142,7 +140,7 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
                 StringData = RawData.Value;
             }
             // Connect the client to the server
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             let collection = db.collection("Objects");
             let query = { ObjectId: ObjectId, Mod: mod };
             const options = { upsert: false };

@@ -1,4 +1,4 @@
-const {LogToFile} = require('./configLoader');
+const {LogToFile} = global.config;
 
 const log4js = require('log4js');
 let datetime = new Date();

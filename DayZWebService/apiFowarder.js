@@ -5,8 +5,6 @@ const log = require("./log");
 
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
 
-const config = require('./configLoader');
-
 /*
     let Request.URL
     let Request.Headers[].Key 

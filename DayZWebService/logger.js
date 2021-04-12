@@ -3,7 +3,6 @@ const { MongoClient } = require("mongodb");
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
 let {createHash} = require('crypto');
 
-const config = require('./configLoader');
  
 const log = require("./log");
 
@@ -20,7 +19,7 @@ router.post('/Many/:id/:auth', (req, res)=>{
 });
 
 async function runLoggerOne(req, res, id, auth) {
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     let RawData = req.body;
 	let hasServerAuth = CheckServerAuth(auth);
 	let hasClientAuth = await CheckAuth(auth, true);
@@ -29,7 +28,7 @@ async function runLoggerOne(req, res, id, auth) {
             //console.log(RawData);
             // Connect the client to the server       
             await client.connect(); 
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             let collection = db.collection("Logs");
             let datetime = new Date();
             let ClientId = GetClientID(req);
@@ -64,7 +63,7 @@ async function runLoggerOne(req, res, id, auth) {
 }
 
 async function runLoggerMany(req, res, id, auth) {
-    const client = new MongoClient(config.DBServer, { useUnifiedTopology: true });
+    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     let RawData = req.body;
 	let hasServerAuth = CheckServerAuth(auth);
 	let hasClientAuth = await CheckAuth(auth, true);
@@ -72,7 +71,7 @@ async function runLoggerMany(req, res, id, auth) {
         try{
             // Connect the client to the server       
             await client.connect(); 
-            const db = client.db(config.DB);
+            const db = client.db(global.config.DB);
             let collection = db.collection("Logs");
             let datetime = new Date();
             let ClientId = GetClientID(req);
