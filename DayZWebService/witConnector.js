@@ -34,8 +34,9 @@ async function AskWit(req, res, key, auth){
     if (CheckServerAuth(auth) || (await CheckAuth(auth)) ){
         let RawData = req.body;
         try {
-            let answer = await Ask(RawData.Question, key);
-            log("Wit AI Query: " + RawData.Question);
+            let question =  RawData.Question || RawData.Text
+            let answer = await Ask(question, key);
+            log("Wit AI Query: " + question + " Status: " + answer.Status);
             res.status(200);
             res.json(answer);
         } catch (e){
@@ -58,10 +59,10 @@ async function Ask(msg, key){
     //console.log(res);
     let data = RemoveBadProperties(res);
     //console.log(data);
-    if (data["intents"] !== undefined && isArray(data['intents']) && data['intents'].length > 0){
-        data["Status"] = "Success";
+    if (data.intents !== undefined && isArray(data.intents) && data.intents.length > 0){
+        data.Status = "Success";
     } else {
-        data["Status"] = "NoIntents";
+        data.Status = "NoIntents";
     }
     return data;
 }

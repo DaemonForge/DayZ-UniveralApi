@@ -13,20 +13,20 @@ const router = Router();
 
 
 
-router.post('/:key/:auth', (req, res)=>{
+router.post('/:auth', (req, res)=>{
     let key = req.params.key;
-    if (global.config.Translate !== undefined && global.config.Translate[key] !== undefined){
-        runTranslate(req, res, req.params.auth, key);
+    if (global.config.Translate !== undefined, global.config.Translate.SubscriptionKey !== ""){
+        runTranslate(req, res, req.params.auth);
     } else { //If the file doesn't exsit give a nice usable json for DayZ
         log(`A Tranlation Request for ${key} is not set up yet`);
         res.json({Status: "Error"});
     }
 });
 
-async function runTranslate(req, res, auth, key){
+async function runTranslate(req, res, auth){
     if ( CheckServerAuth( auth ) || (await CheckAuth( auth )) ){
         try {
-            let Tconfig = global.config.Translate[key];
+            let Tconfig = global.config.Translate;
             let text = req.body.Text;
             let querystr = querystring.stringify({
                 "api-version": '3.0',
@@ -42,16 +42,23 @@ async function runTranslate(req, res, auth, key){
                 },
                 body: JSON.stringify([{"text": text}])
             }).then(response => response.json());
-            let response;
+            //console.log(json)
             if (json[0] !== undefined && json[0].translations !== undefined ){
                 response = {
                     Status: "Success",
+                    Error: "",
                     Translations: json[0].translations,
                     Detected: json[0].detectedLanguage.language
                 }
             } else {
+                let error = "Not a valid response from the API"
+                if (json.error !== undefined ){
+                    error = json.error.message;
+                }
+                log(`Translation an error: ${json} -  ${error}`)
                 response = {
                     Status: "Error",
+                    Error: error,
                     Translations: [{ text: "NA", to: "NA"} ],
                     Detected: "NA"
 
@@ -62,12 +69,12 @@ async function runTranslate(req, res, auth, key){
             
         }catch(e) {
             res.status(200);
-            res.json({Status: "Error", Error: `${e}`});
-            log('Catch an error: ', e)
+            res.json({Status: "Error", Error: `${e}`, Translations: [{ text: "NA", to: "NA"} ], Detected: "NA"});
+            log(`Translation an error: ${e}`)
         }
     }else{
         res.status(401);
-        res.json({Status: "Error", Error: "Invlaid Auth Token"});
+        res.json({Status: "Error", Error: "Invlaid Auth Token", Translations: [{ text: "NA", to: "NA"} ], Detected: "NA"});
         log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
     }
 }

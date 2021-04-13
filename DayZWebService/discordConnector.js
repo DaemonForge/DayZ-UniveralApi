@@ -800,20 +800,30 @@ async function CheckId(res, req, id, guid){
             let collection = db.collection("Players");
             let query = { GUID: guid };
             let results = collection.find(query);
+            let Logcollection = db.collection("Logs");
+            let datetime = new Date();
+            let ClientId = GetClientID(req);
+            let logobj = { Log: "DiscordStatusCheck", TimeStamp: datetime, GUID: guid, SteamId: id, ClientId: ClientId, Status: "Error" }
             if ((await results.count()) > 0){
                 let dataarr = await results.toArray(); 
                 let data = dataarr[0]; 
                 if (data.Discord?.id !== undefined){
                     res.status(200);
+                    logobj.Status = "Success";
+                    logobj.Discord = data.Discord.id;
                     res.json({Status: "Success", Error: "" });
                 } else {
                     res.status(200);
+                    logobj.Status = "NoDiscord";
                     res.json({Status: "NoDiscord", Error: "Discord found for user"  });
                 }
             } else {
+                logobj.Status = "NoUser";
                 res.status(200);
                 res.json({Status: "NoUser", Error: "No User Found"  });
             }
+            await Logcollection.insertOne(logobj);
+            log(`Check status for user: ${guid} - ${datetime.toUTCString()} - ${logobj.Status}`)
         } catch(err){
             log("Error Checking for ID " + guid + " err" + err, "warn");
             res.status(200);
@@ -856,6 +866,16 @@ async function GetDiscordObj(guid){
         return obj;
     }
 
+}
+
+function GetClientID(req){
+    let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    let  hash = createHash('sha256');
+    let theHash = hash.update(ip).digest('base64');
+    if (config.logip !== undefined && config.logip === true){
+        return ip;
+    }
+    return theHash.substr(0,32); //Cutting the last few digets to save a bit of data and make sure people don't mistake it for the GUIDS
 }
 
 module.exports = router;
