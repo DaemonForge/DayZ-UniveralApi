@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <%- include('../sections/head'); -%>
+    </head>
+    <body>
+    <%- include('../sections/nav'); -%>
+    <main>
+        <h1>Console</h1>
+<code id="logs"><% logs.forEach(element => { if (element.type !== "") { %><span class="<%= element.type -%>"><%= element.message -%></span>
+<% } }); %></code>
+    </main>
+<%- include('../sections/footer'); -%>
+</body>
+</html>

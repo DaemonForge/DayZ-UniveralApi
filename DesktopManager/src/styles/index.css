@@ -1,0 +1,107 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  max-width:100%;
+}
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 12px;
+  margin-top: 10px;
+}
+
+#logs {
+  width: 95%;
+  /* position: relative; */
+  overflow-x: auto;
+  overflow-y: auto;
+  /* display: flex; */
+  position: relative;
+  flex-flow: column;
+  white-space: pre;
+  height: 99%;
+  margin: 10px;
+}
+#logs .info{
+  color: cyan;
+}
+#logs .warn{
+  color: orangered;
+}
+main {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-flow: column;
+  align-items: center;
+  margin-bottom: 10px;
+  height: calc(100% - 64px);
+}
+
+body footer {
+  margin-top: 10px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  vertical-align: middle;
+  padding-top: 4px;
+}
+
+body nav {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  height: fit-content;
+}
+
+nav button {
+  margin: 4px;
+  padding: 0px;
+  padding-left: 4px;
+  padding-right: 4px;
+
+}
+
+#menuicon{
+  fill: white; 
+  height: 28px; 
+  width: 28px; 
+}
+
+
+/* Dropdown Button */
+.menubtn {
+  cursor: pointer;
+}
+
+
+/* The container <div> - needed to position the dropdown content */
+.menudropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.menudropdown-content {
+  display: none;
+  position: absolute;
+  background-color: var(--background);
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  margin-left: 4px;
+}
+
+/* Links inside the dropdown */
+.menudropdown-content a {
+  padding: 8px 10px;
+  text-decoration: none;
+  display: block;
+}
+
+/* Change color of dropdown links on hover */
+.menudropdown-content a:hover {background-color: var(--background-alt)}
+
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block;}

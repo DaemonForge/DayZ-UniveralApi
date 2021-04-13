@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <%- include('../sections/head'); -%>
+        <style>
+            .Success{
+                color: #6ece87;
+            }
+            .Error {
+                color: #dc6862;
+            }
+            .Enabled {
+                color: #6ece87;
+            }
+            .Disabled {
+                color: #dc6862;
+            }
+        </style>
+    </head>
+    <body>
+    <%- include('../sections/nav'); -%>
+    <main>
+        <h1>DayZ Univeral Api Version: <%= global.APIVERSION -%></h1>
+        <% if (global.STABLEVERSION !== global.APIVERSION) { 
+        %><h2 style="color: #dc6862"> OUTDATED <a href="<%= global.NEWVERSIONDOWNLOAD -%>"  target="_blank">Download Latest</a> </h2><% 
+        } else { %>
+            <h2 style="color: #6ece87"> Up To Date</h2>
+        <% } %>
+        <article style="margin: 30px; margin-top:0px; text-align: left;">
+            <div id="status" style="display: none; margin: 5px; font-weight: bold; text-align: center;">
+                <div>Database: <span id="dbstatus" class="Error">Error</span> | Discord: <span id="discordstatus">Disabled</span> | Translate: <span id="translatestatus">Disabled</span></div>
+                <div id="error" class="Error" style="display: none; padding: 10px; font-weight: bold; background-color: var(--background-alt)">Errors: <span id="errortext"></span></div>
+                
+            </div>
+            <p style="margin-left: 4px; margin-top: 5px">
+            A univeral API for dayz allowing more flexibility for modders and sever owners to have API intergration, as well as a robust flexible database backend.
+            </p>
+            <blockquote style="font-weight: bold; margin-bottom: 0px; color: #dd97ca" >
+                In order for the database and client authentication to work you must install MongoDB you can either use a local installation using the MongoDB Community Edition Installer or host it on the cloud with MongoDB Atlas for free, keep in mind if you use the cloud version you will want to pick the closest location to your server hosting the API.
+            </blockquote>
+            <ul style="text-align: left; margin-top: 0px">
+                <li><a href="https://www.mongodb.com/try/download/community" target="_blank">MongoDB Installer</a></li>
+                <li><a href="https://account.mongodb.com/account/" target="_blank">MongoDB Atlas(Cloud Database)</a></li>
+            </ul>
+            <p style="margin-left: 4px; margin-top: 0px">
+                If installing locally just restart the API Webservice and it should work, otherwise go to the config page and edit the config to be the connection string for the cloud instance.
+            </p>
+            <blockquote style="font-weight: bold; color: #dd97ca">
+            For help with the api or instructions on how to configure any of the API intergrations reference the <a href="https://github.com/daemonforge/DayZ-UniveralApi/wiki" target="_blank">Wiki</a>
+            </blockquote>
+        </article>
+    </main>
+    <script>
+        let errorele  = document.getElementById("error");
+        let statusele  = document.getElementById("status");
+        function updateHtml(element, text, styleClass){
+            let DomObj = document.getElementById(element);
+            if (DomObj !== undefined && DomObj !== null){
+                if (text === true){
+                    DomObj.innerHTML = "Yes";
+                } else if (text === false){
+                    DomObj.innerHTML = "No";
+                } else {
+                    DomObj.innerHTML = text;
+                }
+                DomObj.className = styleClass;
+            }
+        }
+        async function GetStatus(){
+            let data = await fetch("https://localhost/Status", {method: "post"}).then(response => response.json());
+            statusele.style.display = "inline";
+            if (data.Status == "Success"){
+                updateHtml("dbstatus", "Online", data.Status);
+            } else {
+                errorele.style.display = "block"
+                updateHtml("errortext", data.Error, "error");
+            }
+            updateHtml("discordstatus", data.Discord, data.Discord);
+
+            updateHtml("translatestatus", data.Translate, data.Translate);
+        }
+        
+        window.onload =  GetStatus;
+    </script>
+<%- include('../sections/footer'); -%>
+</body>
+</html>
