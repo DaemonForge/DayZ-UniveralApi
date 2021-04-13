@@ -1,6 +1,7 @@
 
 global.APIVERSION = '0.9.0';
 global.STABLEVERSION = '0.0.0';
+global.NEWVERSIONDOWNLOAD = `https://github.com/daemonforge/DayZ-UniveralApi/releases`;
 const express = require('express');
 const favicon = require("serve-favicon")
 const {existsSync,readFileSync} = require('fs');
@@ -87,6 +88,7 @@ async function CheckRecentVersion(){
     const data = await fetch("https://api.github.com/repos/daemonforge/DayZ-UniveralApi/releases").then( response => response.json()).catch(e => console.log(e));
     if (data[0] !== undefined && data[0].tag_name !== undefined ){
       global.STABLEVERSION = data[0].tag_name;
+      global.NEWVERSIONDOWNLOAD = data[0].html_url;
     }
     let vc = versionCompare(global.APIVERSION, global.STABLEVERSION);
     if (global.STABLEVERSION === "0.0.0"){
@@ -95,6 +97,7 @@ async function CheckRecentVersion(){
       log(`WARNING!!! You are running a unpublished version, note it may not work as expected, Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION} `, "warn");
     } else if (vc < 0){
       log(`WARNING!!! You're API is currently out of date, your currently Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION}`, "warn");
+      log(`WARNING!!! Download Link - ${global.NEWVERSIONDOWNLOAD}`, "warn");
     } else {
       log(`API Is currently running the most recent Stable Version: ${global.APIVERSION}`);
     }
