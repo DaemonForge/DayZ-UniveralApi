@@ -55,7 +55,7 @@ async function runTranslate(req, res, auth){
                 if (json.error !== undefined ){
                     error = json.error.message;
                 }
-                log(`Translation an error: ${json} -  ${error}`)
+                log(`Translation an error: ${error}`)
                 response = {
                     Status: "Error",
                     Error: error,

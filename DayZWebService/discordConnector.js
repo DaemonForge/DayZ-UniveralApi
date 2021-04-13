@@ -822,7 +822,7 @@ async function CheckId(res, req, id, guid){
                 res.status(200);
                 res.json({Status: "NoUser", Error: "No User Found"  });
             }
-            await Logcollection.insertOne(logobj);
+            //await Logcollection.insertOne(logobj);
             log(`Check status for user: ${guid} - ${datetime.toUTCString()} - ${logobj.Status}`)
         } catch(err){
             log("Error Checking for ID " + guid + " err" + err, "warn");

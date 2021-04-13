@@ -19,6 +19,8 @@ class UniversalApi extends Managed{
 	protected ref UApiDBEndpoint m_ObjectEndPoint;
 	//Can't Do Globals due to how globals work
 	
+	protected ref UApiAPIEndpoint m_UApiAPIEndpoint;
+	
 	
 	string GetAuthToken(){
 		if (m_authToken && !GetGame().IsServer()){
@@ -66,11 +68,23 @@ class UniversalApi extends Managed{
 		return m_UniversalDiscordRest;
 	}
 	
-	ref UniversalDSEndpoint DS(){
+	ref UniversalDSEndpoint DS(){ // will remove
+		return ds();
+	}
+	
+	ref UniversalDSEndpoint ds(){
 		if (!m_UniversalDSEndpoint){
 			m_UniversalDSEndpoint = new UniversalDSEndpoint;
 		}
 		return m_UniversalDSEndpoint;
+	}
+	
+	ref UApiAPIEndpoint api(){
+		if (!m_UApiAPIEndpoint){
+			m_UApiAPIEndpoint = new UApiAPIEndpoint;
+		}
+		return m_UApiAPIEndpoint;
+	
 	}
 	
 	void Init(){
@@ -208,7 +222,7 @@ class UniversalApi extends Managed{
 	} 
 	
 	
-	//This is just something I'm playing with maybe helpfull
+	////This will be removed and moved to the UApi().api().QnA()
 	void QnA(string question, bool alwaysAnswer = true, ref RestCallback UCBX = NULL, string jsonString = "{}", string auth = ""){
 		
 		if (!UCBX && alwaysAnswer){

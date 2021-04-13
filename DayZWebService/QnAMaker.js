@@ -39,7 +39,7 @@ async function runQnA(req, res, QnAconfig){
         let json;
         try {
             let EndpointKey = "EndpointKey " + QnAconfig.EndpointKey;
-            let question = req.body.question || req.body.Question || req.body.Text 
+            let question = req.body.question || req.body.Question || req.body.Text;
             let quest = {question: question}
             json = await fetch(QnAconfig.Endpoint, { 
                 method: 'post', 
