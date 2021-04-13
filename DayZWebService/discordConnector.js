@@ -872,9 +872,6 @@ function GetClientID(req){
     let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     let  hash = createHash('sha256');
     let theHash = hash.update(ip).digest('base64');
-    if (config.logip !== undefined && config.logip === true){
-        return ip;
-    }
     return theHash.substr(0,32); //Cutting the last few digets to save a bit of data and make sure people don't mistake it for the GUIDS
 }
 

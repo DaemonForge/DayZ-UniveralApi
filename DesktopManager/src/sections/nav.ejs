@@ -11,6 +11,6 @@
         <a href="./config.ejs">Config</a>
         <a href="./about.ejs">About</a>
         <a href="#" onclick="OpenTemplatesFolder()">Web Templates</a>
-        <a href="#" onclick="OpenLogsFolder()">API Logs</a>
+        <% if (global.config.LogToFile) { %><a href="#" onclick="OpenLogsFolder()">API Logs</a><% } %>
       </div>
 </nav>

@@ -36,7 +36,6 @@ const createWindow = () => {
   global.mainWindow.loadURL('file://' + __dirname + '/views/index.ejs');
 
   appIcon = new Tray(iconpath)
-
   let contextMenu = Menu.buildFromTemplate([
       {
           label: 'Show/Hide', click: function () {
@@ -52,7 +51,9 @@ const createWindow = () => {
           label: 'Shutdown', click: function () {
               isQuiting = true;
               global.mainWindow.destroy()
-              app.quit()
+              appIcon.destroy();
+              app.quit();
+              app.exit();
           }
       },
       {
@@ -65,7 +66,7 @@ const createWindow = () => {
 
   appIcon.setContextMenu(contextMenu)
   // Open the DevTools.
-  global.mainWindow.webContents.openDevTools();
+  //global.mainWindow.webContents.openDevTools();
 
   
   global.mainWindow.on('close', function (event) {
@@ -74,6 +75,8 @@ const createWindow = () => {
       event.preventDefault();
       global.mainWindow.hide();
       event.returnValue = false;
+    } else {
+      app.quit();
     }
   });
 
