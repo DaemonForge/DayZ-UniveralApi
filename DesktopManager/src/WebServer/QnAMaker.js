@@ -39,20 +39,25 @@ async function runQnA(req, res, QnAconfig){
         let json;
         try {
             let EndpointKey = "EndpointKey " + QnAconfig.EndpointKey;
+            let question = req.body.question || req.body.Question || req.body.Text;
+            let quest = {question: question}
             json = await fetch(QnAconfig.Endpoint, { 
                 method: 'post', 
-                body: JSON.stringify(req.body),
+                body: JSON.stringify(quest),
                 headers: { "Content-Type": "application/json",
                 "Authorization": EndpointKey
             }
             }).then(response => response.json())
+            let answer = GetHighestAnwser(json.answers, QnAconfig, question);
+            res.json(answer);
+            if (answer.answer === "null" && QnAconfig.LogUnAnswerable){
+                WriteQuestionToDataBase(question);
+            }
         }catch(e) {
+            res.status(200);
+            res.json({Status: "Error", answer: "", score: 0, Error:  `${e}`});
+            log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
             log('Catch an error: ', e)
-        }
-        let answer = GetHighestAnwser(json.answers, QnAconfig, req.body.question);
-        res.json(answer);
-        if (answer.answer === "null" && QnAconfig.LogUnAnswerable){
-            WriteQuestionToDataBase(req.body.question);
         }
     }else{
         res.status(401);

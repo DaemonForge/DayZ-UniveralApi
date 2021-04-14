@@ -25,7 +25,7 @@ async function runLUIS(req, res, auth, key){
     if ( CheckServerAuth( auth ) || (await CheckAuth( auth )) ){
         try {
             let luisconfig = global.config.LUIS[key];
-            let query = req.body.Query;
+            let query = req.body.Question || req.body.Text;
             let showall = (req.body.showall === 1);
             let querystr = querystring.stringify({
                 query: query,

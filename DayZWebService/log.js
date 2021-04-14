@@ -16,6 +16,10 @@ module.exports = function(message, type = "info"){
 
     if (LogToFile && type === "warn") logger.warn(`${message}`);
 
+    //For Desktop Version, Easier to maintain one version of the API
+    if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: type, message: message})
+    if (global.logs !== undefined) global.logs.push({type: type, message: message});
+
     if (type === "warn")
         console.log("\x1b[33m", `${message}`,'\x1b[0m')
     else if (type === "info")
