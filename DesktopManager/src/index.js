@@ -1,7 +1,7 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray , globalShortcut} = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Tray , globalShortcut,shell, dialog} = require('electron');
 const ejse = require('ejs-electron');
+const { MongoClient } = require("mongodb");
 var iconpath = `${__dirname}/icon.ico`; // pa
-const {shell} = require('electron') // deconstructing assignment
 
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -66,7 +66,7 @@ const createWindow = () => {
 
   appIcon.setContextMenu(contextMenu)
   // Open the DevTools.
-  //global.mainWindow.webContents.openDevTools();
+  global.mainWindow.webContents.openDevTools();
 
   
   global.mainWindow.on('close', function (event) {
@@ -115,7 +115,7 @@ app.on('activate', () => {
 app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
   if (url === 'https://localhost/Status') {
     // Verification logic.
-    console.log("preventing cert error")
+    //console.log("preventing cert error")
     event.preventDefault()
     callback(true)
   } else {
@@ -137,6 +137,55 @@ ipcMain.on('RestartApp', (event, arg) => {
 ipcMain.on('OpenLogsFolder', (event, arg) => {
   shell.openPath(`${__dirname}\\..\\..\\..\\logs\\`) // Show the given file in a file manager. If possible, select the file.
 })
+
+
+ipcMain.on('OpenConfirmationDialog', (event, arg) => {
+  //console.log(arg);
+  //console.log(arg.mod)
+  //console.log(arg.collection)
+  let options  = {
+      buttons: ["Cancel",`Delete all "${arg.collection}" data for "${arg.mod}"`],
+      message: `Are you sure?`,
+      title: `Are you sure?`
+  }
+  //aSynchronous modal - stay alway on top
+  dialog.showMessageBox(options).then( (response) => {
+      if (response.response === 1){
+        deleteModData(arg.collection, arg.mod)
+      } else {
+
+      }
+  });
+})
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 let https = require('./WebServer/app');
+
+async function deleteModData(col, mod){
+  const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+  try {
+    await client.connect();
+    const db = client.db(global.config.DB);
+    let query = {};
+    let collection = db.collection(col);
+    if (col === 'Players'){
+      query[mod] = { "$exists": true };
+      let result = await collection.updateMany(query, {"$unset": JSON.parse(`{ "${mod}": "" }`)});
+      //console.log(result.result);
+      let response = { n: result.result.n, status: result.result.ok, mod: mod, col: col}
+      global.mainWindow.send("DeleteResults", response)
+    } else if (col === 'Objects'){
+      query.Mod = mod;
+      let result = await collection.deleteMany(query);
+      //console.log(result.result);
+      let response = { n: result.result.n, status: result.result.ok, mod: mod, col: col}
+      global.mainWindow.send("DeleteResults", response)
+    }
+
+  } catch (err) {
+    console.log(err)
+  } finally {
+    
+    client.close();
+  }
+}

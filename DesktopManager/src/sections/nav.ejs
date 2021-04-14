@@ -8,9 +8,10 @@
     </button>
     <div id="myDropdown" class="menudropdown-content">
         <a href="./index.ejs">Console</a>
-        <a href="./config.ejs">Config</a>
-        <a href="./about.ejs">About</a>
+        <a href="./config.ejs">System Config</a>
+        <a href="./editor.ejs">DB Editor</a>
         <a href="#" onclick="OpenTemplatesFolder()">Web Templates</a>
         <% if (global.config.LogToFile) { %><a href="#" onclick="OpenLogsFolder()">API Logs</a><% } %>
+        <a href="./about.ejs">About/Status</a>
       </div>
 </nav>

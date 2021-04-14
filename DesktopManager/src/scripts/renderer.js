@@ -5,7 +5,7 @@ const {writeFileSync} = require('fs')
 let logsElement = document.getElementById("logs");
 
 ipcRenderer.on('log', function (event,test) {
-    console.log(test);
+    //console.log(test);
     if (test.type === "" || !logsElement) return;
     logsElement.innerHTML+= `<span class="${test.type}">${test.message}</span>\r\n`;
     logsElement.scrollTop = logsElement.scrollHeight - logsElement.clientHeight;
@@ -50,3 +50,8 @@ window.onclick = function(event) {
       }
     }
   }
+
+  
+function CloseDialog(){
+	dialog.close();
+}

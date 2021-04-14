@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <%- include('../sections/head'); -%>
+        
+        <script defer src="../scripts/editor.js"></script>
+        <style>
+            
+            @keyframes border-pulsate {
+                0%   { 
+                    border: 2px solid rgba(180, 0, 0, 0.0);
+                }
+                10%  { 
+                    border: 2px solid rgba(180, 0, 0, 0.70);
+                }
+                20%  { 
+                    border: 2px solid rgba(180, 0, 0, 0.30);
+                }
+                30%  { 
+                    border: 2px solid rgba(180, 0, 0, 0.60);
+                }
+                40%  { 
+                    border: 2px solid rgba(180, 0, 0, 0.20);
+                }
+                50% { 
+                    border: 2px solid rgba(180, 0, 0, 0.50);
+                }
+                60% { 
+                    border: 2px solid rgba(180, 0, 0, 0.10);
+                }
+                75% { 
+                    border: 2px solid rgba(180, 0, 0, 0.40);
+                }
+                100% { 
+                    border: 2px solid rgba(180, 0, 0, 0.0);
+                }
+            }
+            dialog::backdrop {
+                background: rgba(0,0,0,.61);
+                -webkit-backdrop-filter: blur(4px);
+                backdrop-filter: blur(4px);
+                position: fixed;
+                top: 0px;
+                right: 0px;
+                bottom: 0px;
+                left: 0px;
+            }
+            dialog {
+            background-color: var(--background-alt);
+            color: var(--text-main);
+            border: none;
+            border-radius: 6px;
+            border-color: var(--border);
+            padding: 10px 30px;
+            }
+        </style>
+    </head>
+    <body>
+    <%- include('../sections/nav'); -%>
+    <main>
+        <h1>Editor</h1>
+        <dialog id="dialog"> <header id="DialogHeader">ERROR</header> <p id="DialogText">Invalid Text</p><button onclick="CloseDialog()">Okay</button></dialog>
+        <div style="min-width: 600px; max-width: 800px; width: 95vw" >
+            <h2 style="margin-bottom: 0px;">Wipe Mod Data: </h2>
+            <div style="display: flex; align-items: center;">
+        <label id="collection-label"  style="display: inline; font-size: 18px; margin: 14px" for="collection" >Collection: </label> <select style="display: inline" name="collection" id="collection">
+            <option value="Players">Players</option>
+            <option value="Objects">Objects</option>
+          </select>
+          <label id="mod-label"   style="display: inline; font-size: 18px; margin: 14px" for="mod" >Mod Tag: </label><input type="text" id="mod" name="mod" style="display: inline"></input>
+          <button onclick="DeleteAllData()" style="display: flex; align-items: center; font-weight: bold; padding-left: 8px; padding-right: 8px"><svg style="fill: #FFF; height: 24px; width:24px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M15 16h4v2h-4zm0-8h7v2h-7zm0 4h6v2h-6zM3 18c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H3v10zM14 5h-3l-1-1H6L5 5H2v2h12z"/></svg> DELETE ALL</button>
+        </div>
+        </div>
+    </main>
+<%- include('../sections/footer'); -%>
+</body>
+</html>
