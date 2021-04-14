@@ -94,15 +94,17 @@ async function CheckRecentVersion(){
     if (global.STABLEVERSION === "0.0.0"){
       log(`WARNING!!! Could check for the current stable version`, "warn");
     } else if (vc > 0){
-      log(`WARNING!!! You are running a unpublished version, note it may not work as expected, Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION} `, "warn");
+      log(`WARNING!!! You are running a unpublished version, note it may not work as expected`, "warn")
+      log(`Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION} `);
     } else if (vc < 0){
-      log(`WARNING!!! You're API is currently out of date, your currently Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION}`, "warn");
+      log(`!!!WARNING!!! You're API is currently out of date `, "warn")
+      log(`Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION}`);
       log(`WARNING!!! Download Link - ${global.NEWVERSIONDOWNLOAD}`, "warn");
     } else {
       log(`API Is currently running the most recent Stable Version: ${global.APIVERSION}`);
     }
   } catch (err){
-    log(`WARNING!!! Could check for the current stable version`, "warn");
+    log(`WARNING!!! Couldn't check for the current stable version`, "warn");
     console.log(err);
   }
 }

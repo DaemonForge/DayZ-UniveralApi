@@ -16,15 +16,64 @@ const router = Router();
 router.use('/Query', queryHandler);
 router.use('/Transaction', TransactionHandler);
 router.post('/Load/:GUID/:mod/:auth', (req, res)=>{
-    runGet(req, res, req.params.GUID, req.params.mod, req.params.auth, false);
+    let GUID = req.params.GUID;
+    if (GUID.match(/[1-9][0-9]{16}/g)){
+        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
+        GUID = GUID.replace(/\+/g, '-'); 
+        GUID = GUID.replace(/\//g, '_');
+    }
+    runGet(req, res, GUID, req.params.mod, req.params.auth);
 });
 
 router.post('/Save/:GUID/:mod/:auth', (req, res)=>{
-    runSave(req, res, req.params.GUID, req.params.mod, req.params.auth, true);
+    let GUID = req.params.GUID;
+    if (GUID.match(/[1-9][0-9]{16}/g)){
+        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
+        GUID = GUID.replace(/\+/g, '-'); 
+        GUID = GUID.replace(/\//g, '_');
+    }
+    runSave(req, res, GUID, req.params.mod, req.params.auth);
 });
 
 router.post('/Update/:GUID/:mod/:auth', (req, res)=>{
-    runUpdate(req, res, req.params.GUID, req.params.mod, req.params.auth, true);
+    let GUID = req.params.GUID;
+    if (GUID.match(/[1-9][0-9]{16}/g)){
+        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
+        GUID = GUID.replace(/\+/g, '-'); 
+        GUID = GUID.replace(/\//g, '_');
+    }
+    runUpdate(req, res, GUID, req.params.mod, req.params.auth);
+});
+
+
+router.post('/PublicLoad/:GUID/:mod/:auth', (req, res)=>{
+    let GUID = req.params.GUID;
+    if (GUID.match(/[1-9][0-9]{16}/g)){
+        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
+        GUID = GUID.replace(/\+/g, '-'); 
+        GUID = GUID.replace(/\//g, '_');
+    }
+    runGetPublic(req, res, GUID, req.params.mod, req.params.auth);
+});
+
+router.post('/PublicLoad/:GUID/:mod', (req, res)=>{
+    let GUID = req.params.GUID;
+    if (GUID.match(/[1-9][0-9]{16}/g)){
+        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
+        GUID = GUID.replace(/\+/g, '-'); 
+        GUID = GUID.replace(/\//g, '_');
+    }
+    runGetPublic(req, res, GUID, req.params.mod, "");
+});
+
+router.post('/PublicSave/:GUID/:mod/:auth', (req, res)=>{
+    let GUID = req.params.GUID;
+    if (GUID.match(/[1-9][0-9]{16}/g)){
+        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
+        GUID = GUID.replace(/\+/g, '-'); 
+        GUID = GUID.replace(/\//g, '_');
+    }
+    runSavePublic(req, res, GUID, req.params.mod, req.params.auth);
 });
 
 async function runGet(req, res, GUID, mod, auth) {
@@ -202,6 +251,101 @@ async function runUpdate(req, res, GUID, mod, auth) {
     }
 };
 
- 
+async function runGetPublic(req, res, GUID, mod, auth) {
+    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+    try{ 
+        await client.connect();
+        // Connect the client to the server
+        const db = client.db(global.config.DB);
+        let collection = db.collection("Players");
+        let query = { GUID: GUID };
+        let results = collection.find(query);
+        let RawData = req.body;
+        
+        if ((await results.count()) == 0){
+            if (auth !== "" && (CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite))){
+                log("Can't find Player with ID " + GUID + " Creating it now");
+                const doc  = JSON.parse(`{ "GUID": "${GUID}", "Public": { "${mod}": "${RawData.Value}" } }`);
+                await collection.insertOne(doc);
+            } else {
+                 log("Can't find Player with ID " + GUID, "warn");
+            }
+            res.status(201);
+            res.json(RawData);
+        } else {
+            let dataarr = await results.toArray(); 
+            let data = dataarr[0]; 
+            let sent = false;
+            if (data !== undefined && data.Public !== undefined)
+            for (const [key, value] of Object.entries(data.Public)) {
+                if(key === mod){
+                    sent = true;
+                    res.json({ "Value": value });
+                    log("Retrieving "+ mod + " Data for GUID: " + GUID);
+                }
+            }
+            if (sent !== true){
+                if (auth !== "" && (CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite))){
+                    const updateDocValue  = JSON.parse(`{ "Public": { "${mod}": "${RawData.Value}" } }`);
+                    const updateDoc = { $set: updateDocValue, };
+                    const options = { upsert: false };
+                    await collection.updateOne(query, updateDoc, options);
+                    log("Can't find "+ mod + " Data for GUID: " + GUID +  " Creating it now");
+                } else {
+                    log("Can't find "+ mod + " Data for GUID: " + GUID, "warn");
+                }
+                res.status(203);
+                res.json(RawData);
+            }
+        }
+    }catch(err){
+        res.status(203);
+        res.json({Value: "Error"});
+        log("ERROR: " + err, "warn");
+    }finally{
+        // Ensures that the client will close when you finish/error
+        client.close();
+    }
+};
+async function runSavePublic(req, res, GUID, mod, auth) {
+    if ( CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite) ){
+        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+        try{
+            await client.connect();
+
+            let RawData = req.body;
+            // Connect the client to the server
+            const db = client.db(global.config.DB);
+            let collection = db.collection("Players");
+            let query = { GUID: GUID };
+            const options = { upsert: true };
+            const jsonString = `{ "GUID": "${GUID}", "Public": { "${mod}": "${RawData.Value}" } }`;
+            const updateDocValue  = JSON.parse(jsonString);
+            const updateDoc = { $set: updateDocValue, };
+            const result = await collection.updateOne(query, updateDoc, options);
+            if (result.result.ok == 1){
+                log("Updated "+ mod + " Data for GUID: " + GUID);
+                res.status(200);
+                res.json(RawData);
+            } else {
+                log("Error with Updating "+ mod + " Data for GUID: " + GUID, "warn");
+                res.status(203);
+                res.json(RawData);
+            }
+        }catch(err){
+            res.status(203);
+            res.json(req.body);
+            log("ERROR: " + err, "warn");
+        }finally{
+            // Ensures that the client will close when you finish/error
+            await client.close();
+        }
+    } else {
+        res.status(401);
+        res.json(req.body);
+        log("AUTH ERROR: " + req.url, "warn");
+    }
+};
+
 module.exports = router;
 
