@@ -152,5 +152,49 @@ class UApiDBEndpoint extends Managed {
 		}
 		return cid;
 	}
+	
+	
+	
+	//Only Works on Player Data	
+	int PublicSave(string mod, string oid, string jsonString, Class instance = NULL, string function = "") {	
+		int cid = UApi().CallId();	
+		if (m_Collection != "Player") return -1;
+		string endpoint = "/PublicSave/" + oid + "/" + mod;
+		ref RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		if (jsonString){
+			Post(endpoint,jsonString,DBCBX);
+		} else {
+			Print("[UAPI] [Api] Error Saving " + endpoint + " Data for " + mod);
+			cid = -1;
+		}
+		return cid;
+	}
+	
+	int PublicLoad(string mod, string oid, Class instance, string function, string jsonString = "{}") {		
+		int cid = UApi().CallId();
+		if (m_Collection != "Player") return -1;
+		string endpoint = "/PublicLoad/" + oid + "/" + mod;
+		
+		ref RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		if (DBCBX){
+			Post(endpoint,jsonString,DBCBX);
+		} else {
+			Print("[UAPI] [Api] Error Loading Player Data for " + mod);
+			cid = -1;
+		}
+		return cid;
+	}
 
 }
