@@ -33,7 +33,7 @@ const createWindow = () => {
   });
   global.mainWindow.setMenuBarVisibility(false);
   // and load the index.html of the app.
-  //global.mainWindow.loadURL('file://' + __dirname + '/views/index.ejs');
+  global.mainWindow.loadURL('file://' + __dirname + '/views/index.ejs');
 
   appIcon = new Tray(iconpath)
   let contextMenu = Menu.buildFromTemplate([
@@ -66,7 +66,7 @@ const createWindow = () => {
 
   appIcon.setContextMenu(contextMenu)
   // Open the DevTools.
-  global.mainWindow.webContents.openDevTools();
+  //global.mainWindow.webContents.openDevTools();
 
   
   global.mainWindow.on('close', function (event) {
