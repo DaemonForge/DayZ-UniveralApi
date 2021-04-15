@@ -33,7 +33,7 @@ const createWindow = () => {
   });
   global.mainWindow.setMenuBarVisibility(false);
   // and load the index.html of the app.
-  global.mainWindow.loadURL('file://' + __dirname + '/views/index.ejs');
+  //global.mainWindow.loadURL('file://' + __dirname + '/views/index.ejs');
 
   appIcon = new Tray(iconpath)
   let contextMenu = Menu.buildFromTemplate([
@@ -71,7 +71,7 @@ const createWindow = () => {
   
   global.mainWindow.on('close', function (event) {
     if (!isQuiting) {
-      console.log(global.logs)
+      //console.log(global.logs)
       event.preventDefault();
       global.mainWindow.hide();
       event.returnValue = false;
