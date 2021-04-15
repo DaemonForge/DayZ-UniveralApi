@@ -1,12 +1,12 @@
 modded class MissionGameplay extends MissionBase
 {
 	protected bool m_UApi_Initialized = false;
-	
+
 	void MissionGameplay(){
 		GetRPCManager().AddRPC( "UAPI", "RPCUniversalApiReady", this, SingeplayerExecutionType.Both );
 	}
 	
-	void override OnMissionStart(){
+	override void OnMissionStart(){
 		super.OnMissionStart();
 		if (!GetGame().IsServer()){
 			Print("[UPAI] Requesting First API TOKEN");
@@ -16,7 +16,7 @@ modded class MissionGameplay extends MissionBase
 		}
 	}
 	
-	void override OnMissionFinish(){
+	override void OnMissionFinish(){
 		super.OnMissionFinish();
 		Print("[UPAI] Removing Token Refresh from Call Que");
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.RequestNewAuthToken);
