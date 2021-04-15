@@ -1,14 +1,25 @@
 modded class MissionGameplay extends MissionBase
 {
 	protected bool m_UApi_Initialized = false;
+	
 	void MissionGameplay(){
 		GetRPCManager().AddRPC( "UAPI", "RPCUniversalApiReady", this, SingeplayerExecutionType.Both );
+	}
+	
+	void override OnMissionStart(){
+		super.OnMissionStart();
 		if (!GetGame().IsServer()){
 			Print("[UPAI] Requesting First API TOKEN");
 			GetRPCManager().SendRPC("UAPI", "RPCRequestAuthToken", NULL, true);
 			int TokenRefreshRate = Math.RandomInt(1200,1325); //So that way on server starts it less likley to get a ton of requests at once 
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestNewAuthToken, TokenRefreshRate * 1000, true);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestNewAuthToken, TokenRefreshRate * 1000, false);
 		}
+	}
+	
+	void override OnMissionFinish(){
+		super.OnMissionFinish();
+		Print("[UPAI] Removing Token Refresh from Call Que");
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.RequestNewAuthToken);
 	}
 		
 	void RPCUniversalApiReady( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
@@ -17,7 +28,7 @@ modded class MissionGameplay extends MissionBase
 		if ( !ctx.Read( data ) ) return;
 		if (!m_UApi_Initialized){
 			m_UApi_Initialized = true;
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.UniversalApiReady, 200, false); //Waiting a bit just to make sure that the AuthToken isn't delayed
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.UniversalApiReady, 300, false); //Waiting a bit just to make sure that the AuthToken isn't delayed
 		}
 	}
 	
@@ -30,6 +41,9 @@ modded class MissionGameplay extends MissionBase
 		if (!GetGame().IsServer()){
 			Print("[UPAI] Requesting Renewed API TOKEN");
 			GetRPCManager().SendRPC("UAPI", "RPCRequestAuthToken", NULL, true);
+			int TokenRefreshRate = Math.RandomInt(1200,1325); 
+			//Prevents the call que from failing after being active for a long time.
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestNewAuthToken, TokenRefreshRate * 1000, false);
 		}
 	}
 	
