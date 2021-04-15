@@ -15,14 +15,18 @@ class UApiDBEndpoint extends Managed {
 		m_BaseUrl = new_BaseUrl;
 	}
 	
-	static string BaseUrl(){
+	static protected string BaseUrl(){
 		if (m_BaseUrl != ""){
 			return m_BaseUrl;
 		}
 		return UApiConfig().ServerURL;
 	}
+	
+	static protected string AuthToken(){
+		return UApi().GetAuthToken();
+	}
 
-	RestContext Api()
+	protected RestContext Api()
 	{
 		if (!m_Context){
 			RestApi clCore = GetRestApi();
@@ -38,9 +42,9 @@ class UApiDBEndpoint extends Managed {
 		return m_Context;
 	}
 	
-	void Post(string endpoint, string jsonString, RestCallback UCBX)
+	protected void Post(string endpoint, string jsonString, RestCallback UCBX)
 	{
-		string route = endpoint + "/" + UApi().GetAuthToken();
+		string route = endpoint + "/" + AuthToken();
 		Api().POST(UCBX, route, jsonString);
 	}
 		
