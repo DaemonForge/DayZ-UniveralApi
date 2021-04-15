@@ -263,7 +263,7 @@ async function runGetPublic(req, res, GUID, mod, auth) {
         let RawData = req.body;
         
         if ((await results.count()) == 0){
-            if (auth !== "" && (CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite))){
+            if (auth !== "null" && (CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite))){
                 log("Can't find Player with ID " + GUID + " Creating it now");
                 const doc  = JSON.parse(`{ "GUID": "${GUID}", "Public": { "${mod}": "${RawData.Value}" } }`);
                 await collection.insertOne(doc);
@@ -285,7 +285,7 @@ async function runGetPublic(req, res, GUID, mod, auth) {
                 }
             }
             if (sent !== true){
-                if (auth !== "" && (CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite))){
+                if (auth !== "null" && (CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite))){
                     const updateDocValue  = JSON.parse(`{ "Public": { "${mod}": "${RawData.Value}" } }`);
                     const updateDoc = { $set: updateDocValue, };
                     const options = { upsert: false };
