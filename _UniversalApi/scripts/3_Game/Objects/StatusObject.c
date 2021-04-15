@@ -1,5 +1,5 @@
 class StatusObject extends Managed {
-    string Status =  "Pending"; //Ok or Error
+    string Status =  "Pending"; //Success or Error
 	string Error =  "Not an Error Object";
 	
 	

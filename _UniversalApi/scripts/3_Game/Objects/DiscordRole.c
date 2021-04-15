@@ -17,7 +17,7 @@ class UApiDiscordUser extends StatusObject{
 	}
 }
 
-class UApiDiscordRoleReq extends UApiDiscordObject_Base{
+class UApiDiscordRoleReq extends UApiObject_Base{
 	string Role;
 	void UApiDiscordRoleReq(string role){
 		Role = role;

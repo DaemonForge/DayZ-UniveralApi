@@ -1,4 +1,4 @@
-class UApiDiscordObject_Base extends Managed{
+class UApiObject_Base extends Managed{
 
 	string ToJson(){
 		return "{}";
@@ -6,7 +6,7 @@ class UApiDiscordObject_Base extends Managed{
 	
 }
 
-class UApiDiscordChannelFilter extends UApiDiscordObject_Base {
+class UApiDiscordChannelFilter extends UApiObject_Base {
 	
 	int Limit = -1;
 	string Before = "";
@@ -25,7 +25,7 @@ class UApiDiscordChannelFilter extends UApiDiscordObject_Base {
 	
 }
 
-class UApiDiscordObject extends UApiDiscordObject_Base {
+class UApiDiscordObject extends UApiObject_Base {
 	string username = "";
 	string avatar_url = "";
 	string content = "";
@@ -37,7 +37,7 @@ class UApiDiscordObject extends UApiDiscordObject_Base {
 	}
 }
 
-class UApiDiscordMessage extends UApiDiscordObject_Base {
+class UApiDiscordMessage extends UApiObject_Base {
 	string id;
 	string AuthorId;
 	string Content;
@@ -51,7 +51,7 @@ class UApiDiscordMessage extends UApiDiscordObject_Base {
 	}
 }
 
-class UApiDiscordBasicMessage extends UApiDiscordObject_Base {
+class UApiDiscordBasicMessage extends UApiObject_Base {
 	
 	string Message= "";
 	
@@ -66,7 +66,7 @@ class UApiDiscordBasicMessage extends UApiDiscordObject_Base {
 	
 }
 
-class UApiDiscordEmbed extends UApiDiscordObject_Base{
+class UApiDiscordEmbed extends UApiObject_Base{
 	 
 	ref UApiDiscordAuthor author;
 	string title = "";
@@ -84,7 +84,7 @@ class UApiDiscordEmbed extends UApiDiscordObject_Base{
 	}
 }
 
-class UApiDiscordAuthor extends UApiDiscordObject_Base {
+class UApiDiscordAuthor extends UApiObject_Base {
 	string name = "";
     string url = "";
     string icon_url= "";
@@ -95,7 +95,7 @@ class UApiDiscordAuthor extends UApiDiscordObject_Base {
 	}
 }
 
-class UApiDiscordField extends UApiDiscordObject_Base {
+class UApiDiscordField extends UApiObject_Base {
 	string name = "";
 	string value = "";
 	bool inline = false;
@@ -106,7 +106,7 @@ class UApiDiscordField extends UApiDiscordObject_Base {
 	}
 }
 
-class UApiDiscordImage extends UApiDiscordObject_Base {
+class UApiDiscordImage extends UApiObject_Base {
 	
 	string url = "";
 	int height;
@@ -122,7 +122,7 @@ class UApiDiscordImage extends UApiDiscordObject_Base {
 	}
 }
 
-class UApiDiscordFooter extends UApiDiscordObject_Base{
+class UApiDiscordFooter extends UApiObject_Base{
 	
 	string text = "";
 	string icon_url = "";

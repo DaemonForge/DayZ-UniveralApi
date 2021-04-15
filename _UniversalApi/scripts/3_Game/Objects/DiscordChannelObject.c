@@ -1,4 +1,4 @@
-class UApiCreateChannelObject extends UApiDiscordObject_Base{
+class UApiCreateChannelObject extends UApiObject_Base{
 
 	string Name = "new-channel";
 	
@@ -22,7 +22,7 @@ class UApiCreateChannelObject extends UApiDiscordObject_Base{
 
 }
 
-class UApiUpdateChannelObject extends UApiDiscordObject_Base{
+class UApiUpdateChannelObject extends UApiObject_Base{
 	
 	string Reason = "";
 	ref UApiChannelUpdateOptions Options;
