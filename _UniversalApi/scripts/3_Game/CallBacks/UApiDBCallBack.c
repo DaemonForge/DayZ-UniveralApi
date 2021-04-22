@@ -13,20 +13,28 @@ class UApiDBCallBack : RestCallback
 	}
 	
 	override void OnError(int errorCode) {
+		int rstatus = UAPI_SERVERERROR;
+		if (errorCode == ERestResultState.EREST_ERROR_CLIENTERROR){
+			rstatus = UAPI_CLIENTERROR;
+		}
 		if (Instance && Function != ""){
-			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, string>(CallId, UAPI_DBSERVERERROR, OID, ""));
+			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, string>(CallId, rstatus, OID, "{}"));
 		}
 	};
 	
 	override void OnTimeout() {
 		if (Instance && Function != ""){
-			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, string>(CallId, UAPI_DBTIMEOUT, OID, ""));
+			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, string>(CallId, UAPI_DBTIMEOUT, OID, "{}"));
 		}
 	};
 	
 	override void OnSuccess(string data, int dataSize) {
-		if (Instance && Function != ""){
-			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, string>(CallId, UAPI_DBSUCCESS, OID, data));
+		int rstatus = UAPI_SUCCESS;
+		if (data == "{}" || data == "" || data == "{ }"){
+			rstatus = UAPI_EMPTY;
+		}
+		if (Instance && Function != "" ){
+			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, string>(CallId, rstatus, OID, data));
 		}
 	};
 };
