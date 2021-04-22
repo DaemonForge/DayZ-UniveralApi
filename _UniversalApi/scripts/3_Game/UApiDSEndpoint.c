@@ -228,7 +228,7 @@ class UniversalDSEndpoint extends Managed
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, Options);
+		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, UApiChannelCreateOptions.Cast(Options));
 		
 		if (obj){
 			string url = "Discord/Channel/Create";
@@ -253,7 +253,7 @@ class UniversalDSEndpoint extends Managed
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, Options);
+		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, UApiChannelCreateOptions.Cast(Options));
 		
 		if (obj){
 			string url = "Discord/Channel/Create";

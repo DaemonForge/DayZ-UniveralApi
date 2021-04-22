@@ -148,7 +148,7 @@ class UniversalDiscordRest extends Managed {
 			auth = UApi().GetAuthToken();
 		}
 		
-		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, Options);
+		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, UApiChannelCreateOptions.Cast(Options));
 		
 		if (obj){
 			string url = BaseUrl() + "Discord/Channel/Create/" + auth;
