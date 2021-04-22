@@ -17,6 +17,7 @@ class EntityStore extends UApiObject_Base {
 	float m_Wet;
 	float m_Tempature;
 	float m_Energy;
+	int m_LiquidType;
 	int m_Slot;
 	int m_Idx;
 	int m_Row;
@@ -97,6 +98,7 @@ class EntityStore extends UApiObject_Base {
 			if (itemB.GetCompEM()){
 				m_IsOn = itemB.GetCompEM().IsSwitchedOn();
 			}
+			m_LiquidType = itemB.GetLiquidType();
 			itemB.OnUApiSave(this);
 		}
 		Magazine_Base mag;
@@ -130,7 +132,6 @@ class EntityStore extends UApiObject_Base {
 					if (!m_MagAmmo){ m_MagAmmo = new array<autoptr UApiAmmoData>}
 					m_MagAmmo.Insert(new UApiAmmoData(i, dmg, cartType));
 				}
-				
 			}
 			if (!weap.IsChamberEmpty(m_CurrentMuzzle)){
 				dmg = -1;
@@ -179,6 +180,7 @@ class EntityStore extends UApiObject_Base {
 			}
 			itemB.SetWet(m_Wet);
 			itemB.SetTemperature(m_Tempature);
+			itemB.SetLiquidType(m_LiquidType);
 			if (itemB.GetCompEM()){
 				itemB.GetCompEM().SetEnergy(m_Energy);
 				if (m_IsOn){
@@ -218,19 +220,6 @@ class EntityStore extends UApiObject_Base {
 			if (m_CurrentMuzzle >= weap.GetMuzzleCount() || m_CurrentMuzzle < 0){
 				weap.SetCurrentMuzzle(m_CurrentMuzzle);
 			}
-			for (int mi = 0; mi < weap.GetMuzzleCount(); ++mi)
-			{
-				if (m_ChamberedRound){
-					Print("[UAPI] Pushing Round to Chamber");
-					weap.PushCartridgeToChamber(mi, m_ChamberedRound.dmg(), m_ChamberedRound.cartTypeName());
-				}
-				for (i = 0; i < m_MagAmmo.Count(); i++){
-					if (i > m_Quantity) {break;}
-					weap.PushCartridgeToInternalMagazine( mi, m_MagAmmo.Get(i).dmg(), m_MagAmmo.Get(i).cartTypeName());
-				}
-			}
-			weap.SetStepZeroing(m_CurrentMuzzle, GetInt("Vanilla", "m_Zeroing"));
-			weap.SetZoom(GetFloat("Vanilla", "m_Zoom"));
 			if (m_FireModes){
 				for (i = 0; i < m_FireModes.Count(); ++i)
 				{
@@ -258,16 +247,29 @@ class EntityStore extends UApiObject_Base {
 			Print("[UAPI] [INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
 			Print("-----------------------------------------------------------------------------------------------------------");
 			weap.ValidateAndRepair();
-			Print("===========================================================================================================");
-			Print("===========================================================================================================");
-			/*int dummy_version = int.MAX;
+			int dummy_version = int.MAX;
 			PlayerBase parentPlayer = PlayerBase.Cast(weap.GetHierarchyRootPlayer());
 			if (!parentPlayer)
 				dummy_version -= 1;
 			ScriptReadWriteContext ctx = new ScriptReadWriteContext;
 			weap.OnStoreSave(ctx.GetWriteContext());
 			weap.OnStoreLoad(ctx.GetReadContext(), dummy_version);
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(weap.ValidateAndRepair,100,false);*/
+			/*GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(weap.ValidateAndRepair,100,false);*/
+			for (int mi = 0; mi < weap.GetMuzzleCount(); ++mi)
+			{
+				if (m_ChamberedRound){
+					Print("[UAPI] Pushing Round to Chamber");
+					weap.PushCartridgeToChamber(mi, m_ChamberedRound.dmg(), m_ChamberedRound.cartTypeName());
+				}
+				for (i = 0; i < m_MagAmmo.Count(); i++){
+					if (i > m_Quantity) {break;}
+					weap.PushCartridgeToInternalMagazine( mi, m_MagAmmo.Get(i).dmg(), m_MagAmmo.Get(i).cartTypeName());
+				}
+			}
+			weap.SetStepZeroing(m_CurrentMuzzle, GetInt("Vanilla", "m_Zeroing"));
+			weap.SetZoom(GetFloat("Vanilla", "m_Zoom"));
+			Print("===========================================================================================================");
+			Print("===========================================================================================================");
 		}
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(item.AfterStoreLoad);
 		return item;
@@ -291,6 +293,7 @@ class EntityStore extends UApiObject_Base {
 			}
 			itemB.SetWet(m_Wet);
 			itemB.SetTemperature(m_Tempature);
+			itemB.SetLiquidType(m_LiquidType);
 			if (itemB.GetCompEM()){
 				itemB.GetCompEM().SetEnergy(m_Energy);
 				if (m_IsOn){
@@ -327,19 +330,6 @@ class EntityStore extends UApiObject_Base {
 			if (m_CurrentMuzzle >= weap.GetMuzzleCount() || m_CurrentMuzzle < 0){
 				weap.SetCurrentMuzzle(m_CurrentMuzzle);
 			}
-			for (int mi = 0; mi < weap.GetMuzzleCount(); ++mi)
-			{
-				if (m_ChamberedRound){
-					Print("[UAPI] Pushing Round to Chamber");
-					weap.PushCartridgeToChamber(mi, m_ChamberedRound.dmg(), m_ChamberedRound.cartTypeName());
-				}
-				for (i = 0; i < m_MagAmmo.Count(); i++){
-					if (i > m_Quantity) {break;}
-					weap.PushCartridgeToInternalMagazine( mi, m_MagAmmo.Get(i).dmg(), m_MagAmmo.Get(i).cartTypeName());
-				}
-			}
-			weap.SetStepZeroing(m_CurrentMuzzle, GetInt("Vanilla", "m_Zeroing"));
-			weap.SetZoom(GetFloat("Vanilla", "m_Zoom"));
 			if (m_FireModes){
 				for (i = 0; i < m_FireModes.Count(); ++i)
 				{
@@ -367,8 +357,6 @@ class EntityStore extends UApiObject_Base {
 			Print("[UAPI] [INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
 			Print("-----------------------------------------------------------------------------------------------------------");
 			weap.ValidateAndRepair();
-			Print("===========================================================================================================");
-			Print("===========================================================================================================");
 			/*int dummy_version = int.MAX;
 			PlayerBase parentPlayer = PlayerBase.Cast(weap.GetHierarchyRootPlayer());
 			if (!parentPlayer)
@@ -377,6 +365,21 @@ class EntityStore extends UApiObject_Base {
 			weap.OnStoreSave(ctx.GetWriteContext());
 			weap.OnStoreLoad(ctx.GetReadContext(), dummy_version);
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(weap.ValidateAndRepair,100,false);*/
+			Print("===========================================================================================================");
+			Print("===========================================================================================================");
+			for (int mi = 0; mi < weap.GetMuzzleCount(); ++mi)
+			{
+				for (i = 0; i < m_MagAmmo.Count(); i++){
+					if (i > m_Quantity) {break;}
+					weap.PushCartridgeToInternalMagazine( mi, m_MagAmmo.Get(i).dmg(), m_MagAmmo.Get(i).cartTypeName());
+				}
+				if (m_ChamberedRound){
+					Print("[UAPI] Pushing Round to Chamber");
+					weap.PushCartridgeToChamber(mi, m_ChamberedRound.dmg(), m_ChamberedRound.cartTypeName());
+				}
+			}
+			weap.SetStepZeroing(m_CurrentMuzzle, GetInt("Vanilla", "m_Zeroing"));
+			weap.SetZoom(GetFloat("Vanilla", "m_Zoom"));
 		}
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(item.AfterStoreLoad);
 		return item;
@@ -415,7 +418,27 @@ class EntityStore extends UApiObject_Base {
 				return true;
 			}
 		}
-		data = "";
+		return false;
+	}
+	
+	bool ReadInt(string mod, string var, out int data){
+		for(int i = 0; i < m_MetaData.Count(); i++){
+			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(mod, var)){
+				data = m_MetaData.Get(i).ReadInt();
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	bool ReadFloat(string mod, string var, out float data){
+		for(int i = 0; i < m_MetaData.Count(); i++){
+			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(mod, var)){
+				data = m_MetaData.Get(i).ReadFloat();
+				return true;
+			}
+		}
 		return false;
 	}
 	
