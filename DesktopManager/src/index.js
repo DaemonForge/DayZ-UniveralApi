@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray , globalShortcut,shell, dialog} = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Tray , globalShortcut, shell, dialog} = require('electron');
 const ejse = require('ejs-electron');
 const { MongoClient } = require("mongodb");
 var iconpath = `${__dirname}/icon.ico`; // pa
