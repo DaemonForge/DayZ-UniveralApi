@@ -1,15 +1,73 @@
 modded class ItemBase {
 
-	void OnUApiSave(EntityStore data){
+	void OnUApiSave(UApiEntityStore data){
 		
 	}
 	
-	void OnUApiLoad(EntityStore data){
+	void OnUApiLoad(UApiEntityStore data){
 		
 	}
 }
 
-class EntityStore extends UApiObject_Base {
+modded class Weapon_Base extends Weapon {
+	
+
+	override void OnUApiSave(UApiEntityStore data){
+		super.OnUApiSave(data);
+	}
+	
+	override void OnUApiLoad(UApiEntityStore data){
+		super.OnUApiLoad(data);		
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.SendUApiWeaponAfterLoadClient, 100, false, data);
+	}
+	
+	void SendUApiWeaponAfterLoadClient(UApiEntityStore data){
+		RPCSingleParam(155494166, new Param2<bool, ref UApiEntityStore>( true, data ), true, NULL);
+	}
+
+	override void OnRPC(PlayerIdentity sender, int rpc_type, ParamsReadContext ctx)
+	{
+		super.OnRPC(sender, rpc_type, ctx);
+		Param2<bool, ref UApiEntityStore> data;
+		
+		if (rpc_type == 155494166 && GetGame().IsClient()) {
+			if (ctx.Read(data))	{
+				if (data.param1 && GetGame().IsClient()){
+					UApiWeaponAfterLoadClient(data.param2);
+				}
+			}
+		}
+	}
+	
+	void UApiWeaponAfterLoadClient(ref UApiEntityStore data){
+		Print("[UAPI] UApiWeaponAfterLoadClient");
+		if (!data){return;}
+		Print("===========================================================================================================");
+		Print("===========================================================================================================");
+		Print("[UAPI] [INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
+		Print("-----------------------------------------------------------------------------------------------------------");
+		for (int mi = 0; mi < GetMuzzleCount(); ++mi)
+		{
+			if (data.m_ChamberedRound){
+				Print("[UAPI] Pushing Round to Chamber");
+				PushCartridgeToChamber(mi,  data.m_ChamberedRound.dmg(),  data.m_ChamberedRound.cartTypeName());
+			}
+			for (int i = 0; i < data.m_MagAmmo.Count(); i++){
+				if (i > data.m_Quantity) {break;}
+				PushCartridgeToInternalMagazine( mi,  data.m_MagAmmo.Get(i).dmg(),  data.m_MagAmmo.Get(i).cartTypeName());
+			}
+		}
+		AfterStoreLoad();
+		ValidateAndRepair();
+		SetStepZeroing(GetCurrentMuzzle(), data.GetInt("Vanilla", "m_Zeroing"));
+		SetZoom(data.GetFloat("Vanilla", "m_Zoom"));
+		DryFire(GetCurrentMuzzle());
+		Print("===========================================================================================================");
+		Print("===========================================================================================================");
+	}
+}
+
+class UApiEntityStore extends UApiObject_Base {
 	
 	string m_Type = "";
 	float m_Health = -1;
@@ -27,7 +85,7 @@ class EntityStore extends UApiObject_Base {
 	bool m_IsOn;
 	int m_QuickBarSlot;
 	
-	autoptr array<autoptr EntityStore> m_Cargo;
+	autoptr array<autoptr UApiEntityStore> m_Cargo;
 	
 	bool m_IsMagazine;
 	autoptr array<autoptr UApiAmmoData> m_MagAmmo;
@@ -37,12 +95,12 @@ class EntityStore extends UApiObject_Base {
 	
 	autoptr array<autoptr UApiMetaData> m_MetaData;
 	
-	void EntityStore(EntityAI item = NULL){
+	void UApiEntityStore(EntityAI item = NULL){
 		if (!item) return;
 		SaveEntity(item, true);
 	}
 	
-	void ~EntityStore(){
+	void ~UApiEntityStore(){
 		delete m_Cargo;
 		delete m_MagAmmo;
 		delete m_ChamberedRound;
@@ -69,9 +127,9 @@ class EntityStore extends UApiObject_Base {
 				//items.Debug();
 				for (i = 0; i < items.Count(); i++){
 					EntityAI child_item = EntityAI.Cast(items.Get(i));
-					if (!m_Cargo){m_Cargo = new array<autoptr EntityStore>;}
+					if (!m_Cargo){m_Cargo = new array<autoptr UApiEntityStore>;}
 					if (child_item && ( item.GetInventory().HasEntityInCargo(child_item) || item.GetInventory().HasAttachment(child_item) ) ){
-						EntityStore crg_itemstore = new EntityStore(child_item);
+						UApiEntityStore crg_itemstore = new UApiEntityStore(child_item);
 						m_Cargo.Insert(crg_itemstore);
 					} else {
 						break;
@@ -145,7 +203,6 @@ class EntityStore extends UApiObject_Base {
 				m_FireModes.Insert(weap.GetCurrentMode(i));
 			}
 		}
-		
 	}
 	
 	EntityAI Create(EntityAI parent = NULL, bool RestoreOrginalLocation = true){
@@ -227,6 +284,8 @@ class EntityStore extends UApiObject_Base {
 				}
 			}
 		}
+		bool hasmag = false;
+		bool haschamberedRound = false;
 		if (m_Cargo && m_Cargo.Count() > 0){
 			for(i = 0; i < m_Cargo.Count(); i++){
 				if (m_Cargo.Get(i) && m_Cargo.Get(i).m_IsMagazine && m_IsWeapon && weap){ //Is a mag in a weapon
@@ -235,6 +294,7 @@ class EntityStore extends UApiObject_Base {
 						weap.AttachMagazine(weap.GetCurrentMuzzle(), child_mag);
 						GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(weap.SelectionMagazineShow,600,false);
 						weap.SetJammed(GetInt("Vanilla", "m_IsJammed"));
+						hasmag = true;
 					}
 				} else {
 					m_Cargo.Get(i).Create(item);				
@@ -260,6 +320,7 @@ class EntityStore extends UApiObject_Base {
 				if (m_ChamberedRound){
 					Print("[UAPI] Pushing Round to Chamber");
 					weap.PushCartridgeToChamber(mi, m_ChamberedRound.dmg(), m_ChamberedRound.cartTypeName());
+					haschamberedRound = true;
 				}
 				for (i = 0; i < m_MagAmmo.Count(); i++){
 					if (i > m_Quantity) {break;}
@@ -270,8 +331,11 @@ class EntityStore extends UApiObject_Base {
 			weap.SetZoom(GetFloat("Vanilla", "m_Zoom"));
 			Print("===========================================================================================================");
 			Print("===========================================================================================================");
+			weap.SyncSelectionState(haschamberedRound,hasmag);
 		}
+		
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(item.AfterStoreLoad);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(item.SetSynchDirty);
 		return item;
 	}
 	
@@ -351,6 +415,7 @@ class EntityStore extends UApiObject_Base {
 				}
 			}
 		}
+
 		if (m_IsWeapon && weap){
 			Print("===========================================================================================================");
 			Print("===========================================================================================================");
@@ -382,11 +447,13 @@ class EntityStore extends UApiObject_Base {
 			weap.SetZoom(GetFloat("Vanilla", "m_Zoom"));
 		}
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(item.AfterStoreLoad);
+		
+		item.SetSynchDirty();
 		return item;
 	}
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<EntityStore>.JsonMakeData(this);
+		string jsonString = JsonFileLoader<UApiEntityStore>.JsonMakeData(this);
 		return jsonString;
 	}
 	
