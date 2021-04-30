@@ -1,6 +1,5 @@
 modded class MissionGameplay extends MissionBase
 {
-	protected bool m_UApi_Initialized = false;
 
 	void MissionGameplay(){
 		GetRPCManager().AddRPC( "UAPI", "RPCUniversalApiReady", this, SingeplayerExecutionType.Both );
@@ -8,12 +7,11 @@ modded class MissionGameplay extends MissionBase
 	
 	override void OnMissionStart(){
 		super.OnMissionStart();
-		if (!GetGame().IsServer()){
-			Print("[UPAI] Requesting First API TOKEN");
-			GetRPCManager().SendRPC("UAPI", "RPCRequestAuthToken", NULL, true);
-			int TokenRefreshRate = Math.RandomInt(1200,1325); //So that way on server starts it less likley to get a ton of requests at once 
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestNewAuthToken, TokenRefreshRate * 1000, false);
-		}
+		m_UApi_Initialized = false;
+		Print("[UPAI] Requesting First API TOKEN");
+		GetRPCManager().SendRPC("UAPI", "RPCRequestAuthToken", NULL, true);
+		int TokenRefreshRate = Math.RandomInt(1200,1325); //So that way on server starts it less likley to get a ton of requests at once 
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestNewAuthToken, TokenRefreshRate * 1000, false);
 	}
 	
 	override void OnMissionFinish(){
@@ -31,6 +29,8 @@ modded class MissionGameplay extends MissionBase
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.UniversalApiReady, 300, false); //Waiting a bit just to make sure that the AuthToken isn't delayed
 		}
 	}
+	
+	
 	
 	override void UniversalApiReady(){
 		//You requests for after the AuthToken Is received

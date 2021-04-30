@@ -99,6 +99,7 @@ class UniversalApi extends Managed{
 	
 	void RPCUniversalApiConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
 	{
+		Print("[UAPI] Received UApi Config");
 		Param2<ApiAuthToken, UniversalApiConfig> data; 
 		if ( !ctx.Read( data ) ) return;
 		m_authToken = data.param1;
@@ -110,6 +111,8 @@ class UniversalApi extends Managed{
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.CheckAndPromptDiscordThread);
 			//Should run on thread but give access violation not sure why yet
 		}
+		GetGame().GameScript.CallFunction(GetGame().GetMission(), "UniversalApiReadyTokenReceived", NULL, NULL);
+		Print("[UAPI] Proccessed UApi Config");
 	}
 	void CheckAndPromptDiscordThread(){
 		thread CheckAndPromptDiscord();

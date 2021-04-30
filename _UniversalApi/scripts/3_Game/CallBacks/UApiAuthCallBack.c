@@ -53,7 +53,7 @@ class UApiAuthCallBack : RestCallback
 			m_ClientConfig.EnableBuiltinLogging = UApiConfig().EnableBuiltinLogging;
 			m_ClientConfig.PromptDiscordOnConnect = UApiConfig().PromptDiscordOnConnect;
 			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiConfig", new Param2<ApiAuthToken, UniversalApiConfig>(authToken, m_ClientConfig), true, player);
-			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiReady", new Param1<string>(authToken.GUID), true, player);
+			//GetRPCManager().SendRPC("UAPI", "RPCUniversalApiReady", new Param1<string>(authToken.GUID), true, player);
 			//Removing the Player from the Que About .1 Second Later to allow for other mods the possiblty to search the que as well.
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UApi().RemoveFromQueue, 100, false, player);
 		} else if (m_TryCount <= 8){

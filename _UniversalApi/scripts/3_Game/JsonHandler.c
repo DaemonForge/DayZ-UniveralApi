@@ -8,8 +8,9 @@ class UApiJSONHandler<Class T>
 		if (!m_Serializer)
 			m_Serializer = new JsonSerializer;
 		
-		if (!m_Serializer.ReadFromString(data, stringData, error)) {
-			Print("Error Creating Data from Json");
+		if (stringData == "" || !m_Serializer.ReadFromString(data, stringData, error)) {
+			Print(data);
+			Print("Error Creating Data from Json : " + error);
 			return false;
 		}
 		return true;
@@ -27,6 +28,19 @@ class UApiJSONHandler<Class T>
 		}
 		
 		return stringData;
+	}
+	
+	static bool GetString(T data, out string stringData)
+	{
+		if (!m_Serializer)
+			m_Serializer = new JsonSerializer;
+
+		if (!m_Serializer.WriteToString(data, false, stringData)) {
+			Print("Error Creating JSON from Data");
+			return false;
+		}
+		
+		return true;
 	}
 
 	static void FromFile(string path, out T data)

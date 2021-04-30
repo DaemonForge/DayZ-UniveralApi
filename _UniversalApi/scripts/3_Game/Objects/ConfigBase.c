@@ -105,11 +105,10 @@ class UApiConfigBase : RestCallback {
 		
 	// This Are Called by the API System on errors from the API System
 	override void OnError(int errorCode) {
-		Print("[UAPI] CallBack Failed errorCode: " + errorCode);		
+		Print("[UAPI] CallBack Failed errorCode: " + UApi().ErrorToString(errorCode));		
 	};
 	
 	override void OnTimeout() {
 		Print("[UAPI] CallBack Failed errorCode: Timeout");
-		
 	};
 }
