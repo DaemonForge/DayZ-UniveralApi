@@ -45,7 +45,7 @@ class UApiAPIEndpoint extends Managed {
 	
 	int QnA(string Question,  string Key, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
-		string endpoint = "/QnA/" + Key;
+		string endpoint = "QnA/" + Key;
 		
 		ref RestCallback DBCBX;
 		if (instance && function != ""){
@@ -70,7 +70,7 @@ class UApiAPIEndpoint extends Managed {
 	
 	int Translate(string Text, TStringArray To, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
-		string endpoint = "/Translate";
+		string endpoint = "Translate";
 		
 		ref RestCallback DBCBX;
 		if (instance && function != ""){
@@ -94,7 +94,7 @@ class UApiAPIEndpoint extends Managed {
 	
 	int Wit(string Text, string Key, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
-		string endpoint = "/Wit/" + Key;
+		string endpoint = "Wit/" + Key;
 		
 		ref RestCallback DBCBX;
 		if (instance && function != ""){
@@ -117,7 +117,7 @@ class UApiAPIEndpoint extends Managed {
 	
 	int LUIS(string Text, string Key, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
-		string endpoint = "/LUIS/" + Key;
+		string endpoint = "LUIS/" + Key;
 		
 		ref RestCallback DBCBX;
 		if (instance && function != ""){

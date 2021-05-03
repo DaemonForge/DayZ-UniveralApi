@@ -21,6 +21,8 @@ class UniversalApi extends Managed{
 	
 	protected ref UApiAPIEndpoint m_UApiAPIEndpoint;
 	
+	protected ref TIntSet m_CanceledCalls = new TIntSet;
+	
 	
 	string GetAuthToken(){
 		if (m_authToken && !GetGame().IsServer()){
@@ -285,6 +287,16 @@ class UniversalApi extends Managed{
 	int CallId(){
 		return ++m_CallId;
 	}
+	
+	void RequestCallCancel(int cid){
+		m_CanceledCalls.Insert(cid);
+	}
+	
+	bool IsCallCanceled(int cid){
+		return (m_CanceledCalls.Find(cid) != -1);
+	}
+	
+	
 };
 
 static ref UniversalApi g_UniversalApi;
