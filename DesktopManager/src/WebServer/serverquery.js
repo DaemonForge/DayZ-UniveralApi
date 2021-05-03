@@ -62,43 +62,49 @@ async function QueryServer(ip, port){
 
 async function GetServerStatus(req, res, ip, port, auth){
     if (CheckServerAuth(auth) || ( await CheckAuth(auth) ) ){
-        let response =  await QueryServer(ip, port);
-        if (response.error === undefined) {
-            let statusobj = {
-                Status: response.status,
-                Error: "", 
-                IP: response.ip,
-                GamePort: response.game_port,
-                QueryPort: response.query_port,
-                Name: response.name,
-                Version: response.version,
-                Players: response.players,
-                Queue: response.queue,
-                MaxPlayers: response.max_players,
-                Time: response.time,
-                Map: response.map,
-                Password: response.password ? 1 : 0
-               }
+        try {
+            let response =  await QueryServer(ip, port);
+            if (response.error === undefined) {
+                let statusobj = {
+                    Status: response.status,
+                    Error: "", 
+                    IP: response.ip,
+                    GamePort: response.game_port,
+                    QueryPort: response.query_port,
+                    Name: response.name,
+                    Version: response.version,
+                    Players: response.players,
+                    Queue: response.queue,
+                    MaxPlayers: response.max_players,
+                    Time: response.time,
+                    Map: response.map,
+                    Password: response.password ? 1 : 0,
+                    FirstPerson: response.first_person ? 1 : 0
+                }
+                res.status(200);
+                return res.json(statusobj);
+            }
+        } catch (e) {
+            log(e, "warn");
+        } finally {
             res.status(200);
-            return res.json(statusobj);
+            return res.json( {
+                IP: ip,
+                Error: response.error, 
+                GamePort: -1,
+                QueryPort: parseInt(port),
+                Status: "Offline",
+                Name: "",
+                Version: "",
+                Players: 0,
+                Queue: 0,
+                MaxPlayers: 0,
+                Time: "",
+                Map: "",
+                Password: 0,
+                FirstPerson: 0
+            });
         }
-        res.status(200);
-        return res.json( {
-            IP: ip,
-            Error: response.error, 
-            GamePort: -1,
-            QueryPort: port,
-            Status: "Offline",
-            Name: "",
-            Version: "",
-            Players: 0,
-            Queue: 0,
-            MaxPlayers: 0,
-            Time: "",
-            Map: "",
-            Password: 0
-           }
-        );
     } else {
         res.status(401);
         res.json({Status: "NoAuth", Error: "" });
