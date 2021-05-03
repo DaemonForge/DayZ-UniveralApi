@@ -15,7 +15,9 @@ const ejsLint = require('ejs-lint');
 const router = Router();
 try {
     if (global.config.Discord?.Bot_Token !== "" && global.config.Discord?.Bot_Token !== undefined){
-        client.login(global.config.Discord.Bot_Token);
+        client.login(global.config.Discord.Bot_Token).then(() =>{
+            log(`Discord Intergration Ready and is Logged in as ${client.user.tag}!`);
+        }).catch(err => {console.log(err)});
         log("Logging in to discord bot");
     } else {
         log("Discord Bot Token not present you will not be able to use any discord functions", "warn");
@@ -28,7 +30,6 @@ try {
 
 client.on('ready', () => {
     global.DISCORDSTATUS = "Enabled";
-    log(`Discord Intergration Ready and is Logged in as ${client.user.tag}!`);
   });
 
 if (!existsSync('templates')) mkdirSync('templates');
@@ -185,7 +186,6 @@ async function RenderLogin(req, res){
     let id = req.params.id;
     let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     
-
     let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
     if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined ){
         log("User tried to sign up for discord but Intergration is not setup for this server", "warn");
@@ -413,7 +413,6 @@ async function AddRole(res, req, GUID, auth){
                 res.json(resObj);
             }
         }catch(err){
-            console.log(err);
             res.status(203);
             res.json({Status: "Error", Error: `${err}`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
             log("ERROR: " + err, "warn");
@@ -475,7 +474,6 @@ async function RemoveRole(res, req, GUID, auth){
                 res.json(resObj);
             }
         }catch(err){
-            console.log(err);
             res.status(203);
             res.json({Status: "Error", Error: `${err}`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
             log("ERROR: " + err, "warn");
