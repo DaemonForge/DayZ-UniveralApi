@@ -2,12 +2,20 @@ class UApiDSCallBack : UApiDBCallBack
 {
 	
 	override void OnError(int errorCode) {
+		if (UApi().IsCallCanceled(CallId)){
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnError " + UApi().ErrorToString(errorCode));
+			return;
+		}
 		if (Instance && Function != ""){
 			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordUser>(CallId, UAPI_ERROR, OID, NULL));
 		}
 	};
 	
 	override void OnTimeout() {
+		if (UApi().IsCallCanceled(CallId)){
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnTimeout");
+			return;
+		}
 		if (Instance && Function != ""){
 			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordUser>(CallId, UAPI_TIMEOUT, OID, NULL));
 		}
@@ -15,7 +23,7 @@ class UApiDSCallBack : UApiDBCallBack
 	
 	override void OnSuccess(string data, int dataSize) {
 		if (UApi().IsCallCanceled(CallId)){
-			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled");
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnSuccess");
 			return;
 		}
 		if (Instance && Function != ""){
@@ -47,12 +55,20 @@ class UApiDiscordStatusCallBack : UApiDBCallBack
 {
 	
 	override void OnError(int errorCode) {
+		if (UApi().IsCallCanceled(CallId)){
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnError " + UApi().ErrorToString(errorCode));
+			return;
+		}
 		if (Instance && Function != ""){
 			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordStatusObject>(CallId, UAPI_ERROR, OID, NULL));
 		}
 	};
 	
 	override void OnTimeout() {
+		if (UApi().IsCallCanceled(CallId)){
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnTimeout");
+			return;
+		}
 		if (Instance && Function != ""){
 			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordStatusObject>(CallId, UAPI_TIMEOUT, OID, NULL));
 		}
@@ -61,7 +77,7 @@ class UApiDiscordStatusCallBack : UApiDBCallBack
 	override void OnSuccess(string data, int dataSize) {
 		
 		if (UApi().IsCallCanceled(CallId)){
-			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled");
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnSuccess");
 			return;
 		}
 		if (Instance && Function != ""){
@@ -91,12 +107,20 @@ class UApiDiscordMessagesCallBack : UApiDBCallBack
 {
 	
 	override void OnError(int errorCode) {
+		if (UApi().IsCallCanceled(CallId)){
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnError " + UApi().ErrorToString(errorCode));
+			return;
+		}
 		if (Instance && Function != ""){
 			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordMessagesResponse>(CallId, UAPI_ERROR, OID, NULL));
 		}
 	};
 	
 	override void OnTimeout() {
+		if (UApi().IsCallCanceled(CallId)){
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnTimeout");
+			return;
+		}
 		if (Instance && Function != ""){
 			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordMessagesResponse>(CallId, UAPI_TIMEOUT, OID, NULL));
 		}
@@ -104,7 +128,7 @@ class UApiDiscordMessagesCallBack : UApiDBCallBack
 	
 	override void OnSuccess(string data, int dataSize) {
 		if (UApi().IsCallCanceled(CallId)){
-			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled");
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnSuccess");
 			return;
 		}
 		if (Instance && Function != ""){

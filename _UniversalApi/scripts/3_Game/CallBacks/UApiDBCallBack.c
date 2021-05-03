@@ -18,6 +18,10 @@ class UApiDBCallBack : RestCallback
 	}
 	
 	override void OnError(int errorCode) {
+		if (UApi().IsCallCanceled(CallId)){
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnError " + UApi().ErrorToString(errorCode));
+			return;
+		}
 		int rstatus = UAPI_SERVERERROR;
 		if (errorCode == ERestResultState.EREST_ERROR_CLIENTERROR){
 			rstatus = UAPI_CLIENTERROR;
@@ -28,6 +32,10 @@ class UApiDBCallBack : RestCallback
 	};
 	
 	override void OnTimeout() {
+		if (UApi().IsCallCanceled(CallId)){
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnTimeout");
+			return;
+		}
 		if (GetInstance() && Function != ""){
 			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, UAPI_DBTIMEOUT, OID, "{}"));
 		}
@@ -35,7 +43,7 @@ class UApiDBCallBack : RestCallback
 	
 	override void OnSuccess(string data, int dataSize) {
 		if (UApi().IsCallCanceled(CallId)){
-			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled");
+			Print("[UAPI] Call " + CallId + " not called as it was requested to be canceled - OnSuccess");
 			return;
 		}
 		int rstatus = UAPI_SUCCESS;
