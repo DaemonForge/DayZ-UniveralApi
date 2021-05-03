@@ -138,4 +138,25 @@ class UApiAPIEndpoint extends Managed {
 		return cid;
 	}
 	
+	
+	int ServerQuery(string ip, string queryPort, Class instance, string function, string oid = ""){
+		int cid = UApi().CallId();
+		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
+		
+		ref RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		
+		if (  ip && ip != "" && queryPort && queryPort != "" && DBCBX){
+			Post(endpoint,"{}",DBCBX);
+		} else {
+			Print("[UAPI] [Api] Error ServerQuery IP:" +  ip + " Port:" + queryPort);
+			cid = -1;
+		}
+		return cid;
+	}
 }

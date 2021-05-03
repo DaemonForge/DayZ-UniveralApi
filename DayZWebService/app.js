@@ -1,5 +1,5 @@
 
-global.APIVERSION = '0.9.0';
+global.APIVERSION = '0.9.1';
 global.STABLEVERSION = '0.0.0';
 global.NEWVERSIONDOWNLOAD = `https://github.com/daemonforge/DayZ-UniveralApi/releases`;
 const express = require('express');
@@ -29,6 +29,7 @@ const RouterDiscordConnector = require("./discordConnector");
 const RouterWit = require("./witConnector");
 const RouterLUIS = require("./luisConnector");
 const RouterTranslate = require("./TranslateConnector");
+const RouterServerQuery = require("./serverQuery");
 
 
 app.use((req, res, next) => {
@@ -59,6 +60,7 @@ app.use('/Discord', RouterDiscordConnector);
 app.use('/Wit', RouterWit);
 app.use('/LUIS', RouterLUIS);
 app.use('/Translate', RouterTranslate);
+app.use('/ServerQuery', RouterServerQuery);
 
 app.use('/', (req,res)=>{
     log("Error invalid or is not a post Requested URL is:" + req.url);
