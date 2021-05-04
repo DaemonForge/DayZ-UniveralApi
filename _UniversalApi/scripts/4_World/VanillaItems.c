@@ -20,6 +20,7 @@ modded class Edible_Base extends ItemBase
 				
 		data.WriteFloat("Vanilla", "m_DecayTimer", m_DecayTimer );
 		data.WriteInt("Vanilla", "m_LastDecayStage",  m_LastDecayStage );
+		data.WriteInt("Vanilla", "m_FoodStage", GetFoodStage().GetFoodStageType());
 	}
 	
 	override void OnUApiLoad(UApiEntityStore data){
@@ -29,6 +30,10 @@ modded class Edible_Base extends ItemBase
 		}
 		if (!data.ReadInt("Vanilla", "m_LastDecayStage", m_LastDecayStage )){
 			m_LastDecayStage = FoodStageType.NONE;
+		}
+		int foodStageType;
+		if (data.ReadInt("Vanilla", "m_FoodStage",foodStageType)){
+			GetFoodStage().ChangeFoodStage(foodStageType);
 		}
 	}
 	
