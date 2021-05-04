@@ -62,8 +62,9 @@ async function QueryServer(ip, port){
 
 async function GetServerStatus(req, res, ip, port, auth){
     if (CheckServerAuth(auth) || ( await CheckAuth(auth) ) ){
+        let response;
         try {
-            let response =  await QueryServer(ip, port);
+            response =  await QueryServer(ip, port);
             if (response.error === undefined) {
                 let statusobj = {
                     Status: response.status,
@@ -90,7 +91,7 @@ async function GetServerStatus(req, res, ip, port, auth){
             res.status(200);
             return res.json( {
                 IP: ip,
-                Error: response.error, 
+                Error: response.error || "Error Unknown", 
                 GamePort: -1,
                 QueryPort: parseInt(port),
                 Status: "Offline",
