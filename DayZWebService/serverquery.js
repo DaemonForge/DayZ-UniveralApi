@@ -63,6 +63,7 @@ async function QueryServer(ip, port){
 async function GetServerStatus(req, res, ip, port, auth){
     if (CheckServerAuth(auth) || ( await CheckAuth(auth) ) ){
         let response;
+        let isSent = false;
         try {
             response =  await QueryServer(ip, port);
             if (response.error === undefined) {
@@ -82,14 +83,18 @@ async function GetServerStatus(req, res, ip, port, auth){
                     Password: response.password ? 1 : 0,
                     FirstPerson: response.first_person ? 1 : 0
                 }
+                isSent = true;
                 res.status(200);
-                return res.json(statusobj);
+                res.json(statusobj);
+
+                return;
             }
         } catch (e) {
             log(e, "warn");
-        } finally {
-            res.status(200);
-            return res.json( {
+        }
+            if(isSent) return;
+             res.status(200);
+             res.json( {
                 IP: ip,
                 Error: response.error || "Error Unknown", 
                 GamePort: -1,
@@ -105,10 +110,11 @@ async function GetServerStatus(req, res, ip, port, auth){
                 Password: 0,
                 FirstPerson: 0
             });
-        }
+            return;
     } else {
         res.status(401);
         res.json({Status: "NoAuth", Error: "" });
+        return;
     }
 }
 

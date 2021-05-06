@@ -63,6 +63,7 @@ async function QueryServer(ip, port){
 async function GetServerStatus(req, res, ip, port, auth){
     if (CheckServerAuth(auth) || ( await CheckAuth(auth) ) ){
         let response;
+        let isSent = false;
         try {
             response =  await QueryServer(ip, port);
             if (response.error === undefined) {
@@ -82,14 +83,17 @@ async function GetServerStatus(req, res, ip, port, auth){
                     Password: response.password ? 1 : 0,
                     FirstPerson: response.first_person ? 1 : 0
                 }
+                isSent = true;
                 res.status(200);
                 res.json(statusobj);
-                return
+
+                return;
             }
         } catch (e) {
             log(e, "warn");
-        } finally {
-            res.status(200);
+        }
+            if(isSent) return;
+             res.status(200);
              res.json( {
                 IP: ip,
                 Error: response.error || "Error Unknown", 
@@ -107,7 +111,6 @@ async function GetServerStatus(req, res, ip, port, auth){
                 FirstPerson: 0
             });
             return;
-        }
     } else {
         res.status(401);
         res.json({Status: "NoAuth", Error: "" });
