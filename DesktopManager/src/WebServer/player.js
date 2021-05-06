@@ -4,7 +4,7 @@ let {createHash} = require('crypto');
 const {isArray, isObject} = require('./utils')
 const log = require("./log");
 
-const {CheckAuth, CheckPlayerAuth,CheckServerAuth} = require('./AuthChecker')
+const {CheckAuth, CheckPlayerAuth,CheckServerAuth, isEmpty} = require('./AuthChecker')
 
 
 const queryHandler = require("./Query");
@@ -91,7 +91,7 @@ async function runGet(req, res, GUID, mod, auth) {
             let RawData = req.body;
             
             if ((await results.count()) == 0){
-                if (CheckServerAuth(auth) || global.config.AllowClientWrite){
+                if ((CheckServerAuth(auth) || global.config.AllowClientWrite) && !isEmpty(RawData)){
                     log("Can't find Player with ID " + GUID + "Creating it now");
                     const doc  = JSON.parse("{ \"GUID\": \"" + GUID + "\", \""+mod+"\": "+ StringData + " }");
                     await collection.insertOne(doc);
@@ -112,7 +112,7 @@ async function runGet(req, res, GUID, mod, auth) {
                     }
                 }
                 if (sent != true){
-                    if (CheckServerAuth(auth) || global.config.AllowClientWrite){
+                    if ((CheckServerAuth(auth) || global.config.AllowClientWrite) && !isEmpty(RawData)){
                         const updateDocValue  = JSON.parse("{ \""+mod+"\": "+ StringData + " }");
                         const updateDoc = { $set: updateDocValue, };
                         const options = { upsert: false };

@@ -4,6 +4,7 @@ module.exports ={
     dynamicSort,
     isObject,
     isArray,
+    isEmpty,
     makeAuthToken,
     makeObjectId,
     RemoveBadProperties,
@@ -54,7 +55,9 @@ function isObject(a) {
 function isArray(a) {
     return (!!a) && (a.constructor === Array);
 };
-
+function isEmpty(obj){
+    return (obj && Object.keys(obj).length === 0 && obj.constructor === Object)
+}
 function makeAuthToken() {
     let result           = '';
     let characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.!~';

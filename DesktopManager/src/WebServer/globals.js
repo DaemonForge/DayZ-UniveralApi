@@ -2,7 +2,7 @@ const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 
 const {CheckAuth, CheckServerAuth} = require('./AuthChecker')
-const {isArray, isObject} = require('./utils')
+const {isArray, isObject, isEmpty} = require('./utils')
 
 const log = require("./log");
 
@@ -38,7 +38,7 @@ async function runGet(req, res, mod, auth) {
             let query = { Mod: mod };
             let results = collection.find(query);
             if ((await results.count()) == 0){
-                if (CheckServerAuth(auth) || global.config.AllowClientWrite){
+                if ((CheckServerAuth(auth) || global.config.AllowClientWrite) && !isEmpty(RawData)){
                     let doc = { Mod: mod, Data: RawData };
                     let result = await collection.insertOne(doc);
                     if (result.result.ok == 1){ 
