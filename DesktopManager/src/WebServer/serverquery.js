@@ -70,18 +70,18 @@ async function GetServerStatus(req, res, ip, port, auth){
                 let statusobj = {
                     Status: response.status,
                     Error: "", 
-                    IP: response.ip,
-                    GamePort: response.game_port,
-                    QueryPort: response.query_port,
-                    Name: response.name,
-                    Version: response.version,
-                    Players: response.players,
-                    Queue: response.queue,
-                    MaxPlayers: response.max_players,
-                    Time: response.time,
-                    Map: response.map,
-                    Password: response.password ? 1 : 0,
-                    FirstPerson: response.first_person ? 1 : 0
+                    ip: response.ip,
+                    gamePort: response.game_port,
+                    queryPort: response.query_port,
+                    name: response.name,
+                    version: response.version,
+                    players: response.players,
+                    queue: response.queue,
+                    maxPlayers: response.max_players,
+                    time: response.time,
+                    world: response.map,
+                    password: response.password ? 1 : 0,
+                    firstPerson: response.first_person ? 1 : 0
                 }
                 isSent = true;
                 res.status(200);
@@ -95,20 +95,20 @@ async function GetServerStatus(req, res, ip, port, auth){
             if(isSent) return;
              res.status(200);
              res.json( {
-                IP: ip,
-                Error: response.error || "Error Unknown", 
-                GamePort: -1,
-                QueryPort: parseInt(port),
                 Status: "Offline",
-                Name: "",
-                Version: "",
-                Players: 0,
-                Queue: 0,
-                MaxPlayers: 0,
-                Time: "",
-                Map: "",
-                Password: 0,
-                FirstPerson: 0
+                Error: response.error || "Error Unknown", 
+                ip: ip,
+                gamePort: -1,
+                queryPort: parseInt(port),
+                name: "",
+                version: "",
+                players: 0,
+                queue: 0,
+                maxPlayers: 0,
+                time: "",
+                world: "",
+                password: 0,
+                firstPerson: 0
             });
             return;
     } else {

@@ -1,17 +1,17 @@
 class UApiServerStatus extends StatusObject {
 	
-    string IP;
-    int GamePort
-    int QueryPort;
-    string Name;
-    string Version;
-    int Players;
-    int Queue;
-    int MaxPlayers;
-    string Time;
-    string Map;
-    bool Password;
-    bool FirstPerson;
+    string ip;
+    int gamePort
+    int queryPort;
+    string name;
+    string version;
+    int players;
+    int queue;
+    int maxPlayers;
+    string time;
+    string world;
+    bool password;
+    bool firstPerson;
 	
 	
 }
