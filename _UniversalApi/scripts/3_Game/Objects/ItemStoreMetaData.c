@@ -15,17 +15,15 @@ class UApiAmmoData extends Managed{
 }
 
 class UApiMetaData extends Managed{
-	string Mod;
-	string Var;
-	string Data;
+	protected string Var;
+	protected string Data;
 	
-	void UApiMetaData(string mod, string var, string data){
-		Mod = mod;
+	void UApiMetaData(string var, string data){
 		Var = var;
 		Data = data;
 	}
 	
-	bool Is(string mod, string var){ return Mod == mod && Var == var;}
+	bool Is(string var){ return Var == var;}
 	string ReadString(){return Data;}
 	int ReadInt(){return Data.ToInt();	}
 	float ReadFloat(){return Data.ToFloat();}

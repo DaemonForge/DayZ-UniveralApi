@@ -32,12 +32,12 @@ modded class Weapon_Base extends Weapon {
 					PushCartridgeToInternalMagazine( mi, data.m_MagAmmo.Get(i).dmg(), data.m_MagAmmo.Get(i).cartTypeName());
 				}
 			}
-			SetStepZeroing(GetCurrentMuzzle(), data.GetInt("Vanilla", "m_Zeroing"));
-			SetZoom(data.GetFloat("Vanilla", "m_Zoom"));
+			SetStepZeroing(GetCurrentMuzzle(), data.GetInt("m_Zeroing"));
+			SetZoom(data.GetFloat("m_Zoom"));
 			DryFire(GetCurrentMuzzle());
 		Print("===========================================================================================================");
 		Print("===========================================================================================================");
-			if (data.GetInt("Vanilla", "m_IsJammed") == 1){
+			if (data.GetInt("m_IsJammed") == 1){
 				Print("Setting SetJammed");
 				SetJammed(true);
 			}

@@ -29,7 +29,8 @@
             "iconUrl": "E:\\DesktopManager\\src\\icon.ico",
             "setupIcon": "E:\\DesktopManager\\src\\icon.ico",
             "setupExe": "UApiWebServiceInstaller.exe",
-            "loadingGif": "E:\\DesktopManager\\src\\installing.gif"
+            "loadingGif": "E:\\DesktopManager\\src\\installing.gif",
+            "compression": "maximum"
           }
         },
         {
