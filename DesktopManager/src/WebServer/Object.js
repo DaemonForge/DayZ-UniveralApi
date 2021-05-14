@@ -3,7 +3,7 @@ const { MongoClient } = require("mongodb");
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
 let {createHash} = require('crypto');
 
-const {isArray, isObject, makeObjectId} = require('./utils')
+const {isArray, isObject, makeObjectId, isEmpty} = require('./utils')
  
 const log = require("./log");
 // Create a new MongoClient
