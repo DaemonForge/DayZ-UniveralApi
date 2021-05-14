@@ -70,18 +70,18 @@ async function GetServerStatus(req, res, ip, port, auth){
                 let statusobj = {
                     Status: response.status,
                     Error: "", 
-                    ip: response.ip,
-                    gamePort: response.game_port,
-                    queryPort: response.query_port,
-                    name: response.name,
-                    version: response.version,
-                    players: response.players,
-                    queue: response.queue,
-                    maxPlayers: response.max_players,
-                    time: response.time,
-                    world: response.map,
-                    password: response.password ? 1 : 0,
-                    firstPerson: response.first_person ? 1 : 0
+                    IP: response.ip,
+                    GamePort: response.game_port,
+                    QueryPort: response.query_port,
+                    Name: response.name,
+                    ServerVersion: response.version,
+                    Players: response.players,
+                    QueuePlayers: response.queue,
+                    MaxPlayers: response.max_players,
+                    GameTime: response.time,
+                    GameMap: response.map,
+                    Password: response.password ? 1 : 0,
+                    FirstPerson: response.first_person ? 1 : 0
                 }
                 isSent = true;
                 res.status(200);
@@ -97,18 +97,18 @@ async function GetServerStatus(req, res, ip, port, auth){
              res.json( {
                 Status: "Offline",
                 Error: response.error || "Error Unknown", 
-                ip: ip,
-                gamePort: -1,
-                queryPort: parseInt(port),
-                name: "",
-                version: "",
-                players: 0,
-                queue: 0,
-                maxPlayers: 0,
-                time: "",
-                world: "",
-                password: 0,
-                firstPerson: 0
+                IP: ip,
+                GamePort: -1,
+                QueryPort: parseInt(port),
+                Name: "",
+                ServerVersion: "",
+                Players: 0,
+                QueuePlayers: 0,
+                MaxPlayers: 0,
+                GameTime: "",
+                GameMap: "",
+                Password: 0,
+                FirstPerson: 0
             });
             return;
     } else {
