@@ -13,14 +13,16 @@ class UApiTranslationRequest extends UApiObject_Base{
 
 	string Text = "";
 	ref TStringArray To = {"en"};
+	string From = "";
 
 
 	
-	void UApiTranslationRequest(string text, TStringArray to){
+	void UApiTranslationRequest(string text, TStringArray to, string from = ""){
 		Text = text;
 		if (to){
 			To = to;
 		}
+		From = from;
 	}
 	
 	override string ToJson(){
@@ -28,8 +30,47 @@ class UApiTranslationRequest extends UApiObject_Base{
 		return jsonString;
 	}
 }
+/*  *** Default Supported Languages ***
+    +-----------------------+----------+
+    | Language              | Code     |
+    +-----------------------+----------+
+    | Arabic                | ar       |
+    +-----------------------+----------+
+    | Chinese   Simplified  | zh       |
+    +-----------------------+----------+
+    | English               | en       |
+    +-----------------------+----------+
+    | French                | fr       |
+    +-----------------------+----------+
+    | German                | de       |
+    +-----------------------+----------+
+    | Hindi                 | hi       |
+    +-----------------------+----------+
+    | Indonesian            | id       |
+    +-----------------------+----------+
+    | Irish                 | ga       |
+    +-----------------------+----------+
+    | Italian               | it       |
+    +-----------------------+----------+
+    | Japanese              | ja       |
+    +-----------------------+----------+
+    | Korean                | ko       |
+    +-----------------------+----------+
+    | Polish                | pl       |
+    +-----------------------+----------+
+    | Portuguese            | pt       |
+    +-----------------------+----------+
+    | Russian               | ru       |
+    +-----------------------+----------+
+    | Spanish               | es       |
+    +-----------------------+----------+
+    | Turkish               | tr       |
+    +-----------------------+----------+
+    | Vietnamese            | vi       | 
+    +-----------------------+----------+
+*/
 
-/*  ******* Supported Languages ******* 
+/*  *** Supported Languages Microsoft *** 
     Both Ways (Auto Detected)
     +-----------------------+----------+
     | Language              | Code     |

@@ -37,8 +37,9 @@
         }
     },
     "Translate":{
-        "Endpoint": "https://api.cognitive.microsofttranslator.com/translate",
-        "SubscriptionRegion": "canadacentral",
+        "Endpoint": "https://translate.daemonforge.dev/translate",
+        "Type": "LibreTranslate",
+        "SubscriptionRegion": "",
         "SubscriptionKey":""
     }
 

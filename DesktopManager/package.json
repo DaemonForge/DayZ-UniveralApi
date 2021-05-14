@@ -62,6 +62,7 @@
     "gamedig": "^3.0.3",
     "https": "^1.0.0",
     "jsonwebtoken": "^8.5.1",
+    "languagedetect": "^2.0.0",
     "log4js": "^6.3.0",
     "mongodb": "^3.6.6",
     "node-fetch": "^2.6.1",
