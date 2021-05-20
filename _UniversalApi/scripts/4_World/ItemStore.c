@@ -277,6 +277,41 @@ class UApiEntityStore extends UApiObject_Base {
 		m_MetaData.Insert(new UApiMetaData(var, data.ToString()));
 		return true;
 	}
+	bool Write(string var, TStringArray data){
+		if (!m_MetaData) { m_MetaData = new array<autoptr UApiMetaData>;}
+		for (int ii = 0; ii < data.Count(); ii++){
+			m_MetaData.Insert(new UApiMetaData(var, data.Get(ii)));
+		}
+		return true;
+	}
+	bool Write(string var, TIntArray data){
+		if (!m_MetaData) { m_MetaData = new array<autoptr UApiMetaData>;}
+		for (int ii = 0; ii < data.Count(); ii++){
+			m_MetaData.Insert(new UApiMetaData(var, data.Get(ii).ToString()));
+		}
+		return true;
+	}
+	bool Write(string var, TBoolArray data){
+		if (!m_MetaData) { m_MetaData = new array<autoptr UApiMetaData>;}
+		for (int ii = 0; ii < data.Count(); ii++){
+			m_MetaData.Insert(new UApiMetaData(var, data.Get(ii).ToString()));
+		}
+		return true;
+	}
+	bool Write(string var, TFloatArray data){
+		if (!m_MetaData) { m_MetaData = new array<autoptr UApiMetaData>;}
+		for (int ii = 0; ii < data.Count(); ii++){
+			m_MetaData.Insert(new UApiMetaData(var, data.Get(ii).ToString()));
+		}
+		return true;
+	}
+	bool Write(string var, TVectorArray data){
+		if (!m_MetaData) { m_MetaData = new array<autoptr UApiMetaData>;}
+		for (int ii = 0; ii < data.Count(); ii++){
+			m_MetaData.Insert(new UApiMetaData(var, data.Get(ii).ToString()));
+		}
+		return true;
+	}
 	bool Write(string var, string data){
 		if (!m_MetaData) { m_MetaData = new array<autoptr UApiMetaData>;}
 		m_MetaData.Insert(new UApiMetaData(var, data));
@@ -306,15 +341,6 @@ class UApiEntityStore extends UApiObject_Base {
 		}
 		return false;
 	}
-	bool Read(string var, out string data){
-		for(int i = 0; i < m_MetaData.Count(); i++){
-			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(var)){
-				data = m_MetaData.Get(i).ReadString();
-				return true;
-			}
-		}
-		return false;
-	}
 	bool Read(string var, out float data){
 		for(int i = 0; i < m_MetaData.Count(); i++){
 			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(var)){
@@ -333,8 +359,68 @@ class UApiEntityStore extends UApiObject_Base {
 		}
 		return false;
 	}
+	bool Read(string var, out TStringArray data){
+		bool found = false;
+		for(int i = 0; i < m_MetaData.Count(); i++){
+			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(var)){
+				data.Insert(m_MetaData.Get(i).ReadString());
+				found = true;
+			}
+		}
+		return found;
+	}
+	bool Read(string var, out TIntArray data){
+		bool found = false;
+		for(int i = 0; i < m_MetaData.Count(); i++){
+			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(var)){
+				data.Insert(m_MetaData.Get(i).ReadInt());
+				found = true;
+			}
+		}
+		return found;
+	}
+	bool Read(string var, out TFloatArray data){
+		bool found = false;
+		for(int i = 0; i < m_MetaData.Count(); i++){
+			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(var)){
+				data.Insert(m_MetaData.Get(i).ReadFloat());
+				found = true;
+			}
+		}
+		return found;
+	}
+	bool Read(string var, out TBoolArray data){
+		bool found = false;
+		for(int i = 0; i < m_MetaData.Count(); i++){
+			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(var)){
+				bool value = (m_MetaData.Get(i).ReadInt());
+				data.Insert(value);
+				found = true;
+			}
+		}
+		return found;
+	}
+	bool Read(string var, out TVectorArray data){
+		bool found = false;
+		for(int i = 0; i < m_MetaData.Count(); i++){
+			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(var)){
+				data.Insert(m_MetaData.Get(i).ReadVector());
+				found = true;
+			}
+		}
+		return found;
+	}
+	bool Read(string var, out string data){
+		for(int i = 0; i < m_MetaData.Count(); i++){
+			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(var)){
+				data = m_MetaData.Get(i).ReadString();
+				return true;
+			}
+		}
+		return false;
+	}
 	bool Read(string var, out Class data){
-		Error("[UAPI] Trying to read undefined data class to " + var + " for " + m_Type + " try converting to a string before saving");
+		Error("[UAPI] Trying to read undefined data class for " + var + " for " + m_Type + " try converting to a string before saving");
 		return false;
 	}
 	

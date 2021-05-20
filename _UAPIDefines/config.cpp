@@ -1,3 +1,5 @@
+#define UNIVERSALAPI
+
 class CfgPatches
 {
 	class UAPIDefines
