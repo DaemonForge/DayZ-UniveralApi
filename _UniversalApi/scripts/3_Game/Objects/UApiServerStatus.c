@@ -1,5 +1,4 @@
 class UApiServerStatus extends StatusObject {
-	
     string IP;
     int GamePort
     int QueryPort;

@@ -15,6 +15,7 @@ class UApiEntityStore extends UApiObject_Base {
 	bool m_IsInHands;
 	bool m_IsOn;
 	int m_QuickBarSlot;
+	int m_Agents;
 	
 	protected autoptr array<autoptr UApiEntityStore> m_Cargo;
 	
@@ -88,6 +89,7 @@ class UApiEntityStore extends UApiObject_Base {
 				m_IsOn = itemB.GetCompEM().IsSwitchedOn();
 			}
 			m_LiquidType = itemB.GetLiquidType();
+			m_Agents = itemB.GetAgents();
 			itemB.OnUApiSave(this);
 		}
 		Magazine_Base mag;
@@ -213,6 +215,8 @@ class UApiEntityStore extends UApiObject_Base {
 					itemB.GetCompEM().SwitchOn();
 				}
 			}
+			itemB.RemoveAllAgents();//Removes any default agents then add the needed ones.
+			itemB.TransferAgents(m_Agents);
 			itemB.OnUApiLoad(this);
 		}
 		PlayerBase HoldingPlayer;
