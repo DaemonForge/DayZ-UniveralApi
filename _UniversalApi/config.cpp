@@ -4,7 +4,7 @@ class CfgPatches
 	{
 		requiredVersion=0.1;
 		requiredAddons[]={
-			"UAPIDefines",
+			"UAPIBase",
 			"JM_CF_Scripts"
 		};
 	};

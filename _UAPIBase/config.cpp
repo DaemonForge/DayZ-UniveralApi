@@ -1,8 +1,8 @@
 #define UNIVERSALAPI
-
+//This is to make sure the minium is loaded so that other mods can use properly
 class CfgPatches
 {
-	class UAPIDefines
+	class UAPIBase
 	{
 		requiredVersion=0.1;
 		requiredAddons[]={
@@ -12,9 +12,9 @@ class CfgPatches
 
 class CfgMods
 {
-	class UAPIDefines
+	class UAPIBase
 	{
-		dir = "_UAPIDefines";
+		dir = "_UAPIBase";
 		picture = "";
 		action = "";
 		hideName = 1;
@@ -35,7 +35,8 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"_UAPIDefines/scripts/Common"
+					"_UAPIBase/scripts/Common",
+					"_UAPIBase/scripts/3_Game"
 					};
 			}
 			
@@ -43,7 +44,8 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"_UAPIDefines/scripts/Common"
+					"_UAPIBase/scripts/Common",
+					"_UAPIBase/scripts/4_World"
 					};
 			}
 
@@ -51,7 +53,7 @@ class CfgMods
 			{
 				value = "";
 				files[] = {
-					"_UAPIDefines/scripts/Common"
+					"_UAPIBase/scripts/Common"
 					};
 			};
 		};
