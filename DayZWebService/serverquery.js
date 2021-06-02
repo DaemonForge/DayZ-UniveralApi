@@ -1,9 +1,9 @@
-const {query} = require('gamedig');
+const { query } = require('gamedig');
 
-const {Router} = require('express');
+const { Router } = require('express');
 
 
-const {CheckAuth, CheckServerAuth} = require('./AuthChecker')
+const { CheckAuth, CheckServerAuth } = require('./AuthChecker')
 const log = require("./log");
 
 
@@ -15,11 +15,11 @@ router.post('/Status/:ip/:port/:auth', (req, res)=>{
 
 async function QueryServer(ip, port){
     try{
-        let data = query({
+        let data = query( {
             type: 'dayz',
             host: ip,
             port: port
-        }).then((state) =>{
+        } ).then((state) => {
             //console.log(state);
             let keywords = state.raw.tags.split(',');
             return {
@@ -109,7 +109,7 @@ async function GetServerStatus(req, res, ip, port, auth){
                 GameMap: "",
                 Password: 0,
                 FirstPerson: 0
-            });
+            } );
             return;
     } else {
         res.status(401);
