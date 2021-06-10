@@ -116,9 +116,12 @@ class UniversalApi extends Managed{
 		GetGame().GameScript.CallFunction(GetGame().GetMission(), "UniversalApiReadyTokenReceived", NULL, NULL);
 		Print("[UAPI] Proccessed UApi Config");
 	}
+	
+	
 	void CheckAndPromptDiscordThread(){
 		thread CheckAndPromptDiscord();
 	}
+	
 	
 	protected void CheckAndPromptDiscord(){
 		if (GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){

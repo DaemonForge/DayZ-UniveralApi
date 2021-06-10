@@ -58,7 +58,7 @@ async function runToxicity(req, res, auth, key){
                             }
                             response[label] = Math.round(e.results[0].probabilities[1] * 1000) / 1000;
                         })
-                        res.status(203);
+                        res.status(200);
                         res.json(response);
                     });
                 } catch (e){
@@ -77,7 +77,7 @@ async function runToxicity(req, res, auth, key){
         }
     } else {
         res.status(203);
-        res.json({Status: "NoAuth" });
+        res.json({Status: "NoAuth", Error: "Invalid Auth" });
     }
 
 }
