@@ -75,6 +75,7 @@ const createWindow = () => {
       event.preventDefault();
       global.mainWindow.hide();
       event.returnValue = false;
+      showState = false;
     } else {
       app.quit();
     }
