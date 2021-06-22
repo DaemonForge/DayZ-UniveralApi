@@ -1,3 +1,6 @@
 .vscode
 .git
 Build
+DesktopManager/templates/discordError.ejs
+DesktopManager/templates/discordLogin.ejs
+DesktopManager/templates/discordSuccess.ejs

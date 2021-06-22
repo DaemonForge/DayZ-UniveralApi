@@ -27,7 +27,6 @@ async function runToxicity(req, res, auth, key){
             toxicity.load(threshold).then(model => {
             let query = req.body.Question || req.body.Text;
             const sentences = [query];
-
             try {
                     model.classify(sentences).then(predictions => {
                         let response = {Status: "Success"};

@@ -157,8 +157,41 @@ ipcMain.on('OpenConfirmationDialog', (event, arg) => {
       }
   });
 })
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+
+ipcMain.on('SaveGlobalMod', (event, arg) => {
+  SaveGlobalMod(arg)
+
+})
+
+
+async function SaveGlobalMod(data){
+  
+  const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+  try {
+    await client.connect();
+    const db = client.db(global.config.DB);
+    let collection = db.collection("Globals");
+    let query = { "Mod": data.Mod };
+      let result = await collection.updateOne(query, {"$set": data}, { upsert: false });
+      console.log(result.result);
+      let response = { n: result.result.n, status: result.result.ok, mod: data.Mod, col: "Gobals"}
+      global.mainWindow.send("UpdateModGlobal", response)
+
+  } catch (err) {
+    console.log(err)
+  } finally {
+    
+    client.close();
+  }
+
+
+  GetModList();
+}
+
+ipcMain.on('RequestModListGlobals', (event, arg) => {
+  GetModList();
+})
+
 let https = require('./WebServer/app');
 
 async function deleteModData(col, mod){
@@ -181,6 +214,32 @@ async function deleteModData(col, mod){
       let response = { n: result.result.n, status: result.result.ok, mod: mod, col: col}
       global.mainWindow.send("DeleteResults", response)
     }
+
+  } catch (err) {
+    console.log(err)
+  } finally {
+    
+    client.close();
+  }
+}
+async function GetModList(){
+  const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+  try {
+    await client.connect();
+    const db = client.db(global.config.DB);
+    let query = { "Mod": { "$exists": true }};
+    let collection = db.collection("Globals");
+    let result = collection.find(query);
+    let count = await result.count()
+    //console.log(count);
+    let response = [];
+    await result.forEach(e => {
+      if (e.Mod !== "UniversalApiStatus"){ 
+        response.push(e);
+      }
+    })
+
+    global.mainWindow.send("ModListGlobals", response)
 
   } catch (err) {
     console.log(err)
