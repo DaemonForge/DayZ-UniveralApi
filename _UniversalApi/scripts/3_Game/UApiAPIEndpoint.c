@@ -175,8 +175,7 @@ class UApiAPIEndpoint extends Managed {
 		autoptr UApiQuestionRequest questionreq = new UApiQuestionRequest(text);
 		
 		if (  text && text != "" && questionreq && DBCBX){
-			string jsonString = questionreq.ToJson();
-			Post(endpoint, jsonString, DBCBX);
+			Post(endpoint, questionreq.ToJson(), DBCBX);
 		} else {
 			Print("[UAPI] [Api] Error Toxicity Text:" +  text + " CID:" + cid);
 			cid = -1;
