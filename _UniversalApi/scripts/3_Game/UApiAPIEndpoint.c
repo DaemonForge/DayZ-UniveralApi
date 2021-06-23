@@ -159,4 +159,29 @@ class UApiAPIEndpoint extends Managed {
 		}
 		return cid;
 	}
+	
+	
+	int Toxicity(string text, Class instance, string function, string oid = ""){
+		int cid = UApi().CallId();
+		string endpoint = "Toxicity";
+		
+		ref RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		autoptr UApiQuestionRequest questionreq = new UApiQuestionRequest(text);
+		
+		if (  text && text != "" && questionreq && DBCBX){
+			string jsonString = questionreq.ToJson();
+			Post(endpoint, jsonString, DBCBX);
+		} else {
+			Print("[UAPI] [Api] Error Toxicity Text:" +  text + " CID:" + cid);
+			cid = -1;
+		}
+		return cid;
+	}
+	
 }
