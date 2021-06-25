@@ -106,7 +106,7 @@ async function runLoggerMany(req, res, id, auth) {
 }
 
 function GetClientID(req){
-    let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
     let  hash = createHash('sha256');
     let theHash = hash.update(ip).digest('base64');
     return theHash.substr(0,32); //Cutting the last few digets to save a bit of data and make sure people don't mistake it for the GUIDS

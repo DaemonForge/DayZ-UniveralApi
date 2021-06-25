@@ -35,6 +35,23 @@ const RouterTranslate = require("./TranslateConnector");
 const RouterServerQuery = require("./serverQuery");
 const RouterToxicity = require("./toxicityConnector");
 
+// set up rate limiter: maximum of five requests per minute
+var RateLimit = require('express-rate-limit');
+var limiter = new RateLimit({
+  windowMs: 5*1000, // 100 req/sec
+  max: global.config.RequestLimit || 500,
+  message:  '{ "Status": "Error", "Error": "RateLimited" }',
+  keyGenerator: function (req /*, res*/) {
+    return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+  },
+  onLimitReached: function (req, res, options) {
+    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+    log("RateLimit Reached("  + ip + ") you may be under a DDoS Attack or you may need to increase your request limit");
+  }
+});
+
+// apply rate limiter to all requests
+app.use(limiter);
 
 app.use((req, res, next) => {
   json({
