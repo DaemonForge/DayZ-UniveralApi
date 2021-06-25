@@ -13,6 +13,24 @@ const fetch = require('node-fetch');
 const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
 const router = Router();
+
+var RateLimit = require('express-rate-limit');
+var limiter = new RateLimit({
+  windowMs: 10*1000, // 30 req/sec
+  max: global.config.RequestLimitDiscord || 300,
+  message:  '{ "Status": "Error", "Error": "RateLimited" }',
+  keyGenerator: function (req /*, res*/) {
+    return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+  },
+  onLimitReached: function (req, res, options) {
+    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+    log("RateLimit Reached("  + ip + ") you may be under a DDoS Attack or you may need to increase your request limit");
+  }
+});
+
+// apply rate limiter to all requests
+router.use(limiter);
+
 try {
     if (global.config.Discord?.Bot_Token !== "" && global.config.Discord?.Bot_Token !== undefined){
         client.login(global.config.Discord.Bot_Token);
