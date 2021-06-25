@@ -73,7 +73,8 @@
     "node-fetch": "^2.6.1",
     "node-wit": "^6.0.1",
     "saslprep": "^1.0.3",
-    "serve-favicon": "^2.5.0"
+    "serve-favicon": "^2.5.0",
+    "trim-newlines": "^4.0.2"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.57",

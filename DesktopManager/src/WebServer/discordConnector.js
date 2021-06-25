@@ -15,9 +15,13 @@ const ejsLint = require('ejs-lint');
 const router = Router();
 
 var RateLimit = require('express-rate-limit');
+let TheRateLimit = 40;
+if (global.config.RequestLimitDiscord !== undefined){
+    TheRateLimit =  Math.ceil( global.config.RequestLimitDiscord / 5)
+}
 var limiter = new RateLimit({
-  windowMs: 10*1000, // 30 req/sec
-  max: global.config.RequestLimitDiscord || 300,
+  windowMs: 2*1000, // 20 req/sec
+  max: TheRateLimit,
   message:  '{ "Status": "Error", "Error": "RateLimited" }',
   keyGenerator: function (req /*, res*/) {
     return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
