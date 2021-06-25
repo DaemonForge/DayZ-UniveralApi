@@ -35,10 +35,9 @@ const RouterTranslate = require("./TranslateConnector");
 const RouterServerQuery = require("./serverQuery");
 const RouterToxicity = require("./toxicityConnector");
 
-// set up rate limiter: maximum of five requests per minute
 var RateLimit = require('express-rate-limit');
 var limiter = new RateLimit({
-  windowMs: 5*1000, // 100 req/sec
+  windowMs: 10*1000, // 50 req/sec
   max: global.config.RequestLimit || 500,
   message:  '{ "Status": "Error", "Error": "RateLimited" }',
   keyGenerator: function (req /*, res*/) {

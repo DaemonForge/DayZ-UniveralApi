@@ -8,6 +8,23 @@ const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
 
 const router = Router();
 
+var RateLimit = require('express-rate-limit');
+var limiter = new RateLimit({
+  windowMs: 10*1000, // 30 req/sec
+  max: global.config.RequestLimitServerQuery || 300,
+  message:  '{ "Status": "Error", "Error": "RateLimited" }',
+  keyGenerator: function (req /*, res*/) {
+    return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+  },
+  onLimitReached: function (req, res, options) {
+    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+    log("RateLimit Reached("  + ip + ") you may be under a DDoS Attack or you may need to increase your request limit");
+  }
+});
+
+// apply rate limiter to all requests
+router.use(limiter);
+
 let QnAconf;
 router.post('/:auth', (req, res)=>{
     try{
