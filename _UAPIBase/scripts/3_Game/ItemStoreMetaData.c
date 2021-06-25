@@ -29,3 +29,18 @@ class UApiMetaData extends Managed{
 	float ReadFloat(){return Data.ToFloat();}
 	vector ReadVector(){ return Data.ToVector(); }
 }
+
+
+class UApiZoneHealthData extends Managed{
+	string m_Zone;
+	float m_Health;
+	
+	void UApiPlayerZoneHealthData(string zone, float health){
+		m_Zone = zone;
+		m_Health = health;
+	}
+	
+	bool Is(string zone){ return (m_Zone == zone); }
+	string Zone(){ return m_Zone; }
+	float Health(){ return m_Health; }
+}
