@@ -47,15 +47,21 @@
                 left: 0px;
             }
             dialog {
-            background-color: var(--background-alt);
-            color: var(--text-main);
-            border: none;
-            border-radius: 6px;
-            border-color: var(--border);
-            padding: 10px 30px;
+                background-color: var(--background-alt);
+                color: var(--text-main);
+                border: none;
+                border-radius: 6px;
+                border-color: var(--border);
+                padding: 10px 30px;
             }
             #JsonEditorWrapper{
                 margin: 10px 50px;
+                min-width: 420px;
+                width: 90%;
+                max-width: 620px;
+            }
+            .JsonEditor {
+                width: 100%;
             }
             /* dark styling of the editor */
             div.jsoneditor,
@@ -176,7 +182,7 @@
                 </select>
                 <button style="float: right; display: block;" onclick="SaveGlobal()">Save</button>
             </div>
-            <div id="JsonEditor">
+            <div id="JsonEditor" class="JsonEditor">
 
             </div>
         </div>
