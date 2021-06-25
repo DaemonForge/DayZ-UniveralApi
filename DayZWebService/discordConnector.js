@@ -15,9 +15,7 @@ const ejsLint = require('ejs-lint');
 const router = Router();
 try {
     if (global.config.Discord?.Bot_Token !== "" && global.config.Discord?.Bot_Token !== undefined){
-        client.login(global.config.Discord.Bot_Token).then(() =>{
-            log(`Discord Intergration Ready and is Logged in as ${client.user.tag}!`);
-        }).catch(err => {console.log(err)});
+        client.login(global.config.Discord.Bot_Token);
         log("Logging in to discord bot");
     } else {
         log("Discord Bot Token not present you will not be able to use any discord functions", "warn");
@@ -30,19 +28,20 @@ try {
 
 client.on('ready', () => {
     global.DISCORDSTATUS = "Enabled";
+    log(`Discord Intergration Ready and is Logged in as ${client.user.tag}!`);
   });
 
-if (!existsSync('templates')) mkdirSync('templates');
+if (!existsSync(global.SAVEPATH + 'templates')) mkdirSync(global.SAVEPATH + 'templates');
 
 let LoginTemplate;
 //User Facing Code
 function LoadLoginTemplate(){
     try{
-        LoginTemplate = readFileSync("./templates/discordLogin.ejs","utf8");
+        LoginTemplate = readFileSync(global.SAVEPATH + "templates/discordLogin.ejs","utf8");
     } catch (e) {
         log("Login Template Missing Creating It Now - " + e), "warn";
         LoginTemplate = DefaultTemplates.Login;
-        writeFileSync("./templates/discordLogin.ejs", LoginTemplate);
+        writeFileSync(global.SAVEPATH + "templates/discordLogin.ejs", LoginTemplate);
     }
     try {
         let error = ejsLint(LoginTemplate) ;
@@ -60,11 +59,11 @@ LoadLoginTemplate();
 let SuccessTemplate;
 function LoadSuccessTemplate(){
     try{
-        SuccessTemplate = readFileSync("./templates/discordSuccess.ejs","utf8");
+        SuccessTemplate = readFileSync(global.SAVEPATH + "templates/discordSuccess.ejs","utf8");
     } catch (e) {
         log("Success Template Missing Creating It Now - " + e, "warn");
         SuccessTemplate = DefaultTemplates.Success;
-        writeFileSync("./templates/discordSuccess.ejs", SuccessTemplate);
+        writeFileSync(global.SAVEPATH + "templates/discordSuccess.ejs", SuccessTemplate);
     }
     try {
         let error = ejsLint(SuccessTemplate) ;
@@ -83,11 +82,11 @@ LoadSuccessTemplate();
 let ErrorTemplate;
 function LoadErrorTemplate(){
     try{
-        ErrorTemplate = readFileSync("./templates/discordError.ejs","utf8");
+        ErrorTemplate = readFileSync(global.SAVEPATH + "templates/discordError.ejs","utf8");
     } catch (e) {
         log("Error Template Missing Creating It Now - " + e, "warn");
         ErrorTemplate = DefaultTemplates.Error;
-        writeFileSync("./templates/discordError.ejs", ErrorTemplate);
+        writeFileSync(global.SAVEPATH + "templates/discordError.ejs", ErrorTemplate);
     }
     try {
         let error = ejsLint(ErrorTemplate) ;
@@ -186,6 +185,7 @@ async function RenderLogin(req, res){
     let id = req.params.id;
     let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     
+
     let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
     if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined ){
         log("User tried to sign up for discord but Intergration is not setup for this server", "warn");
@@ -413,6 +413,7 @@ async function AddRole(res, req, GUID, auth){
                 res.json(resObj);
             }
         }catch(err){
+            console.log(err);
             res.status(203);
             res.json({Status: "Error", Error: `${err}`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
             log("ERROR: " + err, "warn");
@@ -474,6 +475,7 @@ async function RemoveRole(res, req, GUID, auth){
                 res.json(resObj);
             }
         }catch(err){
+            console.log(err);
             res.status(203);
             res.json({Status: "Error", Error: `${err}`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
             log("ERROR: " + err, "warn");

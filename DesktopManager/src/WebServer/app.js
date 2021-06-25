@@ -2,6 +2,9 @@
 global.APIVERSION = '0.9.1';
 global.STABLEVERSION = '0.0.0';
 global.NEWVERSIONDOWNLOAD = `https://github.com/daemonforge/DayZ-UniveralApi/releases`;
+if (global.SAVEPATH === undefined){
+  global.SAVEPATH = "./";
+}
 const express = require('express');
 const favicon = require("serve-favicon")
 const {existsSync,readFileSync} = require('fs');

@@ -1,8 +1,9 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray , globalShortcut, shell, dialog} = require('electron');
+const { app, remote, BrowserWindow, ipcMain, Menu, Tray , globalShortcut, shell, dialog} = require('electron');
 const ejse = require('ejs-electron');
 const { MongoClient } = require("mongodb");
 var iconpath = `${__dirname}/icon.ico`; // pa
 
+global.SAVEPATH = (app || remote.app).getPath('userData') + "/";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -129,14 +130,14 @@ ipcMain.on('message', (event, arg) => {
   tmp = arg;
 })
 ipcMain.on('OpenTemplatesFolder', (event, arg) => {
-  shell.openPath(`${__dirname}\\..\\..\\..\\templates\\`) // Show the given file in a file manager. If possible, select the file.
+  shell.openPath(global.SAVEPATH + 'templates\\') // Show the given file in a file manager. If possible, select the file.
 })
 ipcMain.on('RestartApp', (event, arg) => {
   app.relaunch()
   app.exit()
 })
 ipcMain.on('OpenLogsFolder', (event, arg) => {
-  shell.openPath(`${__dirname}\\..\\..\\..\\logs\\`) // Show the given file in a file manager. If possible, select the file.
+  shell.openPath(global.SAVEPATH + 'logs\\') // Show the given file in a file manager. If possible, select the file.
 })
 
 

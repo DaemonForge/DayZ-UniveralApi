@@ -31,17 +31,17 @@ client.on('ready', () => {
     log(`Discord Intergration Ready and is Logged in as ${client.user.tag}!`);
   });
 
-if (!existsSync('templates')) mkdirSync('templates');
+if (!existsSync(global.SAVEPATH + 'templates')) mkdirSync(global.SAVEPATH + 'templates');
 
 let LoginTemplate;
 //User Facing Code
 function LoadLoginTemplate(){
     try{
-        LoginTemplate = readFileSync("./templates/discordLogin.ejs","utf8");
+        LoginTemplate = readFileSync(global.SAVEPATH + "templates/discordLogin.ejs","utf8");
     } catch (e) {
         log("Login Template Missing Creating It Now - " + e), "warn";
         LoginTemplate = DefaultTemplates.Login;
-        writeFileSync("./templates/discordLogin.ejs", LoginTemplate);
+        writeFileSync(global.SAVEPATH + "templates/discordLogin.ejs", LoginTemplate);
     }
     try {
         let error = ejsLint(LoginTemplate) ;
@@ -59,11 +59,11 @@ LoadLoginTemplate();
 let SuccessTemplate;
 function LoadSuccessTemplate(){
     try{
-        SuccessTemplate = readFileSync("./templates/discordSuccess.ejs","utf8");
+        SuccessTemplate = readFileSync(global.SAVEPATH + "templates/discordSuccess.ejs","utf8");
     } catch (e) {
         log("Success Template Missing Creating It Now - " + e, "warn");
         SuccessTemplate = DefaultTemplates.Success;
-        writeFileSync("./templates/discordSuccess.ejs", SuccessTemplate);
+        writeFileSync(global.SAVEPATH + "templates/discordSuccess.ejs", SuccessTemplate);
     }
     try {
         let error = ejsLint(SuccessTemplate) ;
@@ -82,11 +82,11 @@ LoadSuccessTemplate();
 let ErrorTemplate;
 function LoadErrorTemplate(){
     try{
-        ErrorTemplate = readFileSync("./templates/discordError.ejs","utf8");
+        ErrorTemplate = readFileSync(global.SAVEPATH + "templates/discordError.ejs","utf8");
     } catch (e) {
         log("Error Template Missing Creating It Now - " + e, "warn");
         ErrorTemplate = DefaultTemplates.Error;
-        writeFileSync("./templates/discordError.ejs", ErrorTemplate);
+        writeFileSync(global.SAVEPATH + "templates/discordError.ejs", ErrorTemplate);
     }
     try {
         let error = ejsLint(ErrorTemplate) ;

@@ -3,7 +3,7 @@ const {LogToFile} = global.config;
 const log4js = require('log4js');
 let datetime = new Date();
 let date = datetime.toISOString().slice(0,10)
-let logfilename = "logs/api-warnings-" + date + ".log";
+let logfilename = global.SAVEPATH + "logs/api-warnings-" + date + ".log";
 if (LogToFile){
     log4js.configure({
         appenders: { logs: { type: "file", filename: logfilename } },

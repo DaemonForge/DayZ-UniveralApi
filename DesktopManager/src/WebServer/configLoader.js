@@ -6,12 +6,12 @@ const Defaultconfig = require('./sample-config.json');
 const ConfigPath = "config.json"
 let config;
 try{
-  config = JSON.parse(readFileSync(ConfigPath));
+  config = JSON.parse(readFileSync(global.SAVEPATH + ConfigPath));
 } catch (err){
   Defaultconfig.ServerAuth = makeAuthToken();
   config = Defaultconfig;
-  writeFileSync("./config.json", JSON.stringify(Defaultconfig, undefined, 4))
-  console.log("Installing for the first time the default config \"config.json\" was created with the following values");
+  writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(Defaultconfig, undefined, 4))
+  console.log("Installing for the first time the default config \"" + ConfigPath + "\" was created with the following values");
   console.log("   DBServer: "  + config.DBServer);
   console.log("   DB: "  + config.DB);
   console.log("   ServerAuth: "  + config.ServerAuth);
@@ -19,7 +19,7 @@ try{
   console.log("   Port: "  + config.Port);
   
   if (global.mainWindow !== undefined){
-    global.mainWindow.send("log",{type: "warn", message: "Installing for the first time the default config \"config.json\" was created with the following values"})
+    global.mainWindow.send("log",{type: "warn", message: "Installing for the first time the default config \"" + ConfigPath + "\" was created with the following values"})
     global.mainWindow.send("log",{type: "warn", message: "   DBServer: "  + config.DBServer})
     global.mainWindow.send("log",{type: "warn", message: "   DB: "  + config.DB})
     global.mainWindow.send("log",{type: "warn", message: "   ServerAuth: "  + config.ServerAuth})
@@ -27,7 +27,7 @@ try{
     global.mainWindow.send("log",{type: "warn", message: "   Port: "  + config.Port})
   }
   if (global.logs !== undefined){
-    global.logs.push({type: "warn", message: "Installing for the first time the default config \"config.json\" was created with the following values"})
+    global.logs.push({type: "warn", message: "Installing for the first time the default config \"" + ConfigPath + "\" was created with the following values"})
     global.logs.push({type: "warn", message: "   DBServer: "  + config.DBServer})
     global.logs.push({type: "warn", message: "   DB: "  + config.DB})
     global.logs.push({type: "warn", message: "   ServerAuth: "  + config.ServerAuth})
@@ -39,16 +39,16 @@ try{
 
 //Some Code to update configs for people
 try {
-  if (existsSync("./QnAMaker.json")) {
+  if (existsSync(global.SAVEPATH + "QnAMaker.json")) {
         //file exists
       try {
-        let QnAconfig = JSON.parse(readFileSync("QnAMaker.json")); 
-        console.log(`QnAConfig Present Converting to new format`);
+        let QnAconfig = JSON.parse(readFileSync(global.SAVEPATH + "QnAMaker.json")); 
+        log(`QnAConfig Present Converting to new format`);
         if (config.QnA === undefined){
           config.QnA = {};
         }
         config.QnA["main"] =  QnAconfig;
-        unlink("./QnAMaker.json", (err) => {
+        unlink(global.SAVEPATH + "QnAMaker.json", (err) => {
           if (err) {
             console.error(err)
             return
@@ -56,7 +56,7 @@ try {
         
           //file removed
         });
-        writeFileSync("./config.json", JSON.stringify(config, undefined, 4))
+        writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
       } catch(e){
         console.log(e)
       }
@@ -109,7 +109,7 @@ if (config.Discord === undefined){
   } else {config.Discord.Sign_Up_Countries = ["blacklist", "CN"]; }
 
  try {
-  writeFileSync("./config.json", JSON.stringify(config, undefined, 4))
+  writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
  } catch(e) {
    console.log(e)
  }
@@ -118,7 +118,7 @@ if (config.Discord === undefined){
 if (config.CheckForNewVersion === undefined || config.CheckForNewVersion === null){
   config.CheckForNewVersion = true;
   try {
-   writeFileSync("./config.json", JSON.stringify(config, undefined, 4))
+   writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
   } catch(e) {
     console.log(e)
   }

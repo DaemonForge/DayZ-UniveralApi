@@ -69,7 +69,6 @@ async function runTranslate(req, res, auth){
                     Error: error,
                     Translations: [{ text: "NA", to: "NA"} ],
                     Detected: "NA"
-
                 }
             }
             res.status(200);
