@@ -1,7 +1,7 @@
 {
   "name": "universalapiwebservice",
   "productName": "UniversalAPIWebService",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "UniveralApi Web Service",
   "main": "src/index.js",
   "scripts": {
