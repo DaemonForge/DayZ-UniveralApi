@@ -2,6 +2,8 @@ const { app, remote, BrowserWindow, ipcMain, Menu, Tray , globalShortcut, shell,
 const ejse = require('ejs-electron');
 const { MongoClient } = require("mongodb");
 var iconpath = `${__dirname}/icon.ico`; // pa
+const {writeFileSync} = require('fs');
+
 
 global.SAVEPATH = (app || remote.app).getPath('userData') + "/";
 
@@ -165,6 +167,21 @@ ipcMain.on('SaveGlobalMod', (event, arg) => {
 
 })
 
+ipcMain.on('SaveConfig', (event, arg) => {
+  SaveConfig(arg)
+
+})
+
+async function SaveConfig(data){
+  try{
+    global.config = data;
+    //console.log(global.config);
+    writeFileSync(global.SAVEPATH + "config.json", JSON.stringify(data, undefined, 4))
+    console.log("File Saved"); 
+  } catch(e) {
+    console.log(e)
+  }
+}
 
 async function SaveGlobalMod(data){
   

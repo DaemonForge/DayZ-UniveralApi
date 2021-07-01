@@ -28,15 +28,8 @@ function RestartApp() {
   
 
 async function SaveConfig() {
-  try{
-    global.config = editor.get();
-    console.log(global.config);
-    writeFileSync("./config.json", JSON.stringify(global.config, undefined, 4))
-    console.log("File Saved");
-    
-  } catch(e) {
-    console.log(e)
-  }
+  ipcRenderer.send('SaveConfig', editor.get())
+
 }
 window.onclick = function(event) {
     if (!event.target.matches('.menubtn') && !event.target.matches('.menuicon') ) {
