@@ -29,3 +29,9 @@ class UApiToxicityResponse extends StatusObject {
 	float Toxicity;
 	
 }
+
+class UApiRandomNumberResponse extends StatusObject {
+	
+	ref TIntArray Numbers;
+	
+}

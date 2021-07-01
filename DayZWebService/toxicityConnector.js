@@ -2,8 +2,6 @@
 const tf = require('@tensorflow/tfjs');
 const toxicity  = require('@tensorflow-models/toxicity');
 const {Router} = require('express');
-const nodeFetch = require('node-fetch');
-global.fetch = nodeFetch;
 const log = require("./log");
 
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker')

@@ -31,3 +31,17 @@ class UApiQuestionRequest extends UApiObject_Base{
 		return jsonString;
 	}
 }
+
+class UApiRandomNumberRequest extends UApiObject_Base{
+	int Count;
+	
+	void UApiRandomNumberRequest(int count){
+		Count = count;
+	}
+	
+	override string ToJson(){
+		string jsonString = JsonFileLoader<UApiRandomNumberRequest>.JsonMakeData(this);
+		return jsonString;
+	}
+}
+

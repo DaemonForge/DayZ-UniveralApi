@@ -43,7 +43,7 @@ try {
         //file exists
       try {
         let QnAconfig = JSON.parse(readFileSync(global.SAVEPATH + "QnAMaker.json")); 
-        log(`QnAConfig Present Converting to new format`);
+        console.log(`QnAConfig Present Converting to new format`);
         if (config.QnA === undefined){
           config.QnA = {};
         }

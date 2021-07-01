@@ -183,4 +183,28 @@ class UApiAPIEndpoint extends Managed {
 		return cid;
 	}
 	
+	int RandomNumbers(int count, Class instance, string function, string oid = ""){
+		int cid = UApi().CallId();
+		string endpoint = "Random";
+		if (count == -1){
+			count = 2048;
+		}
+		ref RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		autoptr UApiRandomNumberRequest randomreq = new UApiRandomNumberRequest(count);
+		
+		if (  count > 0 && count <= 2048 && randomreq && DBCBX){
+			Post(endpoint, randomreq.ToJson(), DBCBX);
+		} else {
+			Print("[UAPI] [Api] Error Random " +  count + " CID:" + cid);
+			cid = -1;
+		}
+		return cid;
+	}
+	
 }

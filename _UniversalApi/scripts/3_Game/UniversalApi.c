@@ -23,6 +23,10 @@ class UniversalApi extends Managed{
 	
 	protected ref TIntSet m_CanceledCalls = new TIntSet;
 	
+	protected ref TIntArray m_RandomNumbers = new TIntArray;
+	
+	protected int LastRandomNumberRequestCall = -1;
+	
 	
 	string GetAuthToken(){
 		if (m_authToken && !GetGame().IsServer()){
@@ -63,6 +67,7 @@ class UniversalApi extends Managed{
 		return m_UniversalRest;
 	}
 	
+	
 	ref UniversalDiscordRest Discord(){
 		if (!m_UniversalDiscordRest){
 			m_UniversalDiscordRest = new UniversalDiscordRest;
@@ -96,6 +101,9 @@ class UniversalApi extends Managed{
 			GetRPCManager().AddRPC( "UAPI", "RPCUniversalApiConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestQnAConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
+			if (GetGame().IsServer()){
+				PrepareTrueRandom();
+			}
 		}
 	}
 	
@@ -114,9 +122,90 @@ class UniversalApi extends Managed{
 			//Should run on thread but give access violation not sure why yet
 		}
 		GetGame().GameScript.CallFunction(GetGame().GetMission(), "UniversalApiReadyTokenReceived", NULL, NULL);
+		PrepareTrueRandom();
 		Print("[UAPI] Proccessed UApi Config");
 	}
 	
+	void PrepareTrueRandom(){
+		GetRandomNumbers();
+	}
+	
+	int rndInt(int min = 0, int max = 65535){
+		if (!m_RandomNumbers || m_RandomNumbers.Count() <= 0){
+			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			GetRandomNumbers();
+			return Math.RandomInt(min, max);
+		}
+		if (m_RandomNumbers.Count() < 1000){
+			GetRandomNumbers();
+		}
+		int idx = m_RandomNumbers.GetRandomIndex();
+		int number = m_RandomNumbers.Get(idx);
+		m_RandomNumbers.Remove(idx);
+		if (min == 0 && max == 65535){
+			return number;
+		}
+		float num = number / 65535;
+		int diff = max - min;
+		int dnum = diff * num;
+		return  Math.Round( dnum + min);
+	}
+	
+	int rndFloat(float min = 0, float max = 1){
+		if (!m_RandomNumbers || m_RandomNumbers.Count() <= 0){
+			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			GetRandomNumbers();
+			return Math.RandomFloat(min, max);
+		}
+		if (m_RandomNumbers.Count() < 1000){
+			GetRandomNumbers();
+		}
+		int idx = m_RandomNumbers.GetRandomIndex();
+		int number = m_RandomNumbers.Get(idx);
+		m_RandomNumbers.Remove(idx);
+		float num = number / 65535;
+		float diff = max - min;
+		float dnum = diff * num;
+		return  dnum + min;
+	}
+	
+	bool rndFlip(){
+		if (!m_RandomNumbers || m_RandomNumbers.Count() <= 0){
+			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			GetRandomNumbers();
+			return (Math.RandomInt(1, 8) >= 5);
+		}
+		if (m_RandomNumbers.Count() < 1000){
+			GetRandomNumbers();
+		}
+		int idx = m_RandomNumbers.GetRandomIndex();
+		int number = m_RandomNumbers.Get(idx);
+		m_RandomNumbers.Remove(idx);
+		int reval = number % 2;
+		return (reval != 0);
+		
+	}
+	
+	protected void GetRandomNumbers(){
+		if (LastRandomNumberRequestCall < 0){
+			return;
+		}
+		this.api().RandomNumbers(2048, this, "ReadRandomNumber");
+	}
+	
+	void ReadRandomNumber(int cid, int status, string oid, string data){
+		LastRandomNumberRequestCall = -1;
+		if (status == UAPI_SUCCESS){
+			UApiRandomNumberResponse dataload;
+			if (UApiJSONHandler<UApiRandomNumberResponse>.FromString(data, dataload)){
+				if (!m_RandomNumbers){
+					m_RandomNumbers = new TIntArray;
+				}
+				m_RandomNumbers.InsertAll(dataload.Numbers);
+				return;
+			}
+		}
+	}
 	
 	void CheckAndPromptDiscordThread(){
 		thread CheckAndPromptDiscord();
@@ -193,6 +282,9 @@ class UniversalApi extends Managed{
 		return NULL;
 	}
 	
+	
+	
+	//TODO: Rework to not need queue 
 	void AddToQueue(ref PlayerIdentity idenitity){
 		if (GetGame().IsServer()){
 			if (QueuedPlayers.Find(idenitity) == -1){
