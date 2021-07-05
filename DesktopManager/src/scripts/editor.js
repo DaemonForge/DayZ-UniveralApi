@@ -62,9 +62,24 @@ ipcRenderer.on('ModListGlobals', function(event, data){
         GlobalsSelector.add(option);
     })
     if (ModListArray[0] !== undefined){
-        editor.set(ModListArray[0]["Data"]);
+        SetUpEditor(ModListArray[0].mod,ModListArray[0]["Data"], )
     }
 })
+
+async function SetUpEditor(mod, data){
+    let schema = await CheckForSchema(mod);
+    if (schema){
+        let TheOptions = {
+            mode: 'tree',
+            schema: schema
+        }
+        delete editor;
+        JsonEditorDiv.innerHTML = "";
+        editor = new JSONEditor(JsonEditorDiv, TheOptions);
+    }
+    editor.set(data);
+}
+
 ipcRenderer.on('UpdateModGlobal', function(event, data){
     //console.log(data)
 	dialog.showModal();
@@ -77,11 +92,10 @@ ipcRenderer.on('UpdateModGlobal', function(event, data){
     }
 })
 
-function OnGlobalsSelectorChange(event){
-    //console.log(GlobalsSelector.value)
+async function OnGlobalsSelectorChange(event){
     ModListArray.forEach(e => {
         if (e.Mod === GlobalsSelector.value){
-            editor.set(e["Data"]);
+            SetUpEditor(GlobalsSelector.value, e["Data"]);
         }
     })
 };
@@ -141,3 +155,12 @@ function PasteContent(){
         dialog.showModal();
     }
 }
+
+async function CheckForSchema(modtag){
+    let TheSchema = await fetch(`https://raw.githubusercontent.com/daemonforge/DayZ-UniveralApi/master/Schemas/${modtag}.json`).then(response => {
+        return response.json().catch( e => console.log(e));
+    }).catch( e => console.log(e))
+    //console.log(TheSchema);
+    return TheSchema;
+}
+
