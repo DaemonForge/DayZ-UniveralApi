@@ -3,70 +3,91 @@
   "required": ["Servers", "ArrivalPoints", "DepaturePoints", "Currencies"],
   "additionalProperties": false,
   "properties": {
+    "m_DataReceived": {
+      "type": "integer",
+      "minimum": 0, 
+      "maximum": 0, 
+      "description": "You can Ignore this it pretty much should always be 0"
+    },
     "Servers": {
       "type": "array",
+      "description": "This is an array of servers that this players can transfer between",
       "items": {
         "type": "object",
         "required": ["Name", "Map", "IP", "Port", "QueryPort", "Password", "RespawnServer"],
         "additionalProperties": false,
         "properties": {
           "Name": {
-            "type": "string"
+            "type": "string",
+            "description": "The Name of the server MUST match ServerID in the UniversalApi.json"
           },
           "Map": {
-            "type": "string"
+            "type": "string",
+            "description": "The Name of the map the server is running. to be displayed to the player when transfering"
           },
           "IP": {
             "type": "string",
-            "pattern": "[1-2]{0,1}[0-9]{1,2}\\.[1-2]{0,1}[0-9]{1,2}\\.[1-2]{0,1}[0-9]{1,2}\\.[1-2]{0,1}[0-9]{1,2}"
+            "pattern": "[1-2]{0,1}[0-9]{1,2}\\.[1-2]{0,1}[0-9]{1,2}\\.[1-2]{0,1}[0-9]{1,2}\\.[1-2]{0,1}[0-9]{1,2}",
+            "description": "The IP of the server"
           },
           "Port": {
             "type": "integer",
             "minimum": 1024,
-            "maximum": 49151
+            "maximum": 49151,
+            "description": "The Game port of the server"
           },
           "QueryPort": {
             "type": "integer",
             "minimum": 1024,
-            "maximum": 49151
+            "maximum": 49151,
+            "description": "The Steam Query port of the server, used to check player count and queue count"
           },
           "Password": {
-            "type": "string"
+            "type": "string",
+            "description": "The password for the server, leave blank if no password"
           },
           "RespawnServer": {
-            "type": "string"
+            "type": "string",
+            "description": "This is the server that the players on this server will respawn to, if blank they can respawn on this server"
           }
         }
       }
     },
     "ArrivalPoints": {
       "type": "array",
+      "description": "This array of arrival points",
       "items": {
         "type": "object",
         "required": ["Name", "SpawnPoints"],
         "additionalProperties": false,
         "properties": {
           "Name": {
-            "type": "string"
+            "type": "string",
+            "description": "This is the name of the arrival point"
           },
           "SpawnPoints": {
             "type": "array",
+            "description": "An array of spawn points for the arrival point.",
             "items": {
               "type": "object",
               "required": ["ServerName", "DisplayName", "ProtectionTime", "Positions"],
               "additionalProperties": false,
               "properties": {
                 "ServerName": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "This is the server that this spawnpoint is for, MUST match the ServerID in the UniversalApi.json and the 'Name' field in the servers array"
                 },
                 "DisplayName": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "The Display Name for the Spawn point to be displayed to the player"
                 },
                 "ProtectionTime": {
-                  "type": "integer"
+                  "type": "integer",
+                  "description": "The amount of time(in Seconds) this will give players god mod and prevent them from raising guns and melee attack."
                 },
                 "Positions": {
                   "type": "array",
+                  "description": "An array of position players can spawn at",
                   "items": {
                     "type": "object",
                     "required": ["X", "Y", "Z", "D", "Radius", "Chance"],
@@ -74,26 +95,32 @@
                     "properties": {
                       "X": {
                         "type": "number",
-                        "minimum": 0
+                        "minimum": 0,
+                        "description": "The X coordinate of the spawn point"
                       },
                       "Y": {
                         "type": "number",
-                        "minimum": 0
+                        "minimum": 0,
+                        "description": "The Y coordinate of the spawn point '-1' will spawn on ground"
                       },
                       "Z": {
                         "type": "number",
-                        "minimum": 0
+                        "minimum": 0,
+                        "description": "The Z coordinate of the spawn point"
                       },
                       "D": {
                         "type": "number",
                         "minimum": -360,
-                        "maximum": 360
+                        "maximum": 360,
+                        "description": "The Direction the player will face when spawn (X cord of Orientation)"
                       },
                       "Radius": {
-                        "type": "number"
+                        "type": "number",
+                        "description": "The respawn radius if used players will spawn on the ground"
                       },
                       "Chance": {
-                        "type": "number"
+                        "type": "number",
+                        "description": "The chance this respawn point will be selected"
                       }
                     }
                   }
@@ -106,26 +133,37 @@
     },
     "DepaturePoints": {
       "type": "array",
+      "description": "The array of Depatures points, where players can interact with the terminal.",
       "items": {
         "type": "object",
-        "required": ["DisplayName", "ServerName", "SafeZoneRadius", "TerminalType", "Position"],
+        "required": ["DisplayName", "ServerName", "SafeZoneRadius", "TerminalType", "Position", "SafeZoneCoolDown"],
         "additionalProperties": false,
         "properties": {
           "DisplayName": {
-            "type": "string"
+            "type": "string",
+            "description": "The display name for the terminal to show up in the GUI"
           },
           "ServerName": {
-            "type": "string"
+            "type": "string",
+            "description": "The server the Depature is on, MUST match the ServerID in the UniversalApi.json and the 'Name' field in the servers array"
           },
           "SafeZoneRadius": {
             "type": "number",
-            "minimum": -1
+            "minimum": -1,
+            "description": "DOES NOTHING YET"
+          },
+          "SafeZoneCoolDown": {
+            "type": "number",
+            "minimum": -1,
+            "description": "DOES NOTHING YET"
           },
           "TerminalType": {
-            "type": "string"
+            "type": "string",
+            "description": "The Class Name for the terminal"
           },
           "Position": {
             "type": "array",
+            "description": "The Position for the Terminal must be within 0.7M or 20M if its a Hive_Terminal (will picked closest point)",
             "maxItems": 3,
             "minItems": 3,
             "items": {
@@ -135,25 +173,31 @@
           },
           "ArrivalPoints": {
             "type": "array",
+            "description": "The array of Arrival Points that each depature point can travel too",
             "items": {
               "type": "object",
               "required": ["ArrivalPointName", "Icon", "TransitionWaitTime", "Cost", "AcceptedCurrencyId"],
               "additionalProperties": false,
               "properties": {
                 "ArrivalPointName": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "The Name of the ArrivalPoint MUST match Name in the array of Arrival Points"
                 },
                 "Icon": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "The Icon that is displayed for the arrival point, (plane, boat, car, bus, train, portal)"
                 },
                 "TransitionWaitTime": {
-                  "type": "integer"
+                  "type": "integer",
+                  "description": "Time player has wait to trasnfer"
                 },
                 "Cost": {
-                  "type": "integer"
+                  "type": "integer",
+                  "description": "Cost to transfer"
                 },
                 "AcceptedCurrencyId": {
-                  "type": "integer"
+                  "type": "integer",
+                  "description": "Currency ID to transfer much match Currency's ID below"
                 }
               }
             }
@@ -163,33 +207,45 @@
     },
     "Currencies": {
       "type": "array",
+      "description": "An array of accepted currencies",
       "items": {
         "type": "object",
-        "required": ["ID", "Name", "Icon", "MoneyValues"],
+        "required": ["ID", "Name", "Icon", "MoneyValues","CanUseRuinedBills"],
         "additionalProperties": false,
         "properties": {
           "ID": {
-            "type": "integer"
+            "type": "integer",
+            "description": "ID for the currency "
           },
           "Name": {
-            "type": "string"
+            "type": "string",
+            "description": "Name for Currency"
           },
           "Icon": {
-            "type": "string"
+            "type": "string",
+            "description": "Icon for currency (coins, coins2, pound, starticket, rubble, yen, dollar, ticket, euro)"
+          },
+          "CanUseRuinedBills": {
+            "type": "integer",
+            "enum": [0,1],
+            "description": "Specifies if the player can use ruined bills/items"
           },
           "MoneyValues": {
             "type": "array",
+            "description": "An array of item values",
             "items": {
               "type": "object",
               "required": ["Item", "Value"],
               "additionalProperties": false,
               "properties": {
                 "Item": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Money Item's Class Name"
                 },
                 "Value": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "description": "Value for the class name"
                 }
               }
             }
