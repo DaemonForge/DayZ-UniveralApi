@@ -15,6 +15,9 @@ const DefaultCert = require('./defaultkeys.json');
 const app = express();
 const {versionCompare} = require('./utils');
 
+const nodeFetch = require('node-fetch');
+global.fetch = nodeFetch;
+
 /* Config File */
 global.config = require('./configLoader');
 
@@ -34,6 +37,7 @@ const RouterLUIS = require("./luisConnector");
 const RouterTranslate = require("./TranslateConnector");
 const RouterServerQuery = require("./serverQuery");
 const RouterToxicity = require("./toxicityConnector");
+const RouterTrueRandom = require("./TrueRandom");
 
 var RateLimit = require('express-rate-limit');
 var limiter = new RateLimit({
@@ -82,6 +86,7 @@ app.use('/LUIS', RouterLUIS);
 app.use('/Translate', RouterTranslate);
 app.use('/ServerQuery', RouterServerQuery);
 app.use('/Toxicity', RouterToxicity);
+app.use('/Random', RouterTrueRandom);
 
 app.use('/', (req,res)=>{
     log("Error invalid or is not a post Requested URL is:" + req.url);
