@@ -19,6 +19,11 @@ var limiter = new RateLimit({
   onLimitReached: function (req, res, options) {
     let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
     log("RateLimit Reached("  + ip + ") you may be under a DDoS Attack or you may need to increase your request limit");
+  },
+  skip: function (req, res) {
+    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+    if (global.config.RateLimitWhiteList !== undefined && ip !== undefined && ip !== null && isArray(global.config.RateLimitWhiteList) && (global.config.RateLimitWhiteList.find(element => element === ip) === ip)) return true;
+    return false;
   }
 });
 

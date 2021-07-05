@@ -124,5 +124,14 @@ if (config.CheckForNewVersion === undefined || config.CheckForNewVersion === nul
   }
 }
 
+if (config.RateLimitWhiteList === undefined || config.RateLimitWhiteList === null){
+  config.RateLimitWhiteList = ["127.0.0.1"];
+  try {
+   writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
+  } catch(e) {
+    console.log(e)
+  }
+}
+
 
 module.exports = config;
