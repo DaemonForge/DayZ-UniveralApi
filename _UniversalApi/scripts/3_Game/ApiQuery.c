@@ -29,3 +29,16 @@ class ApiQueryBase : RestCallback{
 	};
 	
 }
+
+
+class APIQueryResult<Class T> : StatusObject {
+	
+	autoptr array<ref T> Results;
+	int Count;
+	
+	
+	bool FromJson(string stringData) {
+		return UApiJSONHandler<T>.FromString( stringData, this);
+	}
+
+}
