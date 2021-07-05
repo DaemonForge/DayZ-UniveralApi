@@ -13,7 +13,7 @@ const fetch  = require('node-fetch');
 const {json} = require('body-parser');
 const DefaultCert = require('./defaultkeys.json');
 const app = express();
-const {versionCompare} = require('./utils');
+const {isArray, versionCompare} = require('./utils');
 
 const nodeFetch = require('node-fetch');
 global.fetch = nodeFetch;
