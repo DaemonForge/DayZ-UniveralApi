@@ -37,9 +37,9 @@ class UApiQueryResult<Class T> : StatusObject {
 	int Count;
 	
 	
-	static APIQueryResult<T> CreateFrom(string  stringData){
-		APIQueryResult<T> returnval;
-		if (UApiJSONHandler<APIQueryResult<T>>.FromString( stringData, returnval)){
+	static UApiQueryResult<T> CreateFrom(string  stringData){
+		UApiQueryResult<T> returnval;
+		if (UApiJSONHandler<UApiQueryResult<T>>.FromString( stringData, returnval)){
 			return returnval;
 		} 
 		Error("[UAPI] Failed to create Query Results");
@@ -47,7 +47,11 @@ class UApiQueryResult<Class T> : StatusObject {
 	}
 	
 	bool FromJson(string stringData) {
-		return UApiJSONHandler<APIQueryResult<T>>.FromString( stringData, this);
+		return UApiJSONHandler<UApiQueryResult<T>>.FromString( stringData, this);
 	}
 
+	
+	array<ref T> GetResults(){
+		return Results;
+	}
 }

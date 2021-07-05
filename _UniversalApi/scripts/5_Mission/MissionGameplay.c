@@ -11,6 +11,7 @@ modded class MissionGameplay extends MissionBase
 		UApi().RequestAuthToken(true);
 		int TokenRefreshRate = Math.RandomInt(1200,1325); //So that way on server starts it less likley to get a ton of requests at once 
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestNewAuthToken, TokenRefreshRate * 1000, false);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.TestRandom, 10000, true);
 	}
 	
 	override void OnMissionFinish(){
@@ -42,6 +43,17 @@ modded class MissionGameplay extends MissionBase
 			//Prevents the call que from failing after being active for a long time.
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestNewAuthToken, TokenRefreshRate * 1000, false);
 		}
+	}
+	
+	void TestRandom(){
+		Print("[UAPI] Test Random");
+		Print("Flip Coin "  + UApi().rndFlip());
+		Print("Flip Coin "  + UApi().rndFlip());
+		Print("Flip Coin "  + UApi().rndFlip());
+		Print("Random Number "  + UApi().rndInt());
+		Print("Random Number 1-10 "  + UApi().rndInt(1,10));
+		Print("Random float 1-10 "  + UApi().rndFloat(0,1));
+	
 	}
 	
 }
