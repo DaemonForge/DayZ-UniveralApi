@@ -8,7 +8,7 @@ modded class MissionGameplay extends MissionBase
 	override void OnMissionStart(){
 		super.OnMissionStart();
 		m_UApi_Initialized = false;
-		GetRPCManager().SendRPC("UAPI", "RPCRequestAuthToken", NULL, true);
+		UApi().RequestAuthToken(true);
 		int TokenRefreshRate = Math.RandomInt(1200,1325); //So that way on server starts it less likley to get a ton of requests at once 
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestNewAuthToken, TokenRefreshRate * 1000, false);
 	}
@@ -37,7 +37,7 @@ modded class MissionGameplay extends MissionBase
 	
 	void RequestNewAuthToken(){
 		if (!GetGame().IsServer()){
-			GetRPCManager().SendRPC("UAPI", "RPCRequestAuthToken", NULL, true);
+			UApi().RequestAuthToken();
 			int TokenRefreshRate = Math.RandomInt(1200,1325); 
 			//Prevents the call que from failing after being active for a long time.
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestNewAuthToken, TokenRefreshRate * 1000, false);

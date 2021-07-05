@@ -1,6 +1,7 @@
 class UniversalApi extends Managed{
 
 	protected int m_CallId = 0;
+	protected int m_AuthRetries = 0;
 	
 	protected bool UAPI_Init = false;
 	protected ref ApiAuthToken m_authToken;
@@ -13,6 +14,8 @@ class UniversalApi extends Managed{
 	protected ref UApiDiscordUser dsUser;
 	
 	protected ref array<ref PlayerIdentity> QueuedPlayers = new array<ref PlayerIdentity>;
+	
+	protected ref map<string, string> PlayerAuths = new map<string, string>;
 	
 	protected ref UApiDBEndpoint m_PlayerEndPoint;
 	
@@ -101,6 +104,7 @@ class UniversalApi extends Managed{
 			GetRPCManager().AddRPC( "UAPI", "RPCUniversalApiConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestQnAConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
+			GetRPCManager().AddRPC( "UAPI", "RPCRequestRetry", this, SingeplayerExecutionType.Both );
 			if (GetGame().IsServer()){
 				PrepareTrueRandom();
 			}
@@ -112,6 +116,7 @@ class UniversalApi extends Managed{
 		Print("[UAPI] Received UApi Config");
 		Param2<ApiAuthToken, UniversalApiConfig> data; 
 		if ( !ctx.Read( data ) ) return;
+		m_AuthRetries = 0;
 		m_authToken = data.param1;
 		m_UniversalApiConfig = data.param2;
 		if (m_UniversalApiConfig.QnAEnabled){
@@ -126,86 +131,43 @@ class UniversalApi extends Managed{
 		Print("[UAPI] Proccessed UApi Config");
 	}
 	
-	void PrepareTrueRandom(){
-		GetRandomNumbers();
+	void RPCRequestRetry( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	{
+		if (GetGame().IsClient() && ++m_AuthRetries <= 20){
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestAuthToken, m_AuthRetries * 2200, false, true);
+		}
 	}
 	
-	int rndInt(int min = 0, int max = 65535){
-		if (!m_RandomNumbers || m_RandomNumbers.Count() <= 0){
-			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
-			GetRandomNumbers();
-			return Math.RandomInt(min, max);
+	void RequestAuthToken(bool first = false){
+		if (!GetGame().IsServer()){
+			GetRPCManager().SendRPC("UAPI", "RPCRequestAuthToken", new Param1<bool>(first), true);
 		}
-		if (m_RandomNumbers.Count() < 1000){
-			GetRandomNumbers();
-		}
-		int idx = m_RandomNumbers.GetRandomIndex();
-		int number = m_RandomNumbers.Get(idx);
-		m_RandomNumbers.Remove(idx);
-		if (min == 0 && max == 65535){
-			return number;
-		}
-		float num = number / 65535;
-		int diff = max - min;
-		int dnum = diff * num;
-		return  Math.Round( dnum + min);
 	}
 	
-	int rndFloat(float min = 0, float max = 1){
-		if (!m_RandomNumbers || m_RandomNumbers.Count() <= 0){
-			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
-			GetRandomNumbers();
-			return Math.RandomFloat(min, max);
-		}
-		if (m_RandomNumbers.Count() < 1000){
-			GetRandomNumbers();
-		}
-		int idx = m_RandomNumbers.GetRandomIndex();
-		int number = m_RandomNumbers.Get(idx);
-		m_RandomNumbers.Remove(idx);
-		float num = number / 65535;
-		float diff = max - min;
-		float dnum = diff * num;
-		return  dnum + min;
+	void PreparePlayerAuth(string guid){
+		UApi().Rest().GetAuthNew(guid);
 	}
 	
-	bool rndFlip(){
-		if (!m_RandomNumbers || m_RandomNumbers.Count() <= 0){
-			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
-			GetRandomNumbers();
-			return (Math.RandomInt(1, 8) >= 5);
-		}
-		if (m_RandomNumbers.Count() < 1000){
-			GetRandomNumbers();
-		}
-		int idx = m_RandomNumbers.GetRandomIndex();
-		int number = m_RandomNumbers.Get(idx);
-		m_RandomNumbers.Remove(idx);
-		int reval = number % 2;
-		return (reval != 0);
+	void AddPlayerAuth(string guid, string auth){
+		if (!PlayerAuths){PlayerAuths = new map<string, string>;}
+		Print("[UAPI] Adding PlayerAuth for " + guid + " to cache");
+		PlayerAuths.Set(guid,auth); //Set Auth incase a request comes in.
 		
-	}
-	
-	protected void GetRandomNumbers(){
-		if (LastRandomNumberRequestCall < 0){
-			return;
-		}
-		this.api().RandomNumbers(2048, this, "ReadRandomNumber");
-	}
-	
-	void ReadRandomNumber(int cid, int status, string oid, string data){
-		LastRandomNumberRequestCall = -1;
-		if (status == UAPI_SUCCESS){
-			UApiRandomNumberResponse dataload;
-			if (UApiJSONHandler<UApiRandomNumberResponse>.FromString(data, dataload)){
-				if (!m_RandomNumbers){
-					m_RandomNumbers = new TIntArray;
-				}
-				m_RandomNumbers.InsertAll(dataload.Numbers);
-				return;
-			}
+		DayZPlayer player; //If renewing or if player is availbe send to player
+		if (Class.CastTo(player, FindPlayer(guid)) && player.GetIdentity() ){
+			SendAuthToken(player.GetIdentity(), auth);
 		}
 	}
+	
+	bool GetPlayerAuth(string guid, out string auth){
+		if (PlayerAuths && PlayerAuths.Contains(guid)){
+			auth = PlayerAuths.Get(guid);
+			return true;
+		}
+		Print("[UAPI] Failed to find Player Auth for " + guid);
+		return false;
+	}
+	
 	
 	void CheckAndPromptDiscordThread(){
 		thread CheckAndPromptDiscord();
@@ -244,12 +206,48 @@ class UniversalApi extends Managed{
 	
 	void RPCRequestAuthToken( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
 	{
-		PlayerIdentity idenitity = PlayerIdentity.Cast(sender);
-		if (GetGame().IsServer() && idenitity){
-			AddToQueue(idenitity);
+		Param1<bool> data; 
+		if ( !ctx.Read( data ) ) return;
+		PlayerIdentity identity = PlayerIdentity.Cast(sender);
+		if (GetGame().IsServer() && identity){
 			UApiConfig();
-			if (UApiConfig().ServerAuth != "" && UApiConfig().ServerAuth != "null"){
-				Rest().GetAuth(idenitity.GetId());
+			string authtoken = "";
+			if (UApiConfig().ServerAuth != "" && UApiConfig().ServerAuth != "null" ){
+				if (data.param1 && GetPlayerAuth(identity.GetId(), authtoken)){
+					Print("[UAPI] RPCRequestAuthToken Sending Cached Token ");
+					SendAuthToken(identity, authtoken);
+				} else if (FindPlayer(identity.GetId())){
+					Print("[UAPI] RPCRequestAuthToken  Renewing Auth Token" );
+					PreparePlayerAuth(identity.GetId());
+				}  else {
+					Print("[UAPI] RPCRequestAuthToken Requesting client retry." );
+					GetRPCManager().SendRPC("UAPI", "RPCRequestRetry", new Param1<bool>(true), true, identity);
+				}
+			} else if (UApiConfig().ServerAuth && UApiConfig().ServerAuth != "" && UApiConfig().ServerAuth != "null") {
+				Error("[UAPI] Server Auth is empty or null");
+			}
+		}
+	}
+	
+	void SendAuthToken(ref PlayerIdentity idenitity, string auth){
+		if (idenitity && auth != ""){
+			Print("[UAPI] Sending PlayerAuth Token to " + idenitity.GetId());
+			autoptr UniversalApiConfig m_ClientConfig = new UniversalApiConfig;
+			m_ClientConfig.ConfigVersion = UApiConfig().ConfigVersion;
+			m_ClientConfig.ServerURL = UApiConfig().ServerURL;
+			m_ClientConfig.ServerID = UApiConfig().ServerID;
+			m_ClientConfig.ServerAuth = "null";
+			m_ClientConfig.QnAEnabled = UApiConfig().QnAEnabled;
+			m_ClientConfig.EnableBuiltinLogging = UApiConfig().EnableBuiltinLogging;
+			m_ClientConfig.PromptDiscordOnConnect = UApiConfig().PromptDiscordOnConnect;
+			autoptr ApiAuthToken m_authToken = new ApiAuthToken;
+			m_authToken.GUID = idenitity.GetId();
+			m_authToken.AUTH = auth;
+			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiConfig", new Param2<ApiAuthToken, UniversalApiConfig>(m_authToken, m_ClientConfig), true, idenitity);
+		} else {
+			Print("[UPAI] [UApiAuthCallBack] ERROR ");
+			if (idenitity){
+				UApi().AuthError(idenitity.GetId());
 			}
 		}
 	}
@@ -304,8 +302,8 @@ class UniversalApi extends Managed{
 	void AuthError(string guid){
 		Print("[UPAI] Auth Error for " + guid);
 		//If Auth Token Failed just try again in 3 minutes 
-		if (PlayerIdentity.Cast(SearchQueue(guid))){ //Check to make sure the GUID is still in the queue to prevent any endless loops
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuth, 180 * 1000, false, guid);
+		if (guid != ""){
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuthNew, 180 * 1000, false, guid);
 		}
 	}
 	
@@ -391,6 +389,86 @@ class UniversalApi extends Managed{
 		return (m_CanceledCalls.Find(cid) != -1);
 	}
 	
+	void PrepareTrueRandom(){
+		GetRandomNumbers();
+	}
+	
+	int rndInt(int min = 0, int max = 65535){
+		if (!m_RandomNumbers || m_RandomNumbers.Count() <= 0){
+			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			GetRandomNumbers();
+			return Math.RandomInt(min, max);
+		}
+		if (m_RandomNumbers.Count() < 1000){
+			GetRandomNumbers();
+		}
+		int idx = m_RandomNumbers.GetRandomIndex();
+		int number = m_RandomNumbers.Get(idx);
+		m_RandomNumbers.Remove(idx);
+		if (min == 0 && max == 65535){
+			return number;
+		}
+		float num = number / 65535;
+		int diff = max - min;
+		int dnum = diff * num;
+		return  Math.Round( dnum + min);
+	}
+	
+	float rndFloat(float min = 0, float max = 1){
+		if (!m_RandomNumbers || m_RandomNumbers.Count() <= 0){
+			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			GetRandomNumbers();
+			return Math.RandomFloat(min, max);
+		}
+		if (m_RandomNumbers.Count() < 1000){
+			GetRandomNumbers();
+		}
+		int idx = m_RandomNumbers.GetRandomIndex();
+		int number = m_RandomNumbers.Get(idx);
+		m_RandomNumbers.Remove(idx);
+		float num = number / 65535;
+		float diff = max - min;
+		float dnum = diff * num;
+		return  dnum + min;
+	}
+	
+	bool rndFlip(){
+		if (!m_RandomNumbers || m_RandomNumbers.Count() <= 0){
+			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			GetRandomNumbers();
+			return (Math.RandomInt(1, 8) >= 5);
+		}
+		if (m_RandomNumbers.Count() < 1000){
+			GetRandomNumbers();
+		}
+		int idx = m_RandomNumbers.GetRandomIndex();
+		int number = m_RandomNumbers.Get(idx);
+		m_RandomNumbers.Remove(idx);
+		int reval = number % 2;
+		return (reval != 0);
+		
+	}
+	
+	protected void GetRandomNumbers(){
+		if (LastRandomNumberRequestCall > 0){
+			return;
+		}
+		LastRandomNumberRequestCall = api().RandomNumbers(2048, this, "ReadRandomNumber");
+	}
+	
+	void ReadRandomNumber(int cid, int status, string oid, string data){
+		LastRandomNumberRequestCall = -1;
+		if (status == UAPI_SUCCESS){
+			UApiRandomNumberResponse dataload;
+			if (UApiJSONHandler<UApiRandomNumberResponse>.FromString(data, dataload)){
+				if (!m_RandomNumbers){
+					m_RandomNumbers = new TIntArray;
+				}
+				m_RandomNumbers.InsertAll(dataload.Numbers);
+				return;
+			}
+		}
+	}
 	
 };
 

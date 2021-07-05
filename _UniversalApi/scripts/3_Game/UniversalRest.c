@@ -52,6 +52,12 @@ class UniversalRest extends Managed
 		Post(url, "{}", new UApiAuthCallBack(guid));
 	}
 	
+	static void GetAuthNew( string guid){
+		string url = BaseUrl() + "GetAuth/" + guid + "/" + UApi().GetAuthToken();
+		
+		Post(url, "{}", new UApiNewAuthCallBack(guid));
+	}
+	
 	static void PlayerSave(string mod, string guid, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {		
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
