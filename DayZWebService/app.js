@@ -107,14 +107,17 @@ if (global.config.Certificate != "" && global.config.CertificateKey != ""){
   }
 }
 let Port = process.env.PORT || global.config.Port || 8443
-https.createServer({
+const server = https.createServer({
     key: ServerKey,
     cert: ServerCert
   }, app)
   .listen(Port, function () {
     log('API Webservice started and is now listening on port "' + Port +'"!')
   });
-
+server.on('error', function (e) {
+    // Handle your error here
+    log(e, "warn");
+  });
 
 async function CheckRecentVersion(){
   try {
