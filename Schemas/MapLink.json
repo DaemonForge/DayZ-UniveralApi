@@ -1,0 +1,201 @@
+{
+  "type": "object",
+  "required": ["Servers", "ArrivalPoints", "DepaturePoints", "Currencies"],
+  "additionalProperties": false,
+  "properties": {
+    "Servers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["Name", "Map", "IP", "Port", "QueryPort", "Password", "RespawnServer"],
+        "additionalProperties": false,
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "Map": {
+            "type": "string"
+          },
+          "IP": {
+            "type": "string",
+            "pattern": "[1-2]{0,1}[0-9]{1,2}\\.[1-2]{0,1}[0-9]{1,2}\\.[1-2]{0,1}[0-9]{1,2}\\.[1-2]{0,1}[0-9]{1,2}"
+          },
+          "Port": {
+            "type": "integer",
+            "minimum": 1024,
+            "maximum": 49151
+          },
+          "QueryPort": {
+            "type": "integer",
+            "minimum": 1024,
+            "maximum": 49151
+          },
+          "Password": {
+            "type": "string"
+          },
+          "RespawnServer": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ArrivalPoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["Name", "SpawnPoints"],
+        "additionalProperties": false,
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "SpawnPoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["ServerName", "DisplayName", "ProtectionTime", "Positions"],
+              "additionalProperties": false,
+              "properties": {
+                "ServerName": {
+                  "type": "string"
+                },
+                "DisplayName": {
+                  "type": "string"
+                },
+                "ProtectionTime": {
+                  "type": "integer"
+                },
+                "Positions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["X", "Y", "Z", "D", "Radius", "Chance"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "X": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "Y": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "Z": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "D": {
+                        "type": "number",
+                        "minimum": -360,
+                        "maximum": 360
+                      },
+                      "Radius": {
+                        "type": "number"
+                      },
+                      "Chance": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "DepaturePoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["DisplayName", "ServerName", "SafeZoneRadius", "TerminalType", "Position"],
+        "additionalProperties": false,
+        "properties": {
+          "DisplayName": {
+            "type": "string"
+          },
+          "ServerName": {
+            "type": "string"
+          },
+          "SafeZoneRadius": {
+            "type": "number",
+            "minimum": -1
+          },
+          "TerminalType": {
+            "type": "string"
+          },
+          "Position": {
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 3,
+            "items": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "ArrivalPoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["ArrivalPointName", "Icon", "TransitionWaitTime", "Cost", "AcceptedCurrencyId"],
+              "additionalProperties": false,
+              "properties": {
+                "ArrivalPointName": {
+                  "type": "string"
+                },
+                "Icon": {
+                  "type": "string"
+                },
+                "TransitionWaitTime": {
+                  "type": "integer"
+                },
+                "Cost": {
+                  "type": "integer"
+                },
+                "AcceptedCurrencyId": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Currencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ID", "Name", "Icon", "MoneyValues"],
+        "additionalProperties": false,
+        "properties": {
+          "ID": {
+            "type": "integer"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "Icon": {
+            "type": "string"
+          },
+          "MoneyValues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["Item", "Value"],
+              "additionalProperties": false,
+              "properties": {
+                "Item": {
+                  "type": "string"
+                },
+                "Value": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
