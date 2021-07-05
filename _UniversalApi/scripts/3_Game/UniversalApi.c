@@ -10,6 +10,7 @@ class UniversalApi extends Managed{
 	
 	protected ref UniversalDiscordRest m_UniversalDiscordRest;
 	protected ref UniversalDSEndpoint m_UniversalDSEndpoint;
+	protected ref UApiDBGlobalEndpoint m_UApiDBGlobalEndpoint;
 	
 	protected ref UApiDiscordUser dsUser;
 	
@@ -87,6 +88,13 @@ class UniversalApi extends Managed{
 			m_UniversalDSEndpoint = new UniversalDSEndpoint;
 		}
 		return m_UniversalDSEndpoint;
+	}
+	
+	ref UApiDBGlobalEndpoint globals(){
+		if (!m_UApiDBGlobalEndpoint){
+			m_UApiDBGlobalEndpoint = new UApiDBGlobalEndpoint;
+		}
+		return m_UApiDBGlobalEndpoint;
 	}
 	
 	ref UApiAPIEndpoint api(){
