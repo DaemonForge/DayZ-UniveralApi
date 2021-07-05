@@ -31,14 +31,23 @@ class ApiQueryBase : RestCallback{
 }
 
 
-class APIQueryResult<Class T> : StatusObject {
+class UApiQueryResult<Class T> : StatusObject {
 	
 	autoptr array<ref T> Results;
 	int Count;
 	
 	
+	static APIQueryResult<T> CreateFrom(string  stringData){
+		APIQueryResult<T> returnval;
+		if (UApiJSONHandler<APIQueryResult<T>>.FromString( stringData, returnval)){
+			return returnval;
+		} 
+		Error("[UAPI] Failed to create Query Results");
+		return NULL;
+	}
+	
 	bool FromJson(string stringData) {
-		return UApiJSONHandler<T>.FromString( stringData, this);
+		return UApiJSONHandler<APIQueryResult<T>>.FromString( stringData, this);
 	}
 
 }
