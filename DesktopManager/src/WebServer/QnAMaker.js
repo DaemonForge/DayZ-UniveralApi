@@ -5,6 +5,7 @@ const log = require("./log")
 const fetch  = require('node-fetch');
 
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
+const {isArray} = require('./utils');
 
 const router = Router();
 

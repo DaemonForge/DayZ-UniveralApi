@@ -5,7 +5,7 @@ const log = require("./log")
 const fetch  = require('node-fetch');
 
 const { CheckAuth, CheckServerAuth } = require('./AuthChecker')
-const config = require('./configLoader');
+const {isArray} = require('./utils');
 
 const querystring = require('querystring');
 

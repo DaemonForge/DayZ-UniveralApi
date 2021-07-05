@@ -5,6 +5,7 @@ const {Router} = require('express');
 const log = require("./log");
 
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
+const {isArray} = require('./utils');
 
 const router = Router();
 

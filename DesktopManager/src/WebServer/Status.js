@@ -3,8 +3,8 @@ const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
 const log = require("./log");
-const config = require('./configLoader');
- 
+const {isArray} = require('./utils');
+
 const router = Router();
 
 var RateLimit = require('express-rate-limit');

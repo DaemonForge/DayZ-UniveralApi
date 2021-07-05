@@ -4,6 +4,7 @@ const fetch  = require('node-fetch');
 const log = require("./log");
 
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker')
+const {isArray} = require('./utils');
 
 /*
     let Request.URL

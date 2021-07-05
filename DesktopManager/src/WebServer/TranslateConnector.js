@@ -5,6 +5,7 @@ const fetch  = require('node-fetch');
 const LanguageDetect = require('languagedetect');
 const lngDetector = new LanguageDetect();
 const { CheckAuth, CheckServerAuth } = require('./AuthChecker')
+const {isArray} = require('./utils');
 
 const querystring = require('querystring');
 
