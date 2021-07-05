@@ -46,6 +46,14 @@ window.onclick = function(event) {
 
   
 function CloseDialog(){
-  dialogOkay.innerHTML = 'Okay';
+  if (dialogOkay !== undefined){
+    dialogOkay.innerHTML = 'Okay';
+  }
+  if (pasteTo !== undefined){
+    pasteTo.style.display = 'none';
+  }
+  if (Paste !== undefined){
+    Paste.style.display = 'none';
+  }
 	dialog.close();
 }
