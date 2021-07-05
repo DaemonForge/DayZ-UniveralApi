@@ -113,9 +113,6 @@ class UniversalApi extends Managed{
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestQnAConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestRetry", this, SingeplayerExecutionType.Both );
-			if (GetGame().IsServer()){
-				PrepareTrueRandom();
-			}
 		}
 	}
 	
@@ -135,7 +132,6 @@ class UniversalApi extends Managed{
 			//Should run on thread but give access violation not sure why yet
 		}
 		GetGame().GameScript.CallFunction(GetGame().GetMission(), "UniversalApiReadyTokenReceived", NULL, NULL);
-		PrepareTrueRandom();
 		Print("[UAPI] Proccessed UApi Config");
 	}
 	
@@ -398,7 +394,9 @@ class UniversalApi extends Managed{
 	}
 	
 	void PrepareTrueRandom(){
-		GetRandomNumbers();
+		if (!m_RandomNumbers || m_RandomNumbers.Count() <= 1500){
+			GetRandomNumbers();
+		}
 	}
 	
 	int rndInt(int min = 0, int max = 65535){

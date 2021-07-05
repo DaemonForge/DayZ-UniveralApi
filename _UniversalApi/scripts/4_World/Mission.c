@@ -7,6 +7,7 @@ modded class MissionBaseWorld
 		if (!m_UApi_Initialized){
 			m_UApi_Initialized = true;
 			UniversalApiReady();
+			UApi().PrepareTrueRandom();
 		}
 	}
 	
