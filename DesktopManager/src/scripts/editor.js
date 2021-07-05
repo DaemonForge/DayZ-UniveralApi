@@ -68,14 +68,16 @@ ipcRenderer.on('ModListGlobals', function(event, data){
 
 async function SetUpEditor(mod, data){
     let schema = await CheckForSchema(mod);
+    delete editor;
+    JsonEditorDiv.innerHTML = "";
     if (schema){
         let TheOptions = {
             mode: 'tree',
             schema: schema
         }
-        delete editor;
-        JsonEditorDiv.innerHTML = "";
         editor = new JSONEditor(JsonEditorDiv, TheOptions);
+    } else {
+        editor = new JSONEditor(JsonEditorDiv, Options)
     }
     editor.set(data);
 }
