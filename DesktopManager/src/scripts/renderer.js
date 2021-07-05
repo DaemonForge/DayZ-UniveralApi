@@ -46,5 +46,6 @@ window.onclick = function(event) {
 
   
 function CloseDialog(){
+  dialogOkay.innerHTML = 'Okay';
 	dialog.close();
 }

@@ -174,15 +174,18 @@
     <%- include('../sections/nav'); -%>
     <main>
         <h2>Globals Editor</h2>
-        <dialog id="dialog"> <header id="DialogHeader">ERROR</header> <p id="DialogText">Invalid Text</p><button onclick="CloseDialog()">Okay</button></dialog>
+        <dialog id="dialog"> <header id="DialogHeader">ERROR</header><p id="DialogText">Invalid Text</p><textarea id="pasteTo" style="display: none; width:100%; height: 400px;"></textarea> <button id="dialogOkay" onclick="CloseDialog()">Okay</button><button id="Paste" onclick="PasteContent()" style="display: none;">Paste</button></dialog>
         <div id="JsonEditorWrapper">
             <div style="display: flex;">
                 <select style="float: left; display: block;" id="GlobalsSelector" onchange="OnGlobalsSelectorChange()">
 
                 </select>
                 <button style="float: right; display: block;" onclick="SaveGlobal()">Save</button>
+                <textarea  id="copyFrom" style="display: block; position: absolute; left: -1000px; top: -1000px; padding: 12px" ></textarea><button onclick="CopyJson()" title="Copy" id="CopyJson" style="padding: 0px 8px;"><svg xmlns="http://www.w3.org/2000/svg" style="padding: 0px 0px; margin: 0px 0px; width: 19px; height: 19px; fill: #fff;" viewBox="0 0 24 24" ><path d="M0 0h24v24H0V0z" fill="none"/><path d="M8 7h11v14H8z" opacity=".7"/><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
+                <button onclick="PasteJson()" title="Paste" id="PasteJson" style="padding: 0px 8px;"><svg xmlns="http://www.w3.org/2000/svg" style="padding: 0px 0px; margin: 0px 0px; width: 19px; height: 19px; fill: #fff;" viewBox="0 0 24 24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M17 7H7V4H5v16h14V4h-2z" opacity=".3"/><path d="M19 2h-4.18C14.4.84 13.3 0 12 0S9.6.84 9.18 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/></svg></button>
             </div>
             <div id="JsonEditor" class="JsonEditor">
+                
 
             </div>
         </div>

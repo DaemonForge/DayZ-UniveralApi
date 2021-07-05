@@ -6,6 +6,12 @@ const DialogText = document.getElementById("DialogText");
 const GlobalsSelector = document.getElementById("GlobalsSelector");
 const JsonEditorDiv = document.getElementById("JsonEditor");
 const JsonEditorWrapper = document.getElementById("JsonEditorWrapper");
+const dialogOkay = document.getElementById("dialogOkay");
+const copyFrom = document.getElementById("copyFrom");
+
+const pasteTo = document.getElementById("pasteTo");
+const Paste = document.getElementById("Paste");
+
 let ModListArray = [];
 
 const Options = {
@@ -89,4 +95,49 @@ function SaveGlobal(){
     }
     ipcRenderer.send('SaveGlobalMod', data);
 
+}
+
+
+function CopyJson(){
+    let json = editor.get();
+    let jsonText = JSON.stringify(json, undefined, 2);
+    copyFrom.value = jsonText;
+    /* Select the text field */
+    copyFrom.select();
+    copyFrom.setSelectionRange(0, 999999); /* For mobile devices */
+  
+    /* Copy the text inside the text field */
+    document.execCommand("copy");
+  }
+
+
+function PasteJson(){
+	dialog.showModal();
+    DialogHeader.innerHTML = `Paste JSON Data Here`;
+    DialogText.innerHTML = ``;
+    dialogOkay.innerHTML = 'Cancel';
+    Paste.style.display = 'inline';
+    pasteTo.style.display = 'inline';
+}
+
+
+function PasteContent(){
+	dialog.close();
+    DialogHeader.innerHTML = ``;
+    DialogText.innerHTML = ``;
+    dialogOkay.innerHTML = 'Okay';
+    Paste.style.display = 'none';
+    pasteTo.style.display = 'none';
+    try {
+        let content = JSON.parse(pasteTo.value);
+        editor.set(content);
+        console.log(content)
+        pasteTo.value = "";
+    } catch (e){
+        console.log(e)
+        DialogHeader.innerHTML = `Error`;
+        DialogText.innerHTML = `${e}`;
+        pasteTo.value = "";
+        dialog.showModal();
+    }
 }
