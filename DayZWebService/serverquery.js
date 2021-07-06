@@ -109,6 +109,7 @@ async function GetServerStatus(req, res, ip, port, auth){
                     FirstPerson: response.first_person ? 1 : 0
                 }
                 isSent = true;
+                log("Server Status Check requested for " + response.ip + ":" + response.query_port);
                 res.status(200);
                 res.json(statusobj);
 
