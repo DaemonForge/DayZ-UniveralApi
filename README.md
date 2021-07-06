@@ -19,6 +19,7 @@ The first thing before creating any mod is setting up the structure of the mod t
 3. Create a folder called `5_Mission` inside the `scripts` folder
 4. Create a file named `config.cpp` and put it in the Root of the `EarPlugs` folder
 - *If done correctly it will look like this*
+
 ![folderstucture.png](https://dayzmodding.dev/tutorials/folderstucture.png) ![folderstucture2.png](https://dayzmodding.dev/tutorials/folderstucture2.png)
 
 ## Creating the config.cpp
@@ -133,11 +134,13 @@ So following the [How to package](https://dayzmodding.dev/Tutorials/Packaging-A-
 **You should also be able to see the key bind in the configure controls menu**
 
 ![keybindswithoutcf.jpg](https://dayzmodding.dev/tutorials/earplugs/keybindswithoutcf.jpg)
+
 *Remember without a localization table(Stringtable) you won't see the text* 
 
 ---
 
 **With CF([Community Framework](https://steamcommunity.com/sharedfiles/filedetails/?id=1559212036)) installed you will see:**
+
 ![keybindswithcf.jpg](https://dayzmodding.dev/tutorials/earplugs/keybindswithcf.jpg)
 
 # 3. Adjusting the Ingame Volume when the key bind is pressed
