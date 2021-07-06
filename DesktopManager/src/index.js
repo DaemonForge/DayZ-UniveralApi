@@ -1,10 +1,13 @@
-const { app, remote, BrowserWindow, ipcMain, Menu, Tray , globalShortcut, shell, dialog} = require('electron');
+const { app,autoUpdater, remote, BrowserWindow, ipcMain, Menu, Tray , globalShortcut, shell, dialog} = require('electron');
 const ejse = require('ejs-electron');
 const { MongoClient } = require("mongodb");
 var iconpath = `${__dirname}/icon.ico`; // pa
 const {writeFileSync} = require('fs');
 
-
+const server = "https://hazel.daemonforge.dev"
+const feed = `${server}/update/${process.platform}/${app.getVersion()}`
+autoUpdater.setFeedURL({url: feed, serverType: 'json'})
+global.PENDINGUPDATE = false;
 global.SAVEPATH = (app || remote.app).getPath('userData') + "/";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -14,7 +17,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 ejse.data('theme', 'auto');
 ejse.data('logs', global.logs);
 ejse.data('config', global.config);
-ejse.data('projects', [{name: "Project 1", img: "someimage", path: "/path/"}, {name: "Project 2", img: "someimage", path: "/path/"}, {name: "Project 3", img: "someimage", path: "/path/"}])
+ejse.data('pendingupdate', global.PENDINGUPDATE);
 
 let isQuiting;
 let appIcon;
@@ -267,3 +270,48 @@ async function GetModList(){
     client.close();
   }
 }
+
+setInterval(() => {
+  
+  autoUpdater.checkForUpdates();
+
+}, 3600000);
+
+ipcMain.on('UpdateAndRestart', (event, arg) => {
+  isQuiting = true;
+  autoUpdater.quitAndInstall();
+  global.PENDINGUPDATE = false;
+})
+
+autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+  const dialogOpts = {
+    type: 'info',
+    buttons: ['Restart', 'Later'],
+    title: 'Application Update',
+    message: process.platform === 'win32' ? releaseNotes : releaseName,
+    detail: 'A new version has been downloaded. Restart the application to apply the updates.'
+  }
+  global.PENDINGUPDATE = true;
+    //For Desktop Version, Easier to maintain one version of the API
+  if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: 'A new version has been downloaded. Restart the application to apply the updates.'})
+  if (global.logs !== undefined) global.logs.push({type: "info", message: 'A new version has been downloaded. Restart the application to apply the updates.'});
+  dialog.showMessageBox(dialogOpts).then((returnValue) => {
+    if (returnValue.response === 0) {
+      global.PENDINGUPDATE = false;
+      isQuiting = true;
+      autoUpdater.quitAndInstall();
+    }
+  })
+})
+
+autoUpdater.on('checking-for-update', () => {
+  if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: 'Checking for Unversial API Webservice updates . . .'})
+  if (global.logs !== undefined) global.logs.push({type: "info", message: 'Checking for Unversial API Webservice updates . . .'})
+});
+
+autoUpdater.on('error', message => {
+  if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "warn", message: `Error Checking for updates ${feed}`})
+  if (global.logs !== undefined) global.logs.push({type: "warn", message: `Error Checking for updates ${feed}`});
+})
+
+autoUpdater.checkForUpdates();

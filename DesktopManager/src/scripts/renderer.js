@@ -44,7 +44,9 @@ window.onclick = function(event) {
     }
   }
 
-  
+function UpdateAndRestart(){
+  ipcRenderer.send('UpdateAndRestart', {})
+}
 function CloseDialog(){
   if (dialogOkay !== undefined){
     dialogOkay.innerHTML = 'Okay';

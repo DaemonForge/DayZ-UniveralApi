@@ -13,5 +13,6 @@
         <a href="#" onclick="OpenTemplatesFolder()">Web Templates</a>
         <% if (global.config.LogToFile) { %><a href="#" onclick="OpenLogsFolder()">API Logs</a><% } %>
         <a href="./about.ejs">About/Status</a>
+        <% if (pendingupdate) { %><a href="#" onclick="UpdateAndRestart()">Update!</a><% } %>
       </div>
 </nav>

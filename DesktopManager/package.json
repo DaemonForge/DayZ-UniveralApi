@@ -11,12 +11,13 @@
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\""
   },
+  "repository": "daemonforge/DayZ-UniveralApi",
   "keywords": [],
   "author": {
     "name": "Daemon Forge",
-    "email": "kevhoddinott@gmail.com"
+    "email": "me@daemonforge.dev"
   },
-  "license": "GNU 3.0",
+  "license": "AGPL-3.0-or-later",
   "config": {
     "forge": {
       "packagerConfig": {},
@@ -74,7 +75,7 @@
     "node-wit": "^6.0.1",
     "saslprep": "^1.0.3",
     "serve-favicon": "^2.5.0",
-    "trim-newlines": "^4.0.2"
+    "trim-newlines": "^4.0.2",
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.57",
