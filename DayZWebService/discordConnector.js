@@ -66,7 +66,7 @@ function LoadLoginTemplate(){
     try{
         LoginTemplate = readFileSync(global.SAVEPATH + "templates/discordLogin.ejs","utf8");
     } catch (e) {
-        log("Login Template Missing Creating It Now - " + e), "warn";
+        log("Login Template Missing Creating It Now - " + e);
         LoginTemplate = DefaultTemplates.Login;
         writeFileSync(global.SAVEPATH + "templates/discordLogin.ejs", LoginTemplate);
     }
@@ -88,7 +88,7 @@ function LoadSuccessTemplate(){
     try{
         SuccessTemplate = readFileSync(global.SAVEPATH + "templates/discordSuccess.ejs","utf8");
     } catch (e) {
-        log("Success Template Missing Creating It Now - " + e, "warn");
+        log("Success Template Missing Creating It Now - " + e);
         SuccessTemplate = DefaultTemplates.Success;
         writeFileSync(global.SAVEPATH + "templates/discordSuccess.ejs", SuccessTemplate);
     }
@@ -111,7 +111,7 @@ function LoadErrorTemplate(){
     try{
         ErrorTemplate = readFileSync(global.SAVEPATH + "templates/discordError.ejs","utf8");
     } catch (e) {
-        log("Error Template Missing Creating It Now - " + e, "warn");
+        log("Error Template Missing Creating It Now - " + e);
         ErrorTemplate = DefaultTemplates.Error;
         writeFileSync(global.SAVEPATH + "templates/discordError.ejs", ErrorTemplate);
     }
