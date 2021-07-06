@@ -248,7 +248,7 @@ To do this we have first we have to prepare the layout and images
 ![newlayoutdiaglog.png](https://dayzmodding.dev/tutorials/earplugs/newlayoutdiaglog.png)
 
 2. Once it is created we are going to switch the icon to be centred with the top left of the screen and set it to be relative spacing make sure to checkbox ignore pointer this ensures if it is over top of something it doesn't block you from clicking what's beneath it.
-![position.png](https://dayzmodding.dev/tutorials/earplugs/position.png)   ![relitivespacing.png](https://dayzmodding.dev/tutorials/earplugs/relitivespacing.png)  ![visable.png](/tutorials/earplugs/visable.png)
+![position.png](https://dayzmodding.dev/tutorials/earplugs/position.png)   ![relitivespacing.png](https://dayzmodding.dev/tutorials/earplugs/relitivespacing.png)  ![visable.png](https://dayzmodding.dev/tutorials/earplugs/visable.png)
 
 3. Then Change it from a framewidget to an image widget and rename it to be "icon" as well set the `X` and `Y` to be `5%` as well the width(`W`) and height(`H`) to be `64px`
 4. Also, scroll down to the ImageWidget Section of the Widget Properties set the mode to blend, as well check box src alpha and stretch 
@@ -262,7 +262,9 @@ Now the ideal way for this would be to create image sets and reference images se
 2. Convert the files to a .tga with the resolution of 64px by 64px(same size as the height and width of the widget)
 3. Copy each of the .tga files into the `EarPlugs/data` Folder 
 4. Open Workbench and right-click on each of them and click `Register resource and import` 
+
 ![registerandimport.png](https://dayzmodding.dev/tutorials/earplugs/registerandimport.png)
+
 *can then delete the .tga files once the edds files are created*
 
 ### Creating the widget Class
@@ -343,6 +345,7 @@ modded class MissionGameplay
 }
 ```
 Now when you spawn in you will see your earplug status in the top right-hand corner of your screen and when you push the <kbd>N</kbd> key it will change the icon as well as the icon as shown below
+
 ![soundicon1.jpg](https://dayzmodding.dev/tutorials/earplugs/soundicon1.jpg)  ![soundicon2.jpg](https://dayzmodding.dev/tutorials/earplugs/soundicon2.jpg)
 
 ### Make the icons disappear after some time
