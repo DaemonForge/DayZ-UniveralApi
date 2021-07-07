@@ -48,6 +48,10 @@ class UniversalApi extends Managed{
 		return false;
 	}
 	
+	static string GetVersion(){
+		return UAPI_VERSION;
+	}
+	
 	ref UApiDBEndpoint db(int collection = OBJECT_DB){
 		if (collection == OBJECT_DB){
 			if (!m_ObjectEndPoint){
