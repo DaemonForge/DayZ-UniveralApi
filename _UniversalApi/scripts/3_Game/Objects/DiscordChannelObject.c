@@ -2,7 +2,7 @@ class UApiCreateChannelObject extends UApiObject_Base{
 
 	string Name = "new-channel";
 	
-	ref UApiChannelCreateOptions Options;
+	autoptr UApiChannelCreateOptions Options;
 	
 	
 	void UApiCreateChannelObject(string name, UApiChannelCreateOptions options = NULL){
@@ -25,7 +25,7 @@ class UApiCreateChannelObject extends UApiObject_Base{
 class UApiUpdateChannelObject extends UApiObject_Base{
 	
 	string Reason = "";
-	ref UApiChannelUpdateOptions Options;
+	autoptr UApiChannelUpdateOptions Options;
 	
 	void UApiUpdateChannelObject(string reason, UApiChannelUpdateOptions options){
 		Reason = reason;
@@ -106,14 +106,14 @@ class UApiChannelOptions extends Managed {
 	string topic;
 	bool nsfw;
 	string parent;
-	ref array<ref UApiChannelPermissions> permissionOverwrites;
+	autoptr array<autoptr UApiChannelPermissions> permissionOverwrites;
 	int position = -1;
 	int rateLimitPerUser = -1;
 	
 	
 	void AddPerm(string id, string perm, bool isAllow = true){
 		if (!permissionOverwrites){
-			permissionOverwrites = new array<ref UApiChannelPermissions>;
+			permissionOverwrites = new array<autoptr UApiChannelPermissions>;
 		}
 		bool added = false;
 		for (int i = 0; i < permissionOverwrites.Count(); i++){
@@ -138,7 +138,7 @@ class UApiChannelOptions extends Managed {
 	
 	void SetPerms(string id, TStringArray perms, bool isAllow = true){
 		if (!permissionOverwrites){
-			permissionOverwrites = new array<ref UApiChannelPermissions>;
+			permissionOverwrites = new array<autoptr UApiChannelPermissions>;
 		}
 		bool added = false;
 		for (int i = 0; i < permissionOverwrites.Count(); i++){
@@ -168,8 +168,8 @@ class UApiChannelOptions extends Managed {
 class UApiChannelPermissions extends Managed{
 
 	string id;
-	ref TStringArray allow;
-	ref TStringArray deny;
+	autoptr TStringArray allow;
+	autoptr TStringArray deny;
 	
 	void UApiChannelPermissions(string Id, TStringArray Allow, TStringArray Deny){
 		id = Id;

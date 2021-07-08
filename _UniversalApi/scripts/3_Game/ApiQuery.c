@@ -5,7 +5,7 @@ class ApiQueryBase : RestCallback{
 	
 	/*
 	Replace with your Results
-	ref array<ref UApiConfigBase> Results;
+	autoptr array<autoptr UApiConfigBase> Results;
 	*/
 	int Count;
 	

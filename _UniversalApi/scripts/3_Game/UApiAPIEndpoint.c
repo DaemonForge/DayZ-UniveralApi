@@ -47,7 +47,7 @@ class UApiAPIEndpoint extends Managed {
 		int cid = UApi().CallId();
 		string endpoint = "QnA/" + Key;
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -72,7 +72,7 @@ class UApiAPIEndpoint extends Managed {
 		int cid = UApi().CallId();
 		string endpoint = "Translate";
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -96,7 +96,7 @@ class UApiAPIEndpoint extends Managed {
 		int cid = UApi().CallId();
 		string endpoint = "Wit/" + Key;
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -119,7 +119,7 @@ class UApiAPIEndpoint extends Managed {
 		int cid = UApi().CallId();
 		string endpoint = "LUIS/" + Key;
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -143,7 +143,7 @@ class UApiAPIEndpoint extends Managed {
 		int cid = UApi().CallId();
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -165,7 +165,7 @@ class UApiAPIEndpoint extends Managed {
 		int cid = UApi().CallId();
 		string endpoint = "Toxicity";
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -189,7 +189,7 @@ class UApiAPIEndpoint extends Managed {
 		if (count == -1){
 			count = 2048;
 		}
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {

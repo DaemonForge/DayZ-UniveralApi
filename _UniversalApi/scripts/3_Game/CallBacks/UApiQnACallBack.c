@@ -19,7 +19,7 @@ class UApiQnACallBack : RestCallback
 		}
 	};
 	override void OnSuccess(string data, int dataSize) {
-		ref QnAAnswer AnswerObj;
+		autoptr QnAAnswer AnswerObj;
 		JsonFileLoader<QnAAnswer>.JsonLoadData(data, AnswerObj);
 		if (AnswerObj.get() != "null" && AnswerObj.get() != "error" &&  AnswerObj.get() != "ERROR" &&  AnswerObj.get() != ""){
 			UApiQnAMaker().ProcessAnswer(AnswerObj.get());

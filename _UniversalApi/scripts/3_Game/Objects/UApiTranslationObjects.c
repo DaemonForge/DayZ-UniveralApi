@@ -1,6 +1,6 @@
 class UApiTranslationResponse extends StatusObject {
 
-	ref array<ref UApiTranslation> Translations;
+	autoptr array<autoptr UApiTranslation> Translations;
 	string Detected = "";
 }
 
@@ -12,7 +12,7 @@ class UApiTranslation {
 class UApiTranslationRequest extends UApiObject_Base{
 
 	string Text = "";
-	ref TStringArray To = {"en"};
+	autoptr TStringArray To = {"en"};
 	string From = "";
 
 

@@ -55,8 +55,8 @@ class UApiLogMisc{
 
 
 
-static string GetLogPlayerPosArray(array<ref UApiLogPlayerPos> thePlayerlist){
-	return JsonFileLoader<array<ref UApiLogPlayerPos>>.JsonMakeData(thePlayerlist);
+static string GetLogPlayerPosArray(array<autoptr UApiLogPlayerPos> thePlayerlist){
+	return JsonFileLoader<array<autoptr UApiLogPlayerPos>>.JsonMakeData(thePlayerlist);
 }
 
 

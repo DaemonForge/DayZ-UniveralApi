@@ -16,7 +16,7 @@ class UApiStatusCallBack : UApiDBCallBack
 	override void OnSuccess(string data, int dataSize) {
 		if (Instance && Function != ""){
 			
-			ref StatusObject obj;
+			autoptr StatusObject obj;
 			
 			JsonSerializer js = new JsonSerializer();
 			string error;

@@ -14,7 +14,7 @@ class UApiDiscordStatusObject extends StatusObject {
 
 class UApiDiscordMessagesResponse extends StatusObject {
 	
-	ref array<UApiDiscordMessage> Messages;
+	autoptr array<UApiDiscordMessage> Messages;
 	
 }
 
@@ -32,6 +32,6 @@ class UApiToxicityResponse extends StatusObject {
 
 class UApiRandomNumberResponse extends StatusObject {
 	
-	ref TIntArray Numbers;
+	autoptr TIntArray Numbers;
 	
 }

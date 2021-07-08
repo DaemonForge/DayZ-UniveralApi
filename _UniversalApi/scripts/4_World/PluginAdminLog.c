@@ -258,7 +258,7 @@ modded class PluginAdminLog extends PluginBase
 	void DoUApiPlayerListLog(){
 		array<Man> theManList = new array<Man>;
 		GetGame().GetPlayers( theManList );
-		array<ref UApiLogPlayerPos> thePlayerList = new array<ref UApiLogPlayerPos>;
+		array<autoptr UApiLogPlayerPos> thePlayerList = new array<autoptr UApiLogPlayerPos>;
 		if ( m_PlayerArray.Count() != 0 ) {	
 			for (int i = 0; i < theManList.Count(); i++ ) {
 				PlayerBase thePlayer = PlayerBase.Cast(theManList.Get(i));

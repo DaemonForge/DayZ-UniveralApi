@@ -51,7 +51,7 @@ class UApiDBEndpoint extends Managed {
 	int Save(string mod, string oid, string jsonString, Class instance = NULL, string function = "") {	
 		int cid = UApi().CallId();	
 		string endpoint = "/Save/" + oid + "/" + mod;
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -71,7 +71,7 @@ class UApiDBEndpoint extends Managed {
 		int cid = UApi().CallId();
 		string endpoint = "/Load/" + oid + "/" + mod;
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -91,7 +91,7 @@ class UApiDBEndpoint extends Managed {
 		int cid = UApi().CallId();
 		string endpoint = "/Query/" + mod;
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, "");
 		} else {
@@ -114,7 +114,7 @@ class UApiDBEndpoint extends Managed {
 	int Transaction(string mod, string oid, string element, float value = 1, Class instance = NULL, string function = "") {
 		int cid = UApi().CallId();
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -137,7 +137,7 @@ class UApiDBEndpoint extends Managed {
 		
 	int Update(string mod, string oid, string element, string value, string operation = "set", Class instance = NULL, string function = "") {	
 		int cid = UApi().CallId();
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -164,7 +164,7 @@ class UApiDBEndpoint extends Managed {
 		int cid = UApi().CallId();	
 		if (m_Collection != "Player") return -1;
 		string endpoint = "/PublicSave/" + oid + "/" + mod;
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {
@@ -185,7 +185,7 @@ class UApiDBEndpoint extends Managed {
 		if (m_Collection != "Player") return -1;
 		string endpoint = "/PublicLoad/" + oid + "/" + mod;
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else {

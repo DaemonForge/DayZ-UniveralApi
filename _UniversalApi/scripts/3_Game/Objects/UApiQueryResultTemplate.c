@@ -1,6 +1,6 @@
 class UApiQueryResult<Class T> : StatusObject {
 	
-	autoptr array<ref T> Results;
+	autoptr array<autoptr T> Results;
 	int Count;
 	
 	
@@ -18,7 +18,7 @@ class UApiQueryResult<Class T> : StatusObject {
 	}
 
 	
-	array<ref T> GetResults(){
+	array<autoptr T> GetResults(){
 		return Results;
 	}
 }

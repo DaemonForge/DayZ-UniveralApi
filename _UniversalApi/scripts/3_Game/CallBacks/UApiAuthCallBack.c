@@ -22,7 +22,7 @@ class UApiAuthCallBack : RestCallback
 	override void OnSuccess(string data, int dataSize) {
 		
 		//Print("[UPAI] [UApiAuthCallBack] Auth of a Player Success data: " + data);
-		ref ApiAuthToken authToken;
+		autoptr ApiAuthToken authToken;
 		
 		JsonSerializer js = new JsonSerializer();
 		string error;

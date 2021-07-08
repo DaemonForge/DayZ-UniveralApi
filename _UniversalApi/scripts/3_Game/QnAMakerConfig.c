@@ -4,7 +4,7 @@ class UApiQnAMakerServerAnswers extends Managed
 	protected static string ConfigPATH = ConfigDIR + "\\QnAMakerServerAnswers.json";
 	protected bool UseNotifcationsMod = false;
 	string BotName = "Bot";
-	ref array<ref QnAMakerServerAnswer> ServerSpecificAnswers = new array<ref QnAMakerServerAnswer>;
+	autoptr array<autoptr QnAMakerServerAnswer> ServerSpecificAnswers = new array<autoptr QnAMakerServerAnswer>;
 	
 	void Load(){
 		if (GetGame().IsServer()){
@@ -69,7 +69,7 @@ class QnAMakerServerAnswer {
 ref UApiQnAMakerServerAnswers m_QnAMakerServerAnswers;
 
 //Helper function to return Config
-static ref UApiQnAMakerServerAnswers UApiQnAMaker()
+static UApiQnAMakerServerAnswers UApiQnAMaker()
 {
 	if ( GetGame().IsServer()){
 		if (!m_QnAMakerServerAnswers)

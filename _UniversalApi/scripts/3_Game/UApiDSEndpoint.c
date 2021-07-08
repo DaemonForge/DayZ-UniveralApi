@@ -60,7 +60,7 @@ class UniversalDSEndpoint extends Managed
 		
 	int AddRole(string GUID, string RoleId, Class instance = NULL, string function = "") {
 		int cid = UApi().CallId();
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
 		} else {
@@ -84,7 +84,7 @@ class UniversalDSEndpoint extends Managed
 	
 	int RemoveRole(string GUID, string RoleId, Class instance = NULL, string function = "") {
 		int cid = UApi().CallId();
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
 		} else {
@@ -109,7 +109,7 @@ class UniversalDSEndpoint extends Managed
 	
 	int GetUser(string GUID, Class instance, string function) {
 		int cid = UApi().CallId();
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
 		} else {
@@ -124,7 +124,7 @@ class UniversalDSEndpoint extends Managed
 	
 	int GetUserWithPlainId(string plainId, Class instance, string function) {
 		int cid = UApi().CallId();
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, plainId);
 		} else {
@@ -140,7 +140,7 @@ class UniversalDSEndpoint extends Managed
 	
 	int GetUserObj(string GUID, Class instance, string function) {
 		int cid = UApi().CallId();
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDSCallBack(instance, function, cid, GUID);
 		} else {
@@ -155,7 +155,7 @@ class UniversalDSEndpoint extends Managed
 	
 	int GetUserObjWithPlainId(string plainId, Class instance, string function) {
 		int cid = UApi().CallId();
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDSCallBack(instance, function, cid, plainId);
 		} else {
@@ -180,7 +180,7 @@ class UniversalDSEndpoint extends Managed
 			baseUrl = BaseUrl();
 		}
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, PlainId);
 		} else {
@@ -200,7 +200,7 @@ class UniversalDSEndpoint extends Managed
 			baseUrl = BaseUrl();
 		}
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, PlainId);
 		} else {
@@ -221,7 +221,7 @@ class UniversalDSEndpoint extends Managed
 		int cid = UApi().CallId();
 		
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, Name);
 		} else {
@@ -246,7 +246,7 @@ class UniversalDSEndpoint extends Managed
 		int cid = UApi().CallId();
 		
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDiscordStatusCallBack(instance, function, cid, Name);
 		} else {
@@ -271,7 +271,7 @@ class UniversalDSEndpoint extends Managed
 		int cid = UApi().CallId();
 		
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, id);
 		} else {
@@ -293,7 +293,7 @@ class UniversalDSEndpoint extends Managed
 		int cid = UApi().CallId();
 		
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDiscordStatusCallBack(instance, function, cid, id);
 		} else {
@@ -311,11 +311,11 @@ class UniversalDSEndpoint extends Managed
 		return -1;
 	}
 	
-	int ChannelEdit(string id, string reason, ref UApiChannelUpdateOptions options, Class instance = NULL, string function = ""){
+	int ChannelEdit(string id, string reason, autoptr UApiChannelUpdateOptions options, Class instance = NULL, string function = ""){
 		int cid = UApi().CallId();
 		
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, id);
 		} else {
@@ -333,11 +333,11 @@ class UniversalDSEndpoint extends Managed
 		return -1;
 	}
 	
-	int ChannelEditObj(string id, string reason, ref UApiChannelUpdateOptions options, Class instance = NULL, string function = ""){
+	int ChannelEditObj(string id, string reason, autoptr UApiChannelUpdateOptions options, Class instance = NULL, string function = ""){
 		int cid = UApi().CallId();
 		
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDiscordStatusCallBack(instance, function, cid, id);
 		} else {
@@ -359,7 +359,7 @@ class UniversalDSEndpoint extends Managed
 		int cid = UApi().CallId();
 		
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, id);
 		} else {
@@ -381,7 +381,7 @@ class UniversalDSEndpoint extends Managed
 		int cid = UApi().CallId();
 		
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDiscordStatusCallBack(instance, function, cid, id);
 		} else {
@@ -404,7 +404,7 @@ class UniversalDSEndpoint extends Managed
 		int cid = UApi().CallId();
 		
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, id);
 		} else {
@@ -425,7 +425,7 @@ class UniversalDSEndpoint extends Managed
 		int cid = UApi().CallId();
 		
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDiscordStatusCallBack(instance, function, cid, id);
 		} else {
@@ -443,14 +443,14 @@ class UniversalDSEndpoint extends Managed
 	
 	
 	
-	int ChannelMessages(string id,  Class instance, string function, ref UApiDiscordChannelFilter filter = NULL){
+	int ChannelMessages(string id,  Class instance, string function, autoptr UApiDiscordChannelFilter filter = NULL){
 		int cid = UApi().CallId();
 		
 		if (!filter){
 			filter = new UApiDiscordChannelFilter();
 		}
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, id);
 		} else {
@@ -466,14 +466,14 @@ class UniversalDSEndpoint extends Managed
 		return -1;
 	}
 	
-	int ChannelMessagesObj(string id,  Class instance, string function, ref UApiDiscordChannelFilter filter = NULL){
+	int ChannelMessagesObj(string id,  Class instance, string function, autoptr UApiDiscordChannelFilter filter = NULL){
 		int cid = UApi().CallId();
 		
 		if (!filter){
 			filter = new UApiDiscordChannelFilter();
 		}
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDiscordMessagesCallBack(instance, function, cid, id);
 		} else {

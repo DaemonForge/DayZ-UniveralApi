@@ -29,7 +29,7 @@ class UApiDiscordObject extends UApiObject_Base {
 	string username = "";
 	string avatar_url = "";
 	string content = "";
-	ref array<ref UApiDiscordEmbed> embeds = new array<ref UApiDiscordEmbed>;
+	autoptr array<autoptr UApiDiscordEmbed> embeds = new array<autoptr UApiDiscordEmbed>;
 	
 	override string ToJson(){
 		string jsonString = JsonFileLoader<UApiDiscordObject>.JsonMakeData(this);
@@ -42,7 +42,7 @@ class UApiDiscordMessage extends UApiObject_Base {
 	string AuthorId;
 	string Content;
 	string ChannelId;
-	ref UApiDiscordEmbed Embed;
+	autoptr UApiDiscordEmbed Embed;
 	int TimeStamp;
 	
 	override string ToJson(){
@@ -68,15 +68,15 @@ class UApiDiscordBasicMessage extends UApiObject_Base {
 
 class UApiDiscordEmbed extends UApiObject_Base{
 	 
-	ref UApiDiscordAuthor author;
+	autoptr UApiDiscordAuthor author;
 	string title = "";
 	string url = "";
 	string description = "";
 	int color = 0;
-	ref array<ref UApiDiscordField> embeds = new array<ref UApiDiscordField>;
-	ref UApiDiscordImage thumbnail; 
-	ref UApiDiscordImage image; 
-	ref UApiDiscordFooter footer; 
+	autoptr array<autoptr UApiDiscordField> embeds = new array<autoptr UApiDiscordField>;
+	autoptr UApiDiscordImage thumbnail; 
+	autoptr UApiDiscordImage image; 
+	autoptr UApiDiscordFooter footer; 
 	
 	override string ToJson(){
 		string jsonString = JsonFileLoader<UApiDiscordEmbed>.JsonMakeData(this);

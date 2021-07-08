@@ -121,7 +121,7 @@ class UniversalRest extends Managed
 		
 		string url = BaseUrl() + "Player/Transaction/" + guid   + "/"+ mod + "/" + auth;
 		
-		ref UApiTransaction transaction = new UApiTransaction(element, value);
+		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
 		if ( element && transaction && UCBX){
 			Post(url,transaction.ToJson(),UCBX);
@@ -144,7 +144,7 @@ class UniversalRest extends Managed
 		
 		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new UApiUpdateData(element, value);
+		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -167,7 +167,7 @@ class UniversalRest extends Managed
 		
 		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
+		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -226,7 +226,7 @@ class UniversalRest extends Managed
 		
 		string url = BaseUrl() + "Gobals/Transaction/" + mod  + "/" + auth;
 		
-		ref UApiTransaction transaction = new UApiTransaction(element, value);
+		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
 		if ( element && transaction && UCBX){
 			Post(url,transaction.ToJson(),UCBX);
@@ -249,7 +249,7 @@ class UniversalRest extends Managed
 		
 		string url = BaseUrl() + "Gobals/Update/" + mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new UApiUpdateData(element, value);
+		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -272,7 +272,7 @@ class UniversalRest extends Managed
 		
 		string url = BaseUrl() + "Gobals/Update/" + mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
+		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -350,7 +350,7 @@ class UniversalRest extends Managed
 		string url = BaseUrl() + "Object/Transaction/" + objectId + "/"+ mod + "/" + auth;
 		
 		
-		ref UApiTransaction transaction = new UApiTransaction(element, value);
+		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
 		if ( element && transaction && UCBX){
 			Post(url,transaction.ToJson(),UCBX);
@@ -373,7 +373,7 @@ class UniversalRest extends Managed
 		
 		string url = BaseUrl() + "Object/Update/" + guid  + "/"+ mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new UApiUpdateData(element, value);
+		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -396,7 +396,7 @@ class UniversalRest extends Managed
 		
 		string url = BaseUrl() + "Object/Update/" + guid  + "/" + mod + "/" + auth;
 		
-		ref UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
+		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
 		if ( element && updatedata && UCBX){
 			Post(url,updatedata.ToJson(),UCBX);
@@ -443,7 +443,7 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	//JsonFileLoader<array<ref LogObject>>.JsonMakeData(AnArrayOfYourObjects);
+	//JsonFileLoader<array<autoptr LogObject>>.JsonMakeData(AnArrayOfYourObjects);
 	static void LogBulk(string jsonString, ref RestCallback UCBX = NULL, string auth = ""){
 		
 		if (auth == "" ){

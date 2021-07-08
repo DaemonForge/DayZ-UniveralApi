@@ -1,33 +1,33 @@
-class UniversalApi extends Managed{
+class UniversalApi extends Managed {
 
 	protected int m_CallId = 0;
 	protected int m_AuthRetries = 0;
 	
 	protected bool UAPI_Init = false;
-	protected ref ApiAuthToken m_authToken;
+	protected autoptr ApiAuthToken m_authToken;
 	
-	protected ref UniversalRest m_UniversalRest;
+	protected autoptr UniversalRest m_UniversalRest;
 	
-	protected ref UniversalDiscordRest m_UniversalDiscordRest;
-	protected ref UniversalDSEndpoint m_UniversalDSEndpoint;
-	protected ref UApiDBGlobalEndpoint m_UApiDBGlobalEndpoint;
+	protected autoptr UniversalDiscordRest m_UniversalDiscordRest;
+	protected autoptr UniversalDSEndpoint m_UniversalDSEndpoint;
+	protected autoptr UApiDBGlobalEndpoint m_UApiDBGlobalEndpoint;
 	
-	protected ref UApiDiscordUser dsUser;
+	protected autoptr UApiDiscordUser dsUser;
 	
-	protected ref array<ref PlayerIdentity> QueuedPlayers = new array<ref PlayerIdentity>;
+	protected autoptr array<ref PlayerIdentity> QueuedPlayers = new array<ref PlayerIdentity>;
 	
-	protected ref map<string, string> PlayerAuths = new map<string, string>;
+	protected autoptr map<string, string> PlayerAuths = new map<string, string>;
 	
-	protected ref UApiDBEndpoint m_PlayerEndPoint;
+	protected autoptr UApiDBEndpoint m_PlayerEndPoint;
 	
-	protected ref UApiDBEndpoint m_ObjectEndPoint;
+	protected autoptr UApiDBEndpoint m_ObjectEndPoint;
 	//Can't Do Globals due to how globals work
 	
-	protected ref UApiAPIEndpoint m_UApiAPIEndpoint;
+	protected autoptr UApiAPIEndpoint m_UApiAPIEndpoint;
 	
-	protected ref TIntSet m_CanceledCalls = new TIntSet;
+	protected autoptr TIntSet m_CanceledCalls = new TIntSet;
 	
-	protected ref TIntArray m_RandomNumbers = new TIntArray;
+	protected autoptr TIntArray m_RandomNumbers = new TIntArray;
 	
 	protected int LastRandomNumberRequestCall = -1;
 	
@@ -52,7 +52,7 @@ class UniversalApi extends Managed{
 		return UAPI_VERSION;
 	}
 	
-	ref UApiDBEndpoint db(int collection = OBJECT_DB){
+	UApiDBEndpoint db(int collection = OBJECT_DB){
 		if (collection == OBJECT_DB){
 			if (!m_ObjectEndPoint){
 				m_ObjectEndPoint = new UApiDBEndpoint("Object");
@@ -65,10 +65,9 @@ class UniversalApi extends Managed{
 			return m_PlayerEndPoint;
 		}
 		return NULL;
-		
 	}
 		
-	ref UniversalRest Rest(){
+	UniversalRest Rest(){
 		if (!m_UniversalRest){
 			m_UniversalRest = new UniversalRest;
 		}
@@ -76,32 +75,32 @@ class UniversalApi extends Managed{
 	}
 	
 	
-	ref UniversalDiscordRest Discord(){
+	UniversalDiscordRest Discord(){
 		if (!m_UniversalDiscordRest){
 			m_UniversalDiscordRest = new UniversalDiscordRest;
 		}
 		return m_UniversalDiscordRest;
 	}
 	
-	ref UniversalDSEndpoint DS(){ // will remove
+	UniversalDSEndpoint DS(){ // will remove
 		return ds();
 	}
 	
-	ref UniversalDSEndpoint ds(){
+	UniversalDSEndpoint ds(){
 		if (!m_UniversalDSEndpoint){
 			m_UniversalDSEndpoint = new UniversalDSEndpoint;
 		}
 		return m_UniversalDSEndpoint;
 	}
 	
-	ref UApiDBGlobalEndpoint globals(){
+	UApiDBGlobalEndpoint globals(){
 		if (!m_UApiDBGlobalEndpoint){
 			m_UApiDBGlobalEndpoint = new UApiDBGlobalEndpoint;
 		}
 		return m_UApiDBGlobalEndpoint;
 	}
 	
-	ref UApiAPIEndpoint api(){
+	UApiAPIEndpoint api(){
 		if (!m_UApiAPIEndpoint){
 			m_UApiAPIEndpoint = new UApiAPIEndpoint;
 		}
@@ -262,7 +261,7 @@ class UniversalApi extends Managed{
 	
 	static DayZPlayer FindPlayer(string GUID){
 		if (GetGame().IsServer()){
-			ref array<Man> players = new array<Man>;
+			autoptr array<Man> players = new array<Man>;
 			GetGame().GetPlayers( players );
 			for (int i = 0; i < players.Count(); i++){
 				DayZPlayer player = DayZPlayer.Cast(players.Get(i));
@@ -276,7 +275,7 @@ class UniversalApi extends Managed{
 	
 	
 	//This is so I can get the Identity Quicker as the GetPlayers Method doesn't get the player ID till later
-	ref PlayerIdentity SearchQueue(string GUID){
+	PlayerIdentity SearchQueue(string GUID){
 		if (GetGame().IsServer()){
 			for (int i = 0; i < QueuedPlayers.Count(); i++){
 				PlayerIdentity indentity = PlayerIdentity.Cast(QueuedPlayers.Get(i));
@@ -332,7 +331,7 @@ class UniversalApi extends Managed{
 	void QnA(string question, bool alwaysAnswer = true, ref RestCallback UCBX = NULL, string jsonString = "{}", string auth = ""){
 		
 		if (!UCBX && alwaysAnswer){
-			ref UApiQnACallBack QnACBX = new UApiQnACallBack;
+			UApiQnACallBack QnACBX = new UApiQnACallBack;
 			QnACBX.SetAlwaysAnswer();
 			UCBX = QnACBX;
 		} else if (!UCBX) {
@@ -484,7 +483,7 @@ class UniversalApi extends Managed{
 
 static ref UniversalApi g_UniversalApi;
 
-static ref UniversalApi UApi()
+static UniversalApi UApi()
 {
 	if ( !g_UniversalApi )
 	{

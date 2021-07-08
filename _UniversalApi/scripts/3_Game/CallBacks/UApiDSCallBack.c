@@ -7,7 +7,7 @@ class UApiDSCallBack : UApiDBCallBack
 			return;
 		}
 		if (Instance && Function != ""){
-			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordUser>(CallId, UAPI_ERROR, OID, NULL));
+			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr UApiDiscordUser>(CallId, UAPI_ERROR, OID, NULL));
 		}
 	};
 	
@@ -17,7 +17,7 @@ class UApiDSCallBack : UApiDBCallBack
 			return;
 		}
 		if (Instance && Function != ""){
-			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordUser>(CallId, UAPI_TIMEOUT, OID, NULL));
+			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr UApiDiscordUser>(CallId, UAPI_TIMEOUT, OID, NULL));
 		}
 	};
 	
@@ -28,7 +28,7 @@ class UApiDSCallBack : UApiDBCallBack
 		}
 		if (Instance && Function != ""){
 			
-			ref UApiDiscordUser user;
+			autoptr UApiDiscordUser user;
 			
 			JsonSerializer js = new JsonSerializer();
 			string error;
@@ -38,14 +38,14 @@ class UApiDSCallBack : UApiDBCallBack
 			}
 			
 			if (user && user.Status && user.Status == "Success"){			
-				GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordUser>(CallId, UAPI_SUCCESS, OID, UApiDiscordUser.Cast(user)));
+				GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr UApiDiscordUser>(CallId, UAPI_SUCCESS, OID, UApiDiscordUser.Cast(user)));
 				return;
 			} 
 			if (user.Status && (user.Status == "NotFound" || user.Status ==  "NotSetup")){
-				GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordUser>(CallId, UAPI_NOTFOUND, OID, UApiDiscordUser.Cast(user)));
+				GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr UApiDiscordUser>(CallId, UAPI_NOTFOUND, OID, UApiDiscordUser.Cast(user)));
 				return;
 			}
-			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordUser>(CallId, UAPI_ERROR, OID, UApiDiscordUser.Cast(user)));
+			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr UApiDiscordUser>(CallId, UAPI_ERROR, OID, UApiDiscordUser.Cast(user)));
 		}
 	};
 };
@@ -82,7 +82,7 @@ class UApiDiscordStatusCallBack : UApiDBCallBack
 		}
 		if (Instance && Function != ""){
 			
-			ref UApiDiscordStatusObject obj;
+			autoptr UApiDiscordStatusObject obj;
 			
 			JsonSerializer js = new JsonSerializer();
 			string error;
@@ -133,7 +133,7 @@ class UApiDiscordMessagesCallBack : UApiDBCallBack
 		}
 		if (Instance && Function != ""){
 			
-			ref UApiDiscordMessagesResponse res;
+			autoptr UApiDiscordMessagesResponse res;
 			
 			JsonSerializer js = new JsonSerializer();
 			string error;

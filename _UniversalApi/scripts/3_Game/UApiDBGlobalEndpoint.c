@@ -47,7 +47,7 @@ class UApiDBGlobalEndpoint extends Managed {
 	int Save(string mod, string jsonString, Class instance = NULL, string function = "") {	
 		int cid = UApi().CallId();	
 		string endpoint = "/Save/" + mod;
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, mod);
 		} else {
@@ -67,7 +67,7 @@ class UApiDBGlobalEndpoint extends Managed {
 		int cid = UApi().CallId();
 		string endpoint = "/Load/" + mod;
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, mod);
 		} else {
@@ -90,7 +90,7 @@ class UApiDBGlobalEndpoint extends Managed {
 	int Transaction(string mod, string element, float value = 1, Class instance = NULL, string function = "") {
 		int cid = UApi().CallId();
 		
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, mod);
 		} else {
@@ -113,7 +113,7 @@ class UApiDBGlobalEndpoint extends Managed {
 		
 	int Update(string mod, string element, string value, string operation = "set", Class instance = NULL, string function = "") {	
 		int cid = UApi().CallId();
-		ref RestCallback DBCBX;
+		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
 			DBCBX = new UApiDBCallBack(instance, function, cid, mod);
 		} else {
