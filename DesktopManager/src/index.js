@@ -64,8 +64,12 @@ const createWindow = () => {
       },
       {
         label: 'Restart', click: function () {
-          app.relaunch()
-          app.exit()
+          if (global.PENDINGUPDATE){
+            autoUpdater.quitAndInstall();
+          } else {
+            app.relaunch()
+            app.exit()
+          }
         }
      }
   ])
@@ -138,8 +142,13 @@ ipcMain.on('OpenTemplatesFolder', (event, arg) => {
   shell.openPath(global.SAVEPATH + 'templates\\') // Show the given file in a file manager. If possible, select the file.
 })
 ipcMain.on('RestartApp', (event, arg) => {
-  app.relaunch()
-  app.exit()
+  
+  if (global.PENDINGUPDATE){
+    autoUpdater.quitAndInstall();
+  } else {
+    app.relaunch()
+    app.exit()
+  }
 })
 ipcMain.on('OpenLogsFolder', (event, arg) => {
   shell.openPath(global.SAVEPATH + 'logs\\') // Show the given file in a file manager. If possible, select the file.
@@ -271,11 +280,18 @@ async function GetModList(){
   }
 }
 
-setInterval(() => {
-  
-  autoUpdater.checkForUpdates();
+function StartCheckingForUpdates(){
+  if (global.config.CheckForNewVersion){
+    autoUpdater.checkForUpdates();
 
-}, 3600000);
+    setInterval(() => {
+      
+      autoUpdater.checkForUpdates();
+  
+    }, 3600000);
+    
+  }
+}
 
 ipcMain.on('UpdateAndRestart', (event, arg) => {
   isQuiting = true;
@@ -284,24 +300,35 @@ ipcMain.on('UpdateAndRestart', (event, arg) => {
 })
 
 autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
-  const dialogOpts = {
-    type: 'info',
-    buttons: ['Restart', 'Later'],
-    title: 'Application Update',
-    message: process.platform === 'win32' ? releaseNotes : releaseName,
-    detail: 'A new version has been downloaded. Restart the application to apply the updates.'
-  }
-  global.PENDINGUPDATE = true;
-    //For Desktop Version, Easier to maintain one version of the API
-  if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: 'A new version has been downloaded. Restart the application to apply the updates.'})
-  if (global.logs !== undefined) global.logs.push({type: "info", message: 'A new version has been downloaded. Restart the application to apply the updates.'});
-  dialog.showMessageBox(dialogOpts).then((returnValue) => {
-    if (returnValue.response === 0) {
-      global.PENDINGUPDATE = false;
-      isQuiting = true;
-      autoUpdater.quitAndInstall();
+  if (global.config.AutoUpdate){
+    if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: 'A new version has been downloaded. AutoUpdate Enabled Restarting the WebService.'})
+    if (global.logs !== undefined) global.logs.push({type: "info", message: 'A new version has been downloaded. AutoUpdate Enabled Restarting the WebService.'});
+    
+  setTimeout(() => {
+    isQuiting = true;
+    autoUpdater.quitAndInstall();
+    
+  }, 3000);
+  } else {
+    const dialogOpts = {
+      type: 'info',
+      buttons: ['Restart', 'Later'],
+      title: 'Application Update',
+      message: process.platform === 'win32' ? releaseNotes : releaseName,
+      detail: 'A new version has been downloaded. Restart the application to apply the updates.'
     }
-  })
+    global.PENDINGUPDATE = true;
+    //For Desktop Version, Easier to maintain one version of the API
+    if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: 'A new version has been downloaded. Restart the application to apply the updates.'})
+    if (global.logs !== undefined) global.logs.push({type: "info", message: 'A new version has been downloaded. Restart the application to apply the updates.'});
+    dialog.showMessageBox(dialogOpts).then((returnValue) => {
+      if (returnValue.response === 0) {
+        global.PENDINGUPDATE = false;
+        isQuiting = true;
+        autoUpdater.quitAndInstall();
+      }
+    })
+  }
 })
 
 autoUpdater.on('checking-for-update', () => {
@@ -314,4 +341,4 @@ autoUpdater.on('error', message => {
   if (global.logs !== undefined) global.logs.push({type: "warn", message: `Error Checking for updates ${feed}`});
 })
 
-autoUpdater.checkForUpdates();
+setTimeout(StartCheckingForUpdates, 3000);

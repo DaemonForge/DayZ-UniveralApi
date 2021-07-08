@@ -132,6 +132,14 @@ if (config.RateLimitWhiteList === undefined || config.RateLimitWhiteList === nul
     console.log(e)
   }
 }
+if (config.AutoUpdate === undefined){
+  config.AutoUpdate = false;
+  try {
+   writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
+  } catch(e) {
+    console.log(e)
+  }
+}
 
 
 module.exports = config;
