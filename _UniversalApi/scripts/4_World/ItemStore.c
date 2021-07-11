@@ -231,7 +231,7 @@ modded class UApiEntityStore extends UApiObject_Base {
 			string zone = zones.GetKey(i);
 			float health;
 			if (ReadZoneHealth(zone, health)){
-				item.SetHealth(zone, "Health", health);
+				item.SetHealth(zone, "", health);
 			}
 		}
 		
