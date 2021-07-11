@@ -96,6 +96,20 @@ modded class UApiEntityStore extends UApiObject_Base {
 				m_FireModes.Insert(weap.GetCurrentMode(i));
 			}
 		}
+		
+		// Damage System
+		DamageZoneMap zones = new DamageZoneMap;
+		DamageSystem.GetDamageZoneMap(item,zones);
+		for( i = 0; i < zones.Count(); i++ ){
+			string zone = zones.GetKey(i);
+			SaveZoneHealth(zone, item.GetHealth(zone, ""));
+		}
+		
+		CarScript vehicle;
+		if (Class.CastTo(vehicle,item)){
+			m_IsVehicle = true;
+			vehicle.OnUApiSave(this);
+		}
 	}
 	
 	override EntityAI Create(EntityAI parent = NULL, bool RestoreOrginalLocation = true){
@@ -203,6 +217,24 @@ modded class UApiEntityStore extends UApiObject_Base {
 			count = m_Quantity;
 			mag.ServerSetAmmoCount(count);
 		}
+		
+		CarScript vehicle;
+		if (m_IsVehicle && Class.CastTo(vehicle,item)){
+			vehicle.OnUApiLoad(this);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(vehicle.Synchronize);
+		}
+		
+		// Damage System
+		DamageZoneMap zones = new DamageZoneMap;
+		DamageSystem.GetDamageZoneMap(item, zones);
+		for( i = 0; i < zones.Count(); i++ ){
+			string zone = zones.GetKey(i);
+			float health;
+			if (ReadZoneHealth(zone, health)){
+				item.SetHealth(zone, "Health", health);
+			}
+		}
+		
 		item.SetSynchDirty();
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(item.AfterStoreLoad);
 	}

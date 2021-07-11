@@ -16,12 +16,14 @@ class UApiEntityStore extends UApiObject_Base {
 	bool m_IsOn;
 	int m_QuickBarSlot;
 	int m_Agents;
+	protected autoptr array<autoptr UApiZoneHealthData> m_HealthZones;
 	
 	protected autoptr array<autoptr UApiEntityStore> m_Cargo;
 	
 	bool m_IsMagazine;
 	autoptr array<autoptr UApiAmmoData> m_MagAmmo;
 	bool m_IsWeapon;
+	bool m_IsVehicle;
 	autoptr array<int> m_FireModes;
 	autoptr UApiAmmoData m_ChamberedRound;
 	
@@ -256,5 +258,21 @@ class UApiEntityStore extends UApiObject_Base {
 			if (m_MetaData.Get(i) && m_MetaData.Get(i).Is(var)){ return m_MetaData.Get(i).ReadString(); }
 		}
 		return "";
+	}
+	
+	
+	bool SaveZoneHealth(string zone, float health){
+		if (!m_HealthZones){m_HealthZones = new array<autoptr UApiZoneHealthData>}
+		m_HealthZones.Insert(new UApiZoneHealthData(zone, health));
+		return true;
+	}
+	bool ReadZoneHealth(string zone, out float health){
+		for (int i = 0; i < m_HealthZones.Count(); i++){
+			if (m_HealthZones.Get(i) && m_HealthZones.Get(i).Is(zone)){ 
+				health = m_HealthZones.Get(i).Health();
+				return true;
+			}
+		}
+		return false;
 	}
 }

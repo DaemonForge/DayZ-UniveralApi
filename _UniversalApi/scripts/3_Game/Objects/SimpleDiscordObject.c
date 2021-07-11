@@ -1,10 +1,3 @@
-class UApiObject_Base extends Managed{
-
-	string ToJson(){
-		return "{}";
-	}
-	
-}
 
 class UApiDiscordChannelFilter extends UApiObject_Base {
 	

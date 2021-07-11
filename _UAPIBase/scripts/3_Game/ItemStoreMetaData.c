@@ -35,7 +35,7 @@ class UApiZoneHealthData extends Managed{
 	string m_Zone;
 	float m_Health;
 	
-	void UApiPlayerZoneHealthData(string zone, float health){
+	void UApiZoneHealthData(string zone, float health){
 		m_Zone = zone;
 		m_Health = health;
 	}
