@@ -36,6 +36,10 @@ class UniversalApiConfig extends Managed {
 		}
 	}
 	
+	string GetBaseURL(){
+		return ServerURL;
+	}
+	
 	string GetAuth(){
 		if (GetGame().IsServer()){
 			return ServerAuth;
