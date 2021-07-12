@@ -207,4 +207,23 @@ class UApiAPIEndpoint extends Managed {
 		return cid;
 	}
 	
+	int Status(Class instance, string function, string oid = ""){
+		int cid = UApi().CallId();
+		autoptr RestCallback DBCBX;
+		
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+				
+		if ( DBCBX ){
+			Post("Status", "{}", DBCBX);
+		} else {
+			Print("[UAPI] [Api] Failed to request CID:" + cid);
+			cid = -1;
+		}
+		return cid;
+	}
+	
 }
