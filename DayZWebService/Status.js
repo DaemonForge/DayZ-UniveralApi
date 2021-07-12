@@ -35,6 +35,11 @@ router.post('', (req, res)=>{
 });
 
 // Create a new MongoClient
+router.get('', (req, res)=>{
+    runStatusCheck(req, res, req.headers['Auth-Key']);
+});
+
+// Create a new MongoClient
 router.post('/:Auth', (req, res)=>{
     runStatusCheck(req, res, req.params.Auth);
 });
