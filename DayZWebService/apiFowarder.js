@@ -40,6 +40,9 @@ var limiter = new RateLimit({
 // apply rate limiter to all requests
 router.use(limiter);
 
+router.post('', (req, res)=>{
+    runFowarder(req, res, req.headers['Auth-Key'])
+});
 router.post('/:auth', (req, res)=>{
     runFowarder(req, res, req.params.auth)
 });

@@ -139,6 +139,49 @@ router.get('/callback', (req, res) => {
     HandleCallBack(req, res);
 });
 
+router.post('/AddRole/:GUID', (req, res) => {
+    AddRole(res,req,  req.params.GUID, req.headers['Auth-Key']);
+});
+
+router.post('/RemoveRole/:GUID', (req, res) => {
+    RemoveRole(res,req, req.params.GUID,req.headers['Auth-Key']);
+});
+
+router.post('/Get/:GUID', (req, res) => {
+    GetRoles(res,req, req.params.GUID, req.headers['Auth-Key']);
+});
+
+router.post('/GetWithPlainId/:ID', (req, res) => {
+    let guid = createHash('sha256').update(req.params.ID).digest('base64');
+    guid = guid.replace(/\+/g, '-'); 
+    guid = guid.replace(/\//g, '_');
+    GetRoles(res,req, guid, req.headers['Auth-Key']);
+});
+
+router.post('/Channel/Create', (req, res) => {
+    CreateChannel(res, req, req.headers['Auth-Key']);
+});
+
+router.post('/Channel/Delete/:id', (req, res) => {
+    DeleteChannel(res, req, req.params.id, req.headers['Auth-Key']);
+});
+
+router.post('/Channel/Edit/:id', (req, res) => {
+    EditChannel(res, req, req.params.id, req.headers['Auth-Key']);
+});
+
+router.post('/Channel/Invite/:id', (req, res) => {
+    InviteChannel(res, req, req.params.id, req.headers['Auth-Key']);
+});
+
+router.post('/Channel/Send/:id', (req, res) => {
+    SendMessageChannel(res, req, req.params.id, req.headers['Auth-Key']);
+});
+
+router.post('/Channel/Messages/:id', (req, res) => {
+    GetMessagesChannel(res, req, req.params.id, req.headers['Auth-Key']);
+});
+
 router.post('/AddRole/:GUID/:auth', (req, res) => {
     AddRole(res,req,  req.params.GUID, req.params.auth);
 });

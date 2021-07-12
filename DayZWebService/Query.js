@@ -33,6 +33,10 @@ var limiter = new RateLimit({
 // apply rate limiter to all requests
 router.use(limiter);
 
+router.post('/:mod', (req, res)=>{
+    runQuery(req, res, req.params.mod, req.headers['Auth-Key'], GetCollection(req.baseUrl));
+});
+
 router.post('/:mod/:auth', (req, res)=>{
     runQuery(req, res, req.params.mod, req.params.auth, GetCollection(req.baseUrl));
 });

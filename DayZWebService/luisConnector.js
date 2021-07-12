@@ -33,6 +33,15 @@ var limiter = new RateLimit({
 
 // apply rate limiter to all requests
 router.use(limiter);
+router.post('/:key', (req, res)=>{
+    let key = req.params.key;
+    if (global.config.LUIS !== undefined && global.config.LUIS[key] !== undefined){
+        runLUIS(req, res, req.headers['Auth-Key'], key);
+    } else { //If the file doesn't exsit give a nice usable json for DayZ
+        log(`A LUIS Request for ${key} is not set up yet`);
+        res.json({Status: "Error"});
+    }
+});
 router.post('/:key/:auth', (req, res)=>{
     let key = req.params.key;
     if (global.config.LUIS !== undefined && global.config.LUIS[key] !== undefined){

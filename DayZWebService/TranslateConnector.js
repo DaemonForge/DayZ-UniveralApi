@@ -36,8 +36,18 @@ var limiter = new RateLimit({
 router.use(limiter);
 
 
+router.post('', (req, res)=>{
+    if (global.config.Translate !== undefined && global.config.Translate.Type == "Microsoft" && global.config.Translate.SubscriptionKey !== ""){
+
+        runTranslate(req, res, req.headers['Auth-Key']);
+    } else if (global.config.Translate !== undefined &&  global.config.Translate.Type == "LibreTranslate"){
+        runLibreTranslate(req, res, req.headers['Auth-Key']);
+    } else { //If the file doesn't exsit give a nice usable json for DayZ
+        log(`A Tranlation Request came in but isn't set up yet`);
+        res.json({Status: "Error"});
+    }
+});
 router.post('/:auth', (req, res)=>{
-    let key = req.params.key;
     if (global.config.Translate !== undefined && global.config.Translate.Type == "Microsoft" && global.config.Translate.SubscriptionKey !== ""){
         runTranslate(req, res, req.params.auth);
     } else if (global.config.Translate !== undefined &&  global.config.Translate.Type == "LibreTranslate"){
@@ -93,10 +103,12 @@ async function runTranslate(req, res, auth){
                     Detected: "NA"
                 }
             }
+            log(`Translation successfully request proccessed with Microsoft Translate`);
             res.status(200);
             res.json(response);
             
         }catch(e) {
+            console.log(e);
             res.status(200);
             res.json({Status: "Error", Error: `${e}`, Translations: [{ text: "NA", to: "NA"} ], Detected: "NA"});
             log(`Translation an error: ${e}`)
@@ -112,6 +124,7 @@ async function runLibreTranslate(req, res, auth){
     if ( CheckServerAuth( auth ) || (await CheckAuth( auth )) ){
         try {
             let Tconfig = global.config.Translate;
+            //console.log(req.body)
             let text = req.body.Text;
             let lang = req.body.From;
             let to = req.body.To[0];
@@ -154,10 +167,12 @@ async function runLibreTranslate(req, res, auth){
                     Detected: "NA"
                 }
             }
+            log(`Translation successfully request proccessed with Libre Translate`);
             res.status(200);
             res.json(response);
             
         }catch(e) {
+            console.log(e);
             res.status(200);
             res.json({Status: "Error", Error: `${e}`, Translations: [{ text: "NA", to: "NA"} ], Detected: "NA"});
             log(`Translation an error: ${e}`)

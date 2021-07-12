@@ -30,17 +30,13 @@ var limiter = new RateLimit({
 router.use(limiter);
 
 // Create a new MongoClient
-router.post('/', (req, res)=>{
-    runStatusCheck(req, res);
+router.post('', (req, res)=>{
+    runStatusCheck(req, res, req.headers['Auth-Key']);
 });
 
 // Create a new MongoClient
 router.post('/:Auth', (req, res)=>{
     runStatusCheck(req, res, req.params.Auth);
-});
-
-router.get('/', (req, res)=>{
-    runStatusCheck(req, res);
 });
 
 let WitsEnabled = [];

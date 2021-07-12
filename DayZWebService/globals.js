@@ -9,6 +9,22 @@ const log = require("./log");
 
 const router = Router();
 
+router.post('/Load/:mod', (req, res)=>{
+    runGet(req, res, req.params.mod, req.headers['Auth-Key']);
+});
+
+router.post('/Save/:mod', (req, res)=>{
+    runSave(req, res, req.params.mod, req.headers['Auth-Key']);
+});
+
+router.post('/Transaction/:mod', (req, res)=>{
+    runTransaction(req, res, req.params.mod, req.headers['Auth-Key']);
+});
+
+router.post('/Update/:mod', (req, res)=>{
+    runUpdate(req, res, req.params.mod, req.headers['Auth-Key']);
+});
+
 router.post('/Load/:mod/:auth', (req, res)=>{
     runGet(req, res, req.params.mod, req.params.auth);
 });
