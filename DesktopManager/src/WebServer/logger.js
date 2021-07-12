@@ -33,6 +33,14 @@ var limiter = new RateLimit({
 // apply rate limiter to all requests
 router.use(limiter);
 
+router.post('/One/:id', (req, res)=>{
+    runLoggerOne(req, res,req.params.id, req.headers['Auth-Key']);
+});
+
+router.post('/Many/:id', (req, res)=>{
+    runLoggerMany(req, res,req.params.id, req.headers['Auth-Key']);
+});
+
 router.post('/One/:id/:auth', (req, res)=>{
     runLoggerOne(req, res,req.params.id, req.params.auth);
 });

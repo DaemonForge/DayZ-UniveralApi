@@ -60,6 +60,13 @@ var limiter = new RateLimit({
 
 // apply rate limiter to all requests
 app.use(limiter);
+function ExtractAuthKey (req, res, next) {
+  req.headers['Auth-Key'] = req.headers['Auth-Key'] || req.headers['content-type'] || '';
+  req.headers['content-type'] = 'application/json';
+  next();
+}
+
+app.use(ExtractAuthKey);
 
 app.use((req, res, next) => {
   json({
@@ -68,7 +75,7 @@ app.use((req, res, next) => {
       if (err) {
           console.log("Bad Request Sent");
           res.status(400);
-          res.json({Status: "error", Error: "Bad Request"});
+          res.json({Status: "error", Error: `Bad Request ${err}`});
           return;
       }
       next();

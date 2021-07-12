@@ -31,6 +31,10 @@ var limiter = new RateLimit({
 // apply rate limiter to all requests
 router.use(limiter);
 
+router.post('', (req, res)=>{
+    runToxicity(req, res, req.headers['Auth-Key']);
+});
+
 router.post('/:auth', (req, res)=>{
     runToxicity(req, res, req.params.auth);
 });

@@ -34,6 +34,10 @@ var limiter = new RateLimit({
 // apply rate limiter to all requests
 router.use(limiter);
 
+router.post('/Status/:ip/:port', (req, res)=>{
+    GetServerStatus(req, res, req.params.ip, req.params.port, req.headers['Auth-Key']);
+});
+
 router.post('/Status/:ip/:port/:auth', (req, res)=>{
     GetServerStatus(req, res, req.params.ip, req.params.port, req.params.auth);
 });
