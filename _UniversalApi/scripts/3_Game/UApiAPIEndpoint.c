@@ -1,47 +1,4 @@
-class UApiAPIEndpoint extends Managed {
-	
-	static protected string m_BaseUrl = "";
-	
-	protected RestContext m_Context;
-	
-	
-	static void SetBaseUrl(string new_BaseUrl){
-		m_BaseUrl = new_BaseUrl;
-	}
-	
-	static protected string BaseUrl(){
-		if (m_BaseUrl != ""){
-			return m_BaseUrl;
-		}
-		return UApiConfig().ServerURL;
-	}
-
-	static protected string AuthToken(){
-		return UApi().GetAuthToken();
-	}
-	
-	protected RestContext Api()
-	{
-		if (!m_Context){
-			RestApi clCore = GetRestApi();
-			if (!clCore)
-			{
-				clCore = CreateRestApi();
-				clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
-			}
-			string url = BaseUrl();
-			m_Context =  clCore.GetRestContext(url);
-			m_Context.SetHeader("application/json");
-		}
-		return m_Context;
-	}
-	
-	protected void Post(string endpoint, string jsonString, RestCallback UCBX)
-	{
-		string route = endpoint + "/" + AuthToken();
-		Api().POST(UCBX, route, jsonString);
-	}
-	
+class UApiAPIEndpoint extends UApiBaseEndpoint {
 	
 	int QnA(string Question,  string Key, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
@@ -66,7 +23,6 @@ class UApiAPIEndpoint extends Managed {
 		return cid;
 		
 	}
-	
 	
 	int Translate(string Text, TStringArray To, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
