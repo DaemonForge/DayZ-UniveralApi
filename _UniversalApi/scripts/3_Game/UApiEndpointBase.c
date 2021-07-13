@@ -26,9 +26,8 @@ class UApiBaseEndpoint extends Managed {
 		return m_Context;
 	}
 	
-	protected void Post(string endpoint, string jsonString, RestCallback UCBX)
+	protected void Post(string route, string jsonString, RestCallback UCBX)
 	{
-		string route = endpoint;
 		Api().POST(UCBX, route, jsonString);
 	}
 	
