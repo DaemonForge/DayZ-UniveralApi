@@ -6,14 +6,14 @@ if (global.SAVEPATH === undefined){
   global.SAVEPATH = "./";
 }
 const express = require('express');
-const favicon = require("serve-favicon")
+const favicon = require("serve-favicon");
 const {existsSync,readFileSync} = require('fs');
 const https = require('https')
 const fetch  = require('node-fetch');
 const {json} = require('body-parser');
 const DefaultCert = require('./defaultkeys.json');
 const app = express();
-const {isArray, versionCompare} = require('./utils');
+const {isArray, versionCompare, CheckIndexes} = require('./utils');
 
 const nodeFetch = require('node-fetch');
 global.fetch = nodeFetch;
@@ -154,5 +154,7 @@ async function CheckRecentVersion(){
 if (global.config?.CheckForNewVersion){
   CheckRecentVersion();
 }
+
+setTimeout(CheckIndexes, 1000);
 
 module.exports = https;

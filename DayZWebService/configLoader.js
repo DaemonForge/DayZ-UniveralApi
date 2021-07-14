@@ -133,6 +133,14 @@ if (config.RateLimitWhiteList === undefined || config.RateLimitWhiteList === nul
   }
 }
 
+if (config.CreateIndexes === undefined || config.CreateIndexes === null){
+  config.CreateIndexes = true;
+  try {
+   writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
+  } catch(e) {
+    console.log(e)
+  }
+}
 
 
 module.exports = config;

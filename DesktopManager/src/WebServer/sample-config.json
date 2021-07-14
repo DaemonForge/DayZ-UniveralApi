@@ -8,6 +8,7 @@
     "Certificate": "",
     "CertificateKey": "",
     "CheckForNewVersion": true,
+    "CreateIndexes": true,
     "AutoUpdate": false,
     "RateLimitWhiteList": ["127.0.0.1"],
     "Discord" :{
