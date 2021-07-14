@@ -42,7 +42,7 @@ class UniversalRest extends Managed
 		}
 		return UApiConfig().ServerURL;
 	}
-	
+	/*
 	static void GetAuth( string guid, string auth  = ""){
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
@@ -50,7 +50,7 @@ class UniversalRest extends Managed
 		string url = BaseUrl() + "GetAuth/" + guid + "/" + auth;
 		
 		Post(url, "{}", new UApiAuthCallBack(guid));
-	}
+	}*/
 	
 	static void GetAuthNew( string guid){
 		string url = BaseUrl() + "GetAuth/" + guid + "/" + UApi().GetAuthToken();

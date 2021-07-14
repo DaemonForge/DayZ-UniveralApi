@@ -13,9 +13,7 @@ class UniversalApi extends Managed {
 	protected autoptr UApiDBGlobalEndpoint m_UApiDBGlobalEndpoint;
 	
 	protected autoptr UApiDiscordUser dsUser;
-	
-	protected autoptr array<ref PlayerIdentity> QueuedPlayers = new array<ref PlayerIdentity>;
-	
+		
 	protected autoptr map<string, string> PlayerAuths = new map<string, string>;
 	
 	protected autoptr UApiDBEndpoint m_PlayerEndPoint;
@@ -271,39 +269,6 @@ class UniversalApi extends Managed {
 			}
 		}
 		return NULL;
-	}
-	
-	
-	//This is so I can get the Identity Quicker as the GetPlayers Method doesn't get the player ID till later
-	PlayerIdentity SearchQueue(string GUID){
-		if (GetGame().IsServer()){
-			for (int i = 0; i < QueuedPlayers.Count(); i++){
-				PlayerIdentity indentity = PlayerIdentity.Cast(QueuedPlayers.Get(i));
-				if (indentity && indentity.GetId() == GUID ){
-					return indentity;
-				}
-			}
-		}
-		return NULL;
-	}
-	
-	
-	
-	//TODO: Rework to not need queue 
-	void AddToQueue(ref PlayerIdentity idenitity){
-		if (GetGame().IsServer()){
-			if (QueuedPlayers.Find(idenitity) == -1){
-				QueuedPlayers.Insert(idenitity);
-			}
-		}
-	}
-	
-	void RemoveFromQueue(ref PlayerIdentity idenitity){
-		if (GetGame().IsServer()){
-			if (QueuedPlayers.Find(idenitity) != -1){
-				QueuedPlayers.RemoveItem(idenitity);
-			}
-		}
 	}
 	
 	void AuthError(string guid){
