@@ -12,17 +12,17 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@tensorflow-models/toxicity": "^1.2.2",
-    "@tensorflow/tfjs": "^3.7.0",
-    "@tensorflow/tfjs-converter": "^3.7.0",
-    "@tensorflow/tfjs-core": "^3.7.0",
+    "@tensorflow/tfjs": "^3.8.0",
+    "@tensorflow/tfjs-converter": "^3.8.0",
+    "@tensorflow/tfjs-core": "^3.8.0",
     "body-parser": "^1.19.0",
     "crypto": "^1.0.1",
     "discord.js": "^12.5.3",
     "ejs": "^3.1.6",
-    "ejs-lint": "^1.2.0",
+    "ejs-lint": "^1.2.1",
     "express": "^4.17.1",
     "express-rate-limit": "^5.3.0",
-    "gamedig": "^3.0.5",
+    "gamedig": "^3.0.7",
     "https": "^1.0.0",
     "jsonwebtoken": "^8.5.1",
     "languagedetect": "^2.0.0",
@@ -34,7 +34,7 @@
     "serve-favicon": "^2.5.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.9"
+    "nodemon": "^2.0.12"
   },
   "pkg": {
     "assets": [
