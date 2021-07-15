@@ -1,4 +1,4 @@
-const { app,autoUpdater, remote, BrowserWindow, ipcMain, Menu, Tray , globalShortcut, shell, dialog} = require('electron');
+const { app, autoUpdater, remote, BrowserWindow, ipcMain, Menu, Tray , globalShortcut, shell, dialog} = require('electron');
 const ejse = require('ejs-electron');
 const { MongoClient } = require("mongodb");
 var iconpath = `${__dirname}/icon.ico`; // pa
@@ -223,7 +223,6 @@ ipcMain.on('RequestModListGlobals', (event, arg) => {
   GetModList();
 })
 
-let https = require('./WebServer/app');
 
 async function deleteModData(col, mod){
   const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
@@ -337,8 +336,14 @@ autoUpdater.on('checking-for-update', () => {
 });
 
 autoUpdater.on('error', message => {
-  if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "warn", message: `Error Checking for updates ${feed}`})
-  if (global.logs !== undefined) global.logs.push({type: "warn", message: `Error Checking for updates ${feed}`});
+  if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "warn", message: `Error Checking for updates ${feed} - ${message}`})
+  if (global.logs !== undefined) global.logs.push({type: "warn", message: `Error Checking for updates ${feed} - ${message}`});
 })
 
 setTimeout(StartCheckingForUpdates, 3000);
+
+
+
+let https = require('./WebServer/app');
+
+https(true);

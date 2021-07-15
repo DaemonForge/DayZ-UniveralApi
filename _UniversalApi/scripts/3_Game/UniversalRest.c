@@ -42,12 +42,12 @@ class UniversalRest extends Managed
 		}
 		return UApiConfig().ServerURL;
 	}
-	
+	/*
 	static void GetAuth( string guid, string auth  = ""){
 		string url = BaseUrl() + "GetAuth/" + guid + "/" + auth;
 		
 		Post(url, "{}", new UApiAuthCallBack(guid));
-	}
+	}*/
 	
 	static void GetAuthNew( string guid ){
 		string url = BaseUrl() + "GetAuth/" + guid;
@@ -146,7 +146,8 @@ class UniversalRest extends Managed
 	}
 	
 	static void GlobalsSave(string mod, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {
-		string url = BaseUrl() + "Gobals/Save/" + mod  + "/" + auth;
+
+		string url = BaseUrl() + "Globals/Save/" + mod  + "/" + auth;
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -160,7 +161,9 @@ class UniversalRest extends Managed
 	}
 	
 	static void GlobalsLoad(string mod, ref RestCallback UCBX, string jsonString = "{}", string auth = "") {
-		string url = BaseUrl() + "Gobals/Load/" + mod  + "/" + auth;
+
+		string url = BaseUrl() + "Globals/Load/" + mod  + "/" + auth;
+
 
 		if (UCBX){
 			Post(url,jsonString,UCBX);
@@ -180,7 +183,8 @@ class UniversalRest extends Managed
 			UCBX = new UApiTransactionCallBack;
 		}
 
-		string url = BaseUrl() + "Gobals/Transaction/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Globals/Transaction/" + mod  + "/" + auth;
+
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
@@ -198,7 +202,8 @@ class UniversalRest extends Managed
 			UCBX = new UApiSilentCallBack;
 		}
 
-		string url = BaseUrl() + "Gobals/Update/" + mod + "/" + auth;
+		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
+
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
@@ -216,7 +221,7 @@ class UniversalRest extends Managed
 			UCBX = new UApiSilentCallBack;
 		}
 
-		string url = BaseUrl() + "Gobals/Update/" + mod + "/" + auth;
+		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		

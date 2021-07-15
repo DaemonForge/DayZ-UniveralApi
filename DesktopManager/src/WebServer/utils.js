@@ -1,4 +1,9 @@
 
+const { MongoClient } = require("mongodb");
+const {writeFileSync} = require('fs');
+const ConfigPath = "config.json";
+const log = require("./log");
+
 module.exports ={
     dynamicSortMultiple,
     dynamicSort,
@@ -8,7 +13,10 @@ module.exports ={
     makeAuthToken,
     makeObjectId,
     RemoveBadProperties,
-    versionCompare
+    versionCompare,
+    InstallIndexes,
+    CheckIndexes,
+    CheckRecentVersion
 }
 
 
@@ -157,3 +165,73 @@ function versionCompare(v1, v2, options) {
 
     return 0;
 }
+
+
+async function InstallIndexes(){
+  
+    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+    let returnvalue = false;
+    try{
+      await client.connect(); 
+      const db = client.db(global.config.DB);
+      let pcollection = db.collection("Players");
+      const resultGUID = await pcollection.createIndex({ GUID: 1 });
+      //console.log(resultGUID);
+      const resultAUTH = await pcollection.createIndex({ GUID: 1, AUTH: 1 });
+      console.log(resultAUTH);
+      let ocollection = db.collection("Objects");
+      const oresult = await ocollection.createIndex({ ObjectId: 1, Mod: 1});
+      //console.log(oresult);
+      let gcollection = db.collection("Globals");
+      const gresult = await gcollection.createIndex({ Mod: 1 });
+      //console.log(gresult);
+      returnvalue= true;
+    } catch(e){
+      log(e);
+      returnvalue= false;
+    }finally{
+      await client.close();
+      return returnvalue;
+    }
+  }
+  async function CheckIndexes(){
+      if (global.config.CreateIndexes === undefined || global.config.CreateIndexes === null || global.config.CreateIndexes === true){
+        if ((await InstallIndexes())){
+          global.config.CreateIndexes = false;
+          try {
+            writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(global.config, undefined, 4))
+          } catch(e) {
+            console.log(e)
+          }
+        } else {
+          console.log("Failed to create indexes")
+        }
+    }
+  }
+
+  
+async function CheckRecentVersion(){
+    try {
+      const data = await fetch("https://api.github.com/repos/daemonforge/DayZ-UniveralApi/releases").then( response => response.json()).catch(e => console.log(e));
+      if (data[0] !== undefined && data[0].tag_name !== undefined ){
+        global.STABLEVERSION = data[0].tag_name;
+        global.NEWVERSIONDOWNLOAD = data[0].html_url;
+      }
+      let vc = versionCompare(global.APIVERSION, global.STABLEVERSION);
+      if (global.STABLEVERSION === "0.0.0"){
+        log(`WARNING!!! Could check for the current stable version`, "warn");
+      } else if (vc > 0){
+        log(`WARNING!!! You are running a unpublished version, note it may not work as expected`, "warn")
+        log(`Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION} `);
+      } else if (vc < 0){
+        log(`!!!WARNING!!! You're API is currently out of date `, "warn")
+        log(`Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION}`);
+        log(`WARNING!!! Download Link - ${global.NEWVERSIONDOWNLOAD}`, "warn");
+      } else {
+        log(`API Is currently running the most recent Stable Version: ${global.APIVERSION}`);
+      }
+    } catch (err){
+      log(`WARNING!!! Couldn't check for the current stable version`, "warn");
+      console.log(err);
+    }
+  }

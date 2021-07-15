@@ -1,10 +1,10 @@
 modded class ItemBase {
 
-	void OnUApiSave(UApiEntityStore data){
-		
+	override void OnUApiSave(UApiEntityStore data){
+		super.OnUApiSave(data);
 	}
 	
-	void OnUApiLoad(UApiEntityStore data){
-		
+	override void OnUApiLoad(UApiEntityStore data){
+		super.OnUApiLoad(data);
 	}
 }

@@ -1,6 +1,10 @@
 class UApiEntityStore extends UApiObject_Base {
 	
 	string m_Type = "";
+	int m_pid1;
+	int m_pid2;
+	int m_pid3;
+	int m_pid4;
 	float m_Health = -1;
 	float m_Quantity;
 	float m_Wet;

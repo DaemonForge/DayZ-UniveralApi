@@ -1,4 +1,4 @@
-class UApiAuthCallBack : RestCallback
+/*class UApiAuthCallBack : RestCallback
 {
 	protected int m_TryCount = 0;
 	protected string m_GUID = "";
@@ -68,7 +68,7 @@ class UApiAuthCallBack : RestCallback
 		}
 	}
 };
-
+*/
 class UApiNewAuthCallBack : RestCallback
 {
 	protected int m_TryCount = 0;

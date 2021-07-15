@@ -142,4 +142,13 @@ if (config.AutoUpdate === undefined){
 }
 
 
+if (config.CreateIndexes === undefined || config.CreateIndexes === null){
+  config.CreateIndexes = true;
+  try {
+   writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
+  } catch(e) {
+    console.log(e)
+  }
+}
+
 module.exports = config;

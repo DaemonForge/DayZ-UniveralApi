@@ -5,21 +5,23 @@ global.NEWVERSIONDOWNLOAD = `https://github.com/daemonforge/DayZ-UniveralApi/rel
 if (global.SAVEPATH === undefined){
   global.SAVEPATH = "./";
 }
+/* Config File */
+global.config = require('./configLoader');
+
 const express = require('express');
-const favicon = require("serve-favicon")
+const favicon = require("serve-favicon");
 const {existsSync,readFileSync} = require('fs');
 const https = require('https')
-const fetch  = require('node-fetch');
 const {json} = require('body-parser');
 const DefaultCert = require('./defaultkeys.json');
-const app = express();
-const {isArray, versionCompare} = require('./utils');
+const cluster = require('cluster');
+
+const {isArray, CheckRecentVersion, CheckIndexes} = require('./utils');
 
 const nodeFetch = require('node-fetch');
 global.fetch = nodeFetch;
 
-/* Config File */
-global.config = require('./configLoader');
+const totalCPUs = global.config.cpuCount || require('os').cpus().length || 1;
 
 const log = require("./log");
 
@@ -57,102 +59,109 @@ var limiter = new RateLimit({
     return false;
   }
 });
-
-// apply rate limiter to all requests
-app.use(limiter);
 function ExtractAuthKey (req, res, next) {
   req.headers['Auth-Key'] = req.headers['Auth-Key'] || req.headers['content-type'] || '';
   req.headers['content-type'] = 'application/json';
   next();
 }
 
-app.use(ExtractAuthKey);
 
-app.use((req, res, next) => {
-  json({
-      limit: '64mb'
-  })(req, res, (err) => {
-      if (err) {
-          console.log("Bad Request Sent");
-          res.status(400);
-          res.json({Status: "error", Error: `Bad Request ${err}`});
-          return;
+
+
+function startWebServer() {
+  const webapp = express();
+
+  // apply rate limiter to all requests
+  webapp.use(limiter);
+
+  webapp.use(ExtractAuthKey);
+
+  webapp.use((req, res, next) => {
+    json({
+        limit: '64mb'
+    })(req, res, (err) => {
+        if (err) {
+            console.log("Bad Request Sent");
+            res.status(400);
+            res.json({Status: "error", Error: `Bad Request ${err}`});
+            return;
+        }
+        next();
+    });
+  });
+  webapp.use(favicon(__dirname + '/public/favicon.ico'));
+  webapp.use('/Object', RouterItem);
+  webapp.use('/Player', RouterPlayer);
+  webapp.use('/Gobals', RouterGlobals); //For Backwards Compatblity 
+  webapp.use('/Globals', RouterGlobals);
+  webapp.use('/GetAuth', RouterAuth);
+  webapp.use('/Status', RouterStatus);
+  webapp.use('/QnAMaker', RouterQnA);
+  webapp.use('/QnA', RouterQnA); //Switching to /QnA for new ai interface
+  webapp.use('/Forward', RouterFowarder);
+  webapp.use('/Logger', RouterLogger);
+  webapp.use('/Discord', RouterDiscordConnector);
+  webapp.use('/Wit', RouterWit);
+  webapp.use('/LUIS', RouterLUIS);
+  webapp.use('/Translate', RouterTranslate);
+  webapp.use('/ServerQuery', RouterServerQuery);
+  webapp.use('/Toxicity', RouterToxicity);
+  webapp.use('/Random', RouterTrueRandom);
+
+  webapp.use('/', (req,res)=>{
+      log("Error invalid or is not a post Requested URL is:" + req.url);
+      res.status(501);
+      res.json({Status: "error", Error: "Reqested bad URL"});
+  });
+  let ServerKey = DefaultCert.Key;
+  let ServerCert = DefaultCert.Cert;
+  if (global.config.Certificate != "" && global.config.CertificateKey != ""){
+    if (existsSync(global.config.Certificate) && existsSync(global.config.CertificateKey)){
+      ServerKey = readFileSync(global.config.Certificate);
+      ServerCert = readFileSync(global.config.CertificateKey);
+    }
+  }
+  let Port = process.env.PORT || global.config.Port || 8443
+  const server = https.createServer({
+      key: ServerKey,
+      cert: ServerCert
+    }, webapp)
+    .listen(Port, function () {
+      log('API Webservice started and is now listening on port "' + Port +'"!')
+    });
+  server.on('error', function (e) {
+      // Handle your error here
+      log(e, "warn");
+    });
+
+}
+
+function Start(isElectron){
+  if (cluster.isMaster && totalCPUs > 1 && !isElectron) {
+    // Fork workers.
+    for (let i = 0; i < totalCPUs; i++) {
+      cluster.fork();
+    }
+    cluster.on('exit', (worker, code, signal) => {
+      cluster.fork();
+    });
+    if (global.config?.CheckForNewVersion){
+      CheckRecentVersion();
+    }
+    setTimeout(CheckIndexes, 1000);
+  } else {
+    startWebServer();
+    if (totalCPUs <= 1){
+
+      if (global.config?.CheckForNewVersion){
+        CheckRecentVersion();
       }
-      next();
-  });
-});
-app.use(favicon(__dirname + '/public/favicon.ico'));
-app.use('/Object', RouterItem);
-app.use('/Player', RouterPlayer);
-app.use('/Gobals', RouterGlobals); //For Backwards Compatblity 
-app.use('/Globals', RouterGlobals);
-app.use('/GetAuth', RouterAuth);
-app.use('/Status', RouterStatus);
-app.use('/QnAMaker', RouterQnA);
-app.use('/QnA', RouterQnA); //Switching to /QnA for new ai interface
-app.use('/Forward', RouterFowarder);
-app.use('/Logger', RouterLogger);
-app.use('/Discord', RouterDiscordConnector);
-app.use('/Wit', RouterWit);
-app.use('/LUIS', RouterLUIS);
-app.use('/Translate', RouterTranslate);
-app.use('/ServerQuery', RouterServerQuery);
-app.use('/Toxicity', RouterToxicity);
-app.use('/Random', RouterTrueRandom);
+      
+      setTimeout(CheckIndexes, 1000);
 
-app.use('/', (req,res)=>{
-    log("Error invalid or is not a post Requested URL is:" + req.url);
-    res.status(501);
-    res.json({Status: "error", Error: "Reqested bad URL"});
-});
-let ServerKey = DefaultCert.Key;
-let ServerCert = DefaultCert.Cert;
-if (global.config.Certificate != "" && global.config.CertificateKey != ""){
-  if (existsSync(global.config.Certificate) && existsSync(global.config.CertificateKey)){
-    ServerKey = readFileSync(global.config.Certificate);
-    ServerCert = readFileSync(global.config.CertificateKey);
+    }
   }
 }
-let Port = process.env.PORT || global.config.Port || 8443
-const server = https.createServer({
-    key: ServerKey,
-    cert: ServerCert
-  }, app)
-  .listen(Port, function () {
-    log('API Webservice started and is now listening on port "' + Port +'"!')
-  });
-server.on('error', function (e) {
-    // Handle your error here
-    log(e, "warn");
-  });
 
-async function CheckRecentVersion(){
-  try {
-    const data = await fetch("https://api.github.com/repos/daemonforge/DayZ-UniveralApi/releases").then( response => response.json()).catch(e => console.log(e));
-    if (data[0] !== undefined && data[0].tag_name !== undefined ){
-      global.STABLEVERSION = data[0].tag_name;
-      global.NEWVERSIONDOWNLOAD = data[0].html_url;
-    }
-    let vc = versionCompare(global.APIVERSION, global.STABLEVERSION);
-    if (global.STABLEVERSION === "0.0.0"){
-      log(`WARNING!!! Could check for the current stable version`, "warn");
-    } else if (vc > 0){
-      log(`WARNING!!! You are running a unpublished version, note it may not work as expected`, "warn")
-      log(`Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION} `);
-    } else if (vc < 0){
-      log(`!!!WARNING!!! You're API is currently out of date `, "warn")
-      log(`Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION}`);
-      log(`WARNING!!! Download Link - ${global.NEWVERSIONDOWNLOAD}`, "warn");
-    } else {
-      log(`API Is currently running the most recent Stable Version: ${global.APIVERSION}`);
-    }
-  } catch (err){
-    log(`WARNING!!! Couldn't check for the current stable version`, "warn");
-    console.log(err);
-  }
-}
-if (global.config?.CheckForNewVersion){
-  CheckRecentVersion();
-}
+module.exports = Start;
 
-module.exports = https;
