@@ -176,18 +176,18 @@ async function InstallIndexes(){
       const db = client.db(global.config.DB);
       let pcollection = db.collection("Players");
       const resultGUID = await pcollection.createIndex({ GUID: 1 });
-      console.log(resultGUID);
+      //console.log(resultGUID);
       const resultAUTH = await pcollection.createIndex({ GUID: 1, AUTH: 1 });
       console.log(resultAUTH);
       let ocollection = db.collection("Objects");
       const oresult = await ocollection.createIndex({ ObjectId: 1, Mod: 1});
-      console.log(oresult);
+      //console.log(oresult);
       let gcollection = db.collection("Globals");
       const gresult = await gcollection.createIndex({ Mod: 1 });
-      console.log(gresult);
+      //console.log(gresult);
       returnvalue= true;
     } catch(e){
-      console.log(e);
+      log(e);
       returnvalue= false;
     }finally{
       await client.close();
