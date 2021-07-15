@@ -1,53 +1,15 @@
-class UApiDBEndpoint extends Managed {
-	
-	static protected string m_BaseUrl = "";
-	
-	protected RestContext m_Context;
-	
+class UApiDBEndpoint extends UApiBaseEndpoint {
+		
 	protected string m_Collection = "Object";
-	
 	
 	void UApiDBEndpoint(string collection){
 		m_Collection = collection;
 	}
 	
-	static void SetBaseUrl(string new_BaseUrl){
-		m_BaseUrl = new_BaseUrl;
+	override protected string EndpointBaseUrl(){
+		return UApiConfig().GetBaseURL() + m_Collection + "/";
 	}
 	
-	static protected string BaseUrl(){
-		if (m_BaseUrl != ""){
-			return m_BaseUrl;
-		}
-		return UApiConfig().ServerURL;
-	}
-	
-	static protected string AuthToken(){
-		return UApi().GetAuthToken();
-	}
-
-	protected RestContext Api()
-	{
-		if (!m_Context){
-			RestApi clCore = GetRestApi();
-			if (!clCore)
-			{
-				clCore = CreateRestApi();
-				clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
-			}
-			string url = BaseUrl() + m_Collection;
-			m_Context =  clCore.GetRestContext(url);
-			m_Context.SetHeader("application/json");
-		}
-		return m_Context;
-	}
-	
-	protected void Post(string endpoint, string jsonString, RestCallback UCBX)
-	{
-		string route = endpoint + "/" + AuthToken();
-		Api().POST(UCBX, route, jsonString);
-	}
-		
 	int Save(string mod, string oid, string jsonString, Class instance = NULL, string function = "") {	
 		int cid = UApi().CallId();	
 		string endpoint = "/Save/" + oid + "/" + mod;

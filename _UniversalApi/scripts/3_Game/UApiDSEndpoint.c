@@ -1,61 +1,22 @@
-class UniversalDSEndpoint extends Managed
+class UniversalDSEndpoint extends UApiBaseEndpoint
 {	
 	
-	static protected string m_BaseUrl = "";
-	
-	protected RestContext m_Context;
-	
-	protected string m_Collection = "Discord";
-	
-	
-	void UniversalDiscordEndpoint(string collection){
-		m_Collection = collection;
-	}
-	
-	static void SetBaseUrl(string new_BaseUrl){
-		m_BaseUrl = new_BaseUrl;
-	}
-	
-	static string BaseUrl(){
-		if (m_BaseUrl != ""){
-			return m_BaseUrl;
-		}
-		return UApiConfig().ServerURL;
-	}
 
-	RestContext Api()
-	{
-		if (!m_Context){
-			RestApi clCore = GetRestApi();
-			if (!clCore)
-			{
-				clCore = CreateRestApi();
-				clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
-			}
-			string url = BaseUrl() + m_Collection;
-			m_Context =  clCore.GetRestContext(url);
-			m_Context.SetHeader("application/json");
-		}
-		return m_Context;
+	override protected string EndpointBaseUrl(){
+		return UApiConfig().GetBaseURL() + "Discord/";
 	}
 	
-	void Post(string endpoint, string jsonString, RestCallback UCBX)
-	{
-		string route = endpoint + "/" + UApi().GetAuthToken();
-		Api().POST(UCBX, route, jsonString);
-	}
-	
-	static string Link(string PlainId = ""){
+	string Link(string PlainId = ""){
 		if (PlainId == "" && GetGame().IsClient()){
 			DayZPlayer player = DayZPlayer.Cast(GetGame().GetPlayer());
 			if ( player && player.GetIdentity() ){
-				return BaseUrl() + "Discord/" + player.GetIdentity().GetPlainId();
+				return EndpointBaseUrl() + player.GetIdentity().GetPlainId();
 			}
 			if (GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
-				return BaseUrl() + "Discord/" + GetGame().GetUserManager().GetTitleInitiator().GetUid();
+				return EndpointBaseUrl() + GetGame().GetUserManager().GetTitleInitiator().GetUid();
 			}
 		}
-		return BaseUrl() + "Discord/" + PlainId;
+		return EndpointBaseUrl() + PlainId;
 	}
 		
 	int AddRole(string GUID, string RoleId, Class instance = NULL, string function = "") {
@@ -66,9 +27,8 @@ class UniversalDSEndpoint extends Managed
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
-		
-				
-		string url = "/AddRole/" + GUID;
+			
+		string url = "AddRole/" + GUID;
 		
 		autoptr UApiDiscordRoleReq roleReq = new UApiDiscordRoleReq(RoleId);
 		
@@ -91,7 +51,7 @@ class UniversalDSEndpoint extends Managed
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		string url = "/RemoveRole/" + GUID;
+		string url = "RemoveRole/" + GUID;
 		
 		autoptr UApiDiscordRoleReq roleReq = new UApiDiscordRoleReq(RoleId);
 		
@@ -116,7 +76,7 @@ class UniversalDSEndpoint extends Managed
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		string url = "/Get/" + GUID;
+		string url = "Get/" + GUID;
 		
 		Post(url,"{}",DBCBX);
 		return cid;
@@ -131,7 +91,7 @@ class UniversalDSEndpoint extends Managed
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		string url = "/GetWithPlainId/" + plainId;
+		string url = "GetWithPlainId/" + plainId;
 		if (plainId && plainId != ""){
 			Post(url,"{}",DBCBX);
 		}
@@ -147,7 +107,7 @@ class UniversalDSEndpoint extends Managed
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		string url = "/Get/" + GUID;
+		string url = "Get/" + GUID;
 		
 		Post(url,"{}",DBCBX);
 		return cid;
@@ -162,7 +122,7 @@ class UniversalDSEndpoint extends Managed
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		string url = "/GetWithPlainId/" + plainId;
+		string url = "GetWithPlainId/" + plainId;
 		if (plainId && plainId != ""){
 			Post(url,"{}",DBCBX);
 		}
@@ -170,14 +130,10 @@ class UniversalDSEndpoint extends Managed
 	}
 	
 	
-	
-	
-		
-	
 	int CheckDiscord(string PlainId, Class instance, string function,  string baseUrl = ""){		
 		int cid = UApi().CallId();
 		if (baseUrl == ""){
-			baseUrl = BaseUrl();
+			baseUrl = UApiConfig().GetBaseURL();
 		}
 		
 		autoptr RestCallback DBCBX;
@@ -197,7 +153,7 @@ class UniversalDSEndpoint extends Managed
 	int CheckDiscordObj(string PlainId, Class instance, string function,  string baseUrl = ""){		
 		int cid = UApi().CallId();
 		if (baseUrl == ""){
-			baseUrl = BaseUrl();
+			baseUrl = UApiConfig().GetBaseURL();
 		}
 		
 		autoptr RestCallback DBCBX;
@@ -231,7 +187,7 @@ class UniversalDSEndpoint extends Managed
 		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, UApiChannelCreateOptions.Cast(Options));
 		
 		if (obj){
-			string url = "Discord/Channel/Create";
+			string url = "Channel/Create";
 			
 			Post(url,obj.ToJson(),DBCBX);	
 		
@@ -256,7 +212,7 @@ class UniversalDSEndpoint extends Managed
 		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, UApiChannelCreateOptions.Cast(Options));
 		
 		if (obj){
-			string url = "Discord/Channel/Create";
+			string url = "Channel/Create";
 			
 			Post(url,obj.ToJson(),DBCBX);	
 		
@@ -281,7 +237,7 @@ class UniversalDSEndpoint extends Managed
 		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, NULL);
 		
 		if (obj){
-			string url = "Discord/Channel/Delete/" + id;
+			string url = "Channel/Delete/" + id;
 			
 			Post(url,obj.ToJson(),DBCBX);
 			return cid;			
@@ -303,7 +259,7 @@ class UniversalDSEndpoint extends Managed
 		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, NULL);
 		
 		if (obj){
-			string url = "Discord/Channel/Delete/" + id;
+			string url = "Channel/Delete/" + id;
 			
 			Post(url,obj.ToJson(),DBCBX);
 			return cid;			
@@ -325,7 +281,7 @@ class UniversalDSEndpoint extends Managed
 		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, UApiChannelUpdateOptions.Cast(options));
 		
 		if (obj){
-			string url = "Discord/Channel/Edit/" + id;
+			string url = "Channel/Edit/" + id;
 			
 			Post(url,obj.ToJson(),DBCBX);	
 			return cid;		
@@ -347,7 +303,7 @@ class UniversalDSEndpoint extends Managed
 		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, UApiChannelUpdateOptions.Cast(options));
 		
 		if (obj){
-			string url = "Discord/Channel/Edit/" + id;
+			string url = "Channel/Edit/" + id;
 			
 			Post(url,obj.ToJson(),DBCBX);	
 			return cid;		
@@ -369,7 +325,7 @@ class UniversalDSEndpoint extends Managed
 		UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
 		
 		if (obj){
-			string url = "Discord/Channel/Send/" + id;
+			string url = "Channel/Send/" + id;
 			
 			Post(url,obj.ToJson(),DBCBX);		
 			return cid;	
@@ -391,7 +347,7 @@ class UniversalDSEndpoint extends Managed
 		UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
 		
 		if (obj){
-			string url = "Discord/Channel/Send/" + id;
+			string url = "Channel/Send/" + id;
 			
 			Post(url,obj.ToJson(),DBCBX);		
 			return cid;	
@@ -412,7 +368,7 @@ class UniversalDSEndpoint extends Managed
 		}
 				
 		if (message){
-			string url = "Discord/Channel/Send/" + id;
+			string url = "Channel/Send/" + id;
 			
 			Post(url,message.ToJson(),DBCBX);	
 			return cid;		
@@ -433,7 +389,7 @@ class UniversalDSEndpoint extends Managed
 		}
 				
 		if (message){
-			string url = "Discord/Channel/Send/" + id;
+			string url = "Channel/Send/" + id;
 			
 			Post(url,message.ToJson(),DBCBX);	
 			return cid;		
@@ -457,7 +413,7 @@ class UniversalDSEndpoint extends Managed
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		string url = BaseUrl() + "Discord/Channel/Messages/" + id;
+		string url = "Channel/Messages/" + id;
 		
 		if (filter && DBCBX){
 			Post(url,filter.ToJson(),DBCBX);	
@@ -480,7 +436,7 @@ class UniversalDSEndpoint extends Managed
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		string url = "Discord/Channel/Messages/" + id;
+		string url = "Channel/Messages/" + id;
 		
 		if (filter && DBCBX){
 			Post(url,filter.ToJson(),DBCBX);	

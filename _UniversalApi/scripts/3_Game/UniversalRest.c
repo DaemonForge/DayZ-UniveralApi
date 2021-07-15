@@ -23,7 +23,7 @@ class UniversalRest extends Managed
 			UCBX = new UApiSilentCallBack;
 		}
 		RestContext ctx =  Api().GetRestContext(url);
-		ctx.SetHeader("application/json");
+		ctx.SetHeader(UApi().GetAuthToken());
 		ctx.POST(UCBX , "", jsonString);
 	}
 	
@@ -44,25 +44,18 @@ class UniversalRest extends Managed
 	}
 	/*
 	static void GetAuth( string guid, string auth  = ""){
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
 		string url = BaseUrl() + "GetAuth/" + guid + "/" + auth;
 		
 		Post(url, "{}", new UApiAuthCallBack(guid));
 	}*/
 	
-	static void GetAuthNew( string guid){
-		string url = BaseUrl() + "GetAuth/" + guid + "/" + UApi().GetAuthToken();
+	static void GetAuthNew( string guid ){
+		string url = BaseUrl() + "GetAuth/" + guid;
 		
 		Post(url, "{}", new UApiNewAuthCallBack(guid));
 	}
 	
-	static void PlayerSave(string mod, string guid, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
+	static void PlayerSave(string mod, string guid, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {	
 		string url = BaseUrl() + "Player/Save/" + guid + "/" + mod  + "/" + auth;
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -76,11 +69,6 @@ class UniversalRest extends Managed
 	}
 	
 	static void PlayerLoad(string mod, string guid,  ref RestCallback UCBX, string jsonString = "{}",string auth = "") {
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
 		string url = BaseUrl() + "Player/Load/" + guid + "/" + mod  + "/" + auth;
 		
 		if (UCBX){
@@ -91,10 +79,6 @@ class UniversalRest extends Managed
 	}
 	
 	static void PlayerQuery(string mod, UApiQueryObject query, ref RestCallback UCBX, string auth = "") {
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
 		string url = BaseUrl() + "Player/Query/" + mod  + "/" + auth;
 		
 		if ( query && UCBX){
@@ -113,12 +97,7 @@ class UniversalRest extends Managed
 		if (!UCBX){
 			UCBX = new UApiTransactionCallBack;
 		}
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
-		
+				
 		string url = BaseUrl() + "Player/Transaction/" + guid   + "/"+ mod + "/" + auth;
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
@@ -136,12 +115,7 @@ class UniversalRest extends Managed
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
-		
+				
 		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
@@ -160,11 +134,6 @@ class UniversalRest extends Managed
 			UCBX = new UApiSilentCallBack;
 		}
 		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
-		
 		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
@@ -177,10 +146,7 @@ class UniversalRest extends Managed
 	}
 	
 	static void GlobalsSave(string mod, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
+
 		string url = BaseUrl() + "Globals/Save/" + mod  + "/" + auth;
 		
 		if (!UCBX){
@@ -195,11 +161,9 @@ class UniversalRest extends Managed
 	}
 	
 	static void GlobalsLoad(string mod, ref RestCallback UCBX, string jsonString = "{}", string auth = "") {
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
+
 		string url = BaseUrl() + "Globals/Load/" + mod  + "/" + auth;
+
 
 		if (UCBX){
 			Post(url,jsonString,UCBX);
@@ -218,13 +182,9 @@ class UniversalRest extends Managed
 		if (!UCBX){
 			UCBX = new UApiTransactionCallBack;
 		}
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
-		
+
 		string url = BaseUrl() + "Globals/Transaction/" + mod  + "/" + auth;
+
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
@@ -241,13 +201,9 @@ class UniversalRest extends Managed
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
-		
+
 		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
+
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
@@ -264,12 +220,7 @@ class UniversalRest extends Managed
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
-		
+
 		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
@@ -289,10 +240,7 @@ class UniversalRest extends Managed
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
+
 		string url = BaseUrl() + "Object/Save/" + objectId + "/" +  mod + "/" + auth;
 		
 		if (jsonString){
@@ -304,10 +252,6 @@ class UniversalRest extends Managed
 	
 	static void ObjectLoad(string mod, string objectId, ref RestCallback UCBX, string jsonString = "{}", string auth = "") {
 		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
 		string url = BaseUrl() + "Object/Load/" +  objectId + "/" + mod  + "/" + auth;
 		
 		if (UCBX){
@@ -318,10 +262,6 @@ class UniversalRest extends Managed
 	}
 	
 	static void ObjectQuery(string mod, UApiQueryObject query, ref RestCallback UCBX, string auth = "") {
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
 		
 		string url = BaseUrl() + "Object/Query/" + mod  + "/" + auth;
 		
@@ -342,11 +282,6 @@ class UniversalRest extends Managed
 			UCBX = new UApiTransactionCallBack;
 		}
 		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
-		
 		string url = BaseUrl() + "Object/Transaction/" + objectId + "/"+ mod + "/" + auth;
 		
 		
@@ -366,11 +301,6 @@ class UniversalRest extends Managed
 			UCBX = new UApiSilentCallBack;
 		}
 		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
-		
 		string url = BaseUrl() + "Object/Update/" + guid  + "/"+ mod + "/" + auth;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
@@ -389,11 +319,6 @@ class UniversalRest extends Managed
 			UCBX = new UApiSilentCallBack;
 		}
 		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
-		
 		string url = BaseUrl() + "Object/Update/" + guid  + "/" + mod + "/" + auth;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
@@ -406,11 +331,7 @@ class UniversalRest extends Managed
 	}
 	
 	static void Request(ref UApiForwarder data, ref RestCallback UCBX = NULL, string auth = ""){
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
-		
+				
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
@@ -425,10 +346,6 @@ class UniversalRest extends Managed
 	}
 
 	static void Log(string jsonString, ref RestCallback UCBX = NULL, string auth = ""){
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -445,10 +362,6 @@ class UniversalRest extends Managed
 	
 	//JsonFileLoader<array<autoptr LogObject>>.JsonMakeData(AnArrayOfYourObjects);
 	static void LogBulk(string jsonString, ref RestCallback UCBX = NULL, string auth = ""){
-		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
