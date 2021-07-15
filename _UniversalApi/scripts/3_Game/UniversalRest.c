@@ -181,7 +181,7 @@ class UniversalRest extends Managed
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
-		string url = BaseUrl() + "Gobals/Save/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Globals/Save/" + mod  + "/" + auth;
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -199,7 +199,7 @@ class UniversalRest extends Managed
 		if (auth == "" ){
 			auth = UApi().GetAuthToken();
 		}
-		string url = BaseUrl() + "Gobals/Load/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Globals/Load/" + mod  + "/" + auth;
 
 		if (UCBX){
 			Post(url,jsonString,UCBX);
@@ -224,7 +224,7 @@ class UniversalRest extends Managed
 		}
 		
 		
-		string url = BaseUrl() + "Gobals/Transaction/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Globals/Transaction/" + mod  + "/" + auth;
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
@@ -247,7 +247,7 @@ class UniversalRest extends Managed
 		}
 		
 		
-		string url = BaseUrl() + "Gobals/Update/" + mod + "/" + auth;
+		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
@@ -270,7 +270,7 @@ class UniversalRest extends Managed
 		}
 		
 		
-		string url = BaseUrl() + "Gobals/Update/" + mod + "/" + auth;
+		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
