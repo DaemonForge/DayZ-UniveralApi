@@ -2,6 +2,7 @@ modded class UApiEntityStore extends UApiObject_Base {
 	
 	override void SaveEntity(notnull EntityAI item, bool recursive = true ){
 		m_Type = item.GetType();
+		item.GetPersistentID(m_pid1, m_pid2, m_pid3, m_pid4); //Just for testing but maybe someone will find this usefull
 		m_Health = item.GetHealth("", "");
 		array<EntityAI> items = new array<EntityAI>;
 		int i = 0;
