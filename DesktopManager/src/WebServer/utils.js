@@ -2,6 +2,7 @@
 const { MongoClient } = require("mongodb");
 const {writeFileSync} = require('fs');
 const ConfigPath = "config.json";
+const log = require("./log");
 
 module.exports ={
     dynamicSortMultiple,
@@ -14,7 +15,8 @@ module.exports ={
     RemoveBadProperties,
     versionCompare,
     InstallIndexes,
-    CheckIndexes
+    CheckIndexes,
+    CheckRecentVersion
 }
 
 
@@ -204,5 +206,32 @@ async function InstallIndexes(){
         } else {
           console.log("Failed to create indexes")
         }
+    }
+  }
+
+  
+async function CheckRecentVersion(){
+    try {
+      const data = await fetch("https://api.github.com/repos/daemonforge/DayZ-UniveralApi/releases").then( response => response.json()).catch(e => console.log(e));
+      if (data[0] !== undefined && data[0].tag_name !== undefined ){
+        global.STABLEVERSION = data[0].tag_name;
+        global.NEWVERSIONDOWNLOAD = data[0].html_url;
+      }
+      let vc = versionCompare(global.APIVERSION, global.STABLEVERSION);
+      if (global.STABLEVERSION === "0.0.0"){
+        log(`WARNING!!! Could check for the current stable version`, "warn");
+      } else if (vc > 0){
+        log(`WARNING!!! You are running a unpublished version, note it may not work as expected`, "warn")
+        log(`Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION} `);
+      } else if (vc < 0){
+        log(`!!!WARNING!!! You're API is currently out of date `, "warn")
+        log(`Installed Version: ${global.APIVERSION} Stable Version: ${global.STABLEVERSION}`);
+        log(`WARNING!!! Download Link - ${global.NEWVERSIONDOWNLOAD}`, "warn");
+      } else {
+        log(`API Is currently running the most recent Stable Version: ${global.APIVERSION}`);
+      }
+    } catch (err){
+      log(`WARNING!!! Couldn't check for the current stable version`, "warn");
+      console.log(err);
     }
   }
