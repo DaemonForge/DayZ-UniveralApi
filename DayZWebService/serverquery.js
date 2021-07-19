@@ -47,10 +47,10 @@ async function QueryServer(ip, port){
         let data = query( {
             type: 'dayz',
             host: ip,
-            port: port
+            port: port,
+            requestRules: true
         } ).then((state) => {
-            //console.log(state);
-            let keywords = state.raw.tags.split(',');
+            let keywords = state.raw.tags;
             return {
                 ip: state.connect.split(':')[0],
                 query_port: parseInt(port),
