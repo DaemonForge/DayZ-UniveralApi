@@ -188,7 +188,7 @@ async function InstallIndexes(){
       log("Successfully Created Indexes")
       returnvalue= true;
     } catch(e){
-      log(e);
+      log(e, "warn");
       returnvalue= false;
     }finally{
       await client.close();
@@ -202,10 +202,10 @@ async function InstallIndexes(){
           try {
             writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(global.config, undefined, 4))
           } catch(e) {
-            log(e)
+            log(e, "warn")
           }
         } else {
-          log("Failed to create indexes")
+          log("Failed to create indexes", "warn")
         }
     }
   }
