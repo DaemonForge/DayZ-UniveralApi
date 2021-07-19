@@ -178,13 +178,14 @@ async function InstallIndexes(){
       const resultGUID = await pcollection.createIndex({ GUID: 1 });
       //console.log(resultGUID);
       const resultAUTH = await pcollection.createIndex({ GUID: 1, AUTH: 1 });
-      console.log(resultAUTH);
+      //console.log(resultAUTH);
       let ocollection = db.collection("Objects");
       const oresult = await ocollection.createIndex({ ObjectId: 1, Mod: 1});
       //console.log(oresult);
       let gcollection = db.collection("Globals");
       const gresult = await gcollection.createIndex({ Mod: 1 });
       //console.log(gresult);
+      log("Successfully Created Indexes")
       returnvalue= true;
     } catch(e){
       log(e);
