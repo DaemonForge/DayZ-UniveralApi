@@ -202,10 +202,10 @@ async function InstallIndexes(){
           try {
             writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(global.config, undefined, 4))
           } catch(e) {
-            console.log(e)
+            log(e)
           }
         } else {
-          console.log("Failed to create indexes")
+          log("Failed to create indexes")
         }
     }
   }
