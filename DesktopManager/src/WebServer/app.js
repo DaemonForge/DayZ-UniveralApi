@@ -21,7 +21,11 @@ const {isArray, CheckRecentVersion, CheckIndexes} = require('./utils');
 const nodeFetch = require('node-fetch');
 global.fetch = nodeFetch;
 
-const totalCPUs = global.config.cpuCount || require('os').cpus().length || 1;
+let totalCPUs = global.config.cpuCount || 1;
+
+if (totalCPUs < 1){
+  totalCPUs = require('os').cpus().length 
+}
 
 const log = require("./log");
 
