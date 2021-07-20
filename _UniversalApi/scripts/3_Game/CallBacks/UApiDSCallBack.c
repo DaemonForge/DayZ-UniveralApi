@@ -60,7 +60,7 @@ class UApiDiscordStatusCallBack : UApiDBCallBack
 			return;
 		}
 		if (Instance && Function != ""){
-			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordStatusObject>(CallId, UAPI_ERROR, OID, NULL));
+			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr UApiDiscordStatusObject>(CallId, UAPI_ERROR, OID, NULL));
 		}
 	};
 	
@@ -70,7 +70,7 @@ class UApiDiscordStatusCallBack : UApiDBCallBack
 			return;
 		}
 		if (Instance && Function != ""){
-			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordStatusObject>(CallId, UAPI_TIMEOUT, OID, NULL));
+			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr UApiDiscordStatusObject>(CallId, UAPI_TIMEOUT, OID, NULL));
 		}
 	};
 	
@@ -91,14 +91,14 @@ class UApiDiscordStatusCallBack : UApiDBCallBack
 				Print("[UPAI] [UApiStatusCallBack] Error: " + error);
 			}
 			if (obj && obj.Status && (obj.Status == "Success" || obj.Status == "Ok") ){ //Will eventually Phase out "Ok"			
-				GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordStatusObject>(CallId, UAPI_SUCCESS, OID, UApiDiscordStatusObject.Cast(obj)));
+				GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr UApiDiscordStatusObject>(CallId, UAPI_SUCCESS, OID, UApiDiscordStatusObject.Cast(obj)));
 				return;
 			} 
 			if (obj.Status && (obj.Status == "NotFound" || obj.Status ==  "NotSetup")){
-				GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordStatusObject>(CallId, UAPI_NOTFOUND, OID, UApiDiscordStatusObject.Cast(obj)));
+				GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr UApiDiscordStatusObject>(CallId, UAPI_NOTFOUND, OID, UApiDiscordStatusObject.Cast(obj)));
 				return;
 			}
-			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, ref UApiDiscordStatusObject>(CallId, UAPI_ERROR, OID, UApiDiscordStatusObject.Cast(obj)));
+			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr UApiDiscordStatusObject>(CallId, UAPI_ERROR, OID, UApiDiscordStatusObject.Cast(obj)));
 		}
 	};
 };
