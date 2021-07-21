@@ -271,6 +271,16 @@ class UniversalApi extends Managed {
 		return NULL;
 	}
 	
+	static DayZPlayer FindPlayerByIdentity(PlayerIdentity identity) {
+		if (!identity)
+			return NULL;
+
+		int highBits;
+		int lowBits;
+		GetGame().GetPlayerNetworkIDByIdentityID(identity.GetPlayerId(), lowBits, highBits);
+		return DayZPlayer.Cast(GetGame().GetObjectByNetworkId(lowBits, highBits));
+	}
+	
 	void AuthError(string guid){
 		Print("[UPAI] Auth Error for " + guid);
 		//If Auth Token Failed just try again in 3 minutes 
