@@ -1,4 +1,4 @@
-static const string UAPI_VERSION = "0.9.4";
+static const string UAPI_VERSION = "0.10.0";
 
 static const int UAPI_SUCCESS = 200;
 static const int UAPI_EMPTY = 204;
@@ -16,11 +16,10 @@ static const int UAPI_DBEMPTY = 204;
 static const int UAPI_DBTIMEOUT = 408;
 static const int UAPI_DBSERVERERROR = 500;
 
+
 static const int UAPI_DBUNAUTHORIZED = 401;
 static const int UAPI_DBERROR = 418;
 static const int UAPI_DBTOOEARLY = 425;
-
-
 
 
 static const int PLAYER_DB = 100;
