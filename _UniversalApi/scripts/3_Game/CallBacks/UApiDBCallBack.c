@@ -37,7 +37,7 @@ class UApiDBCallBack : RestCallback
 			return;
 		}
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, UAPI_DBTIMEOUT, OID, "{}"));
+			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, UAPI_TIMEOUT, OID, "{}"));
 		}
 	};
 	

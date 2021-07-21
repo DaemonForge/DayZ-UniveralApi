@@ -3,6 +3,11 @@ class UniversalApi extends Managed {
 	protected int m_CallId = 0;
 	protected int m_AuthRetries = 0;
 	
+	protected bool m_UApiOnline = false;
+	protected int m_UApiVersionOffset = 0;
+	protected bool m_UApiDiscordEnabled = false;
+	protected bool m_UApiTranslateEnabled = false;
+	
 	protected bool UAPI_Init = false;
 	protected autoptr ApiAuthToken m_authToken;
 	
@@ -114,6 +119,9 @@ class UniversalApi extends Managed {
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestQnAConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestRetry", this, SingeplayerExecutionType.Both );
+			if(GetGame().IsServer()){
+				int cid = UApi().api().Status(this, "CBStatusCheck");
+			}
 		}
 	}
 	
@@ -125,16 +133,22 @@ class UniversalApi extends Managed {
 		m_AuthRetries = 0;
 		m_authToken = data.param1;
 		m_UniversalApiConfig = data.param2;
+		Print("[UAPI] Proccessed UApi Config");
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnTokenReceived);
+	}
+	
+	void OnTokenReceived(){
+		Print("[UAPI] OnTokenReceived");
+		int cid = UApi().api().Status(this, "CBStatusCheck");
 		if (m_UniversalApiConfig.QnAEnabled){
 			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(NULL), true);
 		}
 		if (m_UniversalApiConfig.PromptDiscordOnConnect >= 1){
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.CheckAndPromptDiscordThread);
-			//Should run on thread but give access violation not sure why yet
+			thread CheckAndPromptDiscord();
 		}
 		GetGame().GameScript.CallFunction(GetGame().GetMission(), "UniversalApiReadyTokenReceived", NULL, NULL);
-		Print("[UAPI] Proccessed UApi Config");
 	}
+	
 	
 	void RPCRequestRetry( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
 	{
@@ -171,13 +185,7 @@ class UniversalApi extends Managed {
 		}
 		Print("[UAPI] Failed to find Player Auth for " + guid);
 		return false;
-	}
-	
-	
-	void CheckAndPromptDiscordThread(){
-		thread CheckAndPromptDiscord();
-	}
-	
+	}	
 	
 	protected void CheckAndPromptDiscord(){
 		if (GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
@@ -437,10 +445,10 @@ class UniversalApi extends Managed {
 		if (LastRandomNumberRequestCall > 0){
 			return;
 		}
-		LastRandomNumberRequestCall = api().RandomNumbers(2048, this, "ReadRandomNumber");
+		LastRandomNumberRequestCall = api().RandomNumbers(2048, this, "CBRandomNumber");
 	}
 	
-	void ReadRandomNumber(int cid, int status, string oid, string data){
+	void CBRandomNumber(int cid, int status, string oid, string data){
 		LastRandomNumberRequestCall = -1;
 		if (status == UAPI_SUCCESS){
 			UApiRandomNumberResponse dataload;
@@ -454,6 +462,74 @@ class UniversalApi extends Managed {
 		}
 	}
 	
+	void CBStatusCheck(int cid, int status, string oid, string data){
+		if (status == UAPI_SUCCESS){
+			autoptr UApiStatus dataload;
+			if (UApiJSONHandler<UApiStatus>.FromString(data, dataload)){
+				if (dataload.Error == "noerror" && dataload.Status ==  "Success"){
+					m_UApiOnline = true;
+					Print("[UAPI] WebService Online Version: " + dataload.Version + " Mod Version: " + UAPI_VERSION);
+				}
+				if (dataload.Error == "noauth"){
+					Print("[UAPI] Auth Key is not vaild");
+				}
+				if (dataload.Status == "Error"){
+					Print("[UAPI] Something went wrong with connecting to the api: " + dataload.Error);
+				}
+				if (dataload.Error == "noerror" && dataload.Discord == "Enabled"){
+					m_UApiDiscordEnabled = true;
+				}
+				if (dataload.Error == "noerror" && dataload.Translate == "Enabled"){
+					m_UApiTranslateEnabled = true;
+				}
+				m_UApiVersionOffset = dataload.CheckVersion(UAPI_VERSION);
+				Print("m_UApiVersionOffset: " + m_UApiVersionOffset);
+				if (m_UApiVersionOffset > 2){
+					Error2("Universal API WebService Needs Update", "[UAPI] Webservice is outdated and should be updated right away | WebService Version: " + dataload.Version + " Mod Version: " + UAPI_VERSION);
+					return;
+				}
+				if (m_UApiVersionOffset > 1){
+					Error("[UAPI] Webservice is outdated and should be updated right away");
+					return;
+				}
+				if (m_UApiVersionOffset > 0){
+					Print("[UAPI] You may want to check for new versions of the Universal API WebService");
+					return;
+				}
+				if (m_UApiVersionOffset < -2){
+					Error2("Universal API Mod Needs Update", "[UAPI] Universal Api Mod is outdated and should be updated right away | WebService Version: " + dataload.Version + " Mod Version: " + UAPI_VERSION);
+					return;
+				}
+				if (m_UApiVersionOffset < -1){
+					Print("[UAPI] Universal Api Mod maybe outdated and should be updated right away");
+					return;
+				}					
+				return;
+			}
+		} else if (status == UAPI_TIMEOUT){
+			Error("[UAPI] Webservice is offline or unreachable!");
+			m_UApiOnline = false;
+		} else {
+			Error("[UAPI] Error with WebService! Status: " + status);
+			m_UApiOnline = false;
+		}
+	}
+	
+	bool IsDiscordEnabled(){
+		return m_UApiDiscordEnabled;
+	}
+	
+	bool IsTranslateEnabled(){
+		return m_UApiTranslateEnabled;
+	}
+	
+	bool IsOnline(){
+		return m_UApiOnline;
+	}
+	
+	int VersionOffset(){
+		return m_UApiVersionOffset;
+	}
 };
 
 static ref UniversalApi g_UniversalApi;
