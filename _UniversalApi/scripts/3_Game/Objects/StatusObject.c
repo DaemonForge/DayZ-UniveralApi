@@ -62,16 +62,20 @@ class UApiStatus extends StatusObject {
 		int ApiPatch = ApiVerMap.Get(2).ToInt();
 		if (ModMajor > ApiMajor){
 			return 3;
-		} else if (ModMinor > ApiMinor){
-			return 2;
-		} else if (ModPatch > ApiPatch){
-			return 1;
-		}
+		} 
 		if (ModMajor < ApiMajor){
 			return -3;
-		} else if (ModMinor < ApiMinor){
+		}
+		if (ModMinor > ApiMinor){
+			return 2;
+		} 
+		if (ModMinor < ApiMinor){
 			return -2;
-		} else if (ModPatch < ApiPatch){
+		} 
+		if (ModPatch > ApiPatch){
+			return 1;
+		}
+		if (ModPatch < ApiPatch){
 			return -1;
 		}
 		return 0;
