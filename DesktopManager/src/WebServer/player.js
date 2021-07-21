@@ -1,7 +1,7 @@
 const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 let {createHash} = require('crypto');
-const {isArray, isObject, isEmpty} = require('./utils')
+const {isArray, isObject, isEmpty, NormalizeToGUID} = require('./utils')
 const log = require("./log");
 
 const {CheckAuth, CheckPlayerAuth,CheckServerAuth} = require('./AuthChecker')
@@ -16,103 +16,49 @@ const router = Router();
 router.use('/Query', queryHandler);
 router.use('/Transaction', TransactionHandler);
 router.post('/Load/:GUID/:mod', (req, res)=>{
-
-    let GUID = req.params.GUID;
-    if (GUID.match(/[1-9][0-9]{16}/g)){
-        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
-        GUID = GUID.replace(/\+/g, '-'); 
-        GUID = GUID.replace(/\//g, '_');
-    }
+    let GUID = NormalizeToGUID(req.params.GUID);
     runGet(req, res, GUID, req.params.mod, req.headers['Auth-Key']);
 });
 router.post('/Load/:GUID/:mod/:auth', (req, res)=>{
-
-    let GUID = req.params.GUID;
-    if (GUID.match(/[1-9][0-9]{16}/g)){
-        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
-        GUID = GUID.replace(/\+/g, '-'); 
-        GUID = GUID.replace(/\//g, '_');
-    }
+    let GUID = NormalizeToGUID(req.params.GUID);
     runGet(req, res, GUID, req.params.mod, req.params.auth);
 });
 router.post('/Save/:GUID/:mod', (req, res)=>{
-
-    let GUID = req.params.GUID;
-    if (GUID.match(/[1-9][0-9]{16}/g)){
-        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
-        GUID = GUID.replace(/\+/g, '-'); 
-        GUID = GUID.replace(/\//g, '_');
-    }
+    let GUID = NormalizeToGUID(req.params.GUID);
     runSave(req, res, GUID, req.params.mod, req.headers['Auth-Key']);
 });
 
 router.post('/Save/:GUID/:mod/:auth', (req, res)=>{
-
-    let GUID = req.params.GUID;
-    if (GUID.match(/[1-9][0-9]{16}/g)){
-        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
-        GUID = GUID.replace(/\+/g, '-'); 
-        GUID = GUID.replace(/\//g, '_');
-    }
+    let GUID = NormalizeToGUID(req.params.GUID);
     runSave(req, res, GUID, req.params.mod, req.params.auth);
 });
 
 router.post('/Update/:GUID/:mod', (req, res)=>{
-    let GUID = req.params.GUID;
-    if (GUID.match(/[1-9][0-9]{16}/g)){
-        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
-        GUID = GUID.replace(/\+/g, '-'); 
-        GUID = GUID.replace(/\//g, '_');
-    }
+    let GUID = NormalizeToGUID(req.params.GUID);
     runUpdate(req, res, GUID, req.params.mod, req.headers['Auth-Key']);
 });
 router.post('/Update/:GUID/:mod/:auth', (req, res)=>{
-    let GUID = req.params.GUID;
-    if (GUID.match(/[1-9][0-9]{16}/g)){
-        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
-        GUID = GUID.replace(/\+/g, '-'); 
-        GUID = GUID.replace(/\//g, '_');
-    }
+    let GUID = NormalizeToGUID(req.params.GUID);
     runUpdate(req, res, GUID, req.params.mod, req.params.auth);
 });
 
 
 router.post('/PublicLoad/:GUID/:mod/:auth', (req, res)=>{
-    let GUID = req.params.GUID;
-    if (GUID.match(/[1-9][0-9]{16}/g)){
-        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
-        GUID = GUID.replace(/\+/g, '-'); 
-        GUID = GUID.replace(/\//g, '_');
-    }
+    let GUID = NormalizeToGUID(req.params.GUID);
     runGetPublic(req, res, GUID, req.params.mod, req.params.auth);
 });
 
 router.post('/PublicLoad/:GUID/:mod', (req, res)=>{
-    let GUID = req.params.GUID;
-    if (GUID.match(/[1-9][0-9]{16}/g)){
-        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
-        GUID = GUID.replace(/\+/g, '-'); 
-        GUID = GUID.replace(/\//g, '_');
-    }
+    let GUID = NormalizeToGUID(req.params.GUID);
     runGetPublic(req, res, GUID, req.params.mod, req.headers['Auth-Key']);
 });
 
 router.post('/PublicSave/:GUID/:mod', (req, res)=>{
-    let GUID = req.params.GUID;
-    if (GUID.match(/[1-9][0-9]{16}/g)){
-        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
-        GUID = GUID.replace(/\+/g, '-'); 
-        GUID = GUID.replace(/\//g, '_');
-    }
+    let GUID = NormalizeToGUID(req.params.GUID);
     runSavePublic(req, res, GUID, req.params.mod, req.headers['Auth-Key']);
 });
 router.post('/PublicSave/:GUID/:mod/:auth', (req, res)=>{
-    let GUID = req.params.GUID;
-    if (GUID.match(/[1-9][0-9]{16}/g)){
-        GUID = createHash('sha256').update(req.params.GUID).digest('base64');
-        GUID = GUID.replace(/\+/g, '-'); 
-        GUID = GUID.replace(/\//g, '_');
-    }
+    let GUID = NormalizeToGUID(req.params.GUID);
     runSavePublic(req, res, GUID, req.params.mod, req.params.auth);
 });
 

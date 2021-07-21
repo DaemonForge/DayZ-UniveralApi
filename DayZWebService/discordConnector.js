@@ -1,6 +1,6 @@
 global.DISCORDSTATUS = "Pending";
 const {Router} = require('express');
-const {isArray, isObject} = require('./utils')
+const {isArray, isObject,NormalizeToGUID} = require('./utils')
 const {CheckAuth, CheckPlayerAuth,AuthPlayerGuid,CheckServerAuth} = require("./AuthChecker");
 const { MongoClient } = require("mongodb");
 const {createHash} = require('crypto');
@@ -32,8 +32,7 @@ var limiter = new RateLimit({
   },
   skip: function (req, res) {
     let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    if (global.config.RateLimitWhiteList !== undefined && ip !== undefined && ip !== null && isArray(global.config.RateLimitWhiteList) && (global.config.RateLimitWhiteList.find(element => element === ip) === ip)) return true;
-    return false;
+    return (global.config.RateLimitWhiteList !== undefined && ip !== undefined && ip !== null && isArray(global.config.RateLimitWhiteList) && (global.config.RateLimitWhiteList.find(element => element === ip) === ip));
   }
 });
 
@@ -140,22 +139,23 @@ router.get('/callback', (req, res) => {
 });
 
 router.post('/AddRole/:GUID', (req, res) => {
-    AddRole(res,req,  req.params.GUID, req.headers['Auth-Key']);
+    let GUID = NormalizeToGUID(req.params.GUID);
+    AddRole(res,req,  GUID, req.headers['Auth-Key']);
 });
 
 router.post('/RemoveRole/:GUID', (req, res) => {
-    RemoveRole(res,req, req.params.GUID,req.headers['Auth-Key']);
+    let GUID = NormalizeToGUID(req.params.GUID);
+    RemoveRole(res,req, GUID,req.headers['Auth-Key']);
 });
 
 router.post('/Get/:GUID', (req, res) => {
-    GetRoles(res,req, req.params.GUID, req.headers['Auth-Key']);
+    let GUID = NormalizeToGUID(req.params.GUID);
+    GetRoles(res,req, GUID, req.headers['Auth-Key']);
 });
 
 router.post('/GetWithPlainId/:ID', (req, res) => {
-    let guid = createHash('sha256').update(req.params.ID).digest('base64');
-    guid = guid.replace(/\+/g, '-'); 
-    guid = guid.replace(/\//g, '_');
-    GetRoles(res,req, guid, req.headers['Auth-Key']);
+    let GUID = NormalizeToGUID(req.params.ID);
+    GetRoles(res,req, GUID, req.headers['Auth-Key']);
 });
 
 router.post('/Channel/Create', (req, res) => {
@@ -183,22 +183,23 @@ router.post('/Channel/Messages/:id', (req, res) => {
 });
 
 router.post('/AddRole/:GUID/:auth', (req, res) => {
-    AddRole(res,req,  req.params.GUID, req.params.auth);
+    let GUID = NormalizeToGUID(req.params.GUID);
+    AddRole(res,req,  GUID, req.params.auth);
 });
 
 router.post('/RemoveRole/:GUID/:auth', (req, res) => {
-    RemoveRole(res,req, req.params.GUID, req.params.auth);
+    let GUID = NormalizeToGUID(req.params.GUID);
+    RemoveRole(res,req, GUID, req.params.auth);
 });
 
 router.post('/Get/:GUID/:auth', (req, res) => {
-    GetRoles(res,req, req.params.GUID, req.params.auth);
+    let GUID = NormalizeToGUID(req.params.GUID);
+    GetRoles(res,req, GUID, req.params.auth);
 });
 
 router.post('/GetWithPlainId/:ID/:auth', (req, res) => {
-    let guid = createHash('sha256').update(req.params.ID).digest('base64');
-    guid = guid.replace(/\+/g, '-'); 
-    guid = guid.replace(/\//g, '_');
-    GetRoles(res,req, guid, req.params.auth);
+    let GUID = NormalizeToGUID(req.params.ID);
+    GetRoles(res,req, GUID, req.params.auth);
 });
 
 router.post('/Channel/Create/:auth', (req, res) => {
@@ -227,10 +228,8 @@ router.post('/Channel/Messages/:id/:auth', (req, res) => {
 
 
 router.post('/Check/:ID/', (req, res) => {
-    let guid = createHash('sha256').update(req.params.ID).digest('base64');
-    guid = guid.replace(/\+/g, '-'); 
-    guid = guid.replace(/\//g, '_');
-    CheckId(res,req, req.params.ID, guid);
+    let GUID = NormalizeToGUID(req.params.ID);
+    CheckId(res,req, req.params.ID, GUID);
 });
 
 router.get('/:id', (req, res) => {

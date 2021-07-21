@@ -3,6 +3,7 @@ const { MongoClient } = require("mongodb");
 const {writeFileSync} = require('fs');
 const ConfigPath = "config.json";
 const log = require("./log");
+let {createHash} = require('crypto');
 
 module.exports ={
     dynamicSortMultiple,
@@ -16,7 +17,8 @@ module.exports ={
     versionCompare,
     InstallIndexes,
     CheckIndexes,
-    CheckRecentVersion
+    CheckRecentVersion,
+    NormalizeToGUID
 }
 
 
@@ -235,4 +237,14 @@ async function CheckRecentVersion(){
       log(`WARNING!!! Couldn't check for the current stable version`, "warn");
       console.log(err);
     }
+  }
+
+
+  function NormalizeToGUID(idorguid){
+    if (idorguid.match(/[1-9][0-9]{16}/g)){
+        idorguid = createHash('sha256').update(idorguid).digest('base64');
+        idorguid = idorguid.replace(/\+/g, '-'); 
+        idorguid = idorguid.replace(/\//g, '_');
+    }
+    return idorguid;
   }
