@@ -1,5 +1,5 @@
 
-global.APIVERSION = '0.9.4';
+global.APIVERSION = process.env.npm_package_version || require('package.json').version;
 global.STABLEVERSION = '0.0.0';
 global.NEWVERSIONDOWNLOAD = `https://github.com/daemonforge/DayZ-UniveralApi/releases`;
 if (global.SAVEPATH === undefined){
