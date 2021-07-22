@@ -398,6 +398,26 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 	
 	
+	int UserSend(string guid, string message,  Class instance = NULL, string function = ""){
+		int cid = UApi().CallId();
+		
+		autoptr RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, guid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = "User/Send/" + guid;
+		
+		if (message != "" && DBCBX){
+			autoptr UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
+			Post(url,obj.ToJson(),DBCBX);	
+			return cid;		
+		}
+		return -1;
+	}
+	
 	
 	int ChannelMessages(string id,  Class instance, string function, autoptr UApiDiscordChannelFilter filter = NULL){
 		int cid = UApi().CallId();

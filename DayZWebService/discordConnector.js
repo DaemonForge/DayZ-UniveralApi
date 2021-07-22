@@ -178,6 +178,11 @@ router.post('/Channel/Send/:id', (req, res) => {
     SendMessageChannel(res, req, req.params.id, req.headers['Auth-Key']);
 });
 
+router.post('/User/Send/:GUID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    SendMessageUser(res, req, GUID, req.headers['Auth-Key']);
+});
+
 router.post('/Channel/Messages/:id', (req, res) => {
     GetMessagesChannel(res, req, req.params.id, req.headers['Auth-Key']);
 });
@@ -614,6 +619,64 @@ async function GetRoles(res, req, GUID, auth){
 
 }
 
+
+
+async function SendMessageUser(res, req, guid, auth){
+    if (CheckServerAuth(auth) || (await CheckAuth(guid, auth) && global.config.AllowClientWrite)){
+        const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+        try{
+            let RawData = req.body; 
+            let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
+            let message = RawData.Message;
+
+            await mongo.connect();
+            // Connect the client to the server        
+            const db = mongo.db(global.config.DB);
+            let collection = db.collection("Players");
+            let query = { GUID: guid };
+            let results = collection.find(query);
+            if ((await results.count()) > 0){
+                let dataarr = await results.toArray(); 
+                let data = dataarr[0]; 
+                if (data.Discord?.id !== undefined){
+                    let id = data.Discord.id;
+                    try {
+                        let user = await guild.members.fetch(id);
+                        user.send(message)
+                        res.status(200);
+                        res.json({Status: "Success", Error: "" });
+                    } catch(e) {
+                        console.log(e);
+                        res.status(200);
+                        res.json({Status: "Error", Error: `Error Sending Message ${e}` });
+                    }
+                } else {
+                    res.status(200);
+                    logobj.Status = "NoDiscord";
+                    res.json({Status: "NoDiscord", Error: "Discord not found for user"  });
+                }
+            } else {
+                logobj.Status = "NoUser";
+                res.status(200);
+                res.json({Status: "NoUser", Error: "No User Found"  });
+            }
+
+        } catch(e){
+            console.log(e);
+            res.status(400);
+            res.json({Status: "Error", Error: `${e}`});
+            log("AUTH ERROR: " + req.url, "warn");
+
+        }finally{
+            
+            await mongo.close();
+        }
+    } else {
+        res.status(401);
+        res.json({Status: "Error", Error: `Invalid Auth Key`});
+        log("AUTH ERROR: " + req.url, "warn");
+    }
+}
 
 
 async function CreateChannel(res, req, auth){
