@@ -114,9 +114,11 @@ function startWebServer() {
   webapp.use('/Random', RouterTrueRandom);
 
   webapp.use('/', (req,res)=>{
+    if (req.url != '/'){
       log("Error invalid or is not a post Requested URL is:" + req.url);
-      res.status(501);
-      res.json({Status: "error", Error: "Reqested bad URL"});
+    }
+    res.status(501);
+    res.json({Status: "Error", Error: "Reqested bad URL"});
   });
   let ServerKey = DefaultCert.Key;
   let ServerCert = DefaultCert.Cert;
