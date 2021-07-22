@@ -66,7 +66,26 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}
 	
-	
+	int UserSend(string guid, string message,  Class instance = NULL, string function = ""){
+		int cid = UApi().CallId();
+		
+		autoptr RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, guid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = "Send/" + guid;
+		
+		if (message != "" && DBCBX){
+			autoptr UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
+			Post(url,obj.ToJson(),DBCBX);	
+			return cid;		
+		}
+		return -1;
+	}
+
 	int GetUser(string GUID, Class instance, string function) {
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
@@ -396,28 +415,6 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		}
 		return -1;
 	}
-	
-	
-	int UserSend(string guid, string message,  Class instance = NULL, string function = ""){
-		int cid = UApi().CallId();
-		
-		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, guid);
-		} else {
-			DBCBX = new UApiSilentCallBack();
-		}
-		
-		string url = "Send/" + guid;
-		
-		if (message != "" && DBCBX){
-			autoptr UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
-			Post(url,obj.ToJson(),DBCBX);	
-			return cid;		
-		}
-		return -1;
-	}
-	
 	
 	int ChannelMessages(string id,  Class instance, string function, autoptr UApiDiscordChannelFilter filter = NULL){
 		int cid = UApi().CallId();
