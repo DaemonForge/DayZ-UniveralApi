@@ -132,15 +132,6 @@ if (config.RateLimitWhiteList === undefined || config.RateLimitWhiteList === nul
     console.log(e)
   }
 }
-if (config.AutoUpdate === undefined){
-  config.AutoUpdate = false;
-  try {
-   writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
-  } catch(e) {
-    console.log(e)
-  }
-}
-
 
 if (config.CreateIndexes === undefined || config.CreateIndexes === null){
   config.CreateIndexes = true;
@@ -150,5 +141,6 @@ if (config.CreateIndexes === undefined || config.CreateIndexes === null){
     console.log(e)
   }
 }
+
 
 module.exports = config;
