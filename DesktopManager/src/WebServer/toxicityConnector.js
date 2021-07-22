@@ -85,7 +85,6 @@ async function runToxicity(req, res, auth, key){
                         res.json(response);
                     });
                 } catch (e){
-                    console.log(e)
                     log(e, "warn")
                     res.status(203);
                     res.json({Status: "Error", Error: `${e}` });

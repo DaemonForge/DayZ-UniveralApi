@@ -43,7 +43,7 @@ try {
         //file exists
       try {
         let QnAconfig = JSON.parse(readFileSync(global.SAVEPATH + "QnAMaker.json")); 
-        console.log(`QnAConfig Present Converting to new format`);
+        log(`QnAConfig Present Converting to new format`);
         if (config.QnA === undefined){
           config.QnA = {};
         }
@@ -58,7 +58,7 @@ try {
         });
         writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
       } catch(e){
-        console.log(e)
+		log(`${e}`, "warn")
       }
   }
 } catch(err) {
@@ -111,7 +111,7 @@ if (config.Discord === undefined){
  try {
   writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
  } catch(e) {
-   console.log(e)
+   log(`${e}`, "warn")
  }
 }
 
@@ -120,7 +120,7 @@ if (config.CheckForNewVersion === undefined || config.CheckForNewVersion === nul
   try {
    writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
   } catch(e) {
-    console.log(e)
+   log(`${e}`, "warn")
   }
 }
 
@@ -129,7 +129,7 @@ if (config.RateLimitWhiteList === undefined || config.RateLimitWhiteList === nul
   try {
    writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
   } catch(e) {
-    console.log(e)
+   log(`${e}`, "warn")
   }
 }
 
@@ -138,7 +138,7 @@ if (config.CreateIndexes === undefined || config.CreateIndexes === null){
   try {
    writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
   } catch(e) {
-    console.log(e)
+   log(`${e}`, "warn")
   }
 }
 

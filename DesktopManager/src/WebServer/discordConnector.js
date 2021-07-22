@@ -622,65 +622,46 @@ async function GetRoles(res, req, GUID, auth){
 
 
 async function SendMessageUser(res, req, guid, auth){
-    if (CheckServerAuth(auth) || (await CheckAuth(guid, auth) && global.config.AllowClientWrite)){
-        const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
-        try{
-            let RawData = req.body; 
-            let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
-            let message = RawData.Message;
-
-            await mongo.connect();
-            // Connect the client to the server        
-            const db = mongo.db(global.config.DB);
-            let collection = db.collection("Players");
-            let query = { GUID: guid };
-            let results = collection.find(query);
-            if ((await results.count()) > 0){
-                let dataarr = await results.toArray(); 
-                let data = dataarr[0]; 
-                if (data.Discord?.id !== undefined){
-                    let id = data.Discord.id;
-                    try {
-                        let user = await guild.members.fetch(id);
-                        user.send(message)
-                        res.status(200);
-                        res.json({Status: "Success", Error: "" });
-                    } catch(e) {
-                        console.log(e);
-                        res.status(200);
-                        res.json({Status: "Error", Error: `Error Sending Message ${e}` });
-                    }
-                } else {
-                    res.status(200);
-                    logobj.Status = "NoDiscord";
-                    res.json({Status: "NoDiscord", Error: "Discord not found for user"  });
-                }
-            } else {
-                logobj.Status = "NoUser";
+    if (CheckServerAuth(auth) || (await CheckPlayerAuth(guid, auth))){
+        let RawData = req.body; 
+        let guild = client.guilds.fetch(global.config.Discord.Guild_Id);
+        let message = RawData.Message;
+        let userObj = await GetDiscordObj(guid);
+        guild = await guild;
+        if (userObj !== undefined && userObj.id !== "0" && userObj.id !== ""){
+            try {
+                let user = await guild.members.fetch(userObj.id);
+                let result = await user.send(message);
+                log(`Successfully sent Discord Direct Message to ${guid}`);
                 res.status(200);
-                res.json({Status: "NoUser", Error: "No User Found"  });
+                res.json({Status: "Success", Error: "" });
+            } catch(e) {
+                let error = `${e}`;
+                if (error === `DiscordAPIError: Cannot send messages to this user`){
+                    log(`Error sending message to ${guid} they block dms - ${e}`,"warn");
+                    res.status(200);
+                    res.json({Status: "Failed", Error: `Cannot send messages to this user` });
+                } else {
+                    log(`Error sending message to ${guid} - ${e}`,"warn");
+                    res.status(500);
+                    res.json({Status: "Error", Error: `${e}` });
+                }
             }
-
-        } catch(e){
-            console.log(e);
-            res.status(400);
-            res.json({Status: "Error", Error: `${e}`});
-            log("AUTH ERROR: " + req.url, "warn");
-
-        }finally{
-            
-            await mongo.close();
+        } else {
+            log(`Failed to send Discord Direct Message to ${guid} user not configured`);
+            res.status(200);
+            res.json({Status: "NotFound", Error: "Discord User Found"  });
         }
     } else {
         res.status(401);
-        res.json({Status: "Error", Error: `Invalid Auth Key`});
+        res.json({Status: "Error", Error: `Invalid Auth`});
         log("AUTH ERROR: " + req.url, "warn");
     }
 }
 
 
 async function CreateChannel(res, req, auth){
-    if (CheckServerAuth(auth) || (await CheckAuth(GUID, auth) && global.config.AllowClientWrite)){
+    if (CheckServerAuth(auth) || (await CheckAuth(auth) && global.config.AllowClientWrite)){
         try{
             let RawData = req.body; 
             let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
@@ -700,7 +681,7 @@ async function CreateChannel(res, req, auth){
         }
     } else {
         res.status(401);
-        res.json({Status: "Error", Error: `Invalid Auth Key`, oid: "0"});
+        res.json({Status: "Error", Error: `Invalid Auth`, oid: "0"});
         log("AUTH ERROR: " + req.url, "warn");
     }
 }
@@ -741,7 +722,7 @@ async function DeleteChannel(res, req, id, auth){
         }
     } else {
         res.status(401);
-        res.json({Status: "Error", Error: `Invalid Auth Key`, oid: "0"});
+        res.json({Status: "Error", Error: `Invalid Auth`, oid: "0"});
         log("AUTH ERROR: " + req.url, "warn");
     }
 }
@@ -782,7 +763,7 @@ async function EditChannel(res, req, id, auth){
         }
     } else {
         res.status(401);
-        res.json({Status: "Error", Error: `Invalid Auth Key`, oid: "0"});
+        res.json({Status: "Error", Error: `Invalid Auth`, oid: "0"});
         log("AUTH ERROR: " + req.url, "warn");
     }
 }
@@ -849,7 +830,7 @@ async function SendMessageChannel(res, req, id, auth){
         }
     } else {
         res.status(401);
-        res.json({Status: "Error", Error: `Invalid Auth Key`, oid: "0"});
+        res.json({Status: "Error", Error: `Invalid Auth`, oid: "0"});
         log("AUTH ERROR: " + req.url, "warn");
     }
 }
@@ -867,10 +848,9 @@ async function GetMessagesChannel(res, req, id, auth){
             GUID = AuthPlayerGuid(auth);
             //console.log(GUID)
             isClientAuth = (CheckPlayerAuth(GUID, auth));
-            did = GetDiscordObj(GUID);
-            isClientAuth = await isClientAuth;
             //console.log(isClientAuth)
             did = (await GetDiscordObj(GUID)).id;
+            isClientAuth = await isClientAuth;
             //console.log(did)
         }
     }
@@ -946,19 +926,19 @@ async function CheckId(res, req, id, guid){
                     res.json({Status: "Success", Error: "" });
                 } else {
                     res.status(200);
-                    logobj.Status = "NoDiscord";
-                    res.json({Status: "NoDiscord", Error: "Discord found for user"  });
+                    logobj.Status = "NotFound";
+                    res.json({Status: "NotFound", Error: "Discord could not be found for user"  });
                 }
             } else {
-                logobj.Status = "NoUser";
+                logobj.Status = "NotFound";
                 res.status(200);
-                res.json({Status: "NoUser", Error: "No User Found"  });
+                res.json({Status: "NotFound", Error: "No User Found"  });
             }
             //await Logcollection.insertOne(logobj);
             log(`Check status for user: ${guid} - ${datetime.toUTCString()} - ${logobj.Status}`)
         } catch(err){
             log("Error Checking for ID " + guid + " err" + err, "warn");
-            res.status(200);
+            res.status(400);
             res.json({Status: "Error", Error: err });
         } finally{
             await mongo.close();

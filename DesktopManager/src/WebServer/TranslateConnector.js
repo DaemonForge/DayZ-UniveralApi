@@ -107,7 +107,6 @@ async function runTranslate(req, res, auth){
             res.json(response);
             
         }catch(e) {
-            console.log(e);
             res.status(200);
             res.json({Status: "Error", Error: `${e}`, Translations: [{ text: "NA", to: "NA"} ], Detected: "NA"});
             log(`Translation an error: ${e}`)
