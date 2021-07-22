@@ -99,8 +99,8 @@ async function runToxicity(req, res, auth, key){
             res.json({Status: "Error", Error: `${e}` });
         }
     } else {
-        res.status(203);
-        res.json({Status: "NoAuth", Error: "Invalid Auth" });
+        res.status(401);
+        res.json({Status: "Error", Error: "Invalid Auth" });
     }
 
 }

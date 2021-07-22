@@ -112,8 +112,8 @@ async function runQuery(req, res, mod, auth, COLL) {
             await client.close();
         }
     } else {
-        res.status(203);
-        res.json({Status: "NoAuth", Count: 0, Results: [] });
+        res.status(401);
+        res.json({Status: "Error", Error: "Invalid Auth", Count: 0, Results: [] });
     }
 };
 

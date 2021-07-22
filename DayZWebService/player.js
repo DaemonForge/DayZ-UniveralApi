@@ -232,7 +232,7 @@ async function runUpdate(req, res, GUID, mod, auth) {
         }
     } else {
         res.status(401);
-        res.json({ Status: "NoAuth", Element: element, Mod: mod, ID: GUID});
+        res.json({ Status: "Error", Error: "Invalid Auth", Element: element, Mod: mod, ID: GUID});
         log("AUTH ERROR: " + req.url, "warn");
     }
 };

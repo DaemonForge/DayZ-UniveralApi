@@ -71,7 +71,7 @@ async function runTransaction(req, res, mod, id, auth, COLL){
         }
     } else {
         res.status(203);
-        res.json({Status: "NoAuth", ID: id, Value: 0, Element: RawData.Element });
+        res.json({Status: "Error", Error: "Invalid Auth", ID: id, Value: 0, Element: RawData.Element });
     }
 
 }

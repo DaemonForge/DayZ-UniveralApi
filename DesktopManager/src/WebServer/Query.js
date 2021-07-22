@@ -113,7 +113,7 @@ async function runQuery(req, res, mod, auth, COLL) {
         }
     } else {
         res.status(203);
-        res.json({Status: "NoAuth", Count: 0, Results: [] });
+        res.json({Status: "Error", Error: "NoAuth", Count: 0, Results: [] });
     }
 };
 

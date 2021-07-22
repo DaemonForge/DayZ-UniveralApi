@@ -38,12 +38,12 @@ router.post('', (req, res)=>{
             QnAconf = global.config.QnA["main"];
         } else if (global.config.QnA === undefined || global.config.QnA["main"] === undefined){
             log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
-            return res.json({answer: "error", score: 0});
+            return res.json({Status: "Error", answer: "error", score: 0});
         }
         runQnA(req, res,req.headers['Auth-Key'], QnAconf);
     } catch (err){ //If the file doesn't exsit give a nice usable json for DayZ
         log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
-        res.json({answer: "error", score: 0});
+        res.json({Status: "Error",answer: "error", score: 0});
     }
 });
 
@@ -58,12 +58,12 @@ router.post('/:key', (req, res)=>{
                 QnAconf = global.config.QnA["main"];
             } else if (global.config.QnA === undefined || global.config.QnA["main"] === undefined){
                 log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
-                return res.json({answer: "error", score: 0});
+                return res.json({Status: "Error", answer: "error", score: 0});
             }
             runQnA(req, res, key, QnAconf);
         } catch (err){ //If the file doesn't exsit give a nice usable json for DayZ
             log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
-            res.json({answer: "error", score: 0});
+            res.json({Status: "Error", answer: "error", score: 0});
         }
     }
 });
@@ -97,14 +97,13 @@ async function runQnA(req, res, auth, QnAconfig){
                 WriteQuestionToDataBase(question);
             }
         }catch(e) {
-            res.status(200);
-            res.json({Status: "Error", answer: "", score: 0, Error:  `${e}`});
-            log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
-            log('Catch an error: ', e)
+            res.status(400);
+            res.json({Status: "Error", Error: `${e}`, answer: "", score: 0, Error:  `${e}`});
+            log(`Error Getting response from QnA Endpoint: ${e}`, "warn");
         }
     }else{
         res.status(401);
-        res.json({Status: "Error", answer: "Error", score: 0, Error: ""});
+        res.json({Status: "Error", answer: "Error", score: 0, Error: "Auth Error"});
         log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
     }
 }

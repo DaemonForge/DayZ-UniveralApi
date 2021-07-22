@@ -155,8 +155,8 @@ async function runTransaction(req, res, mod, auth){
             await client.close();
         }
     } else {
-        res.status(203);
-        res.json({Status: "NoAuth", ID: mod, Value: 0, Element: RawData.Element });
+        res.status(401);
+        res.json({Status: "Error", Error: "Invalid Auth", ID: mod, Value: 0, Element: RawData.Element });
     }
 
 }
@@ -228,7 +228,7 @@ async function runUpdate(req, res, mod, auth) {
         }
     } else {
         res.status(401);
-        res.json({ Status: "NoAuth", Element: element, Mod: mod, ID: "Globals"});
+        res.json({ Status: "Error", Error: "Invalid Auth" , Element: element, Mod: mod, ID: "Globals"});
         log("AUTH ERROR: " + req.url, "warn");
     }
 };

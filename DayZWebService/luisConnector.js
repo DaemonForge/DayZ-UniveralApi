@@ -82,7 +82,7 @@ async function runLUIS(req, res, auth, key){
         }
     }else{
         res.status(401);
-        res.json({Status: "Error", Error: "Invlaid Auth Token"});
+        res.json({Status: "Error", Error: "Invlaid Auth"});
         log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
     }
 }
