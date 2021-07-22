@@ -408,7 +408,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		string url = "User/Send/" + guid;
+		string url = "Send/" + guid;
 		
 		if (message != "" && DBCBX){
 			autoptr UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);

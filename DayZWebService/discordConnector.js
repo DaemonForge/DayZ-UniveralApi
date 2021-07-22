@@ -178,7 +178,7 @@ router.post('/Channel/Send/:id', (req, res) => {
     SendMessageChannel(res, req, req.params.id, req.headers['Auth-Key']);
 });
 
-router.post('/User/Send/:GUID', (req, res) => {
+router.post('/Send/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
     SendMessageUser(res, req, GUID, req.headers['Auth-Key']);
 });
