@@ -86,7 +86,7 @@ function startWebServer() {
         limit: '64mb'
     })(req, res, (err) => {
         if (err) {
-            console.log("Bad Request Sent");
+            log(`Bad Request Sent to "${req.url}" Error: ${err}`);
             res.status(400);
             res.json({Status: "error", Error: `Bad Request ${err}`});
             return;
