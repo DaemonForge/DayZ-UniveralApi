@@ -924,11 +924,11 @@ async function GetMessagesChannel(res, req, id, auth){
 }
 
 async function CheckId(res, req, id, guid){
-    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+    const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
-            await client.connect();
+            await mongo.connect();
             // Connect the client to the server        
-            const db = client.db(global.config.DB);
+            const db = mongo.db(global.config.DB);
             let collection = db.collection("Players");
             let query = { GUID: guid };
             let results = collection.find(query);
@@ -961,7 +961,7 @@ async function CheckId(res, req, id, guid){
             res.status(200);
             res.json({Status: "Error", Error: err });
         } finally{
-            await client.close();
+            await mongo.close();
         }
 }
 
