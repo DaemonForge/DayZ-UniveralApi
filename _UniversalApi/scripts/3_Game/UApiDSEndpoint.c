@@ -184,7 +184,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, UApiChannelCreateOptions.Cast(Options));
+		autoptr UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, UApiChannelCreateOptions.Cast(Options));
 		
 		if (obj){
 			string url = "Channel/Create";
@@ -209,7 +209,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, UApiChannelCreateOptions.Cast(Options));
+		autoptr UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, UApiChannelCreateOptions.Cast(Options));
 		
 		if (obj){
 			string url = "Channel/Create";
@@ -234,7 +234,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, NULL);
+		autoptr UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, NULL);
 		
 		if (obj){
 			string url = "Channel/Delete/" + id;
@@ -256,7 +256,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, NULL);
+		autoptr UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, NULL);
 		
 		if (obj){
 			string url = "Channel/Delete/" + id;
@@ -278,7 +278,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, UApiChannelUpdateOptions.Cast(options));
+		autoptr UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, UApiChannelUpdateOptions.Cast(options));
 		
 		if (obj){
 			string url = "Channel/Edit/" + id;
@@ -300,7 +300,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, UApiChannelUpdateOptions.Cast(options));
+		autoptr UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, UApiChannelUpdateOptions.Cast(options));
 		
 		if (obj){
 			string url = "Channel/Edit/" + id;
@@ -322,7 +322,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
+		autoptr UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
 		
 		if (obj){
 			string url = "Channel/Send/" + id;
@@ -344,7 +344,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
+		autoptr UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
 		
 		if (obj){
 			string url = "Channel/Send/" + id;
