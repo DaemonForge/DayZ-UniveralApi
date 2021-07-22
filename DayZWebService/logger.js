@@ -73,13 +73,13 @@ async function runLoggerOne(req, res, id, auth) {
             
             const result = await collection.insertOne(RawData);
             if (result.result.ok == 1){
-                res.json({Status: "ok"});
+                res.json({Status: "Success", Error: ""});
                 log(`New Log Registered from ${RawData.ClientType} - Device ID: ${RawData.ClientId}`);
             // log("Status Check Called", "info"); 
             } else {
                 log("ERROR: Database Write Error", "warn");
                 res.status(500);
-                res.json({Status: "error", Error: "Database Write Error"});
+                res.json({Status: "Error", Error: "Database Write Error"});
             }
         }catch(err){
             log("ERROR: " + err, "warn");
@@ -117,16 +117,16 @@ async function runLoggerMany(req, res, id, auth) {
             });
             const result = await collection.insertMany(RawData);
             if (result.result.ok == 1){
-                res.json({Status: "ok"});
+                res.json({Status: "Success", Error: "" });
                 log(`New Log Array Registered from ${ClientType} - Device ID: ${ClientId}`);
             } else {
                 res.status(500);
-                res.json({Status: "error", Error: "Database Write Error"});
+                res.json({Status: "Error", Error: "Database Write Error"});
                 log("ERROR: Database Write Error", "warn");
             }
         }catch(err){
             res.status(500);
-            res.json({Status: "error", Error: err});
+            res.json({Status: "Error", Error: err});
             log("ERROR: " + err, "warn");
         }finally{
             // Ensures that the client will close when you finish/error

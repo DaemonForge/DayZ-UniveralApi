@@ -114,7 +114,7 @@ async function runTranslate(req, res, auth){
         }
     }else{
         res.status(401);
-        res.json({Status: "Error", Error: "Invlaid Auth Token", Translations: [{ text: "NA", to: "NA"} ], Detected: "NA"});
+        res.json({Status: "Error", Error: "Invlaid Auth", Translations: [{ text: "NA", to: "NA"} ], Detected: "NA"});
         log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
     }
 }
@@ -178,7 +178,7 @@ async function runLibreTranslate(req, res, auth){
         }
     }else{
         res.status(401);
-        res.json({Status: "Error", Error: "Invlaid Auth Token", Translations: [{ text: "NA", to: "NA"} ], Detected: "NA"});
+        res.json({Status: "Error", Error: "Invlaid Auth", Translations: [{ text: "NA", to: "NA"} ], Detected: "NA"});
         log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
     }
 }

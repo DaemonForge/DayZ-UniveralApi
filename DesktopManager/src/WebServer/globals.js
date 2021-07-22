@@ -228,7 +228,7 @@ async function runUpdate(req, res, mod, auth) {
         }
     } else {
         res.status(401);
-        res.json({ Status: "Error", Error: "Invalid Auth", Element: element, Mod: mod, ID: "Globals"});
+        res.json({ Status: "Error", Error: "Invalid Auth" , Element: element, Mod: mod, ID: "Globals"});
         log("AUTH ERROR: " + req.url, "warn");
     }
 };

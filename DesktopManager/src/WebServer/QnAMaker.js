@@ -97,7 +97,7 @@ async function runQnA(req, res, auth, QnAconfig){
                 WriteQuestionToDataBase(question);
             }
         }catch(e) {
-            res.status(500);
+            res.status(400);
             res.json({Status: "Error", Error: `${e}`, answer: "", score: 0, Error:  `${e}`});
             log(`Error Getting response from QnA Endpoint: ${e}`, "warn");
         }

@@ -70,7 +70,7 @@ async function runTransaction(req, res, mod, id, auth, COLL){
             await client.close();
         }
     } else {
-        res.status(203);
+        res.status(401);
         res.json({Status: "Error", Error: "Invalid Auth", ID: id, Value: 0, Element: RawData.Element });
     }
 

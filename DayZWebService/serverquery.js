@@ -142,7 +142,7 @@ async function GetServerStatus(req, res, ip, port, auth){
             return;
     } else {
         res.status(401);
-        res.json({Status: "NoAuth", Error: "" });
+        res.json({Status: "Error", Error: "Invalid Auth" });
         return;
     }
 }
