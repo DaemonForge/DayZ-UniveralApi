@@ -34,9 +34,6 @@ router.post('', (req, res)=>{
     runToxicity(req, res, req.headers['Auth-Key']);
 });
 
-router.post('/:auth', (req, res)=>{
-    runToxicity(req, res, req.params.auth);
-});
 // The minimum prediction confidence.
 const threshold = 0.8;
 

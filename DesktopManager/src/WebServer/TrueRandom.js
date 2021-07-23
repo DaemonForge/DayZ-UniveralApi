@@ -30,9 +30,6 @@ router.use(limiter);
 router.post('', (req, res)=>{
     GetRandom(req, res, req.headers['Auth-Key']);
 });
-router.post('/:auth', (req, res)=>{
-    GetRandom(req, res, req.params.auth);
-});
 
 async function GetRandom(req, res, auth){
     if ( CheckServerAuth( auth ) || (await CheckAuth( auth )) ){

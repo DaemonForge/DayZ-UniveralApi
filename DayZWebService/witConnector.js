@@ -33,7 +33,7 @@ router.use(limiter);
 const clients = {};
   
   
-router.post('/:key/:auth', (req, res)=>{
+router.post('/:key', (req, res)=>{
     let key = req.params.key;
     //console.log(key);
     if (clients[key] === undefined || clients[key] === null) {
@@ -45,7 +45,7 @@ router.post('/:key/:auth', (req, res)=>{
         clients[key] = new Wit({accessToken: token});
         //console.log(clients);
     }
-    AskWit(req, res, key, req.params.auth);
+    AskWit(req, res, key, req.headers['Auth-Key']);
 });
 
 

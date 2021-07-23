@@ -19,33 +19,14 @@ router.post('/Load/:GUID/:mod', (req, res)=>{
     let GUID = NormalizeToGUID(req.params.GUID);
     runGet(req, res, GUID, req.params.mod, req.headers['Auth-Key']);
 });
-router.post('/Load/:GUID/:mod/:auth', (req, res)=>{
-    let GUID = NormalizeToGUID(req.params.GUID);
-    runGet(req, res, GUID, req.params.mod, req.params.auth);
-});
 router.post('/Save/:GUID/:mod', (req, res)=>{
     let GUID = NormalizeToGUID(req.params.GUID);
     runSave(req, res, GUID, req.params.mod, req.headers['Auth-Key']);
 });
 
-router.post('/Save/:GUID/:mod/:auth', (req, res)=>{
-    let GUID = NormalizeToGUID(req.params.GUID);
-    runSave(req, res, GUID, req.params.mod, req.params.auth);
-});
-
 router.post('/Update/:GUID/:mod', (req, res)=>{
     let GUID = NormalizeToGUID(req.params.GUID);
     runUpdate(req, res, GUID, req.params.mod, req.headers['Auth-Key']);
-});
-router.post('/Update/:GUID/:mod/:auth', (req, res)=>{
-    let GUID = NormalizeToGUID(req.params.GUID);
-    runUpdate(req, res, GUID, req.params.mod, req.params.auth);
-});
-
-
-router.post('/PublicLoad/:GUID/:mod/:auth', (req, res)=>{
-    let GUID = NormalizeToGUID(req.params.GUID);
-    runGetPublic(req, res, GUID, req.params.mod, req.params.auth);
 });
 
 router.post('/PublicLoad/:GUID/:mod', (req, res)=>{
@@ -56,10 +37,6 @@ router.post('/PublicLoad/:GUID/:mod', (req, res)=>{
 router.post('/PublicSave/:GUID/:mod', (req, res)=>{
     let GUID = NormalizeToGUID(req.params.GUID);
     runSavePublic(req, res, GUID, req.params.mod, req.headers['Auth-Key']);
-});
-router.post('/PublicSave/:GUID/:mod/:auth', (req, res)=>{
-    let GUID = NormalizeToGUID(req.params.GUID);
-    runSavePublic(req, res, GUID, req.params.mod, req.params.auth);
 });
 
 async function runGet(req, res, GUID, mod, auth) {

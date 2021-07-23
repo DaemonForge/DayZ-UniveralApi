@@ -52,28 +52,9 @@ router.post('/:key', (req, res)=>{
     if (global.config.QnA !== undefined && global.config.QnA[key] !== undefined){
         runQnA(req, res, req.headers['Auth-Key'], global.config.QnA[key]);
     } else {
-        try{
-            //Use this meathod to find the file so that way the config file can be outside of the packaged Applications
-            if (QnAconf === undefined && global.config.QnA !== undefined && global.config.QnA["main"] !== undefined){
-                QnAconf = global.config.QnA["main"];
-            } else if (global.config.QnA === undefined || global.config.QnA["main"] === undefined){
-                log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
-                return res.json({Status: "Error", answer: "error", score: 0});
-            }
-            runQnA(req, res, key, QnAconf);
-        } catch (err){ //If the file doesn't exsit give a nice usable json for DayZ
-            log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
-            res.json({Status: "Error", answer: "error", score: 0});
-        }
-    }
-});
-router.post('/:key/:auth', (req, res)=>{
-    let key = req.params.key;
-    if (global.config.QnA !== undefined && global.config.QnA[key] !== undefined){
-        runQnA(req, res, req.params.auth, global.config.QnA[key]);
-    } else { //If the file doesn't exsit give a nice usable json for DayZ
-        log(`A QnA Request came in but it seems QnAMaker for ${key} is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up`);
-        res.json({Status: "Error", Error: "Key not configured", answer: "error", score: 0});
+        //If the file doesn't exsit give a nice usable json for DayZ
+        log("A QnA Request came in but it seems QnAMaker is not set up yet, please go to https://github.com/daemonforge/DayZ-UniveralApi/wiki/Setting-Up-QnA-Maker to learn how to set it up");
+        res.json({Status: "Error", answer: "error", score: 0});
     }
 });
 

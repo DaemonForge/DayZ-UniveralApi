@@ -46,16 +46,6 @@ router.post('', (req, res)=>{
         res.json({Status: "Error"});
     }
 });
-router.post('/:auth', (req, res)=>{
-    if (global.config.Translate !== undefined && global.config.Translate.Type == "Microsoft" && global.config.Translate.SubscriptionKey !== ""){
-        runTranslate(req, res, req.params.auth);
-    } else if (global.config.Translate !== undefined &&  global.config.Translate.Type == "LibreTranslate"){
-        runLibreTranslate(req, res, req.params.auth);
-    } else { //If the file doesn't exsit give a nice usable json for DayZ
-        log(`A Tranlation Request came in but isn't set up yet`);
-        res.json({Status: "Error"});
-    }
-});
 
 async function runTranslate(req, res, auth){
     if ( CheckServerAuth( auth ) || (await CheckAuth( auth )) ){

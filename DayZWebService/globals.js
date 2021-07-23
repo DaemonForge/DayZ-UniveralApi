@@ -25,21 +25,6 @@ router.post('/Update/:mod', (req, res)=>{
     runUpdate(req, res, req.params.mod, req.headers['Auth-Key']);
 });
 
-router.post('/Load/:mod/:auth', (req, res)=>{
-    runGet(req, res, req.params.mod, req.params.auth);
-});
-
-router.post('/Save/:mod/:auth', (req, res)=>{
-    runSave(req, res, req.params.mod, req.params.auth);
-});
-
-router.post('/Transaction/:mod/:auth', (req, res)=>{
-    runTransaction(req, res, req.params.mod, req.params.auth);
-});
-
-router.post('/Update/:mod/:auth', (req, res)=>{
-    runUpdate(req, res, req.params.mod, req.params.auth);
-});
 async function runGet(req, res, mod, auth) {
     let RawData = req.body;
     if (CheckServerAuth(auth)|| (await CheckAuth(auth)) ){
