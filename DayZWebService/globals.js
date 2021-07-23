@@ -147,18 +147,20 @@ async function runTransaction(req, res, mod, auth){
 }
 async function runUpdate(req, res, mod, auth) {
     if ( CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite) ){
+        let RawData = req.body;
         const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
             await client.connect();
 
-            let RawData = req.body;
             let element = RawData.Element;
             let operation = RawData.Operation || "set";
-            let StringData;
+            let StringData = RawData.Value;
             if (isObject(RawData.Value)){
                 StringData = JSON.stringify(RawData.Value);
             } else if (isArray(RawData.Value)) {
                 StringData = JSON.stringify(RawData.Value);
+            } else if (`${StringData}`.match(/^-?(0|[1-9]\d*)(\.\d+)?$/g)){
+                StringData = RawData.Value * 1;
             } else {
                 StringData = RawData.Value;
             }
@@ -167,13 +169,13 @@ async function runUpdate(req, res, mod, auth) {
             let collection = db.collection("Globals");
             let query = { Mod: mod };
             const options = { upsert: false };
-            const jsonString = "{ \"Data."+element+"\": "+ StringData + " }";
+            let jsonString = `{ "Data.${element}": ${StringData} }`;
             let updateDocValue ;
             
             try { //should use regex to check for a string without " but being lazy
                 updateDocValue  = JSON.parse(jsonString);
             } catch (e){
-                jsonString = "{ \"Data."+element+"\": \""+ StringData + "\" }";
+                jsonString = `{ "Data.${element}": "${StringData}" }`;
                 updateDocValue  = JSON.parse(jsonString);
             }
             
@@ -204,16 +206,17 @@ async function runUpdate(req, res, mod, auth) {
                 res.json({ Status: "Error", Element: element, Mod: mod, ID: "Globals"});
             }
         }catch(err){
+            //console.log(err)
+            log(`ERROR: ${err}`, "warn");
             res.status(203);
-            res.json({ Status: "Error", Element: element, Mod: mod, ID: "Globals"});
-            log("ERROR: " + err, "warn");
+            res.json({ Status: "Error", Element: RawData.Element, Mod: RawData.mod, ID: "Globals"});
         }finally{
             // Ensures that the client will close when you finish/error
             await client.close();
         }
     } else {
         res.status(401);
-        res.json({ Status: "Error", Error: "Invalid Auth" , Element: element, Mod: mod, ID: "Globals"});
+        res.json({ Status: "Error", Error: "Invalid Auth" , Element: "", Mod: mod, ID: "Globals"});
         log("AUTH ERROR: " + req.url, "warn");
     }
 };
