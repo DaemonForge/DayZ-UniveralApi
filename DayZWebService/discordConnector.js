@@ -54,7 +54,11 @@ try {
 
 client.on('ready', () => {
     global.DISCORDSTATUS = "Enabled";
-    log(`Discord Intergration Ready and is Logged in as ${client.user.tag}!`);
+    let tag = "NULL";
+    if (client && client.user){
+        tag = client.user.tag;
+    }
+    log(`Discord Intergration Ready and is Logged in as ${tag}!`);
   });
 
 if (!existsSync(global.SAVEPATH + 'templates')) mkdirSync(global.SAVEPATH + 'templates');
