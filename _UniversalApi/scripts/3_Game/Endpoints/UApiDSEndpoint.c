@@ -164,7 +164,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		
 		string url = baseUrl + "Discord/Check/" + PlainId;
 		
-		UApi().Rest().Post(url,"{}",DBCBX);
+		UApi().Post(url,"{}",DBCBX);
 		
 		return cid;
 	}
@@ -184,7 +184,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		
 		string url = baseUrl + "Discord/Check/" + PlainId;
 		
-		UApi().Rest().Post(url,"{}",DBCBX);
+		UApi().Post(url,"{}",DBCBX);
 		
 		return cid;
 	}

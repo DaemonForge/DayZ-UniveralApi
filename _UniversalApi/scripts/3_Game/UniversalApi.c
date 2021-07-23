@@ -333,11 +333,11 @@ class UniversalApi extends Managed {
 		DiscordMessage.content = message;
 		DiscordMessage.username = botName;
 		DiscordMessage.avatar_url = botAvatarUrl;
-		Rest().Post(webhookUrl, DiscordMessage.ToJson());
+		this.Post(webhookUrl, DiscordMessage.ToJson());
 	}
 	
 	void DiscordObject(string webhookUrl, UApiDiscordObject discordObject){
-		Rest().Post(webhookUrl, discordObject.ToJson());
+		this.Post(webhookUrl, discordObject.ToJson());
 	} 
 	
 	
@@ -352,17 +352,14 @@ class UniversalApi extends Managed {
 			UCBX = new UApiQnACallBack;
 		}
 		
-		if (auth == "" ){
-			auth = UApi().GetAuthToken();
-		}
 		if (jsonString == "{}" && question != "" ){
 			QnAQuestion QuestionObj = new QnAQuestion(question);
 			jsonString = QuestionObj.ToJson();
 		}
-		string url = Rest().BaseUrl() + "QnAMaker";
+		string url = UApiConfig().GetBaseURL() + "QnAMaker";
 		
 		if (jsonString != "{}" ){
-			Rest().Post(url,jsonString,UCBX);
+			this.Post(url,jsonString,UCBX,GetAuthToken());
 		} else {
 			Print("[UAPI] [Api] Error Asking Question ");
 		}
