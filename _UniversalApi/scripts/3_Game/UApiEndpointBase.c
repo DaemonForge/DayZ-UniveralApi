@@ -31,4 +31,8 @@ class UApiBaseEndpoint extends Managed {
 		Api().POST(UCBX, route, jsonString);
 	}
 	
+	void UpdateAuthToken(){
+		m_Context.SetHeader(AuthToken());
+	}
+	
 }

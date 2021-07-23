@@ -137,8 +137,17 @@ class UniversalApi extends Managed {
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnTokenReceived);
 	}
 	
-	void OnTokenReceived(){
+	protected void UpdateAllAuthTokens(){
+		this.ds().UpdateAuthToken();
+		this.db(PLAYER_DB).UpdateAuthToken();
+		this.db(OBJECT_DB).UpdateAuthToken();
+		this.globals().UpdateAuthToken();
+		this.api().UpdateAuthToken();
+	}
+	
+	protected void OnTokenReceived(){
 		Print("[UAPI] OnTokenReceived");
+		UpdateAllAuthTokens();
 		int cid = UApi().api().Status(this, "CBStatusCheck");
 		if (m_UniversalApiConfig.QnAEnabled){
 			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(NULL), true);
