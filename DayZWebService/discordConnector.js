@@ -801,7 +801,10 @@ async function SendMessageChannel(res, req, id, auth){
                 let user = await guild.members.fetch(did);
                 //console.log(channel)
                 if (channel && user){
-                    let perms = (channel.permissionsFor(user).has('VIEW_CHANNEL') && channel.permissionsFor(user).has('SEND_MESSAGES'));
+                    let perms = false;
+                    if (isClientAuth){
+                        perms = (channel.permissionsFor(user).has('VIEW_CHANNEL') && channel.permissionsFor(user).has('SEND_MESSAGES'));
+                    }
                     //console.log(perms)
                     if (isServerAuth || (isClientAuth && perms)){
                         let msg = await channel.send(message);
@@ -846,12 +849,9 @@ async function GetMessagesChannel(res, req, id, auth){
        // console.log(isClientAuth)
         if (isClientAuth){
             GUID = AuthPlayerGuid(auth);
-            //console.log(GUID)
             isClientAuth = (CheckPlayerAuth(GUID, auth));
-            //console.log(isClientAuth)
             did = (await GetDiscordObj(GUID)).id;
             isClientAuth = await isClientAuth;
-            //console.log(did)
         }
     }
     if ( isServerAuth || isClientAuth){
@@ -868,8 +868,10 @@ async function GetMessagesChannel(res, req, id, auth){
                 let user = await guild.members.fetch(did);
                 //console.log(channel)
                 if (channel && user){
-                    let perms = (channel.permissionsFor(user).has('VIEW_CHANNEL') && channel.permissionsFor(user).has('READ_MESSAGE_HISTORY')); 
-                    
+                    let perms = false;
+                    if (isClientAuth){
+                        perms = (channel.permissionsFor(user).has('VIEW_CHANNEL') && channel.permissionsFor(user).has('READ_MESSAGE_HISTORY')); 
+                    }
                     if (isServerAuth || (isClientAuth && perms)){
                         let messages = (await channel.messages.fetch(filter)).array();
                         //console.log(messages);
