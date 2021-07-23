@@ -334,7 +334,7 @@ class UniversalApi extends Managed {
 	
 	
 	////This will be removed and moved to the UApi().api().QnA()
-	void QnA(string question, bool alwaysAnswer = true, ref RestCallback UCBX = NULL, string jsonString = "{}", string auth = ""){
+	void QnA(string question, bool alwaysAnswer = true, ref RestCallback UCBX = NULL, string jsonString = "{}"){
 		
 		if (!UCBX && alwaysAnswer){
 			UApiQnACallBack QnACBX = new UApiQnACallBack;
@@ -351,7 +351,7 @@ class UniversalApi extends Managed {
 			QnAQuestion QuestionObj = new QnAQuestion(question);
 			jsonString = QuestionObj.ToJson();
 		}
-		string url = Rest().BaseUrl() + "QnAMaker/" + auth;
+		string url = Rest().BaseUrl() + "QnAMaker";
 		
 		if (jsonString != "{}" ){
 			Rest().Post(url,jsonString,UCBX);
@@ -361,7 +361,7 @@ class UniversalApi extends Managed {
 	}
 	
 	
-	string ErrorToString(int ErrorCode){
+	static string ErrorToString(int ErrorCode){
 		switch ( ErrorCode )
 		{
 			case ERestResultState.EREST_EMPTY:
