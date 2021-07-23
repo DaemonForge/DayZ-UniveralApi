@@ -7,7 +7,7 @@ modded class MissionBaseWorld
 	}
 	
 	void UniversalApiReadyTokenReceived(){
-		Print("[UAPI] MissionBaseWorld - UniversalApiReadyTokenReceived");
+		//Print("[UAPI] MissionBaseWorld - UniversalApiReadyTokenReceived");
 		if (!UApiIsInitialized()){
 			m_UApi_Initialized = true;
 			UniversalApiReady();
@@ -16,7 +16,7 @@ modded class MissionBaseWorld
 	}
 	
 	void UniversalApiReady(){
-		Print("[UAPI] MissionBaseWorld - UniversalApiReady");
+		//Print("[UAPI] MissionBaseWorld - UniversalApiReady");
 	
 	}
 

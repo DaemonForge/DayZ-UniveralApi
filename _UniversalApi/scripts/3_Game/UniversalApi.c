@@ -34,6 +34,19 @@ class UniversalApi extends Managed {
 	
 	protected int LastRandomNumberRequestCall = -1;
 	
+	
+	protected static RestApi Api()
+	{
+		RestApi clCore = GetRestApi();
+		if (!clCore)
+		{
+			clCore = CreateRestApi();
+			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
+		}
+		return clCore;
+	}
+	
+	
 	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL, string contentType = "application/json")
 	{
 		if (!UCBX){
@@ -41,7 +54,7 @@ class UniversalApi extends Managed {
 		}
 		RestContext ctx =  Api().GetRestContext(url);
 		ctx.SetHeader(contentType);
-		ctx.POST(UCBX , "", jsonString);
+		ctx.POST(UCBX, "", jsonString);
 	}
 	
 	static void Get(string url, ref RestCallback UCBX = NULL)
@@ -63,10 +76,7 @@ class UniversalApi extends Managed {
 	}
 	
 	bool HasValidAuth(){
-		if (GetAuthToken() != "null" && GetAuthToken() != "error" && GetAuthToken() != "ERROR" && GetAuthToken() != "" ){
-			return true;
-		}
-		return false;
+		return (GetAuthToken() != "null" && GetAuthToken() != "error" && GetAuthToken() != "ERROR" && GetAuthToken() != "" );
 	}
 	
 	static string GetVersion(){
@@ -79,7 +89,8 @@ class UniversalApi extends Managed {
 				m_ObjectEndPoint = new UApiDBEndpoint("Object");
 			}
 			return m_ObjectEndPoint;
-		} else if (collection == PLAYER_DB){
+		} 
+		if (collection == PLAYER_DB){
 			if (!m_PlayerEndPoint){
 				m_PlayerEndPoint = new UApiDBEndpoint("Player");
 			}
@@ -127,8 +138,8 @@ class UniversalApi extends Managed {
 	
 	void Init(){
 		if (!UAPI_Init){
+			Print("[UAPI] Init");
 			UAPI_Init = true;
-			Print("[UPAI] UAPIRPCRegistrations");
 			GetRPCManager().AddRPC( "UAPI", "RPCUniversalApiConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestQnAConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
@@ -139,7 +150,7 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	void RPCUniversalApiConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	protected void RPCUniversalApiConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
 	{
 		Print("[UAPI] Received UApi Config");
 		Param2<ApiAuthToken, UniversalApiConfig> data; 
@@ -147,7 +158,6 @@ class UniversalApi extends Managed {
 		m_AuthRetries = 0;
 		m_authToken = data.param1;
 		m_UniversalApiConfig = data.param2;
-		Print("[UAPI] Proccessed UApi Config");
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnTokenReceived);
 	}
 	
@@ -170,6 +180,7 @@ class UniversalApi extends Managed {
 			thread CheckAndPromptDiscord();
 		}
 		GetGame().GameScript.CallFunction(GetGame().GetMission(), "UniversalApiReadyTokenReceived", NULL, NULL);
+		Print("[UAPI] OnTokenReceived Proccessed");
 	}
 	
 	
@@ -192,7 +203,7 @@ class UniversalApi extends Managed {
 	
 	void AddPlayerAuth(string guid, string auth){
 		if (!PlayerAuths){PlayerAuths = new map<string, string>;}
-		Print("[UAPI] Adding PlayerAuth for " + guid + " to cache");
+		//Print("[UAPI] Adding PlayerAuth for " + guid + " to cache");
 		PlayerAuths.Set(guid,auth); //Set Auth incase a request comes in.
 		
 		DayZPlayer player; //If renewing or if player is availbe send to player
@@ -212,19 +223,16 @@ class UniversalApi extends Managed {
 	
 	protected void CheckAndPromptDiscord(){
 		if (GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
-			Print("[UPAI] PromtDiscordOnConnect enbabled Requesting Discord Info");
-			dsUser = UApi().Discord().GetUserWithPlainIdNow(GetGame().GetUserManager().GetTitleInitiator().GetUid(), true);
+			dsUser = UApi().Discord().GetUserNow(GetGame().GetUserManager().GetTitleInitiator().GetUid(), true);
 			if (dsUser && dsUser.Status == "Success"){
-				Print("[UPAI] PromtDiscordOnConnect Already Connected Continue");
+				//Print("[UAPI] Promt Discord On Connect Already Connected Continue");
 			} else if (dsUser && dsUser.Status == "NotSetup"){
 				GetGame().OpenURL(UApi().Discord().Link());
 			} else if (dsUser){
-				Print("[UPAI] PromtDiscordOnConnect  " + dsUser.Status + " Error Occured - " + dsUser.Error);
-			} else {
-				Print("[UPAI] PromtDiscordOnConnect dsUser is Null");
+				Print("[UAPI] Promt Discord On Connect  " + dsUser.Status + " Error Occured - " + dsUser.Error);
 			}
 		} else {
-			Print("[UPAI] PromtDiscordOnConnect enbabled but Player/Id is null");
+			Print("[UAPI] Promt Discord On Connect enbabled but Player/Id is null");
 		}
 	}
 	
@@ -250,10 +258,10 @@ class UniversalApi extends Managed {
 			string authtoken = "";
 			if (UApiConfig().ServerAuth != "" && UApiConfig().ServerAuth != "null" ){
 				if (data.param1 && GetPlayerAuth(identity.GetId(), authtoken)){
-					Print("[UAPI] RPCRequestAuthToken Sending Cached Token ");
+					//Print("[UAPI] RPCRequestAuthToken Sending Cached Token ");
 					SendAuthToken(identity, authtoken);
 				} else if (FindPlayer(identity.GetId())){
-					Print("[UAPI] RPCRequestAuthToken  Renewing Auth Token" );
+					//Print("[UAPI] RPCRequestAuthToken  Renewing Auth Token" );
 					PreparePlayerAuth(identity.GetId());
 				}  else {
 					Print("[UAPI] RPCRequestAuthToken Requesting client retry." );
@@ -281,7 +289,7 @@ class UniversalApi extends Managed {
 			m_authToken.AUTH = auth;
 			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiConfig", new Param2<ApiAuthToken, UniversalApiConfig>(m_authToken, m_ClientConfig), true, idenitity);
 		} else {
-			Print("[UPAI] [UApiAuthCallBack] ERROR ");
+			Print("[UAPI] [UApiAuthCallBack] ERROR ");
 			if (idenitity){
 				UApi().AuthError(idenitity.GetId());
 			}
@@ -313,7 +321,7 @@ class UniversalApi extends Managed {
 	}
 	
 	void AuthError(string guid){
-		Print("[UPAI] Auth Error for " + guid);
+		Print("[UAPI] Auth Error for " + guid);
 		//If Auth Token Failed just try again in 3 minutes 
 		if (guid != ""){
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuth, 180 * 1000, false, guid);
@@ -356,7 +364,7 @@ class UniversalApi extends Managed {
 		if (jsonString != "{}" ){
 			Rest().Post(url,jsonString,UCBX);
 		} else {
-			Print("[UPAI] [Api] Error Asking Question ");
+			Print("[UAPI] [Api] Error Asking Question ");
 		}
 	}
 	
@@ -506,7 +514,6 @@ class UniversalApi extends Managed {
 					m_UApiTranslateEnabled = true;
 				}
 				m_UApiVersionOffset = dataload.CheckVersion(UAPI_VERSION);
-				Print("m_UApiVersionOffset: " + m_UApiVersionOffset);
 				if (m_UApiVersionOffset > 2){
 					Error2("Universal API WebService Needs Update", "[UAPI] Webservice is outdated and should be updated right away | WebService Version: " + dataload.Version + " Mod Version: " + UAPI_VERSION);
 					return;
@@ -530,10 +537,10 @@ class UniversalApi extends Managed {
 				return;
 			}
 		} else if (status == UAPI_TIMEOUT){
-			Error("[UAPI] Webservice is offline or unreachable!");
+			Error2("UnviersalApi", "[UAPI] Webservice is offline or unreachable!");
 			m_UApiOnline = false;
 		} else {
-			Error("[UAPI] Error with WebService! Status: " + status);
+			Error2("UnviersalApi", "[UAPI] Error with WebService! Status: " + status);
 			m_UApiOnline = false;
 		}
 	}
@@ -554,17 +561,6 @@ class UniversalApi extends Managed {
 		return m_UApiVersionOffset;
 	}
 	
-	protected static RestApi Api()
-	{
-		RestApi clCore = GetRestApi();
-		if (!clCore)
-		{
-			clCore = CreateRestApi();
-			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
-		}
-		return clCore;
-	}
-	
 };
 
 static ref UniversalApi g_UniversalApi;
@@ -573,7 +569,6 @@ static UniversalApi UApi()
 {
 	if ( !g_UniversalApi )
 	{
-		Print("[UPAI] Init");
 		g_UniversalApi = new UniversalApi;
 		g_UniversalApi.Init();
 	}

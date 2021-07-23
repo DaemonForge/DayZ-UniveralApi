@@ -9,10 +9,8 @@ modded class MissionServer extends MissionBase
 	override void OnClientPrepareEvent(PlayerIdentity identity, out bool useDB, out vector pos, out float yaw, out int preloadTimeout)
 	{
 		if (identity){
-			Print("[UAPI] On Prepare - GUID: " + identity.GetId() );
+			//Print("[UAPI] On Prepare - GUID: " + identity.GetId() );
 			UApi().PreparePlayerAuth(identity.GetId());
-		} else {
-			Print("[UAPI] On Prepare - GUID: NULL");
 		}
 		super.OnClientPrepareEvent(identity, useDB, pos, yaw, preloadTimeout);
 	}

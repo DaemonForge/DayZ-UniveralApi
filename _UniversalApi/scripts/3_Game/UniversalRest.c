@@ -1,12 +1,6 @@
 class UniversalRest extends Managed
-{	
-	static protected string m_BaseUrl = "";
-	
-	static void SetBaseUrl(string new_BaseUrl){
-		m_BaseUrl = new_BaseUrl;
-	}
-	
-	static RestApi Api()
+{		
+	protected static RestApi Api()
 	{
 		RestApi clCore = GetRestApi();
 		if (!clCore)
@@ -17,7 +11,7 @@ class UniversalRest extends Managed
 		return clCore;
 	}
 	
-	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL)
+	protected static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -27,7 +21,7 @@ class UniversalRest extends Managed
 		ctx.POST(UCBX , "", jsonString);
 	}
 	
-	static void Get(string url, ref RestCallback UCBX = NULL)
+	protected static void Get(string url, ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -36,10 +30,7 @@ class UniversalRest extends Managed
 		ctx.GET(UCBX , "");
 	}
 	
-	static string BaseUrl(){
-		if (m_BaseUrl != ""){
-			return m_BaseUrl;
-		}
+	protected static string BaseUrl(){
 		return UApiConfig().ServerURL;
 	}
 	

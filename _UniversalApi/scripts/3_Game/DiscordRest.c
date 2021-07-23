@@ -1,11 +1,6 @@
 class UniversalDiscordRest extends Managed {	
-	static protected string m_BaseUrl = "";
-	
-	static void SetBaseUrl(string new_BaseUrl){
-		m_BaseUrl = new_BaseUrl;
-	}
-	
-	static RestApi Api()
+
+	protected static RestApi Api()
 	{
 		RestApi clCore = GetRestApi();
 		if (!clCore)
@@ -29,7 +24,7 @@ class UniversalDiscordRest extends Managed {
 		return BaseUrl() + "Discord/" + PlainId;
 	}
 	
-	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL)
+	protected static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -39,7 +34,7 @@ class UniversalDiscordRest extends Managed {
 		ctx.POST(UCBX , "", jsonString);
 	}
 	
-	static void Get(string url, ref RestCallback UCBX = NULL)
+	protected static void Get(string url, ref RestCallback UCBX = NULL)
 	{
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -48,7 +43,7 @@ class UniversalDiscordRest extends Managed {
 		ctx.GET(UCBX , "");
 	}
 	
-	static string PostNow(string url, string jsonString = "{}")
+	protected static string PostNow(string url, string jsonString = "{}")
 	{
 		RestContext ctx =  Api().GetRestContext(url);
 		ctx.SetHeader(UApi().GetAuthToken());
@@ -56,10 +51,7 @@ class UniversalDiscordRest extends Managed {
 	}
 
 	
-	static string BaseUrl(){
-		if (m_BaseUrl != ""){
-			return m_BaseUrl;
-		}
+	protected static string BaseUrl(){
 		return UApiConfig().ServerURL;
 	}
 	
