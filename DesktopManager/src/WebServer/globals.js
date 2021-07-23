@@ -10,19 +10,19 @@ const log = require("./log");
 const router = Router();
 
 router.post('/Load/:mod', (req, res)=>{
-    runGet(req, res, req.params.mod, req.headers['Auth-Key']);
+    runGet(req, res, req.params.mod, req.headers['auth-key']);
 });
 
 router.post('/Save/:mod', (req, res)=>{
-    runSave(req, res, req.params.mod, req.headers['Auth-Key']);
+    runSave(req, res, req.params.mod, req.headers['auth-key']);
 });
 
 router.post('/Transaction/:mod', (req, res)=>{
-    runTransaction(req, res, req.params.mod, req.headers['Auth-Key']);
+    runTransaction(req, res, req.params.mod, req.headers['auth-key']);
 });
 
 router.post('/Update/:mod', (req, res)=>{
-    runUpdate(req, res, req.params.mod, req.headers['Auth-Key']);
+    runUpdate(req, res, req.params.mod, req.headers['auth-key']);
 });
 
 async function runGet(req, res, mod, auth) {

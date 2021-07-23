@@ -65,7 +65,7 @@ var limiter = new RateLimit({
   }
 });
 function ExtractAuthKey (req, res, next) {
-  req.headers['Auth-Key'] = req.headers['Auth-Key'] || req.headers['content-type'] || '';
+  req.headers['auth-key'] = req.headers['auth-key'] || req.headers['content-type'] || '';
   req.headers['content-type'] = 'application/json';
   next();
 }

@@ -33,11 +33,11 @@ var limiter = new RateLimit({
 router.use(limiter);
 
 router.post('/One/:id', (req, res)=>{
-    runLoggerOne(req, res,req.params.id, req.headers['Auth-Key']);
+    runLoggerOne(req, res,req.params.id, req.headers['auth-key']);
 });
 
 router.post('/Many/:id', (req, res)=>{
-    runLoggerMany(req, res,req.params.id, req.headers['Auth-Key']);
+    runLoggerMany(req, res,req.params.id, req.headers['auth-key']);
 });
 
 async function runLoggerOne(req, res, id, auth) {

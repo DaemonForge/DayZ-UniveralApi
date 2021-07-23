@@ -31,7 +31,7 @@ var limiter = new RateLimit({
 router.use(limiter);
 
 router.post('', (req, res)=>{
-    runToxicity(req, res, req.headers['Auth-Key']);
+    runToxicity(req, res, req.headers['auth-key']);
 });
 
 // The minimum prediction confidence.

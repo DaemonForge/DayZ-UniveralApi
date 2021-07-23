@@ -45,7 +45,7 @@ router.post('/:key', (req, res)=>{
         clients[key] = new Wit({accessToken: token});
         //console.log(clients);
     }
-    AskWit(req, res, key, req.headers['Auth-Key']);
+    AskWit(req, res, key, req.headers['auth-key']);
 });
 
 

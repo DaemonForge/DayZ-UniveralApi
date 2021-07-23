@@ -144,51 +144,51 @@ router.get('/callback', (req, res) => {
 
 router.post('/AddRole/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
-    AddRole(res,req,  GUID, req.headers['Auth-Key']);
+    AddRole(res,req,  GUID, req.headers['auth-key']);
 });
 
 router.post('/RemoveRole/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
-    RemoveRole(res,req, GUID,req.headers['Auth-Key']);
+    RemoveRole(res,req, GUID,req.headers['auth-key']);
 });
 
 router.post('/Get/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
-    GetRoles(res,req, GUID, req.headers['Auth-Key']);
+    GetRoles(res,req, GUID, req.headers['auth-key']);
 });
 
 router.post('/GetWithPlainId/:ID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.ID);
-    GetRoles(res,req, GUID, req.headers['Auth-Key']);
+    GetRoles(res,req, GUID, req.headers['auth-key']);
 });
 
 router.post('/Channel/Create', (req, res) => {
-    CreateChannel(res, req, req.headers['Auth-Key']);
+    CreateChannel(res, req, req.headers['auth-key']);
 });
 
 router.post('/Channel/Delete/:id', (req, res) => {
-    DeleteChannel(res, req, req.params.id, req.headers['Auth-Key']);
+    DeleteChannel(res, req, req.params.id, req.headers['auth-key']);
 });
 
 router.post('/Channel/Edit/:id', (req, res) => {
-    EditChannel(res, req, req.params.id, req.headers['Auth-Key']);
+    EditChannel(res, req, req.params.id, req.headers['auth-key']);
 });
 
 router.post('/Channel/Invite/:id', (req, res) => {
-    InviteChannel(res, req, req.params.id, req.headers['Auth-Key']);
+    InviteChannel(res, req, req.params.id, req.headers['auth-key']);
 });
 
 router.post('/Channel/Send/:id', (req, res) => {
-    SendMessageChannel(res, req, req.params.id, req.headers['Auth-Key']);
+    SendMessageChannel(res, req, req.params.id, req.headers['auth-key']);
 });
 
 router.post('/Send/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
-    SendMessageUser(res, req, GUID, req.headers['Auth-Key']);
+    SendMessageUser(res, req, GUID, req.headers['auth-key']);
 });
 
 router.post('/Channel/Messages/:id', (req, res) => {
-    GetMessagesChannel(res, req, req.params.id, req.headers['Auth-Key']);
+    GetMessagesChannel(res, req, req.params.id, req.headers['auth-key']);
 });
 
 router.post('/Check/:ID/', (req, res) => {

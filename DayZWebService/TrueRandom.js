@@ -28,7 +28,7 @@ var limiter = new RateLimit({
 router.use(limiter);
 
 router.post('', (req, res)=>{
-    GetRandom(req, res, req.headers['Auth-Key']);
+    GetRandom(req, res, req.headers['auth-key']);
 });
 
 async function GetRandom(req, res, auth){

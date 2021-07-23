@@ -8,7 +8,7 @@ const log = require("./log");
 const router = Router();
 
 router.post('/:GUID', (req, res)=>{
-    if ( CheckServerAuth(req.headers['Auth-Key']) ){
+    if ( CheckServerAuth(req.headers['auth-key']) ){
         runGetAuth(req, res, req.params.GUID);
     }else{
         res.status(401);

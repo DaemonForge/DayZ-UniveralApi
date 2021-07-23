@@ -29,7 +29,7 @@ var limiter = new RateLimit({
 router.use(limiter);
 
 router.post('', (req, res)=>{
-    runStatusCheck(req, res, req.headers['Auth-Key']);
+    runStatusCheck(req, res, req.headers['auth-key']);
 });
 
 router.post('/:Auth', (req, res)=>{
@@ -37,7 +37,7 @@ router.post('/:Auth', (req, res)=>{
 });
 
 router.get('', (req, res)=>{
-    runStatusCheck(req, res, req.headers['Auth-Key']);
+    runStatusCheck(req, res, req.headers['auth-key']);
 });
 
 router.get('/:Auth', (req, res)=>{

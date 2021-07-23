@@ -16,15 +16,15 @@ const router = Router();
 router.use('/Query', queryHandler);
 router.use('/Transaction', TransactionHandler);
 router.post('/Load/:ObjectId/:mod', (req, res)=>{
-    runGet(req, res, req.params.ObjectId, req.params.mod, req.headers['Auth-Key']);
+    runGet(req, res, req.params.ObjectId, req.params.mod, req.headers['auth-key']);
 });
 
 router.post('/Save/:ObjectId/:mod', (req, res)=>{
-    runSave(req, res, req.params.ObjectId, req.params.mod, req.headers['Auth-Key']);
+    runSave(req, res, req.params.ObjectId, req.params.mod, req.headers['auth-key']);
 });
 
 router.post('/Update/:ObjectId/:mod', (req, res)=>{
-    runUpdate(req, res, req.params.ObjectId, req.params.mod, req.headers['Auth-Key']);
+    runUpdate(req, res, req.params.ObjectId, req.params.mod, req.headers['auth-key']);
 });
 
 async function runGet(req, res, ObjectId, mod, auth) {

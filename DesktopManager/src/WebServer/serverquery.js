@@ -34,7 +34,7 @@ var limiter = new RateLimit({
 router.use(limiter);
 
 router.post('/Status/:ip/:port', (req, res)=>{
-    GetServerStatus(req, res, req.params.ip, req.params.port, req.headers['Auth-Key']);
+    GetServerStatus(req, res, req.params.ip, req.params.port, req.headers['auth-key']);
 });
 
 async function QueryServer(ip, port){

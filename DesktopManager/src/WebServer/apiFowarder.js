@@ -40,7 +40,7 @@ var limiter = new RateLimit({
 router.use(limiter);
 
 router.post('', (req, res)=>{
-    runFowarder(req, res, req.headers['Auth-Key'])
+    runFowarder(req, res, req.headers['auth-key'])
 });
 async function runFowarder(req, res, auth){
     let RawData = req.body;

@@ -11,7 +11,7 @@ const router = Router();
 module.exports = router;
 
 router.post('/:id/:mod', (req, res)=>{
-    runTransaction(req, res, req.params.mod, req.params.id, req.headers['Auth-Key'], GetCollection(req.baseUrl));
+    runTransaction(req, res, req.params.mod, req.params.id, req.headers['auth-key'], GetCollection(req.baseUrl));
 });
 
 function GetCollection(URL){

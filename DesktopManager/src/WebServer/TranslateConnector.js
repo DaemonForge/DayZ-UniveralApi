@@ -38,9 +38,9 @@ router.use(limiter);
 router.post('', (req, res)=>{
     if (global.config.Translate !== undefined && global.config.Translate.Type == "Microsoft" && global.config.Translate.SubscriptionKey !== ""){
 
-        runTranslate(req, res, req.headers['Auth-Key']);
+        runTranslate(req, res, req.headers['auth-key']);
     } else if (global.config.Translate !== undefined &&  global.config.Translate.Type == "LibreTranslate"){
-        runLibreTranslate(req, res, req.headers['Auth-Key']);
+        runLibreTranslate(req, res, req.headers['auth-key']);
     } else { //If the file doesn't exsit give a nice usable json for DayZ
         log(`A Tranlation Request came in but isn't set up yet`);
         res.json({Status: "Error"});
