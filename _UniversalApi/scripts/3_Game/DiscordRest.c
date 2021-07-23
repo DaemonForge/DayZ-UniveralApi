@@ -63,13 +63,13 @@ class UniversalDiscordRest extends Managed {
 		return UApiConfig().ServerURL;
 	}
 	
-	static void AddRole(string GUID, string RoleId, ref RestCallback UCBX = NULL, string auth = "") {
+	static void AddRole(string GUID, string RoleId, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 
-		string url = BaseUrl() + "Discord/AddRole/" + GUID + "/" + auth;
+		string url = BaseUrl() + "Discord/AddRole/" + GUID;
 		
 		autoptr UApiDiscordRoleReq roleReq = new UApiDiscordRoleReq(RoleId);
 		
@@ -81,13 +81,13 @@ class UniversalDiscordRest extends Managed {
 		}
 	}
 	
-	static void RemoveRole(string GUID, string RoleId, ref RestCallback UCBX = NULL, string auth = "") {
+	static void RemoveRole(string GUID, string RoleId, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 		
-		string url = BaseUrl() + "Discord/RemoveRole/" + GUID + "/" + auth;
+		string url = BaseUrl() + "Discord/RemoveRole/" + GUID;
 		
 		autoptr UApiDiscordRoleReq roleReq = new UApiDiscordRoleReq(RoleId);
 		
@@ -101,14 +101,14 @@ class UniversalDiscordRest extends Managed {
 	}
 	
 	
-	static void GetUser(string GUID, ref RestCallback UCBX, string auth = "") {
-		string url = BaseUrl() + "Discord/Get/" + GUID + "/" + auth;
+	static void GetUser(string GUID, ref RestCallback UCBX) {
+		string url = BaseUrl() + "Discord/Get/" + GUID;
 		
 		Post(url,"{}",UCBX);
 	}
 	
-	static void GetUserWithPlainId(string plainId, ref RestCallback UCBX, string auth = "") {
-		string url = BaseUrl() + "Discord/GetWithPlainId/" + plainId + "/" + auth;
+	static void GetUserWithPlainId(string plainId, ref RestCallback UCBX) {
+		string url = BaseUrl() + "Discord/GetWithPlainId/" + plainId;
 		
 		Post(url,"{}",UCBX);
 	}
@@ -126,18 +126,18 @@ class UniversalDiscordRest extends Managed {
 	
 	
 	
-	static void ChannelCreate(string Name, ref RestCallback UCBX, UApiChannelOptions Options = NULL, string auth = "") {
+	static void ChannelCreate(string Name, ref RestCallback UCBX, UApiChannelOptions Options = NULL) {
 		
 		UApiCreateChannelObject obj = new UApiCreateChannelObject(Name, UApiChannelCreateOptions.Cast(Options));
 		
 		if (obj){
-			string url = BaseUrl() + "Discord/Channel/Create/" + auth;
+			string url = BaseUrl() + "Discord/Channel/Create";
 			
 			Post(url,obj.ToJson(),UCBX);		
 		}
 	}
 	
-	static void ChannelDelete(string id, string reason,  ref RestCallback UCBX = NULL, string auth = ""){
+	static void ChannelDelete(string id, string reason,  ref RestCallback UCBX = NULL){
 
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -146,14 +146,14 @@ class UniversalDiscordRest extends Managed {
 		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, NULL);
 		
 		if (obj){
-			string url = BaseUrl() + "Discord/Channel/Delete/" + id + "/" + auth;
+			string url = BaseUrl() + "Discord/Channel/Delete/" + id;
 			
 			Post(url,obj.ToJson(),UCBX);		
 		}
 	}
 	
 	
-	static void ChannelEdit(string id, string reason, ref UApiChannelUpdateOptions options, ref RestCallback UCBX = NULL, string auth = ""){
+	static void ChannelEdit(string id, string reason, ref UApiChannelUpdateOptions options, ref RestCallback UCBX = NULL){
 
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -162,14 +162,14 @@ class UniversalDiscordRest extends Managed {
 		UApiUpdateChannelObject obj = new UApiUpdateChannelObject(reason, UApiChannelUpdateOptions.Cast(options));
 		
 		if (obj){
-			string url = BaseUrl() + "Discord/Channel/Edit/" + id + "/" + auth;
+			string url = BaseUrl() + "Discord/Channel/Edit/" + id;
 			
 			Post(url,obj.ToJson(),UCBX);		
 		}
 	}
 	
 	
-	static void ChannelSend(string id, string message, ref RestCallback UCBX = NULL, string auth = ""){
+	static void ChannelSend(string id, string message, ref RestCallback UCBX = NULL){
 
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -178,21 +178,21 @@ class UniversalDiscordRest extends Managed {
 		UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
 		
 		if (obj){
-			string url = BaseUrl() + "Discord/Channel/Send/" + id + "/" + auth;
+			string url = BaseUrl() + "Discord/Channel/Send/" + id;
 			
 			Post(url,obj.ToJson(),UCBX);		
 		}
 	}
 	
 	
-	static void ChannelSendEmbed(string id, UApiDiscordEmbed message, ref RestCallback UCBX = NULL, string auth = ""){
+	static void ChannelSendEmbed(string id, UApiDiscordEmbed message, ref RestCallback UCBX = NULL){
 
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 				
 		if (message){
-			string url = BaseUrl() + "Discord/Channel/Send/" + id + "/" + auth;
+			string url = BaseUrl() + "Discord/Channel/Send/" + id;
 			
 			Post(url,message.ToJson(),UCBX);		
 		}
@@ -207,7 +207,7 @@ class UniversalDiscordRest extends Managed {
 			filter = new UApiDiscordChannelFilter();
 		}
 		
-		string url = BaseUrl() + "Discord/Channel/Messages/" + id + "/" + auth;
+		string url = BaseUrl() + "Discord/Channel/Messages/" + id;
 		
 		if (filter && UCBX){
 			Post(url,filter.ToJson(),UCBX);	
@@ -231,9 +231,9 @@ class UniversalDiscordRest extends Managed {
 	
 	// !!!!!WARNING!!!!!
 	// THE FOLLOWING FUCNTION IS THREAD BLOCKING ONLY RUN in secondary Thread!
-	static UApiDiscordUser GetUserNow(string GUID, bool ReturnError = false, string auth = "") {
+	static UApiDiscordUser GetUserNow(string GUID, bool ReturnError = false) {
 
-		string url = BaseUrl() + "Discord/Get/" + GUID + "/" + auth;
+		string url = BaseUrl() + "Discord/Get/" + GUID;
 		
 		string Result = PostNow(url,"{}");
 		
@@ -264,9 +264,9 @@ class UniversalDiscordRest extends Managed {
 	
 	// !!!!!WARNING!!!!!
 	// THE FOLLOWING FUCNTION IS THREAD BLOCKING ONLY RUN in secondary Thread!
-	static UApiDiscordUser GetUserWithPlainIdNow(string plainId, bool ReturnError = false, string auth = "") {
+	static UApiDiscordUser GetUserWithPlainIdNow(string plainId, bool ReturnError = false) {
 
-		string url = BaseUrl() + "Discord/GetWithPlainId/" + plainId + "/" + auth;
+		string url = BaseUrl() + "Discord/GetWithPlainId/" + plainId;
 		
 		string Result = PostNow(url,"{}");
 		Print(Result);
@@ -294,11 +294,7 @@ class UniversalDiscordRest extends Managed {
 		Print("[UPAI] [GetUserWithPlainIdNow] Returning NULL");
 		
 		return NULL;		
-	}
-	
-	
-	
-	
+	}	
 	
 }
 

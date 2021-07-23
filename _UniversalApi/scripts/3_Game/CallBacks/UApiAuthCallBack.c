@@ -1,4 +1,4 @@
-/*class UApiAuthCallBack : RestCallback
+class UApiAuthCallBack : RestCallback
 {
 	protected int m_TryCount = 0;
 	protected string m_GUID = "";
@@ -8,7 +8,7 @@
 	}
 	
 	override void OnError(int errorCode) {
-		Print("[UPAI] [UApiAuthCallBack] Auth of a Player Failed errorCode: " + errorCode);
+		Print("[UPAI] [UApiAuthCallBack] Auth of a Player Failed errorCode: " + UApi().ErrorToString(errorCode));
 		if (m_GUID != ""){
 			UApi().AuthError(m_GUID);
 		}
@@ -19,6 +19,7 @@
 			UApi().AuthError(m_GUID);
 		}
 	};
+	
 	override void OnSuccess(string data, int dataSize) {
 		
 		//Print("[UPAI] [UApiAuthCallBack] Auth of a Player Success data: " + data);
@@ -30,80 +31,8 @@
 		if (error != ""){
 			Print("[UPAI] [UApiAuthCallBack] Error: " + error);
 		}
-		if (authToken.GUID && authToken.AUTH != "ERROR"){
-			Print("[UPAI] [UApiAuthCallBack] Auth of a Player Success data: GUID " + authToken.GUID);
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.DeferredLoad, authToken);
-		} else {
-			if (m_GUID != ""){
-				UApi().AuthError(m_GUID);
-			}
-		}
-	};
-	
-	void DeferredLoad(ref ApiAuthToken authToken){
-		PlayerIdentity player = PlayerIdentity.Cast(UApi().SearchQueue(authToken.GUID));
-		if (player){
-			Print("[UPAI] [UApiAuthCallBack] Auth of a Player Success PlayerFound");
-			UniversalApiConfig m_ClientConfig = new UniversalApiConfig;
-			m_ClientConfig.ConfigVersion = UApiConfig().ConfigVersion;
-			m_ClientConfig.ServerURL = UApiConfig().ServerURL;
-			m_ClientConfig.ServerID = UApiConfig().ServerID;
-			m_ClientConfig.ServerAuth = "null";
-			m_ClientConfig.QnAEnabled = UApiConfig().QnAEnabled;
-			m_ClientConfig.EnableBuiltinLogging = UApiConfig().EnableBuiltinLogging;
-			m_ClientConfig.PromptDiscordOnConnect = UApiConfig().PromptDiscordOnConnect;
-			GetRPCManager().SendRPC("UAPI", "RPCUniversalApiConfig", new Param2<ApiAuthToken, UniversalApiConfig>(authToken, m_ClientConfig), true, player);
-			//GetRPCManager().SendRPC("UAPI", "RPCUniversalApiReady", new Param1<string>(authToken.GUID), true, player);
-			//Removing the Player from the Que About .1 Second Later to allow for other mods the possiblty to search the que as well.
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UApi().RemoveFromQueue, 100, false, player);
-		} else if (m_TryCount <= 8){
-			m_TryCount++;
-			Print("[UPAI] [UApiAuthCallBack] Auth of a Player failed to Find Player retry: " + m_TryCount);
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.DeferredLoad, m_TryCount * 250, false, authToken);
-		} else {
-			Print("[UPAI] [UApiAuthCallBack] Couldn't Find Player on server");
-			if (m_GUID != ""){
-				UApi().AuthError(m_GUID);
-			}
-		}
-	}
-};
-*/
-class UApiNewAuthCallBack : RestCallback
-{
-	protected int m_TryCount = 0;
-	protected string m_GUID = "";
-	
-	void UApiNewAuthCallBack(string guid = ""){
-		m_GUID = guid;
-	}
-	
-	override void OnError(int errorCode) {
-		Print("[UPAI] [UApiNewAuthCallBack] Auth of a Player Failed errorCode: " + UApi().ErrorToString(errorCode));
-		if (m_GUID != ""){
-			UApi().AuthError(m_GUID);
-		}
-	};
-	override void OnTimeout() {
-		Print("[UPAI] [UApiNewAuthCallBack] Auth of a Player Failed errorCode: Timeout");
-		if (m_GUID != ""){
-			UApi().AuthError(m_GUID);
-		}
-	};
-	
-	override void OnSuccess(string data, int dataSize) {
-		
-		//Print("[UPAI] [UApiNewAuthCallBack] Auth of a Player Success data: " + data);
-		autoptr ApiAuthToken authToken;
-		
-		JsonSerializer js = new JsonSerializer();
-		string error;
-		js.ReadFromString(authToken, data, error);
-		if (error != ""){
-			Print("[UPAI] [UApiNewAuthCallBack] Error: " + error);
-		}
 		if (authToken.GUID == m_GUID && authToken.AUTH != "ERROR"){
-			Print("[UPAI] [UApiNewAuthCallBack] Auth of a Player Success data: GUID " + authToken.GUID);
+			Print("[UPAI] [UApiAuthCallBack] Auth of a Player Success data: GUID " + authToken.GUID);
 			UApi().AddPlayerAuth(authToken.GUID, authToken.AUTH);
 		} else {
 			if (m_GUID != ""){

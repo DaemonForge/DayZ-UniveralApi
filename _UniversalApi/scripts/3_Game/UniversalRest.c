@@ -42,21 +42,15 @@ class UniversalRest extends Managed
 		}
 		return UApiConfig().ServerURL;
 	}
-	/*
-	static void GetAuth( string guid, string auth  = ""){
-		string url = BaseUrl() + "GetAuth/" + guid + "/" + auth;
-		
-		Post(url, "{}", new UApiAuthCallBack(guid));
-	}*/
 	
-	static void GetAuthNew( string guid ){
+	static void GetAuth( string guid ){
 		string url = BaseUrl() + "GetAuth/" + guid;
 		
-		Post(url, "{}", new UApiNewAuthCallBack(guid));
+		Post(url, "{}", new UApiAuthCallBack(guid));
 	}
 	
-	static void PlayerSave(string mod, string guid, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {	
-		string url = BaseUrl() + "Player/Save/" + guid + "/" + mod  + "/" + auth;
+	static void PlayerSave(string mod, string guid, string jsonString, ref RestCallback UCBX = NULL) {	
+		string url = BaseUrl() + "Player/Save/" + guid + "/" + mod;
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
@@ -68,8 +62,8 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	static void PlayerLoad(string mod, string guid,  ref RestCallback UCBX, string jsonString = "{}",string auth = "") {
-		string url = BaseUrl() + "Player/Load/" + guid + "/" + mod  + "/" + auth;
+	static void PlayerLoad(string mod, string guid,  ref RestCallback UCBX, string jsonString = "{}") {
+		string url = BaseUrl() + "Player/Load/" + guid + "/" + mod;
 		
 		if (UCBX){
 			Post(url,jsonString,UCBX);
@@ -78,8 +72,8 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	static void PlayerQuery(string mod, UApiQueryObject query, ref RestCallback UCBX, string auth = "") {
-		string url = BaseUrl() + "Player/Query/" + mod  + "/" + auth;
+	static void PlayerQuery(string mod, UApiQueryObject query, ref RestCallback UCBX) {
+		string url = BaseUrl() + "Player/Query/" + mod;
 		
 		if ( query && UCBX){
 			Post(url,query.ToJson(),UCBX);
@@ -89,16 +83,16 @@ class UniversalRest extends Managed
 	}
 	
 	static void PlayerIncrement(string mod, string guid, string element, float value = 1){
-		PlayerTransaction(mod, guid, element, value, NULL, "");
+		PlayerTransaction(mod, guid, element, value, NULL);
 	}
 	
-	static void PlayerTransaction(string mod, string guid, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
+	static void PlayerTransaction(string mod, string guid, string element, float value = 1, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiTransactionCallBack;
 		}
 				
-		string url = BaseUrl() + "Player/Transaction/" + guid   + "/"+ mod + "/" + auth;
+		string url = BaseUrl() + "Player/Transaction/" + guid   + "/"+ mod;
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
@@ -110,13 +104,13 @@ class UniversalRest extends Managed
 	}
 	
 	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
-	static void PlayerUpdate(string mod, string guid, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
+	static void PlayerUpdate(string mod, string guid, string element, string value, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 				
-		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
+		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
@@ -128,13 +122,13 @@ class UniversalRest extends Managed
 	}
 	
 	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
-	static void PlayerUpdateAdv(string mod, string guid, string element, string value, string operation, ref RestCallback UCBX = NULL, string auth = "") {
+	static void PlayerUpdateAdv(string mod, string guid, string element, string value, string operation, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 		
-		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod + "/" + auth;
+		string url = BaseUrl() + "Player/Update/" + guid   + "/"+ mod;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
@@ -145,9 +139,9 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	static void GlobalsSave(string mod, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {
+	static void GlobalsSave(string mod, string jsonString, ref RestCallback UCBX = NULL) {
 
-		string url = BaseUrl() + "Globals/Save/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Globals/Save/" + mod;
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -160,9 +154,9 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	static void GlobalsLoad(string mod, ref RestCallback UCBX, string jsonString = "{}", string auth = "") {
+	static void GlobalsLoad(string mod, ref RestCallback UCBX, string jsonString = "{}") {
 
-		string url = BaseUrl() + "Globals/Load/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Globals/Load/" + mod;
 
 
 		if (UCBX){
@@ -174,16 +168,16 @@ class UniversalRest extends Managed
 	
 	
 	static void GlobalsIncrement(string mod, string element, float value = 1){
-		GlobalsTransaction(mod, element, value, NULL, "");
+		GlobalsTransaction(mod, element, value, NULL);
 	}
 	
-	static void GlobalsTransaction(string mod, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
+	static void GlobalsTransaction(string mod, string element, float value = 1, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiTransactionCallBack;
 		}
 
-		string url = BaseUrl() + "Globals/Transaction/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Globals/Transaction/" + mod;
 
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
@@ -196,13 +190,13 @@ class UniversalRest extends Managed
 	}
 	
 	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
-	static void GlobalsUpdate(string mod, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
+	static void GlobalsUpdate(string mod, string element, string value, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 
-		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
+		string url = BaseUrl() + "Globals/Update/" + mod;
 
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
@@ -215,13 +209,13 @@ class UniversalRest extends Managed
 	}
 	
 	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
-	static void GlobalsUpdateAdv(string mod, string element, string value, string operation, ref RestCallback UCBX = NULL, string auth = "") {
+	static void GlobalsUpdateAdv(string mod, string element, string value, string operation, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 
-		string url = BaseUrl() + "Globals/Update/" + mod + "/" + auth;
+		string url = BaseUrl() + "Globals/Update/" + mod;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
@@ -235,13 +229,13 @@ class UniversalRest extends Managed
 	
 	//Saving or loading an object with the ObjectId of "NewObject" will generate an Object ID for you, this Object ID will be returned
 	//in the ObjectId var of the Class so make sure your Class has the varible ObjectId if you plan on using this feature
-	static void ObjectSave(string mod, string objectId, string jsonString, ref RestCallback UCBX = NULL, string auth = "") {
+	static void ObjectSave(string mod, string objectId, string jsonString, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 
-		string url = BaseUrl() + "Object/Save/" + objectId + "/" +  mod + "/" + auth;
+		string url = BaseUrl() + "Object/Save/" + objectId + "/" +  mod;
 		
 		if (jsonString){
 			Post(url,jsonString,UCBX);
@@ -250,9 +244,9 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	static void ObjectLoad(string mod, string objectId, ref RestCallback UCBX, string jsonString = "{}", string auth = "") {
+	static void ObjectLoad(string mod, string objectId, ref RestCallback UCBX, string jsonString = "{}") {
 		
-		string url = BaseUrl() + "Object/Load/" +  objectId + "/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Object/Load/" +  objectId + "/" + mod;
 		
 		if (UCBX){
 			Post(url,jsonString,UCBX);
@@ -261,9 +255,9 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	static void ObjectQuery(string mod, UApiQueryObject query, ref RestCallback UCBX, string auth = "") {
+	static void ObjectQuery(string mod, UApiQueryObject query, ref RestCallback UCBX) {
 		
-		string url = BaseUrl() + "Object/Query/" + mod  + "/" + auth;
+		string url = BaseUrl() + "Object/Query/" + mod;
 		
 		if ( query && UCBX){
 			Post(url,query.ToJson(),UCBX);
@@ -273,16 +267,16 @@ class UniversalRest extends Managed
 	}
 	
 	static void ObjectIncrement(string mod, string objectId, string element, float value = 1){
-		ObjectTransaction(mod, objectId, element, value, NULL, "");
+		ObjectTransaction(mod, objectId, element, value, NULL);
 	}
 	
-	static void ObjectTransaction(string mod, string objectId, string element, float value = 1, ref RestCallback UCBX = NULL, string auth = "") {
+	static void ObjectTransaction(string mod, string objectId, string element, float value = 1, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiTransactionCallBack;
 		}
 		
-		string url = BaseUrl() + "Object/Transaction/" + objectId + "/"+ mod + "/" + auth;
+		string url = BaseUrl() + "Object/Transaction/" + objectId + "/"+ mod;
 		
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
@@ -295,13 +289,13 @@ class UniversalRest extends Managed
 	}
 	
 	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
-	static void ObjectUpdate(string mod, string guid, string element, string value, ref RestCallback UCBX = NULL, string auth = "") {
+	static void ObjectUpdate(string mod, string guid, string element, string value, ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 		
-		string url = BaseUrl() + "Object/Update/" + guid  + "/"+ mod + "/" + auth;
+		string url = BaseUrl() + "Object/Update/" + guid  + "/"+ mod;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value);
 		
@@ -313,13 +307,13 @@ class UniversalRest extends Managed
 	}
 	
 	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
-	static void ObjectUpdateAdv(string mod, string guid, string element, string value, string operation = "set", ref RestCallback UCBX = NULL, string auth = "") {
+	static void ObjectUpdateAdv(string mod, string guid, string element, string value, string operation = "set", ref RestCallback UCBX = NULL) {
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 		
-		string url = BaseUrl() + "Object/Update/" + guid  + "/" + mod + "/" + auth;
+		string url = BaseUrl() + "Object/Update/" + guid  + "/" + mod;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
@@ -330,13 +324,13 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	static void Request(ref UApiForwarder data, ref RestCallback UCBX = NULL, string auth = ""){
+	static void Request(ref UApiForwarder data, ref RestCallback UCBX = NULL){
 				
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 		
-		string url = BaseUrl() + "Forward/" + auth;
+		string url = BaseUrl() + "Forward";
 		
 		if ( data && UCBX){
 			Post(url,data.ToJson(),UCBX);
@@ -345,13 +339,13 @@ class UniversalRest extends Managed
 		}
 	}
 
-	static void Log(string jsonString, ref RestCallback UCBX = NULL, string auth = ""){
+	static void Log(string jsonString, ref RestCallback UCBX = NULL){
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 		
-		string url = BaseUrl() + "Logger/One/" + UApiConfig().ServerID + "/"+ auth;
+		string url = BaseUrl() + "Logger/One/" + UApiConfig().ServerID;
 		
 		if ( jsonString && UCBX){
 			Post(url,jsonString,UCBX);
@@ -361,13 +355,13 @@ class UniversalRest extends Managed
 	}
 	
 	//JsonFileLoader<array<autoptr LogObject>>.JsonMakeData(AnArrayOfYourObjects);
-	static void LogBulk(string jsonString, ref RestCallback UCBX = NULL, string auth = ""){
+	static void LogBulk(string jsonString, ref RestCallback UCBX = NULL){
 		
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 		
-		string url = BaseUrl() + "Logger/Many/" + UApiConfig().ServerID + "/"+ auth;
+		string url = BaseUrl() + "Logger/Many/" + UApiConfig().ServerID;
 		if (jsonString && UCBX){
 			Post(url,jsonString,UCBX);
 		} else {

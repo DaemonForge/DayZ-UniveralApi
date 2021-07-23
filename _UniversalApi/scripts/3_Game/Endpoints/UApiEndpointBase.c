@@ -32,7 +32,9 @@ class UApiBaseEndpoint extends Managed {
 	}
 	
 	void UpdateAuthToken(){
-		m_Context.SetHeader(AuthToken());
+		if (m_Context){
+			m_Context.SetHeader(AuthToken());
+		}
 	}
 	
 }

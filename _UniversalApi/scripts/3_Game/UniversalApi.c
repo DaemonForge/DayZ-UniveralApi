@@ -34,6 +34,24 @@ class UniversalApi extends Managed {
 	
 	protected int LastRandomNumberRequestCall = -1;
 	
+	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL, string contentType = "application/json")
+	{
+		if (!UCBX){
+			UCBX = new UApiSilentCallBack;
+		}
+		RestContext ctx =  Api().GetRestContext(url);
+		ctx.SetHeader(contentType);
+		ctx.POST(UCBX , "", jsonString);
+	}
+	
+	static void Get(string url, ref RestCallback UCBX = NULL)
+	{
+		if (!UCBX){
+			UCBX = new UApiSilentCallBack;
+		}
+		RestContext ctx =  Api().GetRestContext(url);
+		ctx.GET(UCBX , "");
+	}
 	
 	string GetAuthToken(){
 		if (m_authToken && !GetGame().IsServer()){
@@ -83,10 +101,6 @@ class UniversalApi extends Managed {
 			m_UniversalDiscordRest = new UniversalDiscordRest;
 		}
 		return m_UniversalDiscordRest;
-	}
-	
-	UniversalDSEndpoint DS(){ // will remove
-		return ds();
 	}
 	
 	UniversalDSEndpoint ds(){
@@ -173,7 +187,7 @@ class UniversalApi extends Managed {
 	}
 	
 	void PreparePlayerAuth(string guid){
-		UApi().Rest().GetAuthNew(guid);
+		this.Rest().GetAuth(guid);
 	}
 	
 	void AddPlayerAuth(string guid, string auth){
@@ -215,7 +229,7 @@ class UniversalApi extends Managed {
 	}
 	
 	
-	void RPCRequestQnAConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	protected void RPCRequestQnAConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
 	{
 		Param1<UApiQnAMakerServerAnswers> data; 
 		if ( !ctx.Read( data ) ) return;
@@ -226,7 +240,7 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	void RPCRequestAuthToken( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	protected void RPCRequestAuthToken( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
 	{
 		Param1<bool> data; 
 		if ( !ctx.Read( data ) ) return;
@@ -251,7 +265,7 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	void SendAuthToken(ref PlayerIdentity idenitity, string auth){
+	protected void SendAuthToken(ref PlayerIdentity idenitity, string auth){
 		if (idenitity && auth != ""){
 			Print("[UAPI] Sending PlayerAuth Token to " + idenitity.GetId());
 			autoptr UniversalApiConfig m_ClientConfig = new UniversalApiConfig;
@@ -302,7 +316,7 @@ class UniversalApi extends Managed {
 		Print("[UPAI] Auth Error for " + guid);
 		//If Auth Token Failed just try again in 3 minutes 
 		if (guid != ""){
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuthNew, 180 * 1000, false, guid);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuth, 180 * 1000, false, guid);
 		}
 	}
 	
@@ -457,7 +471,7 @@ class UniversalApi extends Managed {
 		LastRandomNumberRequestCall = api().RandomNumbers(2048, this, "CBRandomNumber");
 	}
 	
-	void CBRandomNumber(int cid, int status, string oid, string data){
+	protected void CBRandomNumber(int cid, int status, string oid, string data){
 		LastRandomNumberRequestCall = -1;
 		if (status == UAPI_SUCCESS){
 			UApiRandomNumberResponse dataload;
@@ -471,7 +485,7 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	void CBStatusCheck(int cid, int status, string oid, string data){
+	protected void CBStatusCheck(int cid, int status, string oid, string data){
 		if (status == UAPI_SUCCESS){
 			autoptr UApiStatus dataload;
 			if (UApiJSONHandler<UApiStatus>.FromString(data, dataload)){
@@ -539,6 +553,18 @@ class UniversalApi extends Managed {
 	int VersionOffset(){
 		return m_UApiVersionOffset;
 	}
+	
+	protected static RestApi Api()
+	{
+		RestApi clCore = GetRestApi();
+		if (!clCore)
+		{
+			clCore = CreateRestApi();
+			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
+		}
+		return clCore;
+	}
+	
 };
 
 static ref UniversalApi g_UniversalApi;
