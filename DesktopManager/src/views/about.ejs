@@ -123,17 +123,22 @@
             }
         }
         async function GetStatus(){
-            let data = await fetch("https://localhost/Status", {method: "post"}).then(response => response.json());
-            statusele.style.display = "inline";
-            if (data.Status == "Success"){
-                updateHtml("dbstatus", "Online", data.Status);
-            } else {
-                errorele.style.display = "block"
-                updateHtml("errortext", data.Error, "error");
-            }
-            updateHtml("discordstatus", data.Discord, data.Discord);
+            let Port = <%= global.config.Port %>;
+            try {
+                let data = await fetch(`https://localhost:${Port}/Status`, {method: "post"}).then(response => response.json());
+                statusele.style.display = "inline";
+                if (data.Status == "Success"){
+                    updateHtml("dbstatus", "Online", data.Status);
+                } else {
+                    errorele.style.display = "block"
+                    updateHtml("errortext", data.Error, "error");
+                }
+                updateHtml("discordstatus", data.Discord, data.Discord);
 
-            updateHtml("translatestatus", data.Translate, data.Translate);
+                updateHtml("translatestatus", data.Translate, data.Translate);
+            } catch(err){
+                console.log(err)
+            }
         }
         window.onload =  GetStatus;
     </script>

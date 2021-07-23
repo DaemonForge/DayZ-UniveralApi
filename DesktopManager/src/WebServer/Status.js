@@ -32,6 +32,10 @@ router.post('', (req, res)=>{
     runStatusCheck(req, res, req.headers['Auth-Key']);
 });
 
+router.post('/:Auth', (req, res)=>{
+    runStatusCheck(req, res, req.params.Auth);
+});
+
 router.get('', (req, res)=>{
     runStatusCheck(req, res, req.headers['Auth-Key']);
 });
@@ -98,7 +102,7 @@ async function runStatusCheck(req, res, auth) {
     }catch(err){
         console.log(err);
         res.status(500);
-        res.json({Status: "Error", Error: `${err}`, Version: global.APIVERSION, Discord: global.DISCORDSTATUS, Translate: TranslatesEnabled, Wit: WitsEnabled, QnA: QnAEnabled, LUIS: LUISEnabled });
+        res.json({Status: "Error", Error: `Error: ${err}`, Version: global.APIVERSION, Discord: global.DISCORDSTATUS, Translate: TranslatesEnabled, Wit: WitsEnabled, QnA: QnAEnabled, LUIS: LUISEnabled });
         log("ERROR: " + err, "warn");
     }finally{
         // Ensures that the client will close when you finish/error
