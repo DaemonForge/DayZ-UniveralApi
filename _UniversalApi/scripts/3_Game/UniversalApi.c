@@ -133,6 +133,12 @@ class UniversalApi extends Managed {
 	
 	}
 	
+	void ~UniversalApi(){
+		if (GetGame().IsServer() && UAPI_Init){
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.CheckAndRenewQRandom);
+		}
+	}
+	
 	void Init(){
 		if (!UAPI_Init){
 			Print("[UAPI] First Init");
@@ -144,6 +150,7 @@ class UniversalApi extends Managed {
 			if(GetGame().IsServer()){
 				int cid = UApi().api().Status(this, "CBStatusCheck");
 				CheckAndRenewQRandom();
+				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.CheckAndRenewQRandom, 10 * 60 * 1000, true);
 			}
 		}
 	}
