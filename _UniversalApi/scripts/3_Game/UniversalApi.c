@@ -138,7 +138,7 @@ class UniversalApi extends Managed {
 	
 	void Init(){
 		if (!UAPI_Init){
-			Print("[UAPI] Init");
+			Print("[UAPI] First Init");
 			UAPI_Init = true;
 			GetRPCManager().AddRPC( "UAPI", "RPCUniversalApiConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestQnAConfig", this, SingeplayerExecutionType.Both );
@@ -146,6 +146,7 @@ class UniversalApi extends Managed {
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestRetry", this, SingeplayerExecutionType.Both );
 			if(GetGame().IsServer()){
 				int cid = UApi().api().Status(this, "CBStatusCheck");
+				PrepareTrueRandom();
 			}
 		}
 	}
