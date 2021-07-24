@@ -8,7 +8,7 @@ modded class Math
 		if (!m_QRandomNumbers){
 			m_QRandomNumbers = new TIntArray;
 		}
-		Print("[UAPI] Adding " + numbers.Count() + " more numbers to the array");
+		//Print("[UAPI] Adding " + numbers.Count() + " more numbers to the array");
 		m_QRandomNumbers.InsertAll(numbers);
 	}
 	
@@ -29,8 +29,8 @@ modded class Math
 	
 	static int QRandomInt(int min = 0, int max = 65535){
 		if (!m_QRandomNumbers || m_QRandomNumbers.Count() <= 0){
-			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
-			m_QRandomNumbers.Debug();
+			Print("[UAPI] QRandomInt Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			//m_QRandomNumbers.Debug();
 			return RandomInt(min, max);
 		}
 		int number = GetAndRemoveNumber();
@@ -46,7 +46,7 @@ modded class Math
 	
 	static float QRandomFloat(float min = 0, float max = 1){
 		if (!m_QRandomNumbers || m_QRandomNumbers.Count() <= 0){
-			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			Print("[UAPI] QRandomFloat Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
 			return RandomFloat(min, max);
 		}
 		int number = GetAndRemoveNumber();
@@ -58,7 +58,7 @@ modded class Math
 	
 	static bool QRandomFlip(){
 		if (!m_QRandomNumbers || m_QRandomNumbers.Count() <= 0){
-			Print("[UAPI] TRUE RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			Print("[UAPI] QRandomFlip Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
 			return (RandomInt(1, 8) >= 5);
 		}
 		int number = GetAndRemoveNumber();
@@ -66,7 +66,4 @@ modded class Math
 		return (reval != 0);
 		
 	}
-	
-	
-	
 }
