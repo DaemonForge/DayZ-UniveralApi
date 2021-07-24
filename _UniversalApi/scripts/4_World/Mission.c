@@ -10,8 +10,7 @@ modded class MissionBaseWorld
 		//Print("[UAPI] MissionBaseWorld - UniversalApiReadyTokenReceived");
 		if (!UApiIsInitialized()){
 			m_UApi_Initialized = true;
-			UniversalApiReady();
-			UApi().PrepareTrueRandom();
+			this.UniversalApiReady();
 		}
 	}
 	

@@ -334,16 +334,16 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	void DiscordMessage(string webhookUrl, string message, string botName = "", string botAvatarUrl = ""){
+	static void DiscordMessage(string webhookUrl, string message, string botName = "", string botAvatarUrl = ""){
 		UApiDiscordObject DiscordMessage = new UApiDiscordObject;
 		DiscordMessage.content = message;
 		DiscordMessage.username = botName;
 		DiscordMessage.avatar_url = botAvatarUrl;
-		this.Post(webhookUrl, DiscordMessage.ToJson());
+		Post(webhookUrl, DiscordMessage.ToJson());
 	}
 	
-	void DiscordObject(string webhookUrl, UApiDiscordObject discordObject){
-		this.Post(webhookUrl, discordObject.ToJson());
+	static void DiscordObject(string webhookUrl, UApiDiscordObject discordObject){
+		Post(webhookUrl, discordObject.ToJson());
 	} 
 	
 	
