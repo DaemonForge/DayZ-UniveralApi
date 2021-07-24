@@ -33,11 +33,10 @@ class UniversalApi extends Managed {
 	protected int LastRandomNumberRequestCall = -1;
 	
 	
-	protected static RestApi Api()
+	protected static RestApi RestCore()
 	{
 		RestApi clCore = GetRestApi();
-		if (!clCore)
-		{
+		if (!clCore) {
 			clCore = CreateRestApi();
 			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
 		}
@@ -50,7 +49,7 @@ class UniversalApi extends Managed {
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
-		RestContext ctx =  Api().GetRestContext(url);
+		RestContext ctx =  RestCore().GetRestContext(url);
 		ctx.SetHeader(contentType);
 		ctx.POST(UCBX, "", jsonString);
 	}
@@ -60,7 +59,7 @@ class UniversalApi extends Managed {
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
-		RestContext ctx =  Api().GetRestContext(url);
+		RestContext ctx =  RestCore().GetRestContext(url);
 		ctx.GET(UCBX , "");
 	}
 	
