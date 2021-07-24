@@ -347,31 +347,6 @@ class UniversalApi extends Managed {
 	} 
 	
 	
-	////This will be removed and moved to the UApi().api().QnA()
-	void QnA(string question, bool alwaysAnswer = true, ref RestCallback UCBX = NULL, string jsonString = "{}"){
-		
-		if (!UCBX && alwaysAnswer){
-			UApiQnACallBack QnACBX = new UApiQnACallBack;
-			QnACBX.SetAlwaysAnswer();
-			UCBX = QnACBX;
-		} else if (!UCBX) {
-			UCBX = new UApiQnACallBack;
-		}
-		
-		if (jsonString == "{}" && question != "" ){
-			QnAQuestion QuestionObj = new QnAQuestion(question);
-			jsonString = QuestionObj.ToJson();
-		}
-		string url = UApiConfig().GetBaseURL() + "QnAMaker";
-		
-		if (jsonString != "{}" ){
-			this.Post(url,jsonString,UCBX,GetAuthToken());
-		} else {
-			Print("[UAPI] [Api] Error Asking Question ");
-		}
-	}
-	
-	
 	static string ErrorToString(int ErrorCode){
 		switch ( ErrorCode )
 		{

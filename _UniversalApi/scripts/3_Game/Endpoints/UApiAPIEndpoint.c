@@ -14,14 +14,20 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		autoptr UApiQuestionRequest questionObj = new UApiQuestionRequest(Question);
 		string jsonString = questionObj.ToJson();
 		
-		if ( jsonString && Key && DBCBX){
-			Post(endpoint,jsonString,DBCBX);
+		if (Question && jsonString && DBCBX){
+			Post(endpoint, jsonString, DBCBX);
 		} else {
 			Print("[UAPI] [Api] Error QnA K:" +  Key + " Q: " + Question );
 			cid = -1;
 		}
-		return cid;
-		
+		return cid;	
+	}
+	
+	int ChatQnA(string Question, bool Slient){
+		if (Slient){
+			return QnA(Question, "", GetDayZGame(), "CBQnAChatMessageSilent");	
+		}
+		return QnA(Question, "", GetDayZGame(), "CBQnAChatMessage");	
 	}
 	
 	int Translate(string Text, TStringArray To, Class instance, string function, string oid = ""){

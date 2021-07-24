@@ -11,11 +11,11 @@ modded class ChatInputMenu
 				bool generalQuestion = (question.Substring(lastIndex,1) == "?" );
 				if (question != "" && (silentQuestion || generalQuestion))	{
 					string rdyQuestion = question;
+					Print("Question: '" + question + "' Set to API");
 					if (silentQuestion){
 						rdyQuestion = question.Substring(1,lastIndex);
 					}
-					Print("Question: '" + question + "' Set to API");
-					UApi().QnA(rdyQuestion, silentQuestion);
+					UApi().api().ChatQnA(rdyQuestion, silentQuestion);
 					if (silentQuestion){
 						m_close_timer.Run(0.1, this, "Close");
 						return true;
