@@ -27,10 +27,17 @@ class CfgMods
 		extra = 0;
 		type = "mod";
 		
-		dependencies[] = {"Game", "World", "Mission"};
+		dependencies[] = {"Core", "Game", "World", "Mission"};
 
 		class defs
 		{
+			class engineScriptModule
+			{
+				value = "";
+				files[] = {
+					"_UniversalApi/scripts/1_Core"
+					};
+			}
 			class gameScriptModule
 			{
 				value = "";

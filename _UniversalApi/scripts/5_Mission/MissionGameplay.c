@@ -35,6 +35,7 @@ modded class MissionGameplay extends MissionBase
 		super.UniversalApiReady();
 	}
 	
+	
 	void RequestNewAuthToken(){
 		if (!GetGame().IsServer()){
 			UApi().RequestAuthToken();
