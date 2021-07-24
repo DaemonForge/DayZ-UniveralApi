@@ -24,3 +24,14 @@ static const int UAPI_DBTOOEARLY = 425;
 
 static const int PLAYER_DB = 100;
 static const int OBJECT_DB = 101;
+
+
+class UpdateOpts {
+	static string SET = "set";
+	static string PULL = "pull";
+	static string PUSH = "push";
+	static string UNSET = "unset";
+	static string MUL = "mul";
+	static string RENAME = "rename";
+	static string PULLALL = "pullAll";
+}

@@ -71,7 +71,7 @@ class UApiDBGlobalEndpoint extends UApiBaseEndpoint {
 	}
 	
 		
-	int Update(string mod, string element, string value, string operation = "set", Class instance = NULL, string function = "") {	
+	int Update(string mod, string element, string value, string operation = UpdateOpts.SET, Class instance = NULL, string function = "") {	
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){

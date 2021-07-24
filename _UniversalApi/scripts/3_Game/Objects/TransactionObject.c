@@ -18,10 +18,10 @@ class UApiTransaction
 class UApiUpdateData
 {
 	string Element;
-	string Operation = "set"; // set | push | pull | unset | mul | rename | pullAll
+	string Operation = UpdateOpts.SET; // set | push | pull | unset | mul | rename | pullAll
 	string Value;
 	
-	void UApiUpdateData(string element, string value, string operation = "set"){
+	void UApiUpdateData(string element, string value, string operation = UpdateOpts.SET){
 		Element = element;
 		Value = value;
 		Operation = operation;
