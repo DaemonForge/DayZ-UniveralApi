@@ -31,6 +31,10 @@ router.post('', (req, res)=>{
     GetRandom(req, res, req.headers['auth-key']);
 });
 
+router.post('/Full', (req, res)=>{
+    GetFullRandom(req, res, req.headers['auth-key']);
+});
+
 async function GetRandom(req, res, auth){
     if ( CheckServerAuth( auth ) || (await CheckAuth( auth )) ){
         let RawCount = req.body.Count || 2048;
@@ -73,6 +77,64 @@ async function GetRandom(req, res, auth){
         res.json({Status: "Error", Error: "Invalid Auth" });
     }
 
+}
+
+async function GetFullRandom(req, res, auth){
+    if ( CheckServerAuth( auth ) || (await CheckAuth( auth )) ){
+        let RawCount = req.body.Count || 4096;
+        let count = RawCount;
+        if (count > 4096 || count < 1){
+            log("Failed to generate random numbers due to request size being too large", "warn");
+            res.status(203);
+            return res.json({Status: "Error", Error: `Invalid Array Request Size` });
+        }
+        try {
+            let hexs = []; //I know I could Impove this but meh it works and yeah
+            let ints = []; 
+
+            if (count > 2048){
+                count = count - 2048
+                let resJson2 = await fetch(`https://qrng.anu.edu.au/API/jsonI.php?length=1024&type=hex16&size=8`)
+                let data2 = await resJson2.json();
+                if (data2.success){
+                    hexs = hexs.concat(data2.data);
+                }
+            }
+            let resJson = await fetch(`https://qrng.anu.edu.au/API/jsonI.php?length=${Math.ceil(count/2)}&type=hex16&size=8`)
+            let data = await resJson.json();
+            if (data.success){
+                hexs = hexs.concat(data.data);
+                hexs.forEach(e => {
+                    ints = ints.concat(ConvertToInts(e));
+                });
+                log("Random numbers requested");
+                res.status(200);
+                res.json({Status: "Success", Error: ``, Numbers: ints });
+            } else {
+                res.status(203)
+                log("Failed to generate random numbers due to error from qrng servers", "warn");
+                res.json({Status: "Error", Error: `Error in request`,  });
+            }
+        } catch (e){
+            console.log(e)
+            log(e, "warn")
+            res.status(203);
+            res.json({Status: "Error", Error: `${e}` });
+        }
+    } else {
+        res.status(401);
+        res.json({Status: "Error", Error: "Invalid Auth" });
+    }
+
+}
+function ConvertToInts(hex){
+    let buf = Buffer.from(hex, "hex");
+    let buf1 = buf.slice(0,4)
+    let buf2 = buf.slice(4,8)
+    let ints = [];
+    ints.push(buf1.readInt32LE(0))
+    ints.push(buf2.readInt32LE(0))
+    return ints
 }
 
 module.exports = router;

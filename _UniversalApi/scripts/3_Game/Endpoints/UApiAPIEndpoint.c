@@ -145,11 +145,37 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
+	//Get a array of random numbers from 0 - 65535
 	int RandomNumbers(int count, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "Random";
 		if (count == -1){
 			count = 2048;
+		}
+		autoptr RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		autoptr UApiRandomNumberRequest randomreq = new UApiRandomNumberRequest(count);
+		
+		if (  count > 0 && count <= 2048 && randomreq && DBCBX){
+			Post(endpoint, randomreq.ToJson(), DBCBX);
+		} else {
+			Print("[UAPI] [Api] Error Random " +  count + " CID:" + cid);
+			cid = -1;
+		}
+		return cid;
+	}
+	
+	//Gets an array of random number from  -2147483647 to 2147483647
+	int RandomNumbersFull(int count, Class instance, string function, string oid = ""){
+		int cid = UApi().CallId();
+		string endpoint = "Random/Full";
+		if (count == -1){
+			count = 4096;
 		}
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){

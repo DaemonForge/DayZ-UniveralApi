@@ -49,7 +49,7 @@ class UniversalApi extends Managed {
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
-		RestContext ctx =  RestCore().GetRestContext(url);
+		RestContext ctx = RestCore().GetRestContext(url);
 		ctx.SetHeader(contentType);
 		ctx.POST(UCBX, "", jsonString);
 	}
