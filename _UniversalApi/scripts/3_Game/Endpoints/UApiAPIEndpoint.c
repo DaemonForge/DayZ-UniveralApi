@@ -186,7 +186,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		
 		autoptr UApiRandomNumberRequest randomreq = new UApiRandomNumberRequest(count);
 		
-		if (  count > 0 && count <= 2048 && randomreq && DBCBX){
+		if (  count > 0 && count <= 4096 && randomreq && DBCBX){
 			Post(endpoint, randomreq.ToJson(), DBCBX);
 		} else {
 			Print("[UAPI] [Api] Error Random " +  count + " CID:" + cid);

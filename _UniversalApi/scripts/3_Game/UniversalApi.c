@@ -175,7 +175,6 @@ class UniversalApi extends Managed {
 	}
 	
 	protected void OnTokenReceived(){
-		Print("[UAPI] OnTokenReceived");
 		UpdateAllAuthTokens();
 		int cid = UApi().api().Status(this, "CBStatusCheck");
 		if (m_UniversalApiConfig.QnAEnabled){
@@ -389,27 +388,28 @@ class UniversalApi extends Managed {
 	}
 	
 	void CheckAndRenewQRandom(){
-		if (Math.RemainingQRandom()<= 1200){
+		if (Math.QRandomRemaining()<= 2000){
 			GetQRandomNumbers();
 		}
 	}
 	
 	protected void GetQRandomNumbers(){
-		if (LastRandomNumberRequestCall > 0){
+		if (LastRandomNumberRequestCall != -1){
 			return;
 		}
-		LastRandomNumberRequestCall = api().RandomNumbers(2048, this, "CBRandomNumber");
+		LastRandomNumberRequestCall = api().RandomNumbersFull(-1, this, "CBRandomNumber");
 	}
 	
 	protected void CBRandomNumber(int cid, int status, string oid, string data){
 		LastRandomNumberRequestCall = -1;
 		if (status == UAPI_SUCCESS){
 			UApiRandomNumberResponse dataload;
-			if (UApiJSONHandler<UApiRandomNumberResponse>.FromString(data, dataload)){
+			if (UApiJSONHandler<UApiRandomNumberResponse>.FromString(data, dataload) && dataload.Status == "Success"){
 				Math.AddQRandomNumber(dataload.Numbers);
 				return;
 			}
 		}
+		Print("[UAPI] Failed to update the Q Random Numbers");
 	}
 	
 	protected void CBStatusCheck(int cid, int status, string oid, string data){
