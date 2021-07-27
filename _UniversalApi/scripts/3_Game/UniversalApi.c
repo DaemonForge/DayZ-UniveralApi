@@ -1,5 +1,137 @@
 class UniversalApi extends Managed {
+		
+	//Getter function for the Database Endpoint using either OBJECT_DB or PLAYER_DB
+	// "PLAYER_DB" is only accessable on client for the player info being requested 
+	// "OBJECT_DB" all clients can access all data.
+	UApiDBEndpoint db(int collection = OBJECT_DB){
+		if (collection == OBJECT_DB){
+			if (!m_ObjectEndPoint){
+				m_ObjectEndPoint = new UApiDBEndpoint("Object");
+			}
+			return m_ObjectEndPoint;
+		} 
+		if (collection == PLAYER_DB){
+			if (!m_PlayerEndPoint){
+				m_PlayerEndPoint = new UApiDBEndpoint("Player");
+			}
+			return m_PlayerEndPoint;
+		}
+		return NULL;
+	}
+	
+	//Getter function for the Discord Endpoint
+	UniversalDSEndpoint ds(){
+		if (!m_UniversalDSEndpoint){
+			m_UniversalDSEndpoint = new UniversalDSEndpoint;
+		}
+		return m_UniversalDSEndpoint;
+	}
+	
+	//Getter function for the Globals Endpoint
+	UApiDBGlobalEndpoint globals(){
+		if (!m_UApiDBGlobalEndpoint){
+			m_UApiDBGlobalEndpoint = new UApiDBGlobalEndpoint;
+		}
+		return m_UApiDBGlobalEndpoint;
+	}
+	
+	//Getter function for the API Endpoint
+	UApiAPIEndpoint api(){
+		if (!m_UApiAPIEndpoint){
+			m_UApiAPIEndpoint = new UApiAPIEndpoint;
+		}
+		return m_UApiAPIEndpoint;
+	}
+	
+	//Request a call to be canceled
+	void RequestCallCancel(int cid){
+		m_CanceledCalls.Insert(cid);
+	}
+	
+	//A super simple Post Interface to help people
+	static void Post(string url, string jsonString = "{}",autoptr RestCallback UCBX = NULL, string contentType = "application/json")
+	{
+		if (!UCBX){
+			UCBX = new UApiSilentCallBack;
+		}
+		RestContext ctx = RestCore().GetRestContext(url);
+		ctx.SetHeader(contentType);
+		ctx.POST(UCBX, "", jsonString);
+	}
+	
+	//A super simple Get Interface to help people
+	static void Get(string url, autoptr RestCallback UCBX = NULL)
+	{
+		if (!UCBX){
+			UCBX = new UApiSilentCallBack;
+		}
+		RestContext ctx =  RestCore().GetRestContext(url);
+		ctx.GET(UCBX , "");
+	}
+	
+	//Will return true if the discord endpoint is configured (this doesn't mean its configured correctly though :p)
+	bool IsDiscordEnabled(){
+		return m_UApiDiscordEnabled;
+	}
+	
+	//Will return true if the Translate Endpoint is configured
+	bool IsTranslateEnabled(){
+		return m_UApiTranslateEnabled;
+	}
+	
+	//Returns True if the status check has come back and everything is okay
+	bool IsOnline(){
+		return m_UApiOnline;
+	}
+	
+	//Returns current Version Offset 0 Version Matches exactly
+	// -1 or 1 off by a patch this is not a problem and won't cause any major issues
+	// -2 or 2 off by a Minor Version this may cause some endpoints to not work or features to be missing
+	// -3 or 3 off by a Major Version most likely the mod will not work at all!
+	int VersionOffset(){
+		return m_UApiVersionOffset;
+	}
+	
+	//Checks to see if the Random Numbers are below half and add's more
+	void CheckAndRenewQRandom(){
+		if (Math.QRandomRemaining()<= 2000){
+			GetQRandomNumbers();
+		}
+	}
+	
+	//Returns Current Version of the Mod
+	static string GetVersion(){
+		return UAPI_VERSION;
+	}
+	
+	//Simple function for finding a player based on their GUID
+	static DayZPlayer FindPlayer(string GUID){
+		if (GetGame().IsServer()){
+			autoptr array<Man> players = new array<Man>;
+			GetGame().GetPlayers( players );
+			for (int i = 0; i < players.Count(); i++){
+				DayZPlayer player = DayZPlayer.Cast(players.Get(i));
+				if (player.GetIdentity() && player.GetIdentity().GetId() == GUID ){
+					return player;
+				}
+			}
+		}
+		return NULL;
+	}
+	
+	//Simple function for finding a player based on their identity
+	static DayZPlayer FindPlayerByIdentity(PlayerIdentity identity) {
+		if (!identity)
+			return NULL;
 
+		int highBits;
+		int lowBits;
+		GetGame().GetPlayerNetworkIDByIdentityID(identity.GetPlayerId(), lowBits, highBits);
+		return DayZPlayer.Cast(GetGame().GetObjectByNetworkId(lowBits, highBits));
+	}
+	
+	//Stuff that you don't need to worry about :P
+	
 	protected int m_CallId = 0;
 	protected int m_AuthRetries = 0;
 	
@@ -32,7 +164,7 @@ class UniversalApi extends Managed {
 	
 	protected int LastRandomNumberRequestCall = -1;
 	
-	
+		
 	protected static RestApi RestCore()
 	{
 		RestApi clCore = GetRestApi();
@@ -41,26 +173,6 @@ class UniversalApi extends Managed {
 			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
 		}
 		return clCore;
-	}
-	
-	
-	static void Post(string url, string jsonString = "{}", ref RestCallback UCBX = NULL, string contentType = "application/json")
-	{
-		if (!UCBX){
-			UCBX = new UApiSilentCallBack;
-		}
-		RestContext ctx = RestCore().GetRestContext(url);
-		ctx.SetHeader(contentType);
-		ctx.POST(UCBX, "", jsonString);
-	}
-	
-	static void Get(string url, ref RestCallback UCBX = NULL)
-	{
-		if (!UCBX){
-			UCBX = new UApiSilentCallBack;
-		}
-		RestContext ctx =  RestCore().GetRestContext(url);
-		ctx.GET(UCBX , "");
 	}
 	
 	string GetAuthToken(){
@@ -76,34 +188,15 @@ class UniversalApi extends Managed {
 		return (GetAuthToken() != "null" && GetAuthToken() != "error" && GetAuthToken() != "ERROR" && GetAuthToken() != "" );
 	}
 	
-	static string GetVersion(){
-		return UAPI_VERSION;
-	}
 	
-	UApiDBEndpoint db(int collection = OBJECT_DB){
-		if (collection == OBJECT_DB){
-			if (!m_ObjectEndPoint){
-				m_ObjectEndPoint = new UApiDBEndpoint("Object");
-			}
-			return m_ObjectEndPoint;
-		} 
-		if (collection == PLAYER_DB){
-			if (!m_PlayerEndPoint){
-				m_PlayerEndPoint = new UApiDBEndpoint("Player");
-			}
-			return m_PlayerEndPoint;
-		}
-		return NULL;
-	}
-		
+	//OLD RestCallBack Endpoints use if you want to use RestCallBack Classes instead of Function Based
 	UniversalRest Rest(){
 		if (!m_UniversalRest){
 			m_UniversalRest = new UniversalRest;
 		}
 		return m_UniversalRest;
 	}
-	
-	
+
 	UniversalDiscordRest Discord(){
 		if (!m_UniversalDiscordRest){
 			m_UniversalDiscordRest = new UniversalDiscordRest;
@@ -111,27 +204,7 @@ class UniversalApi extends Managed {
 		return m_UniversalDiscordRest;
 	}
 	
-	UniversalDSEndpoint ds(){
-		if (!m_UniversalDSEndpoint){
-			m_UniversalDSEndpoint = new UniversalDSEndpoint;
-		}
-		return m_UniversalDSEndpoint;
-	}
 	
-	UApiDBGlobalEndpoint globals(){
-		if (!m_UApiDBGlobalEndpoint){
-			m_UApiDBGlobalEndpoint = new UApiDBGlobalEndpoint;
-		}
-		return m_UApiDBGlobalEndpoint;
-	}
-	
-	UApiAPIEndpoint api(){
-		if (!m_UApiAPIEndpoint){
-			m_UApiAPIEndpoint = new UApiAPIEndpoint;
-		}
-		return m_UApiAPIEndpoint;
-	
-	}
 	
 	void ~UniversalApi(){
 		if (GetGame().IsServer() && UAPI_Init){
@@ -301,30 +374,6 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	static DayZPlayer FindPlayer(string GUID){
-		if (GetGame().IsServer()){
-			autoptr array<Man> players = new array<Man>;
-			GetGame().GetPlayers( players );
-			for (int i = 0; i < players.Count(); i++){
-				DayZPlayer player = DayZPlayer.Cast(players.Get(i));
-				if (player.GetIdentity() && player.GetIdentity().GetId() == GUID ){
-					return player;
-				}
-			}
-		}
-		return NULL;
-	}
-	
-	static DayZPlayer FindPlayerByIdentity(PlayerIdentity identity) {
-		if (!identity)
-			return NULL;
-
-		int highBits;
-		int lowBits;
-		GetGame().GetPlayerNetworkIDByIdentityID(identity.GetPlayerId(), lowBits, highBits);
-		return DayZPlayer.Cast(GetGame().GetObjectByNetworkId(lowBits, highBits));
-	}
-	
 	void AuthError(string guid){
 		Print("[UAPI] Auth Error for " + guid);
 		//If Auth Token Failed just try again in 3 minutes 
@@ -379,18 +428,9 @@ class UniversalApi extends Managed {
 		return ++m_CallId;
 	}
 	
-	void RequestCallCancel(int cid){
-		m_CanceledCalls.Insert(cid);
-	}
 	
 	bool IsCallCanceled(int cid){
 		return (m_CanceledCalls.Find(cid) != -1);
-	}
-	
-	void CheckAndRenewQRandom(){
-		if (Math.QRandomRemaining()<= 2000){
-			GetQRandomNumbers();
-		}
 	}
 	
 	protected void GetQRandomNumbers(){
@@ -462,22 +502,6 @@ class UniversalApi extends Managed {
 			Error2("UnviersalApi", "[UAPI] Error with WebService! Status: " + status);
 			m_UApiOnline = false;
 		}
-	}
-	
-	bool IsDiscordEnabled(){
-		return m_UApiDiscordEnabled;
-	}
-	
-	bool IsTranslateEnabled(){
-		return m_UApiTranslateEnabled;
-	}
-	
-	bool IsOnline(){
-		return m_UApiOnline;
-	}
-	
-	int VersionOffset(){
-		return m_UApiVersionOffset;
 	}
 	
 };

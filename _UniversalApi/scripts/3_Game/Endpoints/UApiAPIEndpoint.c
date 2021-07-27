@@ -1,5 +1,7 @@
 class UApiAPIEndpoint extends UApiBaseEndpoint {
 	
+	
+	//Uses the QnA Endpoint to send requests returns QnAAnswer
 	int QnA(string Question,  string Key, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "QnA/" + Key;
@@ -22,7 +24,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		}
 		return cid;	
 	}
-	
+	//Helper function for returning the question to chat
 	int ChatQnA(string Question, bool Slient){
 		if (Slient){
 			return QnA(Question, "", GetDayZGame(), "CBQnAChatMessageSilent");	
@@ -30,6 +32,8 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		return QnA(Question, "", GetDayZGame(), "CBQnAChatMessage");	
 	}
 	
+	
+	//Sends request to get text translated returns a `UApiTranslationResponse` object
 	int Translate(string Text, TStringArray To, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "Translate";
@@ -54,6 +58,8 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		
 	}
 	
+	
+	//Runs a wit query to the key specificed must be configured server side
 	int Wit(string Text, string Key, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "Wit/" + Key;
@@ -77,6 +83,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
+	//Sends a query to Microsoft's LUIS
 	int LUIS(string Text, string Key, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "LUIS/" + Key;
@@ -100,7 +107,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	
+	//Runs a Steam Query for a server returning a `UApiServerStatus` object
 	int ServerQuery(string ip, string queryPort, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
@@ -122,7 +129,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	
+	//Sends text for Toxicity Check returns a `UApiToxicityResponse` object
 	int Toxicity(string text, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "Toxicity";
@@ -145,7 +152,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	//Get a array of random numbers from 0 - 65535
+	//Get a array of random numbers from 0 - 65535 returns `UApiRandomNumberResponse`
 	int RandomNumbers(int count, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "Random";
@@ -170,7 +177,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	//Gets an array of random number from  -2147483647 to 2147483647
+	//Gets an array of random number from  -2147483647 to 2147483647 returns `UApiRandomNumberResponse`
 	int RandomNumbersFull(int count, Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "Random/Full";
@@ -195,6 +202,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
+	//Request a status check from the api so you can get version number and such returns a `UApiStatus` object
 	int Status(Class instance, string function, string oid = ""){
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;

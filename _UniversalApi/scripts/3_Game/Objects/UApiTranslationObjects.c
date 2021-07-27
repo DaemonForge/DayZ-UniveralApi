@@ -4,7 +4,7 @@ class UApiTranslationResponse extends StatusObject {
 	string Detected = "";
 }
 
-class UApiTranslation {
+class UApiTranslation extends Managed {
 	string text;
 	string to;
 }

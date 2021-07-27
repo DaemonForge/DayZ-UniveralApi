@@ -1,17 +1,4 @@
-class QnAQuestion extends UApiObject_Base{ // Will be removed to allow for it to just use the generic UApiQuestion Object
-	string question = "";
-	
-	void QnAQuestion(string Question){
-		question = Question;
-	}
-	
-	override string ToJson(){
-		string jsonString = JsonFileLoader<QnAQuestion>.JsonMakeData(this);
-		return jsonString;
-	}
-}
-
-class QnAAnswer{
+class QnAAnswer extends StatusObject{
 	string answer = "";
 	float score = 0;
 	string get(){

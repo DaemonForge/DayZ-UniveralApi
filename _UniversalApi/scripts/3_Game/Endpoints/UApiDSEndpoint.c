@@ -6,6 +6,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return UApiConfig().GetBaseURL() + "Discord/";
 	}
 	
+	//Returns a link for the player based on the players steam id so they can connect there discord to there steam account
 	string Link(string PlainId = ""){
 		if (PlainId == "" && GetGame().IsClient()){
 			DayZPlayer player = DayZPlayer.Cast(GetGame().GetPlayer());
@@ -19,6 +20,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return EndpointBaseUrl() + PlainId;
 	}
 		
+	//Add's a role to a user's connected discord
 	int AddRole(string GUID, string RoleId, Class instance = NULL, string function = "") {
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
@@ -42,6 +44,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}
 	
+	//Removes a role from a user's connected discord
 	int RemoveRole(string GUID, string RoleId, Class instance = NULL, string function = "") {
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
@@ -66,6 +69,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}
 	
+	//Sends a DM to a user's discord retuns `StatusObject`
 	int UserSend(string guid, string message,  Class instance = NULL, string function = ""){
 		int cid = UApi().CallId();
 		
@@ -86,6 +90,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return -1;
 	}
 
+	//Return's a User's `UApiDiscordUser` Object 
 	int GetUser(string GUID, Class instance, string function) {
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
@@ -98,22 +103,6 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		string url = "Get/" + GUID;
 		
 		Post(url,"{}",DBCBX);
-		return cid;
-	}
-	
-	int GetUserWithPlainId(string plainId, Class instance, string function) {
-		int cid = UApi().CallId();
-		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, plainId);
-		} else {
-			DBCBX = new UApiSilentCallBack();
-		}
-		
-		string url = "GetWithPlainId/" + plainId;
-		if (plainId && plainId != ""){
-			Post(url,"{}",DBCBX);
-		}
 		return cid;
 	}
 	
@@ -130,66 +119,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		
 		Post(url,"{}",DBCBX);
 		return cid;
-	}
-	
-	int GetUserObjWithPlainId(string plainId, Class instance, string function) {
-		int cid = UApi().CallId();
-		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDSCallBack(instance, function, cid, plainId);
-		} else {
-			DBCBX = new UApiSilentCallBack();
-		}
-		
-		string url = "GetWithPlainId/" + plainId;
-		if (plainId && plainId != ""){
-			Post(url,"{}",DBCBX);
-		}
-		return cid;
-	}
-	
-	
-	int CheckDiscord(string PlainId, Class instance, string function,  string baseUrl = ""){		
-		int cid = UApi().CallId();
-		if (baseUrl == ""){
-			baseUrl = UApiConfig().GetBaseURL();
-		}
-		
-		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, PlainId);
-		} else {
-			DBCBX = new UApiSilentCallBack();
-		}
-		
-		string url = baseUrl + "Discord/Check/" + PlainId;
-		
-		UApi().Post(url,"{}",DBCBX);
-		
-		return cid;
-	}
-	
-	int CheckDiscordObj(string PlainId, Class instance, string function,  string baseUrl = ""){		
-		int cid = UApi().CallId();
-		if (baseUrl == ""){
-			baseUrl = UApiConfig().GetBaseURL();
-		}
-		
-		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, PlainId);
-		} else {
-			DBCBX = new UApiSilentCallBack();
-		}
-		
-		string url = baseUrl + "Discord/Check/" + PlainId;
-		
-		UApi().Post(url,"{}",DBCBX);
-		
-		return cid;
-	}
-	
-	
+	}	
 	
 	
 	int ChannelCreate(string Name, UApiChannelOptions Options = NULL, Class instance = NULL, string function = "") {
@@ -461,5 +391,81 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		}
 		return -1;
 	}
+	
+	//A way to check if a player's discord is set up before they connect to the server and get an authkey
+	int CheckDiscord(string PlainId, Class instance, string function,  string baseUrl = ""){		
+		int cid = UApi().CallId();
+		if (baseUrl == ""){
+			baseUrl = UApiConfig().GetBaseURL();
+		}
+		
+		autoptr RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, PlainId);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = baseUrl + "Discord/Check/" + PlainId;
+		
+		UApi().Post(url,"{}",DBCBX);
+		
+		return cid;
+	}
+	
+	//A way to check if a player's discord is set up before they connect to the server and get an authkey
+	int CheckDiscordObj(string PlainId, Class instance, string function,  string baseUrl = ""){		
+		int cid = UApi().CallId();
+		if (baseUrl == ""){
+			baseUrl = UApiConfig().GetBaseURL();
+		}
+		
+		autoptr RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, PlainId);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = baseUrl + "Discord/Check/" + PlainId;
+		
+		UApi().Post(url,"{}",DBCBX);
+		
+		return cid;
+	}
+	
+	int GetUserWithPlainId(string plainId, Class instance, string function) {
+		int cid = UApi().CallId();
+		autoptr RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDBCallBack(instance, function, cid, plainId);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = "GetWithPlainId/" + plainId;
+		if (plainId && plainId != ""){
+			Post(url,"{}",DBCBX);
+		}
+		return cid;
+	}
+	
+	
+	int GetUserObjWithPlainId(string plainId, Class instance, string function) {
+		int cid = UApi().CallId();
+		autoptr RestCallback DBCBX;
+		if (instance && function != ""){
+			DBCBX = new UApiDSCallBack(instance, function, cid, plainId);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = "GetWithPlainId/" + plainId;
+		if (plainId && plainId != ""){
+			Post(url,"{}",DBCBX);
+		}
+		return cid;
+	}
+	
 	
 }

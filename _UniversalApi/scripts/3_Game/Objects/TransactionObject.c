@@ -1,5 +1,4 @@
-class UApiTransaction
-{
+class UApiTransaction extends UApiObject_Base {
 	string Element;
 	float Value;
 	
@@ -8,15 +7,14 @@ class UApiTransaction
 		Value = value;
 	}
 	
-	string ToJson(){
-		string jsonString = JsonFileLoader<UApiTransaction>.JsonMakeData(this);;
+	override string ToJson(){
+		string jsonString = JsonFileLoader<UApiTransaction>.JsonMakeData(this);
 		return jsonString;
 	}
 	
 };
 
-class UApiUpdateData
-{
+class UApiUpdateData extends UApiObject_Base {
 	string Element;
 	string Operation = UpdateOpts.SET; // set | push | pull | unset | mul | rename | pullAll
 	string Value;
@@ -27,8 +25,8 @@ class UApiUpdateData
 		Operation = operation;
 	}
 	
-	string ToJson(){
-		string jsonString = JsonFileLoader<UApiUpdateData>.JsonMakeData(this);;
+	override string ToJson(){
+		string jsonString = JsonFileLoader<UApiUpdateData>.JsonMakeData(this);
 		return jsonString;
 	}
 	
