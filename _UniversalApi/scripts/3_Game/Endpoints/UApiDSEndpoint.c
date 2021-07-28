@@ -113,10 +113,13 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 	
 	int GetUserObj(string GUID, Class instance, string function) {
+		if (GUID == ""){
+			return -1;
+		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
-			DBCBX = new UApiDSCallBack(instance, function, cid, GUID);
+			DBCBX = new UApiDBNestedCallBack(new UApiDatabaseCallback<UApiDiscordUser>(instance, function, GUID), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -159,7 +162,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
-			DBCBX = new UApiDiscordStatusCallBack(instance, function, cid, Name);
+			DBCBX = new UApiDBNestedCallBack(new UApiDatabaseCallback<UApiDiscordStatusObject>(instance, function, Name), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -206,7 +209,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
-			DBCBX = new UApiDiscordStatusCallBack(instance, function, cid, id);
+			DBCBX = new UApiDBNestedCallBack(new UApiDatabaseCallback<UApiDiscordStatusObject>(instance, function, id), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -250,7 +253,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
-			DBCBX = new UApiDiscordStatusCallBack(instance, function, cid, id);
+			DBCBX =  new UApiDBNestedCallBack(new UApiDatabaseCallback<UApiDiscordStatusObject>(instance, function, id), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -294,7 +297,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
-			DBCBX = new UApiDiscordStatusCallBack(instance, function, cid, id);
+			DBCBX = new UApiDBNestedCallBack(new UApiDatabaseCallback<UApiDiscordStatusObject>(instance, function, id), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -338,7 +341,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
-			DBCBX = new UApiDiscordStatusCallBack(instance, function, cid, id);
+			DBCBX = new UApiDBNestedCallBack(new UApiDatabaseCallback<UApiDiscordStatusObject>(instance, function, id), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -384,7 +387,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
-			DBCBX = new UApiDiscordMessagesCallBack(instance, function, cid, id);
+			DBCBX = new UApiDBNestedCallBack(new UApiDatabaseCallback<UApiDiscordMessagesResponse>(instance, function, id), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -428,7 +431,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, PlainId);
+			DBCBX = new UApiDBNestedCallBack(new UApiDatabaseCallback<StatusObject>(instance, function, PlainId), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
