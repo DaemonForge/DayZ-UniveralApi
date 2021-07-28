@@ -434,50 +434,47 @@ class UniversalApi extends Managed {
 		Print("[UAPI] Failed to update the Q Random Numbers");
 	}
 	
-	protected void CBStatusCheck(int cid, int status, string oid, string data){
-		if (status == UAPI_SUCCESS){
-			autoptr UApiStatus dataload;
-			if (UApiJSONHandler<UApiStatus>.FromString(data, dataload)){
-				if (dataload.Error == "noerror" && dataload.Status ==  "Success"){
-					m_UApiOnline = true;
-					Print("[UAPI] WebService Online Version: " + dataload.Version + " Mod Version: " + UAPI_VERSION);
-				}
-				if (dataload.Error == "noauth"){
-					Print("[UAPI] Auth Key is not vaild");
-				}
-				if (dataload.Status == "Error"){
-					Print("[UAPI] Something went wrong with connecting to the api: " + dataload.Error);
-				}
-				if (dataload.Error == "noerror" && dataload.Discord == "Enabled"){
-					m_UApiDiscordEnabled = true;
-				}
-				if (dataload.Error == "noerror" && dataload.Translate == "Enabled"){
-					m_UApiTranslateEnabled = true;
-				}
-				m_UApiVersionOffset = dataload.CheckVersion(UAPI_VERSION);
-				if (m_UApiVersionOffset > 2){
-					Error2("Universal API WebService Needs Update", "[UAPI] Webservice is outdated and should be updated right away | WebService Version: " + dataload.Version + " Mod Version: " + UAPI_VERSION);
-					return;
-				}
-				if (m_UApiVersionOffset > 1){
-					Error("[UAPI] Webservice is outdated and should be updated right away");
-					return;
-				}
-				if (m_UApiVersionOffset > 0){
-					Print("[UAPI] You may want to check for new versions of the Universal API WebService");
-					return;
-				}
-				if (m_UApiVersionOffset < -2){
-					Error2("Universal API Mod Needs Update", "[UAPI] Universal Api Mod is outdated and should be updated right away | WebService Version: " + dataload.Version + " Mod Version: " + UAPI_VERSION);
-					return;
-				}
-				if (m_UApiVersionOffset < -1){
-					Print("[UAPI] Universal Api Mod maybe outdated and should be updated right away");
-					return;
-				}					
+	protected void CBStatusCheck(int cid, int status, string oid, UApiStatus data){
+		if (status == UAPI_SUCCESS && data){
+			if (data.Error == "noerror"){
+				m_UApiOnline = true;
+				Print("[UAPI] WebService Online Version: " + data.Version + " Mod Version: " + UAPI_VERSION);
+			}
+			if (data.Error == "noauth"){
+				Print("[UAPI] Auth Key is not vaild");
+			}
+			if (data.Error == "noerror" && data.Discord == "Enabled"){
+				m_UApiDiscordEnabled = true;
+			}
+			if (data.Error == "noerror" && data.Translate == "Enabled"){
+				m_UApiTranslateEnabled = true;
+			}
+			m_UApiVersionOffset = data.CheckVersion(UAPI_VERSION);
+			if (m_UApiVersionOffset > 2){
+				Error2("Universal API WebService Needs Update", "[UAPI] Webservice is outdated and should be updated right away | WebService Version: " + data.Version + " Mod Version: " + UAPI_VERSION);
 				return;
 			}
-		} else if (status == UAPI_TIMEOUT){
+			if (m_UApiVersionOffset > 1){
+				Error("[UAPI] Webservice is outdated and should be updated right away");
+				return;
+			}
+			if (m_UApiVersionOffset > 0){
+				Print("[UAPI] You may want to check for new versions of the Universal API WebService");
+				return;
+			}
+			if (m_UApiVersionOffset < -2){
+				Error2("Universal API Mod Needs Update", "[UAPI] Universal Api Mod is outdated and should be updated right away | WebService Version: " + data.Version + " Mod Version: " + UAPI_VERSION);
+				return;
+			}
+			if (m_UApiVersionOffset < -1){
+				Print("[UAPI] Universal Api Mod maybe outdated and should be updated right away");
+				return;
+			}					
+			return;
+		} else if (status == UAPI_ERROR){
+			Error2("UnviersalApi", "[UAPI] Something went wrong communicating with the webservice check to make sure it is installed correctly and the mongodb service is running correctly!");
+			m_UApiOnline = false;
+		}  else if (status == UAPI_TIMEOUT){
 			Error2("UnviersalApi", "[UAPI] Webservice is offline or unreachable!");
 			m_UApiOnline = false;
 		} else {

@@ -117,16 +117,10 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			return -1;
 		}
 		int cid = UApi().CallId();
-		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(instance, function, GUID), cid);
-		} else {
-			DBCBX = new UApiSilentCallBack();
-		}
 		
 		string url = "Get/" + GUID;
 		
-		Post(url,"{}",DBCBX);
+		Post(url,"{}",new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(instance, function, GUID), cid));
 		return cid;
 	}	
 	

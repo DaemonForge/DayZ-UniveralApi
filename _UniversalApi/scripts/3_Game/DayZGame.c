@@ -22,24 +22,20 @@ modded class DayZGame extends CGame
 		}
 	}
 	
-	protected void CBQnAChatMessageSilent(int cid, int status, string oid, string data){
-		if (status == UAPI_SUCCESS){
-			autoptr QnAAnswer AnswerObj;
-			JsonFileLoader<QnAAnswer>.JsonLoadData(data, AnswerObj);
-			if (AnswerObj.get() != "null" && AnswerObj.get() != "error" &&  AnswerObj.get() != "ERROR" &&  AnswerObj.get() != ""){
-				UApiQnAMaker().ProcessAnswer(AnswerObj.get());
+	protected void CBQnAChatMessageSilent(int cid, int status, string oid, QnAAnswer data){
+		if (status == UAPI_SUCCESS && data){
+			if (data.get() != "null" && data.get() != "error" &&  data.get() != "ERROR" &&  data.get() != ""){
+				UApiQnAMaker().ProcessAnswer(data.get());
 			} else {
 				UApiQnAMaker().SendRespone("Sorry couldn't find the an answer to your question? Try rephrasing it or asking a real person");
 			}
 		}
 	}
 	
-	protected void CBQnAChatMessage(int cid, int status, string oid, string data){
-		if (status == UAPI_SUCCESS){
-			autoptr QnAAnswer AnswerObj;
-			JsonFileLoader<QnAAnswer>.JsonLoadData(data, AnswerObj);
-			if (AnswerObj.get() != "null" && AnswerObj.get() != "error" &&  AnswerObj.get() != "ERROR" &&  AnswerObj.get() != ""){
-				UApiQnAMaker().ProcessAnswer(AnswerObj.get());
+	protected void CBQnAChatMessage(int cid, int status, string oid, QnAAnswer data){
+		if (status == UAPI_SUCCESS && data){
+			if (data.get() != "null" && data.get() != "error" &&  data.get() != "ERROR" &&  data.get() != ""){
+				UApiQnAMaker().ProcessAnswer(data.get());
 			}
 		}
 	}

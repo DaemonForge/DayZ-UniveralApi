@@ -56,10 +56,17 @@ class UApiCallbackBase extends Managed{
 		return Instance;
 	}
 	
-	void UApiCallbackBase(Class instance, string function, string oid){
+	void UApiCallbackBase(Class instance, string function, string oid = ""){
 		Instance = instance;
 		Function = function;
 		OID = oid;
+	}
+	
+	//So I can set it automaticly to save on coding for other devs
+	void SetOID(string oid){
+		if (OID == "" && oid != ""){
+			OID = oid;
+		}
 	}
 	
 	void OnError(int errorCode, int cid) {
