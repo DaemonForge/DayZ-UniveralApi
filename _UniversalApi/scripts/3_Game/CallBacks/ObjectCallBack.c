@@ -1,7 +1,7 @@
 //This meathod has to be used for the template class to work, can have a template class that exends RestCallback
 
 
-class UApiDatabaseCallback<Class T> extends UApiDatabaseCallbackBase{
+class UApiCallback<Class T> extends UApiCallbackBase{
 	
 	override void OnError(int errorCode, int cid) {
 		if (GetInstance() && Function != "") {
@@ -45,7 +45,7 @@ class UApiDatabaseCallback<Class T> extends UApiDatabaseCallbackBase{
 	}
 }
 
-class UApiDatabaseCallbackBase extends Managed{
+class UApiCallbackBase extends Managed{
 
 	protected Class Instance;
 	protected string Function;
@@ -56,7 +56,7 @@ class UApiDatabaseCallbackBase extends Managed{
 		return Instance;
 	}
 	
-	void UApiDatabaseCallbackBase(Class instance, string function, string oid){
+	void UApiCallbackBase(Class instance, string function, string oid){
 		Instance = instance;
 		Function = function;
 		OID = oid;
@@ -74,14 +74,14 @@ class UApiDatabaseCallbackBase extends Managed{
 class UApiDBNestedCallBack : RestCallback
 {
 	protected int CallId;
-	protected autoptr UApiDatabaseCallbackBase m_CB;
+	protected autoptr UApiCallbackBase m_CB;
 
 	
-	protected UApiDatabaseCallbackBase GetCB(){
+	protected UApiCallbackBase GetCB(){
 		return m_CB;
 	}
 	
-	void UApiDBNestedCallBack(UApiDatabaseCallbackBase cb, int callId){
+	void UApiDBNestedCallBack(UApiCallbackBase cb, int callId){
 		m_CB = cb;
 		CallId = callId;
 	}
