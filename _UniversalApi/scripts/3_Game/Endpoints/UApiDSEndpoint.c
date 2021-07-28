@@ -443,7 +443,11 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}
 	
-	int GetUserWithPlainId(string plainId, Class instance, string function) {
+	
+	
+	
+	//Obsolete GetUser accepts both plainid or GUID
+	/*int GetUserWithPlainId(string plainId, Class instance, string function) {
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
@@ -457,14 +461,14 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			Post(url,"{}",DBCBX);
 		}
 		return cid;
-	}
+	}*/
 	
-	
-	int GetUserObjWithPlainId(string plainId, Class instance, string function) {
+	//Obsolete GetUserObj accepts both plainid or GUID
+	/*int GetUserObjWithPlainId(string plainId, Class instance, string function) {
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
-			DBCBX = new UApiDSCallBack(instance, function, cid, plainId);
+			DBCBX = new UApiDBNestedCallBack(new UApiDatabaseCallback<UApiDiscordUser>(instance, function, plainId), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -474,7 +478,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 			Post(url,"{}",DBCBX);
 		}
 		return cid;
-	}
+	}*/
 	
 	
 }
