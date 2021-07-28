@@ -37,6 +37,11 @@ router.post('/Status/:ip/:port', (req, res)=>{
     GetServerStatus(req, res, req.params.ip, req.params.port, req.headers['auth-key']);
 });
 
+//TO REMOVE
+router.post('/Status/:ip/:port/:auth', (req, res)=>{
+    GetServerStatus(req, res, req.params.ip, req.params.port, req.params.auth);
+});
+
 async function QueryServer(ip, port){
     try{
         let data = query( {

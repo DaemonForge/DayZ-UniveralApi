@@ -14,6 +14,11 @@ router.post('/:id/:mod', (req, res)=>{
     runTransaction(req, res, req.params.mod, req.params.id, req.headers['auth-key'], GetCollection(req.baseUrl));
 });
 
+//TO REMOVE
+router.post('/:id/:mod/:auth', (req, res)=>{
+    runTransaction(req, res, req.params.mod, req.params.id, req.params.auth, GetCollection(req.baseUrl));
+});
+
 function GetCollection(URL){
     if (URL.includes("/Player/")){
         return "Players"

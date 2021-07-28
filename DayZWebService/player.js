@@ -39,6 +39,30 @@ router.post('/PublicSave/:GUID/:mod', (req, res)=>{
     runSavePublic(req, res, GUID, req.params.mod, req.headers['auth-key']);
 });
 
+
+//TO REMOVE
+router.post('/Load/:GUID/:mod/:auth', (req, res)=>{
+    let GUID = NormalizeToGUID(req.params.GUID);
+    runGet(req, res, GUID, req.params.mod, req.params.auth);
+});
+router.post('/Save/:GUID/:mod/:auth', (req, res)=>{
+    let GUID = NormalizeToGUID(req.params.GUID);
+    runSave(req, res, GUID, req.params.mod, req.params.auth);
+});
+router.post('/Update/:GUID/:mod/:auth', (req, res)=>{
+    let GUID = NormalizeToGUID(req.params.GUID);
+    runUpdate(req, res, GUID, req.params.mod, req.params.auth);
+});
+router.post('/PublicLoad/:GUID/:mod/:auth', (req, res)=>{
+    let GUID = NormalizeToGUID(req.params.GUID);
+    runGetPublic(req, res, GUID, req.params.mod, req.params.auth);
+});
+router.post('/PublicSave/:GUID/:mod/:auth', (req, res)=>{
+    let GUID = NormalizeToGUID(req.params.GUID);
+    runSavePublic(req, res, GUID, req.params.mod, req.params.auth);
+});
+
+
 async function runGet(req, res, GUID, mod, auth) {
     if (  CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth))){
         const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });

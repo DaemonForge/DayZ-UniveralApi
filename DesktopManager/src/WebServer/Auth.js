@@ -17,6 +17,17 @@ router.post('/:GUID', (req, res)=>{
     }
 });
 
+//TO REMOVE
+router.post('/:GUID/:auth', (req, res)=>{
+    if ( CheckServerAuth(req.params.auth) ){
+        runGetAuth(req, res, req.params.GUID);
+    }else{
+        res.status(401);
+        res.json({ GUID: req.params.GUID, AuthToken: "ERROR" });
+        log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
+    }
+});
+
 async function runGetAuth(req, res, GUID) {
     const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     try{
