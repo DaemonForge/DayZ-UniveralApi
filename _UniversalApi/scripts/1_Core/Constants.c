@@ -1,4 +1,4 @@
-static const string UAPI_VERSION = "0.10.1";
+static const string UAPI_VERSION = "1.0.0";
 
 static const int UAPI_SUCCESS = 200;
 static const int UAPI_EMPTY = 204;
