@@ -221,7 +221,7 @@ class UniversalApi extends Managed {
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestRetry", this, SingeplayerExecutionType.Both );
 			if(GetGame().IsServer()){
-				int cid = UApi().api().Status(this, "CBStatusCheck");
+				int cid = UApi().api().StatusObj(this, "CBStatusCheck");
 				CheckAndRenewQRandom();
 				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.CheckAndRenewQRandom, 10 * 60 * 1000, true);
 			}
@@ -249,7 +249,7 @@ class UniversalApi extends Managed {
 	
 	protected void OnTokenReceived(){
 		UpdateAllAuthTokens();
-		UApi().api().Status(this, "CBStatusCheck");
+		UApi().api().StatusObj(this, "CBStatusCheck");
 		if (m_UniversalApiConfig.QnAEnabled){
 			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(NULL), true);
 		}
