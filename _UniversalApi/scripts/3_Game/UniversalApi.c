@@ -249,13 +249,11 @@ class UniversalApi extends Managed {
 	
 	protected void OnTokenReceived(){
 		UpdateAllAuthTokens();
-		int cid = UApi().api().Status(this, "CBStatusCheck");
+		UApi().api().Status(this, "CBStatusCheck");
 		if (m_UniversalApiConfig.QnAEnabled){
 			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(NULL), true);
 		}
-		if (m_UniversalApiConfig.PromptDiscordOnConnect >= 1){
-			thread CheckAndPromptDiscord();
-		}
+		UApi().ds().GetUserObj(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
 		GetGame().GameScript.CallFunction(GetGame().GetMission(), "UniversalApiReadyTokenReceived", NULL, NULL);
 		Print("[UAPI] OnTokenReceived Proccessed");
 		CheckAndRenewQRandom();
@@ -297,23 +295,7 @@ class UniversalApi extends Managed {
 		}
 		Print("[UAPI] Failed to find Player Auth for " + guid);
 		return false;
-	}	
-	
-	protected void CheckAndPromptDiscord(){
-		if (GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
-			dsUser = UApi().Discord().GetUserNow(GetGame().GetUserManager().GetTitleInitiator().GetUid(), true);
-			if (dsUser && dsUser.Status == "Success"){
-				//Print("[UAPI] Promt Discord On Connect Already Connected Continue");
-			} else if (dsUser && dsUser.Status == "NotSetup"){
-				GetGame().OpenURL(UApi().Discord().Link());
-			} else if (dsUser){
-				Print("[UAPI] Promt Discord On Connect  " + dsUser.Status + " Error Occured - " + dsUser.Error);
-			}
-		} else {
-			Print("[UAPI] Promt Discord On Connect enbabled but Player/Id is null");
-		}
-	}
-	
+	}		
 	
 	protected void RPCRequestQnAConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
 	{
