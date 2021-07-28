@@ -9,19 +9,16 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	//Returns a link for the player based on the players steam id so they can connect there discord to there steam account
 	string Link(string PlainId = ""){
 		if (PlainId == "" && GetGame().IsClient()){
-			DayZPlayer player = DayZPlayer.Cast(GetGame().GetPlayer());
-			if ( player && player.GetIdentity() ){
-				return EndpointBaseUrl() + player.GetIdentity().GetPlainId();
-			}
-			if (GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
-				return EndpointBaseUrl() + GetGame().GetUserManager().GetTitleInitiator().GetUid();
-			}
+			return EndpointBaseUrl() + GetDayZGame().GetSteamId();
 		}
 		return EndpointBaseUrl() + PlainId;
 	}
 		
 	//Add's a role to a user's connected discord
 	int AddRole(string GUID, string RoleId, Class instance = NULL, string function = "") {
+		if (GUID == ""){
+			return -1;
+		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
@@ -46,6 +43,9 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	
 	//Removes a role from a user's connected discord
 	int RemoveRole(string GUID, string RoleId, Class instance = NULL, string function = "") {
+		if (GUID == ""){
+			return -1;
+		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
@@ -70,17 +70,20 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 	
 	//Sends a DM to a user's discord retuns `StatusObject`
-	int UserSend(string guid, string message,  Class instance = NULL, string function = ""){
+	int UserSend(string GUID, string message,  Class instance = NULL, string function = ""){
+		if (GUID == ""){
+			return -1;
+		}
 		int cid = UApi().CallId();
 		
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, guid);
+			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		string url = "Send/" + guid;
+		string url = "Send/" + GUID;
 		
 		if (message != "" && DBCBX){
 			autoptr UApiDiscordBasicMessage obj = new UApiDiscordBasicMessage(message);
@@ -92,6 +95,9 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 
 	//Return's a User's `UApiDiscordUser` Object 
 	int GetUser(string GUID, Class instance, string function) {
+		if (GUID == ""){
+			return -1;
+		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){

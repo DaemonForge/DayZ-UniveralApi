@@ -22,4 +22,15 @@ modded class DayZGame extends CGame
 			}
 		}
 	}
+	
+	//Client side function to get the steam id
+	string GetSteamId(){
+		DayZPlayer player;
+		if (IsClient() && Class.CastTo(player, GetPlayer()) && player.GetIdentity() ){
+			return player.GetIdentity().GetPlainId();
+		} else if (IsClient() && GetUserManager() && GetUserManager().GetTitleInitiator()){
+			return GetUserManager().GetTitleInitiator().GetUid();
+		}
+		return "";
+	}
 }

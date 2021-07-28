@@ -13,13 +13,7 @@ class UniversalDiscordRest extends Managed {
 	
 	static string Link(string PlainId = ""){
 		if (PlainId == "" && GetGame().IsClient()){
-			DayZPlayer player = DayZPlayer.Cast(GetGame().GetPlayer());
-			if ( player && player.GetIdentity() ){
-				return BaseUrl() + "Discord/" + player.GetIdentity().GetPlainId();
-			}
-			if (GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
-				return BaseUrl() + "Discord/" + GetGame().GetUserManager().GetTitleInitiator().GetUid();
-			}
+			return BaseUrl() + "Discord/" +  GetDayZGame().GetSteamId();
 		}
 		return BaseUrl() + "Discord/" + PlainId;
 	}
