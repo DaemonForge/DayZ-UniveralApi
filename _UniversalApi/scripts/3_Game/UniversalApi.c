@@ -270,7 +270,7 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	protected void RPCUniversalApiConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	protected void RPCUniversalApiConfig( CallType type, ParamsReadContext ctx, PlayerIdentity sender, ref Object target )
 	{
 		Print("[UAPI] Received UApi Config");
 		Param2<ApiAuthToken, UniversalApiConfig> data; 
@@ -302,7 +302,7 @@ class UniversalApi extends Managed {
 	}
 	
 	
-	void RPCRequestRetry( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	void RPCRequestRetry( CallType type, ParamsReadContext ctx, PlayerIdentity sender, ref Object target )
 	{
 		if (GetGame().IsClient() && ++m_AuthRetries <= 20){
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestAuthToken, m_AuthRetries * 2200, false, true);
@@ -339,7 +339,7 @@ class UniversalApi extends Managed {
 		return false;
 	}		
 	
-	protected void RPCRequestQnAConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	protected void RPCRequestQnAConfig( CallType type, ParamsReadContext ctx, PlayerIdentity sender, ref Object target )
 	{
 		Param1<UApiQnAMakerServerAnswers> data; 
 		if ( !ctx.Read( data ) ) return;
@@ -350,7 +350,7 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	protected void RPCRequestAuthToken( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	protected void RPCRequestAuthToken( CallType type, ParamsReadContext ctx, PlayerIdentity sender, ref Object target )
 	{
 		Param1<bool> data; 
 		if ( !ctx.Read( data ) ) return;
@@ -375,7 +375,7 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	protected void SendAuthToken(ref PlayerIdentity idenitity, string auth){
+	protected void SendAuthToken(PlayerIdentity idenitity, string auth){
 		if (idenitity && auth != ""){
 			Print("[UAPI] Sending PlayerAuth Token to " + idenitity.GetId());
 			autoptr UniversalApiConfig m_ClientConfig = new UniversalApiConfig;
