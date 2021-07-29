@@ -223,7 +223,7 @@ async function runUpdate(req, res, GUID, mod, auth) {
             } else {
                 log("Error with Updating " + element +" for "+ mod + " Data for GUID: " + GUID, "warn");
                 res.status(203);
-                res.json({ Status: "Error", Element: element, Mod: mod, ID: GUID});
+                res.json({ Status: "NotFound", Element: element, Mod: mod, ID: GUID});
             }
         }catch(err){
             res.status(203);

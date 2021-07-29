@@ -195,7 +195,7 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
                 //console.log(result.result)
                 log("Error with Updating " + element +" for "+ mod + " Data for ObjectId: " + ObjectId, "warn");
                 res.status(203);
-                res.json({ Status: "Error", Element: element, Mod: mod, ID: ObjectId});
+                res.json({ Status: "NotFound", Element: element, Mod: mod, ID: ObjectId});
             }
         }catch(err){
             log(`ERROR: ${err}`, "warn");

@@ -31,3 +31,13 @@ class UApiUpdateData extends UApiObject_Base {
 	}
 	
 };
+
+class UApiUpdateResponse extends UApiTransactionResponse {
+	float Value;
+}
+
+class UApiTransactionResponse extends StatusObject {
+	string ID;
+	string Element;
+	string Mod;
+}
