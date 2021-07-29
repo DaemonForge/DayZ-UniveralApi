@@ -49,7 +49,16 @@ class UniversalApi extends Managed {
 	}
 	
 	//A super simple Post Interface to help people
-	static void Post(string url, string jsonString = "{}",autoptr RestCallback UCBX = NULL, string contentType = "application/json")
+	static int Post(string url)
+	{
+		RestContext ctx = RestCore().GetRestContext(url);
+		ctx.SetHeader("application/json");
+		ctx.POST(new UApiSilentCallBack, "", "{}");
+		return 0;
+	}
+	
+	//A super simple Post Interface to help people
+	static int Post(string url, string jsonString, autoptr RestCallback UCBX = NULL, string contentType = "application/json")
 	{
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -57,16 +66,49 @@ class UniversalApi extends Managed {
 		RestContext ctx = RestCore().GetRestContext(url);
 		ctx.SetHeader(contentType);
 		ctx.POST(UCBX, "", jsonString);
+		return 0;
+	}
+	
+	//A super simple Post Interface to help people
+	static int Post(string url, string jsonString, autoptr UApiCallbackBase cb, string contentType = "application/json")
+	{
+		int cid = UApi().CallId();
+		if (cb){
+			RestContext ctx = RestCore().GetRestContext(url);
+			ctx.SetHeader(contentType);
+			ctx.POST(new UApiDBNestedCallBack(cb,cid), "", jsonString);
+			return cid;
+		}
+		return -1;
 	}
 	
 	//A super simple Get Interface to help people
-	static void Get(string url, autoptr RestCallback UCBX = NULL)
+	static int Get(string url)
+	{
+		RestContext ctx =  RestCore().GetRestContext(url);
+		ctx.GET(new UApiSilentCallBack, "");
+		return 0;
+	}
+	//A super simple Get Interface to help people
+	static int Get(string url, autoptr RestCallback UCBX)
 	{
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 		RestContext ctx =  RestCore().GetRestContext(url);
 		ctx.GET(UCBX , "");
+		return 0;
+	}
+	//A super simple Get Interface to help people
+	static int Get(string url,autoptr UApiCallbackBase cb)
+	{
+		int cid = UApi().CallId();
+		if (cb){
+			RestContext ctx =  RestCore().GetRestContext(url);
+			ctx.GET(new UApiDBNestedCallBack(cb,cid), "");
+			return cid;
+		}
+		return -1;
 	}
 	
 	//Will return true if the discord endpoint is configured (this doesn't mean its configured correctly though :p)
