@@ -1,4 +1,4 @@
-class UApiQueryObject{
+class UApiQueryBase extends Managed{
 	
 	/*
 		
@@ -13,6 +13,16 @@ class UApiQueryObject{
 	
 	int MaxResults = -1;  //Max Number of Results to return, Note: dayz seems to crash at over 30mb in some of my tests
 	
+	bool FixQuery = false;  //Max Number of Results to return, Note: dayz seems to crash at over 30mb in some of my tests
+	
+	
+	string ToJson(){
+		return JsonFileLoader<UApiQueryBase>.JsonMakeData(this);
+	}
+	
+}
+
+class UApiQueryObject extends UApiQueryBase {	
 	
 	
 	void UApiQueryObject(string query = "{}", string orderBy = "{}", int maxResults = -1, string returnObject = ""){
@@ -21,11 +31,20 @@ class UApiQueryObject{
 		OrderBy = orderBy;
 		ReturnObject = returnObject;
 		MaxResults = maxResults;
-		
+		FixQuery = false;
 	}
 	
-	string ToJson(){
-		return JsonFileLoader<UApiQueryObject>.JsonMakeData(this);
+	
+}
+
+class UApiDBQuery extends UApiQueryBase{
+		
+	void UApiDBQuery(string query = "{}", string orderBy = "{}", bool fixQuery = true, int maxResults = -1, string returnObject = ""){
+		Query = query;
+		OrderBy = orderBy;
+		FixQuery = fixQuery;
+		ReturnObject = returnObject;
+		MaxResults = maxResults;
 	}
 	
 }

@@ -77,7 +77,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 	}
 	
 	
-	int Query(string mod, UApiQueryObject query, UApiCallbackBase cb) {
+	int Query(string mod, UApiQueryBase query, UApiCallbackBase cb) {
 		int cid = UApi().CallId();
 		string endpoint = "/Query/" + mod;
 				
@@ -91,7 +91,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Query(string mod, UApiQueryObject query, Class instance, string function) {
+	int Query(string mod, UApiQueryBase query, Class instance, string function) {
 		int cid = UApi().CallId();
 		string endpoint = "/Query/" + mod;
 				
