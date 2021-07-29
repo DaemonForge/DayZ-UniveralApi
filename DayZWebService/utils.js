@@ -18,7 +18,8 @@ module.exports ={
     InstallIndexes,
     CheckIndexes,
     CheckRecentVersion,
-    NormalizeToGUID
+    NormalizeToGUID,
+    ExtractAuthKey
 }
 
 
@@ -248,3 +249,16 @@ async function CheckRecentVersion(){
     }
     return idorguid;
   }
+
+
+  function ExtractAuthKey (req, res, next) {
+    let contentType = req.headers['content-type'] || "application/json";
+    if ( `${contentType}`.match(/^(text\/|application\/|multipart\/|audio\/|image\/|video\/)/gi)){ 
+      req.headers['auth-key'] = req.headers['auth-key'] || '';
+    } else {
+      req.headers['auth-key'] = req.headers['auth-key'] || req.headers['content-type'] || '';
+      req.headers['content-type'] = 'application/json';
+    }
+    next();
+  }
+  

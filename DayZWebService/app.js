@@ -18,7 +18,7 @@ const {json} = require('body-parser');
 const DefaultCert = require('./defaultkeys.json');
 const cluster = require('cluster');
 
-const {isArray, CheckRecentVersion, CheckIndexes} = require('./utils');
+const {isArray, CheckRecentVersion, CheckIndexes, ExtractAuthKey} = require('./utils');
 
 const nodeFetch = require('node-fetch');
 global.fetch = nodeFetch;
@@ -64,14 +64,6 @@ var limiter = new RateLimit({
     return (global.config.RateLimitWhiteList !== undefined && ip !== undefined && ip !== null && isArray(global.config.RateLimitWhiteList) && (global.config.RateLimitWhiteList.find(element => element === ip) === ip));
   }
 });
-function ExtractAuthKey (req, res, next) {
-  req.headers['auth-key'] = req.headers['auth-key'] || req.headers['content-type'] || '';
-  req.headers['content-type'] = 'application/json';
-  next();
-}
-
-
-
 
 function startWebServer() {
   const webapp = express();
