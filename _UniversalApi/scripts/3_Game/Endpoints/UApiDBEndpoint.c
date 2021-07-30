@@ -183,6 +183,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
 		if ( mod && element && updatedata && cb){
+			cb.SetOID(oid); //Only sets if not set
 			Post(endpoint, updatedata.ToJson(), new UApiDBNestedCallBack(cb, cid));
 		} else {
 			Print("[UAPI] [Api] Error Transaction " +  mod);
