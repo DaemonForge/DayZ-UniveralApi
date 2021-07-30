@@ -28,11 +28,11 @@ static const int OBJECT_DB = 101;
 
 
 class UpdateOpts {
-	static string SET = "set";
-	static string PULL = "pull";
-	static string PUSH = "push";
-	static string UNSET = "unset";
-	static string MUL = "mul";
-	static string RENAME = "rename";
-	static string PULLALL = "pullAll";
+	static string SET = "set"; // `set` to set the value of an element
+	static string PULL = "pull"; // `pull` to pull a value out of an array
+	static string PUSH = "push"; // `push` to push a value into an array
+	static string UNSET = "unset";// `unset` to remove an element from the database
+	static string MUL = "mul"; // `mul` to mulitply an element by the value in the database
+	static string RENAME = "rename";// `rename` to rename an element in the database
+	static string PULLALL = "pullAll";// `pullAll` to empty an array
 }

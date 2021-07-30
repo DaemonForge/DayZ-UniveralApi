@@ -13,7 +13,7 @@ class UApiQueryBase extends Managed{
 	
 	int MaxResults = -1;  //Max Number of Results to return, Note: dayz seems to crash at over 30mb in some of my tests
 	
-	bool FixQuery = false;  //Max Number of Results to return, Note: dayz seems to crash at over 30mb in some of my tests
+	bool FixQuery = false;  //This will correct queries to match the api's save structure in mongodb 
 	
 	
 	string ToJson(){
