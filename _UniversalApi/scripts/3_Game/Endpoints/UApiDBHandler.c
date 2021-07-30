@@ -53,7 +53,8 @@ class UApiDBHandler<Class T> extends UApiDBHandlerBase{
 	
 	//Query Will return a UApiQueryResult with your Class Callback function for this would be
 	/*
-	CALLBACK FUNCTION EXAMPLE
+	
+	//CALLBACK FUNCTION EXAMPLE
 	protected void MyCallBackFunction(int cid, int status, string guid, UApiQueryResult<myClass> data) {
 		if ( status == UAPI_SUCCESS ){
 			//Do something with data
@@ -62,12 +63,18 @@ class UApiDBHandler<Class T> extends UApiDBHandlerBase{
 
 		}
 	}
+	
+	Query Example "{ \"MyVar\": 3 }" would return all objects that have MyVar = 3
+	Query Example "{ \"MyVar\": { \"$gte\": 5} }" would return all objects that have MyVar = 5 or higher
+	Query Example "{ \"MyTStrringArray\": "somevalue" }" would return all objects that have a value of 'somevalue' inside the array
+	Query Example "{ \"MySubObject.SubVar\": 3 }" would return all objects that have a SubVar = 3 inside a sub object this also works if the sub object was an array
+	
 	*/
 	override int Query(UApiQueryBase query, Class cbInstance, string cbFunction) {
-		return UApi().db(Database).Query(Mod,query,new UApiCallback<UApiQueryResult<T>>(cbInstance, cbFunction, oid));
+		return UApi().db(Database).Query(Mod,query,new UApiCallback<UApiQueryResult<T>>(cbInstance, cbFunction));
 	}
 	override int Query(string query, Class cbInstance, string cbFunction) {
-		return UApi().db(Database).Query(Mod, new UApiDBQuery(query),new UApiCallback<UApiQueryResult<T>>(cbInstance, cbFunction, oid));
+		return UApi().db(Database).Query(Mod, new UApiDBQuery(query),new UApiCallback<UApiQueryResult<T>>(cbInstance, cbFunction));
 	}
 }
 
@@ -126,6 +133,12 @@ class UApiDBHandlerBase extends Managed {
 		return Transaction(Mod, element, value);
 	}
 	
+	//Transactions
+	/*
+	Updates a sub value inside the object in the database then returns the new value only works with floats or ints
+	Sub objects can be used with dot notation aka MySubObject.SubObjectVar
+	Will return status of UAPI_SUCCESS if operations was successful
+	*/
 	int Transaction(string oid, string element, float value) {
 		return UApi().db(Database).Transaction(Mod,oid,element,value);
 	}
@@ -133,7 +146,17 @@ class UApiDBHandlerBase extends Managed {
 	int Transaction(string oid, string element, float value, Class cbInstance, string cbFunction) {
 		return UApi().db(Database).Transaction(Mod, oid, element, value, new UApiCallback<UApiTransactionResponse>(cbInstance, cbFunction));
 	}	
-		
+	
+	//Update
+	/*
+	Updates a sub value inside the object in the database, can also use other operations
+	https://github.com/daemonforge/DayZ-UniveralApi/blob/master/_UniversalApi/scripts/1_Core/Constants.c#L30
+
+	Values can be in JSON format to update or push elements into arrays
+	
+	Sub objects can be used with dot notation aka MySubObject.SubObjectVar
+	will return status of UAPI_SUCCESS if operations was successful
+	*/
 	int Update(string oid, string element, string value, string operation = UpdateOpts.SET) {
 		return UApi().db(Database).Update(Mod, oid, element, value, operation);
 	}
