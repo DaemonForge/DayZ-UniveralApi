@@ -20,6 +20,9 @@ class UApiCallback<Class T> extends UApiCallbackBase{
 						case "NotFound":
 							rstatus = UAPI_NOTFOUND;
 							break;
+						case "NoResults":
+							rstatus = UAPI_EMPTY;
+							break;
 						case "Error":
 							rstatus = UAPI_ERROR;
 							break;

@@ -1,8 +1,8 @@
 static const string UAPI_VERSION = "1.0.0";
 
 static const int UAPI_SUCCESS = 200;
-static const int UAPI_EMPTY = 204;
-static const int UAPI_NOTSETUP = 424;//Used for discord requests only right now.
+static const int UAPI_EMPTY = 204; //Means response was empty or query result returned no results
+static const int UAPI_NOTSETUP = 424; //Used for discord requests only right now.
 static const int UAPI_TIMEOUT = 408;
 static const int UAPI_CLIENTERROR = 400;
 static const int UAPI_SERVERERROR = 500;
