@@ -125,7 +125,7 @@ async function runQuery(req, res, mod, auth, COLL) {
 function FixQuery(query, prefix){
     if (isObject(query)){
         for (const [key, value] of Object.entries(query)) {
-            if(!key.match(/^\$/i) && !key.match(new RegExp(`^${prefix}\.`, "i"))){
+            if(!key.match(/^\$/i) && !key.match(new RegExp(`^${prefix}\\.`, "i"))){
                 query[`${prefix}.${key}`] = FixQuery(value);
                 delete query[key]
             } else {
