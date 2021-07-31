@@ -4,14 +4,19 @@ const { MongoClient } = require("mongodb");
 const log = require("./log");
 
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
-
+const {NormalizeToGUID} = require('./utils');
 
 const router = Router();
 
 module.exports = router;
 
 router.post('/:id/:mod', (req, res)=>{
-    runTransaction(req, res, req.params.mod, req.params.id, req.headers['auth-key'], GetCollection(req.baseUrl));
+    let GUID = req.params.id;
+    let collection = GetCollection(req.baseUrl);
+    if (collection === "Players") {
+        GUID = NormalizeToGUID(req.params.id);
+    }
+    runTransaction(req, res, req.params.mod, GUID, req.headers['auth-key'], collection);
 });
 
 //TO REMOVE
