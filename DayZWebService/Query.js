@@ -125,18 +125,18 @@ async function runQuery(req, res, mod, auth, COLL) {
 function FixQuery(query, prefix){
     if (isObject(query)){
         for (const [key, value] of Object.entries(query)) {
-            if(!key.match(/^\$/i) && !key.match(new RegExp(`^${prefix}\\.`, "i"))){
-                query[`${prefix}.${key}`] = FixQuery(value);
+            if(!key.match(/^\$/i) && !key.match(new RegExp(`^${prefix}\\.`, "g"))){
+                query[`${prefix}.${key}`] = FixQuery(value, prefix);
                 delete query[key]
             } else {
-                query[key] = FixQuery(value);
+                query[key] = FixQuery(value, prefix);
             }
         }
         return query;
     } else if (isArray(query)){
         let newArr = [];
         query.forEach(e => {
-            newArr.push(FixQuery(e));
+            newArr.push(FixQuery(e, prefix));
         });
         return newArr;
     }
