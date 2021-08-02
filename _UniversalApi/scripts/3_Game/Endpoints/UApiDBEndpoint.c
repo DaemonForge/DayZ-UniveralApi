@@ -77,7 +77,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 	}
 	
 	
-	int Query(string mod, UApiQueryObject query, UApiCallbackBase cb) {
+	int Query(string mod, UApiQueryBase query, UApiCallbackBase cb) {
 		int cid = UApi().CallId();
 		string endpoint = "/Query/" + mod;
 				
@@ -91,7 +91,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Query(string mod, UApiQueryObject query, Class instance, string function) {
+	int Query(string mod, UApiQueryBase query, Class instance, string function) {
 		int cid = UApi().CallId();
 		string endpoint = "/Query/" + mod;
 				
@@ -159,8 +159,40 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
+	int Update(string mod, string oid, string element, string value, string operation = UpdateOpts.SET) {	
+		int cid = UApi().CallId();
 		
-	int Update(string mod, string oid, string element, string value, string operation = UpdateOpts.SET, Class instance = NULL, string function = "") {	
+		string endpoint = "/Update/" + oid   + "/"+ mod;
+		
+		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
+		
+		if ( mod && element && operation && updatedata){
+			Post(endpoint, updatedata.ToJson(), new UApiSilentCallBack());
+		} else {
+			Print("[UAPI] [Api] Error Transaction " +  mod);
+			cid = -1;
+		}
+		return cid;
+	}
+		
+	int Update(string mod, string oid, string element, string value, string operation, UApiCallbackBase cb) {	
+		int cid = UApi().CallId();
+
+		string endpoint = "/Update/" + oid   + "/"+ mod;
+		
+		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
+		
+		if ( mod && element && updatedata && cb){
+			cb.SetOID(oid); //Only sets if not set
+			Post(endpoint, updatedata.ToJson(), new UApiDBNestedCallBack(cb, cid));
+		} else {
+			Print("[UAPI] [Api] Error Transaction " +  mod);
+			cid = -1;
+		}
+		return cid;
+	}
+	
+	int Update(string mod, string oid, string element, string value, string operation, Class instance, string function) {	
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
 		if (instance && function != ""){
@@ -173,7 +205,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
-		if ( element && updatedata && DBCBX){
+		if (mod && element && updatedata && DBCBX){
 			Post(endpoint, updatedata.ToJson(), DBCBX);
 		} else {
 			Print("[UAPI] [Api] Error Transaction " +  mod);

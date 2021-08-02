@@ -3,7 +3,7 @@ const { MongoClient } = require("mongodb");
 
 
 const log = require("./log");
-const {isArray} = require('./utils');
+const {isArray,isObject} = require('./utils');
 
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
 
@@ -60,10 +60,14 @@ async function runQuery(req, res, mod, auth, COLL) {
             await client.connect();
             
             const db = client.db(global.config.DB);
-            var collection = db.collection(COLL);
-            var query = JSON.parse(RawData.Query);
-            var orderBy = JSON.parse(RawData.OrderBy);
-            var ReturnCol = "Data";
+            let collection = db.collection(COLL);
+            let query = JSON.parse(RawData.Query);
+            let orderBy = JSON.parse(RawData.OrderBy);
+            let FixQuery = RawData.FixQuery || false;
+            if (FixQuery){
+                query = FixQuery(query);
+            }
+            let ReturnCol = "Data";
             if (COLL == "Players"){
                 ReturnCol = mod;
                 if (query && Object.keys(query).length === 0 && query.constructor === Object){
@@ -73,13 +77,13 @@ async function runQuery(req, res, mod, auth, COLL) {
             if (COLL == "Objects" && (query.Mod === undefined || query.Mod === null)){
                 query.Mod = mod;
             }
-            var results = collection.find(query).sort(orderBy);
+            let results = collection.find(query).sort(orderBy);
             if (RawData.MaxResults >= 1){
                 results.limit(RawData.MaxResults);
             }
-            var theData = await results.toArray();
-            var RetrunData = [];
-            var count = 0;
+            let theData = await results.toArray();
+            let RetrunData = [];
+            let count = 0;
             for (result of theData){
                 for (const [key, value] of Object.entries(result)) {
                     if(key === ReturnCol){
@@ -95,11 +99,11 @@ async function runQuery(req, res, mod, auth, COLL) {
             }
             if (RetrunData){
                 if (count == 0){
-                    var simpleReturn = { Status: "NoResults", Count: 0, Results: [] }
+                    let simpleReturn = { Status: "NoResults", Count: 0, Results: [] }
                     log("Query:  " + JSON.stringify(query) + " against " + COLL + " for " + ReturnCol + " Got 0 Results", "info");
                     res.json(simpleReturn);
                 } else {
-                    var simpleReturn = {Status: "Success", Count: count, Results: RetrunData }
+                    let simpleReturn = {Status: "Success", Count: count, Results: RetrunData }
                     log("Query:  " + JSON.stringify(query) + " against " + COLL + " for " + ReturnCol + " Got " + count + " Results", "info");
                     res.json(simpleReturn);
                 }
@@ -117,5 +121,26 @@ async function runQuery(req, res, mod, auth, COLL) {
         res.json({Status: "Error", Error: "Invalid Auth", Count: 0, Results: [] });
     }
 };
+
+function FixQuery(query, prefix){
+    if (isObject(query)){
+        for (const [key, value] of Object.entries(query)) {
+            if(!key.match(/^\$/i) && !key.match(new RegExp(`^${prefix}\\.`, "g"))){
+                query[`${prefix}.${key}`] = FixQuery(value, prefix);
+                delete query[key]
+            } else {
+                query[key] = FixQuery(value, prefix);
+            }
+        }
+        return query;
+    } else if (isArray(query)){
+        let newArr = [];
+        query.forEach(e => {
+            newArr.push(FixQuery(e, prefix));
+        });
+        return newArr;
+    }
+    return query;
+}
 
 module.exports = router;

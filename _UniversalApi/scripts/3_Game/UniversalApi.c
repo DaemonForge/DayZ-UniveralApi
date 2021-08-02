@@ -49,7 +49,16 @@ class UniversalApi extends Managed {
 	}
 	
 	//A super simple Post Interface to help people
-	static void Post(string url, string jsonString = "{}",autoptr RestCallback UCBX = NULL, string contentType = "application/json")
+	static int Post(string url)
+	{
+		RestContext ctx = RestCore().GetRestContext(url);
+		ctx.SetHeader("application/json");
+		ctx.POST(new UApiSilentCallBack, "", "{}");
+		return 0;
+	}
+	
+	//A super simple Post Interface to help people
+	static int Post(string url, string jsonString, autoptr RestCallback UCBX = NULL, string contentType = "application/json")
 	{
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
@@ -57,16 +66,49 @@ class UniversalApi extends Managed {
 		RestContext ctx = RestCore().GetRestContext(url);
 		ctx.SetHeader(contentType);
 		ctx.POST(UCBX, "", jsonString);
+		return 0;
+	}
+	
+	//A super simple Post Interface to help people
+	static int Post(string url, string jsonString, autoptr UApiCallbackBase cb, string contentType = "application/json")
+	{
+		int cid = UApi().CallId();
+		if (cb){
+			RestContext ctx = RestCore().GetRestContext(url);
+			ctx.SetHeader(contentType);
+			ctx.POST(new UApiDBNestedCallBack(cb,cid), "", jsonString);
+			return cid;
+		}
+		return -1;
 	}
 	
 	//A super simple Get Interface to help people
-	static void Get(string url, autoptr RestCallback UCBX = NULL)
+	static int Get(string url)
+	{
+		RestContext ctx =  RestCore().GetRestContext(url);
+		ctx.GET(new UApiSilentCallBack, "");
+		return 0;
+	}
+	//A super simple Get Interface to help people
+	static int Get(string url, autoptr RestCallback UCBX)
 	{
 		if (!UCBX){
 			UCBX = new UApiSilentCallBack;
 		}
 		RestContext ctx =  RestCore().GetRestContext(url);
 		ctx.GET(UCBX , "");
+		return 0;
+	}
+	//A super simple Get Interface to help people
+	static int Get(string url,autoptr UApiCallbackBase cb)
+	{
+		int cid = UApi().CallId();
+		if (cb){
+			RestContext ctx =  RestCore().GetRestContext(url);
+			ctx.GET(new UApiDBNestedCallBack(cb,cid), "");
+			return cid;
+		}
+		return -1;
 	}
 	
 	//Will return true if the discord endpoint is configured (this doesn't mean its configured correctly though :p)
@@ -228,7 +270,7 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	protected void RPCUniversalApiConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	protected void RPCUniversalApiConfig( CallType type, ParamsReadContext ctx, PlayerIdentity sender, ref Object target )
 	{
 		Print("[UAPI] Received UApi Config");
 		Param2<ApiAuthToken, UniversalApiConfig> data; 
@@ -260,7 +302,7 @@ class UniversalApi extends Managed {
 	}
 	
 	
-	void RPCRequestRetry( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	void RPCRequestRetry( CallType type, ParamsReadContext ctx, PlayerIdentity sender, ref Object target )
 	{
 		if (GetGame().IsClient() && ++m_AuthRetries <= 20){
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestAuthToken, m_AuthRetries * 2200, false, true);
@@ -297,7 +339,7 @@ class UniversalApi extends Managed {
 		return false;
 	}		
 	
-	protected void RPCRequestQnAConfig( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	protected void RPCRequestQnAConfig( CallType type, ParamsReadContext ctx, PlayerIdentity sender, ref Object target )
 	{
 		Param1<UApiQnAMakerServerAnswers> data; 
 		if ( !ctx.Read( data ) ) return;
@@ -308,7 +350,7 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	protected void RPCRequestAuthToken( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
+	protected void RPCRequestAuthToken( CallType type, ParamsReadContext ctx, PlayerIdentity sender, ref Object target )
 	{
 		Param1<bool> data; 
 		if ( !ctx.Read( data ) ) return;
@@ -333,7 +375,7 @@ class UniversalApi extends Managed {
 		}
 	}
 	
-	protected void SendAuthToken(ref PlayerIdentity idenitity, string auth){
+	protected void SendAuthToken(PlayerIdentity idenitity, string auth){
 		if (idenitity && auth != ""){
 			Print("[UAPI] Sending PlayerAuth Token to " + idenitity.GetId());
 			autoptr UniversalApiConfig m_ClientConfig = new UniversalApiConfig;

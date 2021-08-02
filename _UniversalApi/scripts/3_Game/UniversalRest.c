@@ -63,7 +63,7 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	static void PlayerQuery(string mod, UApiQueryObject query, ref RestCallback UCBX) {
+	static void PlayerQuery(string mod, UApiQueryBase query, ref RestCallback UCBX) {
 		string url = BaseUrl() + "Player/Query/" + mod;
 		
 		if ( query && UCBX){
@@ -246,7 +246,7 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	static void ObjectQuery(string mod, UApiQueryObject query, ref RestCallback UCBX) {
+	static void ObjectQuery(string mod, UApiQueryBase query, ref RestCallback UCBX) {
 		
 		string url = BaseUrl() + "Object/Query/" + mod;
 		
