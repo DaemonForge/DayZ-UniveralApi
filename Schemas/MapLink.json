@@ -1,6 +1,6 @@
 {
   "type": "object",
-  "required": ["Servers", "ArrivalPoints", "DepaturePoints", "Currencies"],
+  "required": ["Servers", "ArrivalPoints", "DepaturePoints", "Currencies","LogLevel_File","LogLevel_API"],
   "additionalProperties": false,
   "properties": {
     "m_DataReceived": {
@@ -252,6 +252,20 @@
           }
         }
       }
+    },
+    "LogLevel_File": {
+      "type": "integer",
+      "minimum": -1, 
+      "maximum": 3,
+      "enum": [-1, 0, 1,2,3], 
+      "description": "At which level to log to the file, -1 to disable logging, 3 for debuging, 2 for info logging, 1 for verbose logging"
+    },
+    "LogLevel_API": {
+      "type": "integer",
+      "minimum": -1, 
+      "maximum": 3,
+      "enum": [-1, 0, 1,2,3],
+      "description": "At which level to log to the API/Database, -1 to disable logging, 3 for debuging, 2 for info logging, 1 for verbose logging"
     }
   }
 }
