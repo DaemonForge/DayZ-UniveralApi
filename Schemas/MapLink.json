@@ -9,6 +9,10 @@
       "maximum": 0, 
       "description": "You can Ignore this it pretty much should always be 0"
     },
+    "ConfigVersion": {
+      "type": "string",
+      "description": "This is to identify which version of the mod is installed so if the version is upgraded I can update the config"
+    },
     "Servers": {
       "type": "array",
       "description": "This is an array of servers that this players can transfer between",
