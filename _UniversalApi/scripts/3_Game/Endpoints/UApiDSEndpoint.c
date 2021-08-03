@@ -15,7 +15,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 		
 	//Add's a role to a user's connected discord
-	int AddRole(string GUID, string RoleId, Class instance = NULL, string function = "", bool returnString = false) {
+	int AddRole(string GUID, string RoleId, Class instance = NULL, string function = "", bool ReturnString = false) {
 		if (GUID == ""){
 			return -1;
 		}
@@ -278,7 +278,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		if (instance && function != "" && ReturnString){
 			DBCBX = new UApiDBCallBack(instance, function, cid, PlainId);
 		} else if (instance && function != "") {
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(instance, function, id), cid);
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(instance, function, PlainId), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}

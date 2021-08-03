@@ -172,6 +172,11 @@ class UniversalApi extends Managed {
 		return DayZPlayer.Cast(GetGame().GetObjectByNetworkId(lowBits, highBits));
 	}
 	
+	
+	
+	
+	
+	
 	//Stuff that you don't need to worry about :P
 	
 	protected int m_CallId = 0;
@@ -295,10 +300,10 @@ class UniversalApi extends Managed {
 		if (m_UniversalApiConfig.QnAEnabled){
 			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(NULL), true);
 		}
-		UApi().ds().GetUserObj(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
+		UApi().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
 		GetGame().GameScript.CallFunction(GetGame().GetMission(), "UniversalApiReadyTokenReceived", NULL, NULL);
-		Print("[UAPI] OnTokenReceived Proccessed");
 		CheckAndRenewQRandom();
+		Print("[UAPI] OnTokenReceived Proccessed");
 	}
 	
 	
