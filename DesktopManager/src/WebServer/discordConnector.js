@@ -455,7 +455,7 @@ async function AddRole(res, req, GUID, auth){
             if ((await results.count()) == 0){
                 log("Error: Discord AddRole Can't find Player with ID " + GUID, "warn");
                 res.status(201);
-                res.json({Status: "Error", Error: `Player with ${GUID} Not Found`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
+                res.json({Status: "NotFound", Error: `Player with ${GUID} Not Found`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
             } else {
                 let dataarr = await results.toArray(); 
                 let data = dataarr[0]; 
@@ -500,7 +500,7 @@ async function AddRole(res, req, GUID, auth){
         }
     } else {
         res.status(401);
-        res.json({Status: "Error", Error: `Invalid Auth Key`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
+        res.json({Status: "NoAuth", Error: `Invalid Auth Key`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
         log("AUTH ERROR: " + req.url, "warn");
     }
 }
@@ -562,7 +562,7 @@ async function RemoveRole(res, req, GUID, auth){
         }
     } else {
         res.status(401);
-        res.json({Status: "Error", Error: `Invalid Auth Key`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
+        res.json({Status: "NoAuth", Error: `Invalid Auth Key`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
         log("AUTH ERROR: " + req.url, "warn");
     }
 
@@ -637,27 +637,27 @@ async function SendMessageUser(res, req, guid, auth){
                 let result = await user.send(message);
                 log(`Successfully sent Discord Direct Message to ${guid}`);
                 res.status(200);
-                res.json({Status: "Success", Error: "" });
+                res.json({Status: "Success", Error: "", oid: result.id});
             } catch(e) {
                 let error = `${e}`;
                 if (error === `DiscordAPIError: Cannot send messages to this user`){
-                    log(`Error sending message to ${guid} they block dms - ${e}`,"warn");
+                    log(`Error sending message to ${guid} they may block dms - ${e}`,"warn");
                     res.status(200);
-                    res.json({Status: "Failed", Error: `Cannot send messages to this user` });
+                    res.json({Status: "Error", Error: `Cannot send messages to this user, they may have dm's blocked`, oid: "" });
                 } else {
                     log(`Error sending message to ${guid} - ${e}`,"warn");
                     res.status(500);
-                    res.json({Status: "Error", Error: `${e}` });
+                    res.json({Status: "Error", Error: `${e}`, oid: "" });
                 }
             }
         } else {
             log(`Failed to send Discord Direct Message to ${guid} user not configured`);
             res.status(200);
-            res.json({Status: "NotFound", Error: "Discord User Found"  });
+            res.json({Status: "NotFound", Error: "Discord User Found", oid: "" });
         }
     } else {
         res.status(401);
-        res.json({Status: "Error", Error: `Invalid Auth`});
+        res.json({Status: "Error", Error: `Invalid Auth`, oid: ""});
         log("AUTH ERROR: " + req.url, "warn");
     }
 }

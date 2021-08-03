@@ -84,7 +84,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		if (instance && function != "" && ReturnString){
 			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
 		}  else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(instance, function, GUID), cid);
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(instance, function, GUID), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
