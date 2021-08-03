@@ -48,6 +48,61 @@ class UApiCallback<Class T> extends UApiCallbackBase{
 	}
 }
 
+//Allows you to load the json to a defined object
+class UApiCallbackLoader<Class T> extends UApiCallbackBase {
+	
+	autoptr T obj;
+	
+	void SetObject(T object){
+		obj = object;
+	}
+	
+	override void OnError(int errorCode, int cid) {
+		if (GetInstance() && Function != "") {
+			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, errorCode, OID, NULL));
+		}
+	}
+	
+	override void OnSuccess(string jsonData, int cid) {
+			int rstatus = UAPI_ERROR;
+			if (UApiJSONHandler<T>.FromString(jsonData, obj)){
+				rstatus = UAPI_SUCCESS;
+				StatusObject sobj;
+				if (Class.CastTo(sobj, obj)){
+					switch (sobj.Status) {
+						case "NotFound":
+							rstatus = UAPI_NOTFOUND;
+							break;
+						case "NoResults":
+							rstatus = UAPI_EMPTY;
+							break;
+						case "Error":
+							rstatus = UAPI_ERROR;
+							break;
+						case "NoPerms":
+							rstatus = UAPI_UNAUTHORIZED;
+							break;
+						case "NoAuth":
+							rstatus = UAPI_UNAUTHORIZED;
+							break;
+						case "InvalidAuth":
+							rstatus = UAPI_UNAUTHORIZED;
+							break;
+						case "NotSetup":
+							rstatus = UAPI_NOTSETUP;
+							break;
+					}
+				}
+			
+			if (GetInstance() && Function != ""){
+				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, rstatus, OID, obj));
+			} else {
+				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, UAPI_ERROR, OID, NULL));
+			}
+		}
+	}
+}
+
 class UApiCallbackBase extends Managed{
 
 	protected Class Instance;

@@ -38,15 +38,18 @@ class UApiDBHandler<Class T> extends UApiDBHandlerBase{
 	}
 	
 	override int Load(string oid, Class cbInstance, string cbFunction, string defaultJson = "{}") {
-		return UApi().db(Database).Load(Mod,oid, new UApiCallback<T>(cbInstance, cbFunction, oid), defaultJson);
+		return UApi().db(Database).Load(Mod,oid, new UApiCallback<T>(cbInstance, cbFunction), defaultJson);
 	}
 	
-	override int Load(string oid, Class cbInstance, string cbFunction, Class defaultObject) {
+	override int Load(string oid, Class cbInstance, string cbFunction, Class inObject) {
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
-		if (Class.CastTo(obj, defaultObject) && UApiJSONHandler<T>.GetString(obj, jsonString)) {
-			return UApi().db(Database).Load(Mod, oid, new UApiCallback<T>(cbInstance, cbFunction, oid), jsonString);
-		}
+		if (Class.CastTo(obj, inObject) && UApiJSONHandler<T>.GetString(obj, jsonString)) {
+			autoptr UApiCallbackLoader<T> cb = new UApiCallbackLoader<T>(cbInstance, cbFunction);
+			cb.SetObject(obj);
+			return UApi().db(Database).Load(Mod, oid, cb, jsonString);
+		} 
+		Error2("[UAPI] DB HANDLER Load", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
 	}
 	
