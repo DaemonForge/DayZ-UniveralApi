@@ -63,10 +63,7 @@ async function runQuery(req, res, mod, auth, COLL) {
             let collection = db.collection(COLL);
             let query = JSON.parse(RawData.Query);
             let orderBy = JSON.parse(RawData.OrderBy);
-            let FixQuery = RawData.FixQuery || false;
-            if (FixQuery){
-                query = FixQuery(query);
-            }
+            let fixQuery = RawData.FixQuery || 0;
             let ReturnCol = "Data";
             if (COLL == "Players"){
                 ReturnCol = mod;
@@ -76,6 +73,9 @@ async function runQuery(req, res, mod, auth, COLL) {
             }
             if (COLL == "Objects" && (query.Mod === undefined || query.Mod === null)){
                 query.Mod = mod;
+            }
+            if (fixQuery === 1){
+                query = FixQuery(query,ReturnCol);
             }
             let results = collection.find(query).sort(orderBy);
             if (RawData.MaxResults >= 1){
