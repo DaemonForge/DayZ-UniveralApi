@@ -25,6 +25,7 @@ class UApiDBHandler<Class T> extends UApiDBHandlerBase{
 		if (Class.CastTo(obj, object) && UApiJSONHandler<T>.GetString(obj, jsonString)) {
 			return UApi().db(Database).Save(Mod, oid, jsonString);
 		}
+		Error2("[UAPI] DB HANDLER Save", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
 	}
 	
@@ -34,6 +35,7 @@ class UApiDBHandler<Class T> extends UApiDBHandlerBase{
 		if (Class.CastTo(obj, object) && UApiJSONHandler<T>.GetString(obj, jsonString)) {
 			return UApi().db(Database).Save(Mod, oid, jsonString, new UApiCallback<T>(cbInstance, cbFunction));
 		}
+		Error2("[UAPI] DB HANDLER Save", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
 	}
 	
