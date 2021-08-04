@@ -42,7 +42,7 @@ class UApiCallback<Class T> extends UApiCallbackBase{
 				}
 				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, rstatus, OID, obj));
 			} else {
-				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, UAPI_ERROR, OID, NULL));
+				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, UAPI_JSONERROR, OID, NULL));
 			}
 		}
 	}
@@ -64,7 +64,7 @@ class UApiCallbackLoader<Class T> extends UApiCallbackBase {
 	}
 	
 	override void OnSuccess(string jsonData, int cid) {
-		int rstatus = UAPI_ERROR;
+		int rstatus = UAPI_JSONERROR;
 		if (UApiJSONHandler<T>.FromString(jsonData, obj)){
 			rstatus = UAPI_SUCCESS;
 			StatusObject sobj;

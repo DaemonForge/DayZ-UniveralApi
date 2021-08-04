@@ -7,6 +7,7 @@ static const int UAPI_TIMEOUT = 408;
 static const int UAPI_CLIENTERROR = 400;
 static const int UAPI_SERVERERROR = 500;
 static const int UAPI_ERROR = 418;
+static const int UAPI_JSONERROR = 419;
 static const int UAPI_NOTFOUND = 404;
 static const int UAPI_TOOEARLY = 425;
 static const int UAPI_UNAUTHORIZED = 401;
