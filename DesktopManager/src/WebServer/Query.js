@@ -3,7 +3,7 @@ const { MongoClient } = require("mongodb");
 
 
 const log = require("./log");
-const {isArray,isObject} = require('./utils');
+const {isArray,isObject,CleanRegEx} = require('./utils');
 
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
 
@@ -125,7 +125,7 @@ async function runQuery(req, res, mod, auth, COLL) {
 function FixQuery(query, prefix){
     if (isObject(query)){
         for (const [key, value] of Object.entries(query)) {
-            if(!key.match(/^\$/i) && !key.match(new RegExp(`^${prefix}\\.`, "g"))){
+            if(!key.match(/^\$/i) && !key.match(new RegExp(`^${CleanRegEx(prefix)}\\.`, "g"))){
                 query[`${prefix}.${key}`] = FixQuery(value, prefix);
                 delete query[key]
             } else {

@@ -19,7 +19,8 @@ module.exports ={
     CheckIndexes,
     CheckRecentVersion,
     NormalizeToGUID,
-    ExtractAuthKey
+    ExtractAuthKey,
+    CleanRegEx
 }
 
 
@@ -262,3 +263,7 @@ async function CheckRecentVersion(){
     next();
   }
   
+
+  function CleanRegEx(value){
+    return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
+  }
