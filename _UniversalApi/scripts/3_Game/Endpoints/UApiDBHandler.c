@@ -147,10 +147,13 @@ class UApiDBHandlerBase extends Managed {
 	int Transaction(string oid, string element, float value) {
 		return UApi().db(Database).Transaction(Mod,oid,element,value);
 	}
-	
 	int Transaction(string oid, string element, float value, Class cbInstance, string cbFunction) {
 		return UApi().db(Database).Transaction(Mod, oid, element, value, new UApiCallback<UApiTransactionResponse>(cbInstance, cbFunction));
-	}	
+	}
+	int Transaction(string oid, string element, float value, float min, float max, Class cbInstance, string cbFunction) {
+		return UApi().db(Database).Transaction(Mod, oid, element, value, min, max, new UApiCallback<UApiTransactionResponse>(cbInstance, cbFunction));
+	}
+	
 	
 	//Update
 	/*

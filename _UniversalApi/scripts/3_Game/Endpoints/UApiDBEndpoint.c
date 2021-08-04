@@ -141,6 +141,23 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
+	int Transaction(string mod, string oid, string element, float value, float min, float max, UApiCallbackBase cb) {
+		int cid = UApi().CallId();
+		
+		string endpoint = "/Transaction/" + oid   + "/"+ mod;
+		
+		autoptr UApiValidatedTransaction transaction = new UApiValidatedTransaction(element, value, min, max);
+		
+		if ( mod && cb && oid && element && transaction){
+			cb.SetOID(oid); //Only sets if not set
+			Post(endpoint,transaction.ToJson(), new UApiDBNestedCallBack(cb, cid));
+		} else {
+			Print("[UAPI] [Api] Error Transaction " +  mod);
+			cid = -1;
+		}
+		return cid;
+	}
+	
 	int Transaction(string mod, string oid, string element, float value, Class instance, string function) {
 		int cid = UApi().CallId();
 		
@@ -149,6 +166,24 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		string endpoint = "/Transaction/" + oid   + "/"+ mod;
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
+		
+		if (mod && oid && element && transaction){
+			Post(endpoint,transaction.ToJson(), new UApiDBCallBack(instance, function, cid, oid));
+		} else {
+			Print("[UAPI] [Api] Error Transaction " +  mod);
+			cid = -1;
+		}
+		return cid;
+	}
+	
+	int Transaction(string mod, string oid, string element, float value, float min, float max, Class instance, string function) {
+		int cid = UApi().CallId();
+		
+		autoptr RestCallback DBCBX = ;
+		
+		string endpoint = "/Transaction/" + oid   + "/"+ mod;
+		
+		autoptr UApiValidatedTransaction transaction = new UApiValidatedTransaction(element, value, min, max);
 		
 		if (mod && oid && element && transaction){
 			Post(endpoint,transaction.ToJson(), new UApiDBCallBack(instance, function, cid, oid));
