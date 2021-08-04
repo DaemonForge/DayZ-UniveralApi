@@ -1,4 +1,4 @@
-//This meathod has to be used for the template class to work, can have a template class that exends RestCallback
+//This meathod has to be used for the template class to work, you can't have a template class that exends RestCallback
 
 
 class UApiCallback<Class T> extends UApiCallbackBase{
