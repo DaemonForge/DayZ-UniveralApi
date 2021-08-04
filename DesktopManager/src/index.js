@@ -3,6 +3,7 @@ const ejse = require('ejs-electron');
 const { MongoClient } = require("mongodb");
 var iconpath = `${__dirname}/icon.ico`; // pa
 const {writeFileSync} = require('fs');
+let {createHash} = require('crypto');
 
 const server = "https://hazel.daemonforge.dev"
 const feed = `${server}/update/${process.platform}/${app.getVersion()}`
@@ -180,11 +181,93 @@ ipcMain.on('SaveGlobalMod', (event, arg) => {
 
 })
 
+ipcMain.on('RequestFromDatabase', (event, arg) => {
+  RequestFromDatabase(arg)
+
+})
+
 ipcMain.on('SaveConfig', (event, arg) => {
   SaveConfig(arg)
 
 })
 
+async function RequestFromDatabase(arg){
+  
+  const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+  try {
+    await mongo.connect();
+    const db = mongo.db(global.config.DB);
+    let collection = db.collection(arg.Collection);
+    let query = {};
+    let returnValue = "Data";
+    if (arg.Collection === "Players"){
+      query["GUID"] = NormalizeToGUID(arg.ID);
+      returnValue = arg.Mod;
+    } else {
+      query["Mod"] = arg.Mod 
+      query["ObjectId"] = arg.ID;
+    }
+    let result = collection.find(query);
+    let count = await result.count();
+    if (count > 0){
+      let res = [];
+      await result.forEach(e => {
+        res.push(e[returnValue])
+      });
+      let response = { status: true, Results: res, ID: arg.ID, Mod: arg.Mod, col: arg.Collection}
+      global.mainWindow.send("ReceiveDatabaseData", response);
+    } else {
+      
+      global.mainWindow.send("ReceiveDatabaseData", { n: 0, status: false, Results: [], ID: arg.ID, Mod: arg.Mod, col: arg.Collection})
+    }
+  } catch (err) {
+    console.log(err);
+  } finally {
+      mongo.close();
+  }
+}
+
+async function SaveOtherData(arg){
+  
+  const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+  try {
+    await client.connect();
+    const db = client.db(global.config.DB);
+    let collection = db.collection(arg.Collection);
+    let query = {};
+    let returnValue = "Data";
+    if (arg.Collection === "Players"){
+      query["GUID"] = NormalizeToGUID(arg.ID);
+      returnValue = arg.Mod;
+    } else {
+      query["Mod"] = arg.Mod 
+      query["ObjectId"] = arg.ID;
+    }
+    let data = {};
+    data[returnValue] = arg.Data;
+    let result = await collection.updateOne(query, {"$set": data}, { upsert: false });
+    console.log(result.result);
+
+  } catch (err) {
+    console.log(err)
+  } finally {
+    client.close();
+  }
+}
+
+
+ipcMain.on('SaveOtherData', (event, arg) => {
+  SaveOtherData(arg)
+
+})
+  function NormalizeToGUID(idorguid){
+    if (idorguid.match(/[1-9][0-9]{16}/g)){
+        idorguid = createHash('sha256').update(idorguid).digest('base64');
+        idorguid = idorguid.replace(/\+/g, '-'); 
+        idorguid = idorguid.replace(/\//g, '_');
+    }
+    return idorguid;
+  }
 async function SaveConfig(data){
   try{
     global.config = data;
