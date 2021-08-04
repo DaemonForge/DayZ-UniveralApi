@@ -584,17 +584,18 @@ async function GetRoles(res, req, GUID, auth){
                 res.json({Status: "Error", Error: `Player with ${GUID} Not Found`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
             } else {
                 let dataarr = await results.toArray(); 
-                let data = dataarr[0]; 
+                let data = dataarr[0].Discord; 
                 let resObj;
-                if (data.Discord === undefined || data.Discord === {} || data.Discord.id === undefined || data.Discord.id === "" || data.Discord.id === "0" ){
+                if (data === undefined || data.id === undefined || data.id === "" || data.id === "0" ){
                     resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
-                } else {
-                    resObj = {Status: "Error", Error: `Couldn't connect to discord`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
+                } else {                        
+                    resObj = { Status: "Error", Error: "Couldn't connect to discord", Roles: [], id: data.id, Username: data.username, Discriminator: data.discriminator, Avatar: data.avatar };
                     let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
                     try {
-                        let player = await guild.members.fetch(data.Discord.id);
-                        let roles = player._roles;
-                        resObj = { Status: "Success", Error: "", Roles: roles, id: data.Discord.id, Username: data.Discord.username, Discriminator: data.Discord.discriminator, Avatar: data.Discord.avatar };
+                        let player = await guild.members.fetch(data.id);
+                        resObj.Status = "Success"
+                        resObj.Error = "";
+                        resObj.Roles = player._roles || [];
                     
                         log(`Succefully found discord ID and Roles for ${GUID}`);
                     } catch (e) {
