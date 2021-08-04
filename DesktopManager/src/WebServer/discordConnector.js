@@ -654,7 +654,7 @@ async function SendMessageUser(res, req, guid, auth){
         } else {
             log(`Failed to send Discord Direct Message to ${guid} user not configured`);
             res.status(200);
-            res.json({Status: "NotFound", Error: "Discord User Found", oid: "" });
+            res.json({Status: "NotSetup", Error: "Discord User Found", oid: "" });
         }
     } else {
         res.status(401);

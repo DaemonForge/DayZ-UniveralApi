@@ -9,12 +9,10 @@ class UApiDiscordUser extends StatusObject{
 	TStringArray Roles;
 	
 	bool HasRole(string roleid){
+		if (!Roles) return false;
 		return (Roles.Find(roleid) != -1);
 	}
 	
-	void ~UApiDiscordUser(){
-		Print("[UAPI] ~UApiDiscordUser");
-	}
 }
 
 class UApiDiscordRoleReq extends UApiObject_Base{
@@ -24,7 +22,7 @@ class UApiDiscordRoleReq extends UApiObject_Base{
 	}
 	
 	override string ToJson(){
-		return JsonFileLoader<UApiDiscordRoleReq>.JsonMakeData(this);;
+		return JsonFileLoader<UApiDiscordRoleReq>.JsonMakeData(this);
 	}
 	
 }
