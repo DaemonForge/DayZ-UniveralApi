@@ -693,18 +693,19 @@ async function GetRoles(res, req, GUID, auth){
             if ((await results.count()) == 0){
                 log("Can't find Player with ID " + GUID, "warn");
                 res.status(201);
-                res.json({Status: "Error", Error: `Player with ${GUID} Not Found`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
+                res.json({Status: "Error", Error: `Player with ${GUID} Not Found`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
             } else {
                 let dataarr = await results.toArray(); 
                 let data = dataarr[0].Discord; 
                 let resObj;
                 if (data === undefined || data.id === undefined || data.id === "" || data.id === "0" ){
-                    resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" };
+                    resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" };
                 } else {                        
-                    resObj = { Status: "Error", Error: "Couldn't connect to discord", Roles: [], id: data.id, Username: data.username, Discriminator: data.discriminator, Avatar: data.avatar };
+                    resObj = { Status: "Error", Error: "Couldn't connect to discord", Roles: [], VoiceChannel: "", id: data.id, Username: data.username, Discriminator: data.discriminator, Avatar: data.avatar };
                     let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
                     try {
                         let player = await guild.members.fetch(data.id);
+                        resObj.VoiceChannel = player.voice.channelID || "";
                         resObj.Status = "Success"
                         resObj.Error = "";
                         resObj.Roles = player._roles || [];
@@ -721,7 +722,7 @@ async function GetRoles(res, req, GUID, auth){
             }
         }catch(err){
             res.status(203);
-            res.json({Status: "Error", Error: `${err}`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
+            res.json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
             log("ERROR: " + err, "warn");
         }finally{
             // Ensures that the client will close when you finish/error
@@ -730,7 +731,7 @@ async function GetRoles(res, req, GUID, auth){
     } else {
         log("AUTH ERROR: " + req.url, "warn");
         res.status(401);
-        res.json({Status: "Error", Error: `Invalid Auth Key`, Roles: [], id: "0", Username: "", Discriminator: "", Avatar: "" });
+        res.json({Status: "Error", Error: `Invalid Auth Key`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
     }
 
 }

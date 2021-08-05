@@ -8,6 +8,8 @@ class UApiDiscordUser extends StatusObject{
 	
 	TStringArray Roles;
 	
+	string VoiceChannel;
+	
 	bool HasRole(string roleid){
 		if (!Roles) return false;
 		return (Roles.Find(roleid) != -1);
