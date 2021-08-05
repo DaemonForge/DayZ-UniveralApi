@@ -100,6 +100,23 @@ class UApiCallbackLoader<Class T> extends UApiCallbackBase {
 	}
 }
 
+class UApiJSONCallback extends UApiCallbackBase {
+	
+	override void OnError(int errorCode, int cid) {
+		if (GetInstance() && Function != ""){
+			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "{}"));
+		}
+	}
+		
+	override void OnSuccess(string jsonData, int cid) {
+		if (GetInstance() && Function != ""){
+			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, UAPI_SUCCESS, OID, jsonData));
+		}
+	}
+}
+
+
+
 class UApiCallbackBase extends Managed{
 
 	protected Class Instance;
@@ -125,11 +142,11 @@ class UApiCallbackBase extends Managed{
 	}
 	
 	void OnError(int errorCode, int cid) {
-		
+		Error2("[UAPI] Callback Error", "Error calling back OnError, not set up correctly CallId: " + cid);
 	}
 		
 	void OnSuccess(string jsonData, int cid) {
-		
+		Error2("[UAPI] Callback Error", "Error calling back OnSuccess, not set up correctly CallId: " + cid);
 	}
 }
 
