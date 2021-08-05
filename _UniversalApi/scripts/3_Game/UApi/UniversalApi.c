@@ -268,7 +268,7 @@ class UniversalApi extends Managed {
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestRetry", this, SingeplayerExecutionType.Both );
 			if(GetGame().IsServer()){
-				int cid = UApi().api().StatusObj(this, "CBStatusCheck");
+				int cid = UApi().api().Status(this, "CBStatusCheck");
 				CheckAndRenewQRandom();
 				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.CheckAndRenewQRandom, 10 * 60 * 1000, true);
 			}
@@ -469,14 +469,11 @@ class UniversalApi extends Managed {
 		LastRandomNumberRequestCall = api().RandomNumbersFull(-1, this, "CBRandomNumber");
 	}
 	
-	protected void CBRandomNumber(int cid, int status, string oid, string data){
+	protected void CBRandomNumber(int cid, int status, string oid, UApiRandomNumberResponse data){
 		LastRandomNumberRequestCall = -1;
-		if (status == UAPI_SUCCESS){
-			UApiRandomNumberResponse dataload;
-			if (UApiJSONHandler<UApiRandomNumberResponse>.FromString(data, dataload) && dataload.Status == "Success"){
-				Math.AddQRandomNumber(dataload.Numbers);
-				return;
-			}
+		if (status == UAPI_SUCCESS && data){
+			Math.AddQRandomNumber(data.Numbers);
+			return;
 		}
 		Print("[UAPI] Failed to update the Q Random Numbers");
 	}
