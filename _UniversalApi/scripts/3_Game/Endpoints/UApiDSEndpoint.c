@@ -120,6 +120,91 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}	
 	
+	//Return's a User's currently connected channel `UApiDiscordStatusObject` Object 
+	int GetUsersChannel(string GUID, Class instance, string function, bool ReturnString = false) {
+		if (GUID == ""){
+			return -1;
+		}
+		int cid = UApi().CallId();
+		autoptr RestCallback DBCBX;
+		if (instance && function != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
+		} else if (instance && function != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(instance, function, GUID), cid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = "GetChannel/" + GUID;
+		
+		Post(url,"{}",DBCBX);
+		return cid;
+	}	
+	
+	int MoveTo(string GUID, string ChannelId, Class instance = NULL , string function = "", bool ReturnString = false) {
+		if (GUID == "" || ChannelId == ""){
+			return -1;
+		}
+		int cid = UApi().CallId();
+		autoptr RestCallback DBCBX;
+		if (instance && function != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
+		} else if (instance && function != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(instance, function, GUID), cid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = "Move/" + GUID + "/" + ChannelId;
+		
+		Post(url, "{}", DBCBX);
+		return cid;
+	}
+	
+	int KickUser(string GUID, string Reason = "", Class instance = NULL , string function = "", bool ReturnString = false) {
+		if (GUID == ""){
+			return -1;
+		}
+		int cid = UApi().CallId();
+		autoptr RestCallback DBCBX;
+		if (instance && function != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
+		} else if (instance && function != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(instance, function, GUID), cid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = "Kick/" + GUID;
+		autoptr UApiTextObject txtObj = new UApiTextObject(Reason);
+		
+		Post(url, txtObj.ToJson(), DBCBX);
+		return cid;
+	}
+	
+	int MuteUser(string GUID, bool ToMute, Class instance, string function, bool ReturnString = false) {
+		if (GUID == ""){
+			return -1;
+		}
+		int cid = UApi().CallId();
+		autoptr RestCallback DBCBX;
+		if (instance && function != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
+		} else if (instance && function != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(instance, function, GUID), cid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = "Mute/" + GUID;
+		
+		autoptr UApiDiscordMute muteObject = new UApiDiscordMute(ToMute);
+		
+		Post(url, muteObject.ToJson(), DBCBX);
+		
+		return cid;
+	}		
+	
 	int ChannelCreate(string Name, UApiChannelOptions Options = NULL, Class instance = NULL, string function = "", bool ReturnString = false) {
 		int cid = UApi().CallId();
 		

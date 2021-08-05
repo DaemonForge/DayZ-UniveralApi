@@ -6,6 +6,20 @@ class StatusObject extends Managed {
 	
 }
 
+class UApiTextObject extends UApiObject_Base{
+	
+	string Text = "";
+	
+	void UApiTextObject(string text){
+		Text = text;
+	}
+	
+	override string ToJson(){
+		string jsonString = JsonFileLoader<UApiTextObject>.JsonMakeData(this);
+		return jsonString;
+	}
+}
+
 class UApiDiscordStatusObject extends StatusObject {
 	
 	string oid;

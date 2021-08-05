@@ -130,3 +130,19 @@ class UApiDiscordFooter extends UApiObject_Base{
 		return jsonString;
 	}
 }
+
+
+
+class UApiDiscordMute extends UApiObject_Base{
+	
+	bool ToMute = true;
+	
+	void UApiDiscordMute(bool toMute){
+		ToMute = toMute;
+	}
+	
+	override string ToJson(){
+		string jsonString = JsonFileLoader<UApiDiscordMute>.JsonMakeData(this);
+		return jsonString;
+	}
+}
