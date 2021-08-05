@@ -36,11 +36,6 @@ router.post('/:mod', (req, res)=>{
     runQuery(req, res, req.params.mod, req.headers['auth-key'], GetCollection(req.baseUrl));
 });
 
-//TO REMOVE
-router.post('/:mod/:auth', (req, res)=>{
-    runQuery(req, res, req.params.mod, req.params.auth, GetCollection(req.baseUrl));
-});
-
 function GetCollection(URL){
     if (URL.includes("/Player/")){
         return "Players"

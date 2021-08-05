@@ -40,15 +40,6 @@ router.post('/Many/:id', (req, res)=>{
     runLoggerMany(req, res,req.params.id, req.headers['auth-key']);
 });
 
-//TO REMOVE
-router.post('/One/:id/:auth', (req, res)=>{
-    runLoggerOne(req, res,req.params.id, req.params.auth);
-});
-
-router.post('/Many/:id/:auth', (req, res)=>{
-    runLoggerMany(req, res,req.params.id, req.params.auth);
-});
-
 
 async function runLoggerOne(req, res, id, auth) {
     const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });

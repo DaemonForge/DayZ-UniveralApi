@@ -196,50 +196,6 @@ router.post('/Check/:ID/', (req, res) => {
     CheckId(res,req, req.params.ID, GUID);
 });
 
-//TO REMOVE
-router.post('/AddRole/:GUID/:auth', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    AddRole(res,req,  GUID, req.params.auth);
-});
-
-router.post('/RemoveRole/:GUID/:auth', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    RemoveRole(res,req, GUID, req.params.auth);
-});
-
-router.post('/Get/:GUID/:auth', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    GetRoles(res,req, GUID, req.params.auth);
-});
-
-router.post('/GetWithPlainId/:ID/:auth', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.ID);
-    GetRoles(res,req, GUID, req.params.auth);
-});
-
-router.post('/Channel/Create/:auth', (req, res) => {
-    CreateChannel(res, req, req.params.auth);
-});
-
-router.post('/Channel/Delete/:id/:auth', (req, res) => {
-    DeleteChannel(res, req, req.params.id, req.params.auth);
-});
-
-router.post('/Channel/Edit/:id/:auth', (req, res) => {
-    EditChannel(res, req, req.params.id, req.params.auth);
-});
-
-router.post('/Channel/Invite/:id/:auth', (req, res) => {
-    InviteChannel(res, req, req.params.id, req.params.auth);
-});
-
-router.post('/Channel/Send/:id/:auth', (req, res) => {
-    SendMessageChannel(res, req, req.params.id, req.params.auth);
-});
-
-router.post('/Channel/Messages/:id/:auth', (req, res) => {
-    GetMessagesChannel(res, req, req.params.id, req.params.auth);
-});
 router.get('/:id', (req, res) => {
     if (LoginTemplate === undefined) LoadLoginTemplate();
     if (ErrorTemplate === undefined) LoadErrorTemplate();
