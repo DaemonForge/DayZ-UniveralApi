@@ -181,4 +181,8 @@ class UApiDBHandlerBase extends Managed {
 		Error2("[UAPI] UApiDBHandlerBase QUERY","Incorrect Ussage class is not type of UApiDBHandler<T>");
 		return -1;
 	}
+	
+	void Cancel(int cid){
+		UApi().RequestCallCancel(cid);
+	}
 }
