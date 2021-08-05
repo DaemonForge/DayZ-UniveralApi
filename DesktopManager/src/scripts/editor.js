@@ -159,7 +159,7 @@ function PasteContent(){
 }
 
 async function CheckForSchema(modtag){
-    let TheSchema = await fetch(`https://raw.githubusercontent.com/daemonforge/DayZ-UniveralApi/master/Schemas/${modtag}.json`).then(response => {
+    let TheSchema = await fetch(`https://raw.githubusercontent.com/daemonforge/DayZ-UniveralApi/stable/Schemas/${modtag}.json`).then(response => {
         return response.json().catch( e => console.log(e));
     }).catch( e => console.log(e))
     //console.log(TheSchema);
