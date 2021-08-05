@@ -17,7 +17,7 @@ class UApiTranslationRequest extends UApiObject_Base{
 
 
 	
-	void UApiTranslationRequest(string text, TStringArray to, string from = ""){
+	void UApiTranslationRequest(string text, TStringArray to, string from = "auto"){
 		Text = text;
 		if (to){
 			To = to;

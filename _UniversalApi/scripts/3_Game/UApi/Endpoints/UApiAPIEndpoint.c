@@ -30,6 +30,30 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	
 	
 	//Sends request to get text translated returns a `UApiTranslationResponse` object
+	int Translate(string Text, string To, string From, Class instance, string function, string oid = "", bool ReturnString = false){
+		int cid = UApi().CallId();
+		string endpoint = "Translate";
+		
+		autoptr RestCallback DBCBX;
+		if (instance && function != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		} else if (instance && function != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiTranslationResponse>(instance, function, oid), cid);
+		}
+		
+		autoptr UApiTranslationRequest translationReq = new UApiTranslationRequest(Text, {To}, From);
+		
+		if ( translationReq && Text && To && DBCBX){
+			Post(endpoint,translationReq.ToJson(),DBCBX);
+		} else {
+			Print("[UAPI] [Api] Error Translate " +  Text);
+			cid = -1;
+		}
+		return cid;
+		
+	}
+	
+	//Sends request to get text translated returns a `UApiTranslationResponse` object
 	int Translate(string Text, TStringArray To, Class instance, string function, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		string endpoint = "Translate";
@@ -42,10 +66,9 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		}
 		
 		autoptr UApiTranslationRequest translationReq = new UApiTranslationRequest(Text, To);
-		string jsonString = translationReq.ToJson();
 		
-		if ( jsonString && Text && To && DBCBX){
-			Post(endpoint,jsonString,DBCBX);
+		if ( translationReq && Text && To && DBCBX){
+			Post(endpoint,translationReq.ToJson(),DBCBX);
 		} else {
 			Print("[UAPI] [Api] Error Translate " +  Text);
 			cid = -1;
@@ -180,7 +203,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		if (  text && text != "" && questionreq && DBCBX){
 			Post(endpoint, questionreq.ToJson(), DBCBX);
 		} else {
-			Print("[UAPI] [Api] Error Toxicity Text:" +  text + " CID:" + cid);
+			Error2("[UAPI] [Api] Error Toxicity ", "Text:" +  text + " CID:" + cid);
 			cid = -1;
 		}
 		return cid;
@@ -198,8 +221,6 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else if (instance && function != ""){
 			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiRandomNumberResponse>(instance, function, oid), cid);
-		} else {
-			DBCBX = new UApiSilentCallBack();
 		}
 		
 		autoptr UApiRandomNumberRequest randomreq = new UApiRandomNumberRequest(count);
@@ -207,14 +228,14 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		if (  count > 0 && count <= 2048 && randomreq && DBCBX){
 			Post(endpoint, randomreq.ToJson(), DBCBX);
 		} else {
-			Print("[UAPI] [Api] Error Random " +  count + " CID:" + cid);
+			Error2("[UAPI] [Api] Error Random", "Count: " +  count + " CID:" + cid);
 			cid = -1;
 		}
 		return cid;
 	}
 	
 	//Gets an array of random number from  -2147483647 to 2147483647 returns `UApiRandomNumberResponse`
-	int RandomNumbersFull(int count, Class instance, string function, bool ReturnString = false, string oid = ""){
+	int RandomNumbersFull(int count, Class instance, string function, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		string endpoint = "Random/Full";
 		if (count == -1){
@@ -225,8 +246,6 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
 		} else if (instance && function != "") {
 			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiRandomNumberResponse>(instance, function, oid), cid);
-		} else {
-			DBCBX = new UApiSilentCallBack();
 		}
 		
 		autoptr UApiRandomNumberRequest randomreq = new UApiRandomNumberRequest(count);
@@ -234,7 +253,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		if (  count > 0 && count <= 4096 && randomreq && DBCBX){
 			Post(endpoint, randomreq.ToJson(), DBCBX);
 		} else {
-			Print("[UAPI] [Api] Error Random " +  count + " CID:" + cid);
+			Error2("[UAPI] [Api] Error Random", "Count: " +  count + " CID:" + cid);
 			cid = -1;
 		}
 		return cid;
