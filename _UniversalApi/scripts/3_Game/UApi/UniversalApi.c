@@ -296,7 +296,7 @@ class UniversalApi extends Managed {
 	
 	protected void OnTokenReceived(){
 		UpdateAllAuthTokens();
-		UApi().api().StatusObj(this, "CBStatusCheck");
+		UApi().api().Status(this, "CBStatusCheck");
 		if (m_UniversalApiConfig.QnAEnabled){
 			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(NULL), true);
 		}
