@@ -17,7 +17,6 @@ class UApiQueryResult<Class T> : StatusObject {
 		return UApiJSONHandler<UApiQueryResult<T>>.FromString( stringData, this);
 	}
 
-	
 	array<autoptr T> GetResults(){
 		return Results;
 	}

@@ -1,18 +1,13 @@
-
-class UApiDiscordChannelFilter extends UApiObject_Base {
+class UApiDiscordBasicMessage extends UApiObject_Base {
 	
-	int Limit = -1;
-	string Before = "";
-	string After = "";
+	string Message= "";
 	
-	void UApiDiscordChannelFilter(int limit = -1, string before = "", string after = ""){
-		Limit = limit;
-		Before = before;
-		After = after;
+	void UApiDiscordBasicMessage(string message){
+		Message = message;
 	}
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordChannelFilter>.JsonMakeData(this);
+		string jsonString = JsonFileLoader<UApiDiscordBasicMessage>.JsonMakeData(this);
 		return jsonString;
 	}
 	
@@ -44,20 +39,6 @@ class UApiDiscordMessage extends UApiObject_Base {
 	}
 }
 
-class UApiDiscordBasicMessage extends UApiObject_Base {
-	
-	string Message= "";
-	
-	void UApiDiscordBasicMessage(string message){
-		Message = message;
-	}
-	
-	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordBasicMessage>.JsonMakeData(this);
-		return jsonString;
-	}
-	
-}
 
 class UApiDiscordEmbed extends UApiObject_Base{
 	 

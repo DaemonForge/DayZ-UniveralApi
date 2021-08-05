@@ -1,11 +1,6 @@
 class UApiLogBase{
-	
-
-	
 	string Log = "";
-	
 	string GUID = "";
-	
 	vector Position;
 	
 	
@@ -24,9 +19,6 @@ class UApiLogBase{
 }
 
 class UApiLogMisc{
-	
-
-	
 	string Log = "";
 	string Action = "";
 	string Item = "";
@@ -52,13 +44,6 @@ class UApiLogMisc{
 	}
 	
 }
-
-
-
-static string GetLogPlayerPosArray(array<autoptr UApiLogPlayerPos> thePlayerlist){
-	return JsonFileLoader<array<autoptr UApiLogPlayerPos>>.JsonMakeData(thePlayerlist);
-}
-
 
 class UApiLogPlayerPos {
 	string Log = "PlayerPos";

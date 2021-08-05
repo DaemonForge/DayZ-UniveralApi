@@ -3,52 +3,8 @@ class StatusObject extends Managed {
     string Status =  "Pending"; //Success or Error
 	string Error =  "Not an Error Object";
 	
-	
 }
 
-class UApiTextObject extends UApiObject_Base{
-	
-	string Text = "";
-	
-	void UApiTextObject(string text){
-		Text = text;
-	}
-	
-	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiTextObject>.JsonMakeData(this);
-		return jsonString;
-	}
-}
-
-class UApiDiscordStatusObject extends StatusObject {
-	
-	string oid;
-
-}
-
-class UApiDiscordMessagesResponse extends StatusObject {
-	
-	autoptr array<UApiDiscordMessage> Messages;
-	
-}
-
-class UApiToxicityResponse extends StatusObject {
-	
-	float IdentityAttack;
-	float Insult;
-	float Obscene;
-	float SevereToxicity;
-	float SexualExplicit;
-	float Threat;
-	float Toxicity;
-	
-}
-
-class UApiRandomNumberResponse extends StatusObject {
-	
-	autoptr TIntArray Numbers;
-	
-}
 
 class UApiStatus extends StatusObject {
 	
@@ -58,7 +14,6 @@ class UApiStatus extends StatusObject {
 	autoptr TStringArray Wit;
 	autoptr TStringArray QnA;
 	autoptr TStringArray LUIS;
-	
 	
 	int CheckVersion(string version){
 		if (version == Version){

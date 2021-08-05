@@ -31,4 +31,3 @@ class UApiRandomNumberRequest extends UApiObject_Base{
 		return jsonString;
 	}
 }
-
