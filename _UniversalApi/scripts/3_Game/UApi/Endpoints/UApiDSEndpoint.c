@@ -15,16 +15,16 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 		
 	//Add's a role to a user's connected discord
-	int AddRole(string GUID, string RoleId, Class instance = NULL, string function = "", bool ReturnString = false) {
+	int AddRole(string GUID, string RoleId, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
 		if (GUID == ""){
 			return -1;
 		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
-		}  else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(instance, function, GUID), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, GUID);
+		}  else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(cbInstance, cbFunction, GUID), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -44,16 +44,16 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 	
 	//Removes a role from a user's connected discord
-	int RemoveRole(string GUID, string RoleId, Class instance = NULL, string function = "", bool ReturnString = false) {
+	int RemoveRole(string GUID, string RoleId, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
 		if (GUID == ""){
 			return -1;
 		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
-		}  else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(instance, function, GUID), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, GUID);
+		}  else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(cbInstance, cbFunction, GUID), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -74,17 +74,17 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 	
 	//Sends a DM to a user's discord retuns `StatusObject`
-	int UserSend(string GUID, string message,  Class instance = NULL, string function = "", bool ReturnString = false){
+	int UserSend(string GUID, string message,  Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		if (GUID == ""){
 			return -1;
 		}
 		int cid = UApi().CallId();
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
-		}  else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(instance, function, GUID), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, GUID);
+		}  else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(cbInstance, cbFunction, GUID), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -100,16 +100,16 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 
 	//Return's a User's `UApiDiscordUser` Object 
-	int GetUser(string GUID, Class instance, string function, bool ReturnString = false) {
+	int GetUser(string GUID, Class cbInstance, string cbFunction, bool ReturnString = false) {
 		if (GUID == ""){
 			return -1;
 		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
-		} else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(instance, function, GUID), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, GUID);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(cbInstance, cbFunction, GUID), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -121,16 +121,16 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}	
 	
 	//Return's a User's currently connected channel `UApiDiscordStatusObject` Object 
-	int GetUsersChannel(string GUID, Class instance, string function, bool ReturnString = false) {
+	int GetUsersChannel(string GUID, Class cbInstance, string cbFunction, bool ReturnString = false) {
 		if (GUID == ""){
 			return -1;
 		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
-		} else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(instance, function, GUID), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, GUID);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(cbInstance, cbFunction, GUID), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -141,16 +141,16 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}	
 	
-	int MoveTo(string GUID, string ChannelId, Class instance = NULL , string function = "", bool ReturnString = false) {
+	int MoveTo(string GUID, string ChannelId, Class cbInstance = NULL , string cbFunction = "", bool ReturnString = false) {
 		if (GUID == "" || ChannelId == ""){
 			return -1;
 		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
-		} else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(instance, function, GUID), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, GUID);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(cbInstance, cbFunction, GUID), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -161,16 +161,16 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}
 	
-	int KickUser(string GUID, string Reason = "", Class instance = NULL , string function = "", bool ReturnString = false) {
+	int KickUser(string GUID, string Reason = "", Class cbInstance = NULL , string cbFunction = "", bool ReturnString = false) {
 		if (GUID == ""){
 			return -1;
 		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
-		} else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(instance, function, GUID), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, GUID);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(cbInstance, cbFunction, GUID), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -182,16 +182,16 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}
 	
-	int MuteUser(string GUID, bool ToMute, Class instance, string function, bool ReturnString = false) {
+	int MuteUser(string GUID, bool ToMute, Class cbInstance, string cbFunction, bool ReturnString = false) {
 		if (GUID == ""){
 			return -1;
 		}
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, GUID);
-		} else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(instance, function, GUID), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, GUID);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(cbInstance, cbFunction, GUID), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -205,14 +205,14 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}		
 	
-	int ChannelCreate(string Name, UApiChannelOptions Options = NULL, Class instance = NULL, string function = "", bool ReturnString = false) {
+	int ChannelCreate(string Name, UApiChannelOptions Options = NULL, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
 		int cid = UApi().CallId();
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, Name);
-		} else if (instance && function != "") {
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(instance, function, Name), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, Name);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(cbInstance, cbFunction, Name), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -231,15 +231,15 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 	
 	
-	int ChannelDelete(string id, string reason, Class instance = NULL, string function = "", bool ReturnString = false){
+	int ChannelDelete(string id, string reason, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, id);
-		} else if (instance && function != "") {
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(instance, function, id), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, id);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(cbInstance, cbFunction, id), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -255,15 +255,15 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return -1;
 	}
 	
-	int ChannelEdit(string id, string reason, autoptr UApiChannelUpdateOptions options, Class instance = NULL, string function = "", bool ReturnString = false){
+	int ChannelEdit(string id, string reason, autoptr UApiChannelUpdateOptions options, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, id);
-		} else if (instance && function != "") {
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(instance, function, id), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, id);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(cbInstance, cbFunction, id), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -279,15 +279,15 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return -1;
 	}
 	
-	int ChannelSend(string id, string message, Class instance = NULL, string function = "", bool ReturnString = false){
+	int ChannelSend(string id, string message, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, id);
-		} else if (instance && function != "") {
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(instance, function, id), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, id);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(cbInstance, cbFunction, id), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -304,15 +304,15 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 	
 	
-	int ChannelSendEmbed(string id, UApiDiscordEmbed message, Class instance = NULL, string function = "", bool ReturnString = false){
+	int ChannelSendEmbed(string id, UApiDiscordEmbed message, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, id);
-		} else if (instance && function != "") {
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(instance, function, id), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, id);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordStatusObject>(cbInstance, cbFunction, id), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -327,7 +327,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 	
 	
-	int ChannelMessages(string id,  Class instance, string function, autoptr UApiDiscordChannelFilter filter = NULL, bool ReturnString = false){
+	int ChannelMessages(string id,  Class cbInstance, string cbFunction, autoptr UApiDiscordChannelFilter filter = NULL, bool ReturnString = false){
 		int cid = UApi().CallId();
 		
 		if (!filter){
@@ -335,10 +335,10 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		}
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, id);
-		} else if (instance && function != "") {
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordMessagesResponse>(instance, function, id), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, id);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordMessagesResponse>(cbInstance, cbFunction, id), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -353,17 +353,17 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 	
 	//A way to check if a player's discord is set up before they connect to the server and get an authkey
-	int CheckDiscord(string PlainId, Class instance, string function,  string baseUrl = "", bool ReturnString = false){		
+	int CheckDiscord(string PlainId, Class cbInstance, string cbFunction,  string baseUrl = "", bool ReturnString = false){		
 		int cid = UApi().CallId();
 		if (baseUrl == ""){
 			baseUrl = UApiConfig().GetBaseURL();
 		}
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, PlainId);
-		} else if (instance && function != "") {
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(instance, function, PlainId), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, PlainId);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(cbInstance, cbFunction, PlainId), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -378,11 +378,11 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	
 	
 	//Obsolete GetUser accepts both plainid or GUID
-	/*int GetUserWithPlainId(string plainId, Class instance, string function) {
+	/*int GetUserWithPlainId(string plainId, Class cbInstance, string cbFunction) {
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, plainId);
+		if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, plainId);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -395,11 +395,11 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}*/
 	
 	//Obsolete GetUserObj accepts both plainid or GUID
-	/*int GetUserObjWithPlainId(string plainId, Class instance, string function) {
+	/*int GetUserObjWithPlainId(string plainId, Class cbInstance, string cbFunction) {
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(instance, function, plainId), cid);
+		if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiDiscordUser>(cbInstance, cbFunction, plainId), cid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
