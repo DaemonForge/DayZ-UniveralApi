@@ -172,11 +172,6 @@ router.post('/GetChannel/:GUID', (req, res) => {
     PlayerVoiceGetChannel(res,req, GUID, req.headers['auth-key']);
 });
 
-router.post('/GetWithPlainId/:ID', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.ID);
-    GetRoles(res,req, GUID, req.headers['auth-key']);
-});
-
 router.post('/Channel/Create', (req, res) => {
     CreateChannel(res, req, req.headers['auth-key']);
 });
