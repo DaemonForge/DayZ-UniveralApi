@@ -7,6 +7,17 @@ const log = require("./log");
 
 const router = Router();
 
+/**
+ *  Generate Auth Token
+ *  Post: Auth/[GUID]
+ *  
+ *  Description: This generates a auth token for the specified GUID and 
+ *   updates the database so that way we can validate that the user has 
+ *   already be issued a new. The AUTHTOKEN will expire 
+ * 
+ *  Returns: `{ "GUID": "{THEPASSEDGUID}", "AUTH": "{AUTHTOKEN}" }`
+ * 
+ */
 router.post('/:GUID', (req, res)=>{
     if ( CheckServerAuth(req.headers['auth-key']) ){
         runGetAuth(req, res, req.params.GUID);
