@@ -4,6 +4,7 @@ const {writeFileSync} = require('fs');
 const ConfigPath = "config.json";
 const log = require("./log");
 let {createHash} = require('crypto');
+const RateLimit = require('express-rate-limit');
 
 module.exports ={
     dynamicSortMultiple,
@@ -20,7 +21,8 @@ module.exports ={
     CheckRecentVersion,
     NormalizeToGUID,
     ExtractAuthKey,
-    CleanRegEx
+    CleanRegEx,
+    GenerateLimiter
 }
 
 
@@ -266,4 +268,25 @@ async function CheckRecentVersion(){
 
   function CleanRegEx(value){
     return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
+  }
+
+  function GenerateLimiter(limitRate, seconds){
+    let Seconds = seconds || 10;
+    let LimitRate = limitRate || 300
+    return new RateLimit({
+      windowMs: Seconds * 1000, // 40 req/sec
+      max: LimitRate,
+      message:  '{ "Status": "Error", "Error": "RateLimited" }',
+      keyGenerator: function (req /*, res*/) {
+        return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+      },
+      onLimitReached: function (req, res, options) {
+        let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+        log("RateLimit Reached("  + ip + ") you may be under a DDoS Attack or you may need to increase your request limit");
+      },
+      skip: function (req, res) {
+        let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
+        return (global.config.RateLimitWhiteList !== undefined && ip !== undefined && ip !== null && isArray(global.config.RateLimitWhiteList) && (global.config.RateLimitWhiteList.find(element => element === ip) === ip));
+      }
+    });
   }

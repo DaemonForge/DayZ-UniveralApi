@@ -1,6 +1,5 @@
 const {Router} = require('express');
 const { MongoClient } = require("mongodb");
-let {createHash} = require('crypto');
 const {isArray, isObject, isEmpty, NormalizeToGUID} = require('./utils')
 const log = require("./log");
 

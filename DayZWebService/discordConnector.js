@@ -1,6 +1,6 @@
 global.DISCORDSTATUS = "Pending";
 const {Router} = require('express');
-const {isArray, isObject,NormalizeToGUID} = require('./utils')
+const {isArray, isObject,NormalizeToGUID,GenerateLimiter} = require('./utils')
 const {CheckAuth, CheckPlayerAuth,AuthPlayerGuid,CheckServerAuth} = require("./AuthChecker");
 const { MongoClient } = require("mongodb");
 const {createHash} = require('crypto');
@@ -14,11 +14,14 @@ const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
 const router = Router();
 
-var RateLimit = require('express-rate-limit');
 let TheRateLimit = 40;
 if (global.config.RequestLimitDiscord !== undefined){
     TheRateLimit =  Math.ceil( global.config.RequestLimitDiscord / 5)
 }
+// apply rate limiter to all requests
+router.use(GenerateLimiter(TheRateLimit, 2));
+
+var RateLimit = require('express-rate-limit');
 var limiter = new RateLimit({
   windowMs: 2*1000, // 20 req/sec
   max: TheRateLimit,
