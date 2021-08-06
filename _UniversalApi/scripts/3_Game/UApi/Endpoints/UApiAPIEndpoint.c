@@ -2,7 +2,7 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	
 	
 	//Uses the QnA Endpoint to send requests returns QnAAnswer
-	int QnA(string Question,  string Key, Class instance, string function, string oid = "", bool ReturnString = false){
+	int QnA(string Question,  string Key, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		string endpoint = "QnA/" + Key;
 				
@@ -10,9 +10,9 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		string jsonString = questionObj.ToJson();
 		
 		if (Question && jsonString && ReturnString){
-			Post(endpoint, jsonString, new UApiDBCallBack(instance, function, cid, oid));
+			Post(endpoint, jsonString, new UApiDBCallBack(cbInstance, cbFunction, cid, oid));
 		} else if (Question && jsonString){
-			Post(endpoint, jsonString, new UApiDBNestedCallBack(new UApiCallback<QnAAnswer>(instance, function, oid), cid));
+			Post(endpoint, jsonString, new UApiDBNestedCallBack(new UApiCallback<QnAAnswer>(cbInstance, cbFunction, oid), cid));
 		} else {
 			Print("[UAPI] [Api] Error QnA K:" +  Key + " Q: " + Question );
 			cid = -1;
@@ -30,15 +30,15 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	
 	
 	//Sends request to get text translated returns a `UApiTranslationResponse` object
-	int Translate(string Text, string To, string From, Class instance, string function, string oid = "", bool ReturnString = false){
+	int Translate(string Text, string To, string From, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		string endpoint = "Translate";
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
-		} else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiTranslationResponse>(instance, function, oid), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiTranslationResponse>(cbInstance, cbFunction, oid), cid);
 		}
 		
 		autoptr UApiTranslationRequest translationReq = new UApiTranslationRequest(Text, {To}, From);
@@ -54,15 +54,15 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	}
 	
 	//Sends request to get text translated returns a `UApiTranslationResponse` object
-	int Translate(string Text, TStringArray To, Class instance, string function, string oid = "", bool ReturnString = false){
+	int Translate(string Text, TStringArray To, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		string endpoint = "Translate";
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
-		} else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiTranslationResponse>(instance, function, oid), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiTranslationResponse>(cbInstance, cbFunction, oid), cid);
 		}
 		
 		autoptr UApiTranslationRequest translationReq = new UApiTranslationRequest(Text, To);
@@ -79,13 +79,13 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		
 	
 	//Runs a wit query to the key specificed must be configured server side
-	int Wit(string Text, string Key, Class instance, string function, string oid = ""){
+	int Wit(string Text, string Key, Class cbInstance, string cbFunction, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "Wit/" + Key;
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -103,13 +103,13 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	}
 	
 	//Sends a query to Microsoft's LUIS
-	int LUIS(string Text, string Key, Class instance, string function, string oid = ""){
+	int LUIS(string Text, string Key, Class cbInstance, string cbFunction, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "LUIS/" + Key;
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -129,15 +129,15 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	
 	
 	//Replacing ServerQuery Runs a Steam Query for a server returning a `UApiServerStatus` object
-	int SteamQuery(string ip, string queryPort, Class instance, string function, string oid = "", bool ReturnString = false){
+	int SteamQuery(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
-		} else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiServerStatus>(instance, function, oid), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiServerStatus>(cbInstance, cbFunction, oid), cid);
 		}
 		
 		if (  ip && ip != "" && queryPort && queryPort != "" && DBCBX){
@@ -151,13 +151,13 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	
 	//To Be removed
 	//Runs a Steam Query for a server returning a `UApiServerStatus` object
-	int ServerQuery(string ip, string queryPort, Class instance, string function, string oid = ""){
+	int ServerQuery(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -173,12 +173,12 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	}
 	
 	//Runs a Steam Query for a server returning a `UApiServerStatus` object
-	int ServerQueryObj(string ip, string queryPort, Class instance, string function, string oid = ""){
+	int ServerQueryObj(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = ""){
 		int cid = UApi().CallId();
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
 		
 		if (  ip && ip != "" && queryPort && queryPort != "" ){
-			Post(endpoint,"{}",new UApiDBNestedCallBack(new UApiCallback<UApiServerStatus>(instance, function, oid), cid));
+			Post(endpoint,"{}",new UApiDBNestedCallBack(new UApiCallback<UApiServerStatus>(cbInstance, cbFunction, oid), cid));
 		} else {
 			Print("[UAPI] [Api] Error ServerQuery IP:" +  ip + " Port:" + queryPort);
 			cid = -1;
@@ -187,20 +187,20 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	}
 	
 	//Sends text for Toxicity Check returns a `UApiToxicityResponse` object
-	int Toxicity(string text, Class instance, string function, string oid = "", bool ReturnString = false){
+	int Toxicity(string text, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		string endpoint = "Toxicity";
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
-		} else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiToxicityResponse>(instance, function, oid), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiToxicityResponse>(cbInstance, cbFunction, oid), cid);
 		}
 		
 		autoptr UApiQuestionRequest questionreq = new UApiQuestionRequest(text);
 		
-		if (  text && text != "" && questionreq && DBCBX){
+		if ( text && text != "" && questionreq && DBCBX){
 			Post(endpoint, questionreq.ToJson(), DBCBX);
 		} else {
 			Error2("[UAPI] [Api] Error Toxicity ", "Text:" +  text + " CID:" + cid);
@@ -210,17 +210,17 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	}
 	
 	//Get a array of random numbers from 0 - 65535 returns `UApiRandomNumberResponse`
-	int RandomNumbers(int count, Class instance, string function, string oid = "", bool ReturnString = false){
+	int RandomNumbers(int count, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		string endpoint = "Random";
 		if (count == -1){
 			count = 2048;
 		}
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
-		} else if (instance && function != ""){
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiRandomNumberResponse>(instance, function, oid), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiRandomNumberResponse>(cbInstance, cbFunction, oid), cid);
 		}
 		
 		autoptr UApiRandomNumberRequest randomreq = new UApiRandomNumberRequest(count);
@@ -235,17 +235,17 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	}
 	
 	//Gets an array of random number from  -2147483647 to 2147483647 returns `UApiRandomNumberResponse`
-	int RandomNumbersFull(int count, Class instance, string function, string oid = "", bool ReturnString = false){
+	int RandomNumbersFull(int count, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		string endpoint = "Random/Full";
 		if (count == -1){
 			count = 4096;
 		}
 		autoptr RestCallback DBCBX;
-		if (instance && function != "" && ReturnString){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
-		} else if (instance && function != "") {
-			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiRandomNumberResponse>(instance, function, oid), cid);
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiRandomNumberResponse>(cbInstance, cbFunction, oid), cid);
 		}
 		
 		autoptr UApiRandomNumberRequest randomreq = new UApiRandomNumberRequest(count);
@@ -260,12 +260,12 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 	}
 	
 	//Request a status check from the api so you can get version number and such returns a `UApiStatus` object
-	int Status(Class instance, string function, string oid = "", bool ReturnString = false){
+	int Status(Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();
 		if (ReturnString){	
-			Post("Status", "{}", new UApiDBCallBack(instance, function, cid, oid));
+			Post("Status", "{}", new UApiDBCallBack(cbInstance, cbFunction, cid, oid));
 		} else {
-			Post("Status", "{}",  new UApiDBNestedCallBack(new UApiCallback<UApiStatus>(instance, function, oid), cid));
+			Post("Status", "{}",  new UApiDBNestedCallBack(new UApiCallback<UApiStatus>(cbInstance, cbFunction, oid), cid));
 		}
 		return cid;
 	}

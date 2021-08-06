@@ -22,12 +22,12 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Save(string mod, string oid, string jsonString, Class instance, string function) {	
+	int Save(string mod, string oid, string jsonString, Class cbInstance, string cbFunction) {	
 		int cid = UApi().CallId();	
 		string endpoint = "/Save/" + oid + "/" + mod;
 
 		if (mod && oid && jsonString){
-			Post(endpoint,jsonString, new UApiDBCallBack(instance, function, cid, oid));
+			Post(endpoint,jsonString, new UApiDBCallBack(cbInstance, cbFunction, cid, oid));
 		} else {
 			Print("[UAPI] [Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
@@ -63,12 +63,12 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Load(string mod, string oid, Class instance, string function, string jsonString = "{}") {		
+	int Load(string mod, string oid, Class cbInstance, string cbFunction, string jsonString = "{}") {		
 		int cid = UApi().CallId();
 		string endpoint = "/Load/" + oid + "/" + mod;
 		
 		if (mod && oid && jsonString){
-			Post(endpoint,jsonString, new UApiDBCallBack(instance, function, cid, oid));
+			Post(endpoint,jsonString, new UApiDBCallBack(cbInstance, cbFunction, cid, oid));
 		} else {
 			Print("[UAPI] [Api] Error Loading Player Data for " + mod);
 			cid = -1;
@@ -91,12 +91,12 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Query(string mod, UApiQueryBase query, Class instance, string function) {
+	int Query(string mod, UApiQueryBase query, Class cbInstance, string cbFunction) {
 		int cid = UApi().CallId();
 		string endpoint = "/Query/" + mod;
 				
 		if (mod && query){
-			Post(endpoint,query.ToJson(),new UApiDBCallBack(instance, function, cid, ""));
+			Post(endpoint,query.ToJson(),new UApiDBCallBack(cbInstance, cbFunction, cid, ""));
 		} else {
 			Print("[UAPI] [Api] Error Querying " +  mod);
 			cid = -1;
@@ -158,7 +158,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Transaction(string mod, string oid, string element, float value, Class instance, string function) {
+	int Transaction(string mod, string oid, string element, float value, Class cbInstance, string cbFunction) {
 		int cid = UApi().CallId();
 		
 		autoptr RestCallback DBCBX = ;
@@ -168,7 +168,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
 		if (mod && oid && element && transaction){
-			Post(endpoint,transaction.ToJson(), new UApiDBCallBack(instance, function, cid, oid));
+			Post(endpoint,transaction.ToJson(), new UApiDBCallBack(cbInstance, cbFunction, cid, oid));
 		} else {
 			Print("[UAPI] [Api] Error Transaction " +  mod);
 			cid = -1;
@@ -176,7 +176,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Transaction(string mod, string oid, string element, float value, float min, float max, Class instance, string function) {
+	int Transaction(string mod, string oid, string element, float value, float min, float max, Class cbInstance, string cbFunction) {
 		int cid = UApi().CallId();
 		
 		autoptr RestCallback DBCBX = ;
@@ -186,7 +186,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		autoptr UApiValidatedTransaction transaction = new UApiValidatedTransaction(element, value, min, max);
 		
 		if (mod && oid && element && transaction){
-			Post(endpoint,transaction.ToJson(), new UApiDBCallBack(instance, function, cid, oid));
+			Post(endpoint,transaction.ToJson(), new UApiDBCallBack(cbInstance, cbFunction, cid, oid));
 		} else {
 			Print("[UAPI] [Api] Error Transaction " +  mod);
 			cid = -1;
@@ -227,11 +227,11 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Update(string mod, string oid, string element, string value, string operation, Class instance, string function) {	
+	int Update(string mod, string oid, string element, string value, string operation, Class cbInstance, string cbFunction) {	
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -252,13 +252,13 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 	
 	
 	//Only Works on Player Data	
-	int PublicSave(string mod, string oid, string jsonString, Class instance = NULL, string function = "") {	
+	int PublicSave(string mod, string oid, string jsonString, Class cbInstance = NULL, string cbFunction = "") {	
 		if (m_Collection != "Player") return -1;
 		int cid = UApi().CallId();	
 		string endpoint = "/PublicSave/" + oid + "/" + mod;
 		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
@@ -272,14 +272,14 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int PublicLoad(string mod, string oid, Class instance, string function, string jsonString = "{}") {		
+	int PublicLoad(string mod, string oid, Class cbInstance, string cbFunction, string jsonString = "{}") {		
 		if (m_Collection != "Player") return -1;
 		int cid = UApi().CallId();
 		string endpoint = "/PublicLoad/" + oid + "/" + mod;
 		
 		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, oid);
+		if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}

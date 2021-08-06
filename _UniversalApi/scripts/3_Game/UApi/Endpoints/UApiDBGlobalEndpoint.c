@@ -16,11 +16,11 @@ class UApiDBGlobalEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Save(string mod, string jsonString, Class instance, string function) {	
+	int Save(string mod, string jsonString, Class cbInstance, string cbFunction) {	
 		int cid = UApi().CallId();	
 		string endpoint = "/Save/" + mod;		
 		if (mod && jsonString){
-			Post(endpoint,jsonString, new UApiDBCallBack(instance, function, cid, mod));
+			Post(endpoint,jsonString, new UApiDBCallBack(cbInstance, cbFunction, cid, mod));
 		} else {
 			Print("[UAPI] [Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
@@ -41,12 +41,12 @@ class UApiDBGlobalEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Load(string mod, Class instance, string function, string jsonString = "{}") {		
+	int Load(string mod, Class cbInstance, string cbFunction, string jsonString = "{}") {		
 		int cid = UApi().CallId();
 		string endpoint = "/Load/" + mod;
 
 		if (mod && jsonString){
-			Post(endpoint,jsonString,new UApiDBCallBack(instance, function, cid, mod));
+			Post(endpoint,jsonString,new UApiDBCallBack(cbInstance, cbFunction, cid, mod));
 		} else {
 			Print("[UAPI] [Api] Error Loading Player Data for " + mod);
 			cid = -1;
@@ -86,14 +86,14 @@ class UApiDBGlobalEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int Transaction(string mod, string element, float value, Class instance, string function) {
+	int Transaction(string mod, string element, float value, Class cbInstance, string cbFunction) {
 		int cid = UApi().CallId();
 		string endpoint = "/Transaction/" + mod;
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
 		if ( element && transaction && mod){
-			Post(endpoint,transaction.ToJson(), new UApiDBCallBack(instance, function, cid, mod));
+			Post(endpoint,transaction.ToJson(), new UApiDBCallBack(cbInstance, cbFunction, cid, mod));
 		} else {
 			Print("[UAPI] [Api] Error Transaction " +  mod);
 			cid = -1;
@@ -118,11 +118,11 @@ class UApiDBGlobalEndpoint extends UApiBaseEndpoint {
 	}
 	
 		
-	int Update(string mod, string element, string value, string operation = UpdateOpts.SET, Class instance = NULL, string function = "") {	
+	int Update(string mod, string element, string value, string operation = UpdateOpts.SET, Class cbInstance = NULL, string cbFunction = "") {	
 		int cid = UApi().CallId();
 		autoptr RestCallback DBCBX;
-		if (instance && function != ""){
-			DBCBX = new UApiDBCallBack(instance, function, cid, mod);
+		if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, mod);
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
