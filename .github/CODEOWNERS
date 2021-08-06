@@ -1,0 +1,20 @@
+# In this example, any change inside the `/apps` directory
+# will require approval from @doctocat.
+# /apps/ @doctocat
+@daemonforge
+/DayZWebService/ @daemonforge
+/DesktopManager/ @daemonforge
+/_UAPIBase/ @daemonforge
+/_UniversalApi/ @daemonforge
+
+# In this example, any change inside the `/apps` directory
+# will require approval from @doctocat or @octocat.
+# /apps/ @doctocat @octocat
+
+# In this example, any change inside the `/apps` directory
+# will require approval from a member of the @example-org/content team.
+# If a member of @example-org/content opens a pull request 
+# with a change inside the `/apps` directory, their approval is implicit.
+# The team is still added as a reviewer but not a required reviewer.
+# Anyone can approve the changes.
+# /apps/ @example-org/content-team
