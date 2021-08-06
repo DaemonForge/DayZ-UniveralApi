@@ -154,7 +154,7 @@ router.post('/RemoveRole/:GUID', (req, res) => {
 
 router.post('/Get/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
-    GetRoles(res,req, GUID, req.headers['auth-key']);
+    GetUserAndRoles(res,req, GUID, req.headers['auth-key']);
 });
 
 router.post('/Mute/:GUID', (req, res) => {
@@ -424,7 +424,7 @@ async function AddRole(res, req, GUID, auth){
             let RawData = req.body;
             let Role = RawData.Role;
             let resObj;
-            if (dsInfo === undefined || data.id === "0" ){
+            if (dsInfo === undefined || dsInfo.id === "0" ){
                 log(`Error: Discord AddRole User(${GUID}) doesn't have discord set up`, "warn");
                 resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "",id: "0", Username: "", Discriminator: "", Avatar: "" };
             } else {
@@ -491,10 +491,13 @@ async function RemoveRole(res, req, GUID, auth){
                         let role = await guild.roles.fetch(Role);
                         await player.roles.remove(role).catch((e) => log(`Error: ${e}`));
                         resObj.Roles = resObj.Roles.filter(item => item !== Role)
+                        log(`Discord RemoveRole User(${GUID}) Removed ${Role}`);
                     } else {
+                        log(`Warning: Discord RemoveRole User(${GUID}) didn't have Role: ${Role}`);
                         resObj.Error = "Already didn't have Role";
                     }
                 } catch (e) {
+                    log(`Error: Discord RemoveRole User(${GUID}) not found in discord`, "warn");
                     resObj.Error = "User not found in discord";
                     resObj.Status = "NotFound";
                 }
@@ -514,7 +517,7 @@ async function RemoveRole(res, req, GUID, auth){
 
 }
 
-async function GetRoles(res, req, GUID, auth){
+async function GetUserAndRoles(res, req, GUID, auth){
     if (CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth))){
         const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
         try{
@@ -583,11 +586,10 @@ async function PlayerVoiceGetChannel(res, req, GUID, auth){
                 if (result !== undefined && result !== null) {
                     res.json({Status: "Success", Error: "", oid: result})
                 } else {
-                    log(`Error: Discord User(${GUID}) Player Not in a channel on discord`, "warn");
                     res.json({Status: "NotFound", Error: "Player is not in a channel on discord", oid: ""})
                 }
             } catch (e) {
-                log(`Error: Discord User(${GUID}) not found in discord`, "warn");
+                log(`Error: Can't get discord voice channel, User(${GUID}) not found in discord`, "warn");
                 res.json({Status: "NotFound", Error: `Player not a member of the discord server`, oid: ""})
             }
         } else {
@@ -615,8 +617,10 @@ async function PlayerVoiceMute(res, req, GUID, auth){
                 try {
                     if (player.voice.channelID !== null && player.voice.channelID !== undefined){
                         let result = await player.voice.setMute(ToMute);
+                        log(`Muted Discord User(${GUID}) in a channel ${player.voice.channelID}`);
                         res.json({Status: "Success", Error: ""})
                     } else {
+                        log(`Error: Can't Mute Discord User(${GUID}) Not in a channel on discord`, "warn");
                         res.json({Status: "NotFound", Error: "Player is not in a channel on discord"})
                     }
                 }
@@ -690,11 +694,13 @@ async function ChannelVoiceMove(res, req, GUID, ChannelId, auth){
                 }
                 if (CheckServerAuth(auth) || (channel.permissionsFor(player).has('VIEW_CHANNEL') && channel.permissionsFor(player).has('CONNECT') )) {
                     try {
+                        let oldchannel = player.voice.channelID;
                         let result = await player.voice.setChannel(ChannelId);
+                        log(`Moved Discord User(${GUID}) From ${oldchannel} to ${ChannelId}`);
                         res.json({Status: "Success", Error: ""})
                     }
                     catch (e) {
-                        log(`Error: Discord User(${GUID}) Player Not in a channel on discord`, "warn");
+                        log(`Error: Can't Move Discord User(${GUID}) Player Not in a channel on discord`, "warn");
                         res.json({Status: "NotFound", Error: "Player is not in a channel on discord"})
                     }
                 } else {
