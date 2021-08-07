@@ -9,7 +9,7 @@ const router = Router();
 router.use(GenerateLimiter(global.config.RequestLimitToxicity || 200, 10));
 
 /**
- *  Generate Auth Token
+ *  Quantum Random Number Generator 0 to 65535
  *  Post: /Random
  *  
  *  Description: This endpoint generates the specified amount of random numbers from 
@@ -25,7 +25,7 @@ router.post('', (req, res)=>{
 });
 
 /**
- *  Generate Auth Token
+ *  Quantum Random Number Generator -2147483647 to 2147483647
  *  Post: /Random/Full
  *  
  *  Description: This endpoint generates the specified amount of random numbers from 
@@ -33,7 +33,11 @@ router.post('', (req, res)=>{
  * 
  *  Accepts: `{ "Count": |NumberToGenerate| }`
  *
- *  Returns: `{ "Status": "|STATUSOFREQUEST|", "Error": "|ANYERRORMESSAGE|", "Numbers": [|ARRAYOFINTEGERS|] }`
+ *  Returns: `{ 
+ *                 "Status": "|STATUSOFREQUEST|", 
+ *                 "Error": "|ANYERRORMESSAGE|",
+ *                  "Numbers": [|ARRAYOFINTEGERS|] 
+ *            }`
  * 
  */
 router.post('/Full', (req, res)=>{
