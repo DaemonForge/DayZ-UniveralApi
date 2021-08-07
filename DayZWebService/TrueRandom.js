@@ -8,10 +8,34 @@ const router = Router();
 
 router.use(GenerateLimiter(global.config.RequestLimitToxicity || 200, 10));
 
+/**
+ *  Generate Auth Token
+ *  Post: /Random
+ *  
+ *  Description: This endpoint generates the specified amount of random numbers from 
+ *    ANU's Quantum Random number API within the range of 0 to 65535
+ * 
+ *  Accepts: `{ "Count": |NumberToGenerate| }`
+ *
+ *  Returns: `{ "Status": "|STATUSOFREQUEST|", "Error": "|ANYERRORMESSAGE|", "Numbers": [|ARRAYOFINTEGERS|] }`
+ * 
+ */
 router.post('', (req, res)=>{
     GetRandom(req, res, req.headers['auth-key']);
 });
 
+/**
+ *  Generate Auth Token
+ *  Post: /Random/Full
+ *  
+ *  Description: This endpoint generates the specified amount of random numbers from 
+ *    ANU's Quantum Random number API within the range of -2147483647 to 2147483647
+ * 
+ *  Accepts: `{ "Count": |NumberToGenerate| }`
+ *
+ *  Returns: `{ "Status": "|STATUSOFREQUEST|", "Error": "|ANYERRORMESSAGE|", "Numbers": [|ARRAYOFINTEGERS|] }`
+ * 
+ */
 router.post('/Full', (req, res)=>{
     GetFullRandom(req, res, req.headers['auth-key']);
 });
