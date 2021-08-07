@@ -21,27 +21,6 @@ if (global.config.RequestLimitDiscord !== undefined){
 // apply rate limiter to all requests
 router.use(GenerateLimiter(TheRateLimit, 2));
 
-var RateLimit = require('express-rate-limit');
-var limiter = new RateLimit({
-  windowMs: 2*1000, // 20 req/sec
-  max: TheRateLimit,
-  message:  '{ "Status": "Error", "Error": "RateLimited" }',
-  keyGenerator: function (req /*, res*/) {
-    return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-  },
-  onLimitReached: function (req, res, options) {
-    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    log("RateLimit Reached("  + ip + ") you may be under a DDoS Attack or you may need to increase your request limit");
-  },
-  skip: function (req, res) {
-    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    return (global.config.RateLimitWhiteList !== undefined && ip !== undefined && ip !== null && isArray(global.config.RateLimitWhiteList) && (global.config.RateLimitWhiteList.find(element => element === ip) === ip));
-  }
-});
-
-// apply rate limiter to all requests
-router.use(limiter);
-
 try {
     if (global.config.Discord?.Bot_Token !== "" && global.config.Discord?.Bot_Token !== undefined){
         client.login(global.config.Discord.Bot_Token);
@@ -54,7 +33,18 @@ try {
     log("Discord Bot Token is invalid", "warn");
     log(e, "warn");
 }
+//Create Template Folder if it doesn't exist
+if (!existsSync(global.SAVEPATH + 'templates')) mkdirSync(global.SAVEPATH + 'templates');
 
+//Load Signup Templates
+LoadLoginTemplate();
+LoadSuccessTemplate();
+LoadErrorTemplate();
+
+/**
+ * Logs that discord is connected and ready
+ *
+ */
 client.on('ready', () => {
     global.DISCORDSTATUS = "Enabled";
     let tag = "NULL";
@@ -64,156 +54,18 @@ client.on('ready', () => {
     log(`Discord Intergration Ready and is Logged in as ${tag}!`);
   });
 
-if (!existsSync(global.SAVEPATH + 'templates')) mkdirSync(global.SAVEPATH + 'templates');
-
-let LoginTemplate;
-//User Facing Code
-function LoadLoginTemplate(){
-    try{
-        LoginTemplate = readFileSync(global.SAVEPATH + "templates/discordLogin.ejs","utf8");
-    } catch (e) {
-        log("Login Template Missing Creating It Now - " + e);
-        LoginTemplate = DefaultTemplates.Login;
-        writeFileSync(global.SAVEPATH + "templates/discordLogin.ejs", LoginTemplate);
-    }
-    try {
-        let error = ejsLint(LoginTemplate) ;
-        if (error !== undefined){
-            LoginTemplate = DefaultTemplates.Login;
-            log("============ ERROR IN LOGIN TEMPLATE ================", "warn");
-            log(error, "warn");
-            log("=====================================================", "warn");
-        }
-    } catch (e) {
-        //console.log(e);
-    }
-}
-LoadLoginTemplate();
-let SuccessTemplate;
-function LoadSuccessTemplate(){
-    try{
-        SuccessTemplate = readFileSync(global.SAVEPATH + "templates/discordSuccess.ejs","utf8");
-    } catch (e) {
-        log("Success Template Missing Creating It Now - " + e);
-        SuccessTemplate = DefaultTemplates.Success;
-        writeFileSync(global.SAVEPATH + "templates/discordSuccess.ejs", SuccessTemplate);
-    }
-    try {
-        let error = ejsLint(SuccessTemplate) ;
-        if (error !== undefined){
-            LoginTemplate = DefaultTemplates.Success;
-        
-            log("=========== ERROR IN SUCCESS TEMPLATE ===============", "warn");
-            log(error, "warn");
-            log("=====================================================", "warn");
-        }
-    } catch (e) {
-        //console.log(e);
-    }
-}
-LoadSuccessTemplate();
-let ErrorTemplate;
-function LoadErrorTemplate(){
-    try{
-        ErrorTemplate = readFileSync(global.SAVEPATH + "templates/discordError.ejs","utf8");
-    } catch (e) {
-        log("Error Template Missing Creating It Now - " + e);
-        ErrorTemplate = DefaultTemplates.Error;
-        writeFileSync(global.SAVEPATH + "templates/discordError.ejs", ErrorTemplate);
-    }
-    try {
-        let error = ejsLint(ErrorTemplate) ;
-        if (error !== undefined){
-            ErrorTemplate = DefaultTemplates.Error;
-        
-            log("============ ERROR IN ERROR TEMPLATE ================", "warn")
-            log(error, "warn")
-            log("=====================================================", "warn")
-        }
-    } catch (e) {
-        //console.log(e);
-    }
-
-}
-LoadErrorTemplate();
-
+/**
+ * Sign Up Page
+ *
+ * This endpoints handle the signup/connection process for players connecting there steam IDs to Discord
+ *
+ */
 router.get('/', (req, res) => {
     res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}))
 });
-
 router.get('/callback', (req, res) => {
     HandleCallBack(req, res);
 });
-
-router.post('/AddRole/:GUID', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    AddRole(res,req,  GUID, req.headers['auth-key']);
-});
-
-router.post('/RemoveRole/:GUID', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    RemoveRole(res,req, GUID,req.headers['auth-key']);
-});
-
-router.post('/Get/:GUID', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    GetUserAndRoles(res,req, GUID, req.headers['auth-key']);
-});
-
-router.post('/Mute/:GUID', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    PlayerVoiceMute(res,req, GUID, req.headers['auth-key']);
-});
-
-router.post('/Kick/:GUID', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    PlayerVoiceKick(res,req, GUID, req.headers['auth-key']);
-});
-
-router.post('/GetChannel/:GUID', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    PlayerVoiceGetChannel(res,req, GUID, req.headers['auth-key']);
-});
-
-router.post('/Channel/Create', (req, res) => {
-    CreateChannel(res, req, req.headers['auth-key']);
-});
-
-router.post('/Channel/Delete/:id', (req, res) => {
-    DeleteChannel(res, req, req.params.id, req.headers['auth-key']);
-});
-
-router.post('/Channel/Edit/:id', (req, res) => {
-    EditChannel(res, req, req.params.id, req.headers['auth-key']);
-});
-
-router.post('/Channel/Invite/:id', (req, res) => {
-    InviteChannel(res, req, req.params.id, req.headers['auth-key']);
-});
-
-router.post('/Channel/Send/:id', (req, res) => {
-    SendMessageChannel(res, req, req.params.id, req.headers['auth-key']);
-});
-
-router.post('/Move/:GUID/:id', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    ChannelVoiceMove(res, req, GUID,  req.params.id, req.headers['auth-key']);
-});
-
-router.post('/Send/:GUID', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    SendMessageUser(res, req, GUID, req.headers['auth-key']);
-});
-
-router.post('/Channel/Messages/:id', (req, res) => {
-    GetMessagesChannel(res, req, req.params.id, req.headers['auth-key']);
-});
-
-router.post('/Check/:ID/', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.ID);
-    CheckId(res,req, req.params.ID, GUID);
-});
-
 router.get('/:id', (req, res) => {
     if (LoginTemplate === undefined) LoadLoginTemplate();
     if (ErrorTemplate === undefined) LoadErrorTemplate();
@@ -225,10 +77,90 @@ router.get('/:id', (req, res) => {
     else
         res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}));
 });
-
 router.get('/login/:id', (req, res) => {
    RenderLogin(req, res);
 });
+
+/**
+ * User Related Endpoints
+ *
+ * These endpoints handle user related functions
+ *
+ */
+
+router.post('/AddRole/:GUID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    AddRole(res,req,  GUID, req.headers['auth-key']);
+});
+router.post('/RemoveRole/:GUID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    RemoveRole(res,req, GUID,req.headers['auth-key']);
+});
+router.post('/Get/:GUID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    GetUserAndRoles(res,req, GUID, req.headers['auth-key']);
+});
+router.post('/Mute/:GUID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    PlayerVoiceMute(res,req, GUID, req.headers['auth-key']);
+});
+router.post('/Kick/:GUID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    PlayerVoiceKick(res,req, GUID, req.headers['auth-key']);
+});
+router.post('/Move/:GUID/:id', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    ChannelVoiceMove(res, req, GUID,  req.params.id, req.headers['auth-key']);
+});
+router.post('/Send/:GUID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    SendMessageUser(res, req, GUID, req.headers['auth-key']);
+});
+router.post('/Check/:ID/', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.ID);
+    CheckId(res,req, req.params.ID, GUID);
+});
+
+
+
+/**
+ * Channel Related Endpoints
+ *
+ * These endpoints handle Channel related functions
+ *
+ */
+
+router.post('/GetChannel/:GUID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    PlayerVoiceGetChannel(res,req, GUID, req.headers['auth-key']);
+});
+router.post('/Channel/Create', (req, res) => {
+    CreateChannel(res, req, req.headers['auth-key']);
+});
+router.post('/Channel/Delete/:id', (req, res) => {
+    DeleteChannel(res, req, req.params.id, req.headers['auth-key']);
+});
+router.post('/Channel/Edit/:id', (req, res) => {
+    EditChannel(res, req, req.params.id, req.headers['auth-key']);
+});
+router.post('/Channel/Invite/:id', (req, res) => {
+    InviteChannel(res, req, req.params.id, req.headers['auth-key']);
+});
+router.post('/Channel/Send/:id', (req, res) => {
+    SendMessageChannel(res, req, req.params.id, req.headers['auth-key']);
+});
+router.post('/Channel/Messages/:id', (req, res) => {
+    GetMessagesChannel(res, req, req.params.id, req.headers['auth-key']);
+});
+
+
+
+
+
+
+
+
+
 
 
 async function RenderLogin(req, res){
@@ -286,7 +218,7 @@ async function HandleCallBack(req, res){
     if (SuccessTemplate === undefined) LoadSuccessTemplate();
     const code = req.query.code;
     const state = req.query.state;
-    //console.log(req.query)
+
     if (code === undefined || code === null || state === undefined || state === null){
         log(`HandleCallBack - Invalid Response from Discord`, "warn");
         res.send(render(ErrorTemplate, {TheError: "Invalid Response from Discord", Type: "Discord"}));
@@ -307,8 +239,7 @@ async function HandleCallBack(req, res){
                 redirect_uri: `https://${req.headers.host}/discord/callback`
             }),
         });
-        const json = await response.json();
-        //console.log(json);
+        const json = await response.json();;
         const discordres = await fetch(`https://discordapp.com/api/users/@me`, {
             method: 'GET',
             headers: {
@@ -316,7 +247,6 @@ async function HandleCallBack(req, res){
             }
         });
         let discordjson = await discordres.json();
-        //console.log(discordjson)
         discordjson.steamid = state;
         let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
         let msg = "Unknown Error";
@@ -329,12 +259,9 @@ async function HandleCallBack(req, res){
             msg = "User not found in discord";
             errType = "UserNotFound";
         }
-        //let suser = server.member(user);
-        //console.log( player )
-        //console.log(suser.roles)
         if(player !== undefined && player.roles !== undefined){
             let roles = player._roles
-            //console.log(roles)
+
             msg = "User is missing the role";
             errType = "RoleRequired";
             if (global.config.Discord.BlackList_Role !== "" && global.config.Discord.BlackList_Role !== undefined && roles.find(element => element === global.config.Discord.BlackList_Role) !== undefined){
@@ -345,10 +272,9 @@ async function HandleCallBack(req, res){
             } 
         }
 
-        //console.log(msg)
         if (msg === "Success"){
             discordjson.avatar = `https://cdn.discordapp.com/avatars/${discordjson.id}/${discordjson.avatar}`
-            //console.log(discordjson)           
+           
             let guid = createHash('sha256').update(discordjson.steamid).digest('base64');
             guid = guid.replace(/\+/g, '-'); 
             guid = guid.replace(/\//g, '_');
@@ -1082,5 +1008,76 @@ function GetClientID(req){
     let theHash = hash.update(ip).digest('base64');
     return theHash.substr(0,32); //Cutting the last few digets to save a bit of data and make sure people don't mistake it for the GUIDS
 }
+
+
+let LoginTemplate;
+//User Facing Code
+function LoadLoginTemplate(){
+    try{
+        LoginTemplate = readFileSync(global.SAVEPATH + "templates/discordLogin.ejs","utf8");
+    } catch (e) {
+        log("Login Template Missing Creating It Now - " + e);
+        LoginTemplate = DefaultTemplates.Login;
+        writeFileSync(global.SAVEPATH + "templates/discordLogin.ejs", LoginTemplate);
+    }
+    try {
+        let error = ejsLint(LoginTemplate) ;
+        if (error !== undefined){
+            LoginTemplate = DefaultTemplates.Login;
+            log("============ ERROR IN LOGIN TEMPLATE ================", "warn");
+            log(error, "warn");
+            log("=====================================================", "warn");
+        }
+    } catch (e) {
+        //console.log(e);
+    }
+}
+
+let SuccessTemplate;
+function LoadSuccessTemplate(){
+    try{
+        SuccessTemplate = readFileSync(global.SAVEPATH + "templates/discordSuccess.ejs","utf8");
+    } catch (e) {
+        log("Success Template Missing Creating It Now - " + e);
+        SuccessTemplate = DefaultTemplates.Success;
+        writeFileSync(global.SAVEPATH + "templates/discordSuccess.ejs", SuccessTemplate);
+    }
+    try {
+        let error = ejsLint(SuccessTemplate) ;
+        if (error !== undefined){
+            LoginTemplate = DefaultTemplates.Success;
+        
+            log("=========== ERROR IN SUCCESS TEMPLATE ===============", "warn");
+            log(error, "warn");
+            log("=====================================================", "warn");
+        }
+    } catch (e) {
+        //console.log(e);
+    }
+}
+let ErrorTemplate;
+function LoadErrorTemplate(){
+    try{
+        ErrorTemplate = readFileSync(global.SAVEPATH + "templates/discordError.ejs","utf8");
+    } catch (e) {
+        log("Error Template Missing Creating It Now - " + e);
+        ErrorTemplate = DefaultTemplates.Error;
+        writeFileSync(global.SAVEPATH + "templates/discordError.ejs", ErrorTemplate);
+    }
+    try {
+        let error = ejsLint(ErrorTemplate) ;
+        if (error !== undefined){
+            ErrorTemplate = DefaultTemplates.Error;
+        
+            log("============ ERROR IN ERROR TEMPLATE ================", "warn")
+            log(error, "warn")
+            log("=====================================================", "warn")
+        }
+    } catch (e) {
+        //console.log(e);
+    }
+
+}
+
 
 module.exports = router;
