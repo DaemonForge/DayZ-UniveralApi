@@ -11,6 +11,29 @@ const router = Router();
 
 router.use(GenerateLimiter(global.config.RequestLimitStatus || 100, 10));
 
+
+
+
+/**
+ *  Toxicity Checker
+ *  Post: /Toxicity
+ *  
+ *  Description: This uses TensorsFlows Toxicity Classifier to check the Toxicity of a given Text 
+ * 
+ *  Accepts: `{ "Text": "|TEXTTOCLASSIFY|" }`
+ *
+ *  Returns: `{ 
+ *               "Status": "|STATUSOFSERVER|", 
+ *               "Error": "|ANYERRORMESSAGE|",
+ *               "Toxicity": |0-1SCALE|,
+ *               "Threat": |0-1SCALE|,
+ *               "SexualExplicit": |0-1SCALE|,
+ *               "SevereToxicity": |0-1SCALE|,
+ *               "Insult": |0-1SCALE|,
+ *               "IdentityAttack": |0-1SCALE|
+ *            }`
+ * 
+ */
 router.post('', (req, res)=>{
     runToxicity(req, res, req.headers['auth-key']);
 });

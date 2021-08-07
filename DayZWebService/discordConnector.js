@@ -37,6 +37,9 @@ try {
 if (!existsSync(global.SAVEPATH + 'templates')) mkdirSync(global.SAVEPATH + 'templates');
 
 //Load Signup Templates
+let LoginTemplate;
+let ErrorTemplate;
+let SuccessTemplate;
 LoadLoginTemplate();
 LoadSuccessTemplate();
 LoadErrorTemplate();
@@ -88,40 +91,201 @@ router.get('/login/:id', (req, res) => {
  *
  */
 
+
+
+/**
+ *  Add Role to User
+ *  Post: Discord/AddRole/[GUID]
+ *  
+ *  Description: This will get the discord object associated with the GUID
+ *                 and then add a new role and return an updated user Object
+ * 
+ *  Accepts: `{ "Role": "|ROLETOADD|" }`
+ * 
+ *  Returns: `{
+ *               Status: "|STATUSOFREQUEST|", 
+ *               Error: "|ANYERRORMESSAGE|", 
+ *               Roles: ["|ARRAYOFROLES|"], 
+ *               VoiceChannel: "|CONNECTEDVOICECHANNEL|", 
+ *               id: "|DISCORDID|", 
+ *               Username: "|USERNAME|", 
+ *               Discriminator: "|DISCRIMINATOR|", 
+ *               Avatar: "|LINKTOAVATAR|" 
+ *             }`
+ * 
+ */
 router.post('/AddRole/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
     AddRole(res,req,  GUID, req.headers['auth-key']);
 });
+
+
+/**
+ *  Remove Role to User
+ *  Post: Discord/RemoveRole/[GUID]
+ *  
+ *  Description: This will get the discord object associated with the GUID
+ *                 and then remove a role and return an updated user Object
+ * 
+ *  Accepts: `{ "Role": "|ROLETOREMOVE|" }`
+ * 
+ *  Returns: `{
+ *               Status: "|STATUSOFREQUEST|", 
+ *               Error: "|ANYERRORMESSAGE|", 
+ *               Roles: ["|ARRAYOFROLES|"], 
+ *               VoiceChannel: "|CONNECTEDVOICECHANNEL|", 
+ *               id: "|DISCORDID|", 
+ *               Username: "|USERNAME|", 
+ *               Discriminator: "|DISCRIMINATOR|", 
+ *               Avatar: "|LINKTOAVATAR|" 
+ *             }`
+ * 
+ */
 router.post('/RemoveRole/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
     RemoveRole(res,req, GUID,req.headers['auth-key']);
 });
+
+
+/**
+ *  Get Discord User
+ *  Post: Discord/Get/[GUID]
+ *  
+ *  Description: This will get the discord object associated with the GUID
+ * 
+ *  Returns: `{
+ *               Status: "|STATUSOFREQUEST|", 
+ *               Error: "|ANYERRORMESSAGE|", 
+ *               Roles: ["|ARRAYOFROLES|"], 
+ *               VoiceChannel: "|CONNECTEDVOICECHANNEL|", 
+ *               id: "|DISCORDID|", 
+ *               Username: "|USERNAME|", 
+ *               Discriminator: "|DISCRIMINATOR|", 
+ *               Avatar: "|LINKTOAVATAR|" 
+ *             }`
+ * 
+ */
 router.post('/Get/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
     GetUserAndRoles(res,req, GUID, req.headers['auth-key']);
 });
+
+
+/**
+ *  Mute Discord User
+ *  Post: Discord/Mute/[GUID]
+ *  
+ *  Description: Mutes the user in discord if they are connected to a voice channel
+ * 
+ *  Accepts: `{ "State": |1-Mute,0-UnMute| }`
+ * 
+ *  Returns: `{
+ *               Status: "|STATUSOFREQUEST|", 
+ *               Error: "|ANYERRORMESSAGE|"
+ *            }`
+ * 
+ */
 router.post('/Mute/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
     PlayerVoiceMute(res,req, GUID, req.headers['auth-key']);
 });
+
+
+/**
+ *  Kick Discord User
+ *  Post: Discord/Kick/[GUID]
+ *  
+ *  Description: Kicks a user from a voice channel
+ * 
+ *  Accepts: `{ "Text": "|REASONFORKICK|" }`
+ * 
+ *  Returns: `{
+ *               Status: "|STATUSOFREQUEST|", 
+ *               Error: "|ANYERRORMESSAGE|"
+ *            }`
+ * 
+ */
 router.post('/Kick/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
     PlayerVoiceKick(res,req, GUID, req.headers['auth-key']);
 });
+
+
+/**
+ *  Move Discord User to new Channel
+ *  Post: Discord/Move/[GUID]/[ChannelId]
+ *  
+ *  Description: Moves player to specified Channel
+ * 
+ *  Returns: `{
+ *               Status: "|STATUSOFREQUEST|", 
+ *               Error: "|ANYERRORMESSAGE|"
+ *            }`
+ * 
+ */
 router.post('/Move/:GUID/:id', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
     ChannelVoiceMove(res, req, GUID,  req.params.id, req.headers['auth-key']);
 });
+
+
+/**
+ *  Send a DM from Bot
+ *  Post: Discord/Send/[GUID]
+ *  
+ *  Description: Sends a DM to the user based on there GUID
+ * 
+ *  Accepts: `{ "Message": "|MESSAGETOSEND|" }`
+ * 
+ *  Returns: `{
+ *               Status: "|STATUSOFREQUEST|", 
+ *               Error: "|ANYERRORMESSAGE|",
+ *               oid: "|IDOFMESSAGE|"
+ *            }`
+ * 
+ */
 router.post('/Send/:GUID', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
     SendMessageUser(res, req, GUID, req.headers['auth-key']);
 });
+
+
+/**
+ *  Get Voice Channel
+ *  Post: Discord/GetChannel/[GUID]
+ *  
+ *  Description: Checks if the user is connected to a voice channel and returns the channel id
+ * 
+ *  Returns: `{
+ *               Status: "|STATUSOFREQUEST|", 
+ *               Error: "|ANYERRORMESSAGE|",
+ *               oid: "|IDOFCHANNELCONNECTEDTO|"
+ *            }`
+ * 
+ */
+ router.post('/GetChannel/:GUID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    PlayerVoiceGetChannel(res,req, GUID, req.headers['auth-key']);
+});
+
+
+/**
+ *  Check User
+ *  Post: Discord/Check/[GUID]
+ *  
+ *  Description: Allows you to check if a user has a discord attached to their GUID
+ *                 without authentication
+ * 
+ *  Returns: `{
+ *               Status: "|STATUSOFREQUEST|", 
+ *               Error: "|ANYERRORMESSAGE|"
+ *            }`
+ * 
+ */
 router.post('/Check/:ID/', (req, res) => {
     let GUID = NormalizeToGUID(req.params.ID);
     CheckId(res,req, req.params.ID, GUID);
 });
-
-
 
 /**
  * Channel Related Endpoints
@@ -129,11 +293,6 @@ router.post('/Check/:ID/', (req, res) => {
  * These endpoints handle Channel related functions
  *
  */
-
-router.post('/GetChannel/:GUID', (req, res) => {
-    let GUID = NormalizeToGUID(req.params.GUID);
-    PlayerVoiceGetChannel(res,req, GUID, req.headers['auth-key']);
-});
 router.post('/Channel/Create', (req, res) => {
     CreateChannel(res, req, req.headers['auth-key']);
 });
@@ -1010,7 +1169,6 @@ function GetClientID(req){
 }
 
 
-let LoginTemplate;
 //User Facing Code
 function LoadLoginTemplate(){
     try{
@@ -1033,7 +1191,6 @@ function LoadLoginTemplate(){
     }
 }
 
-let SuccessTemplate;
 function LoadSuccessTemplate(){
     try{
         SuccessTemplate = readFileSync(global.SAVEPATH + "templates/discordSuccess.ejs","utf8");
@@ -1055,7 +1212,6 @@ function LoadSuccessTemplate(){
         //console.log(e);
     }
 }
-let ErrorTemplate;
 function LoadErrorTemplate(){
     try{
         ErrorTemplate = readFileSync(global.SAVEPATH + "templates/discordError.ejs","utf8");

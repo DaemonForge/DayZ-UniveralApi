@@ -11,10 +11,36 @@ const {isArray,GenerateLimiter} = require('./utils');
 const router = Router();
 
 
-
-
 router.use(GenerateLimiter(global.config.RequestLimitServerQuery || 200 ,5));
 
+
+
+
+/**
+ *  DayZ Server SteamQuery
+ *  Post: /ServerQuery/Status/[IP]/[PORT]
+ *  
+ *  Description: This runs a Steam Query to the specified IP and port to get some 
+ *    basic server information, like player count and Queue
+ * 
+ *  Returns: `{ 
+ *               "Status": "|STATUSOFSERVER|", 
+ *               "Error": "|ANYERRORMESSAGE|",
+ *               "IP": "|Servers IP|",
+ *               "GamePort": |GAME PORT|,
+ *               "QueryPort": |STEAMQUERYPORT|,
+ *               "Name": "|SERVERNAME|",
+ *               "ServerVersion": "|SERVERSVERSION|",
+ *               "Players": |#OFPLAYERSONLINE|,
+ *               "QueuePlayers": |#OFPLAYERSINQUEUE|,
+ *               "MaxPlayers": |MAX#OFPLAYERCANBEONSERVER|,
+ *               "GameTime": "|CURRENTINGAMETIME|",
+ *               "GameMap": "|MAPSERVERISRUNNING|",
+ *               "Password": |1?0HASPASSWORD|,
+ *               "FirstPerson": |1?0ISFIRSTPERSON|
+ *            }`
+ * 
+ */
 router.post('/Status/:ip/:port', (req, res)=>{
     GetServerStatus(req, res, req.params.ip, req.params.port, req.headers['auth-key']);
 });

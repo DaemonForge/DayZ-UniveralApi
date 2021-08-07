@@ -15,7 +15,10 @@ const router = Router();
  *   updates the database so that way we can validate that the user has 
  *   already be issued a new. The AUTHTOKEN will expire 
  * 
- *  Returns: `{ "GUID": "{THEPASSEDGUID}", "AUTH": "{AUTHTOKEN}" }`
+ *  Returns: `{ 
+ *                "GUID": "|THEPASSEDGUID|", 
+ *                "AUTH": "|AUTHTOKEN|" 
+ *            }`
  * 
  */
 router.post('/:GUID', (req, res)=>{
