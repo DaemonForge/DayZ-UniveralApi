@@ -691,7 +691,7 @@ async function PlayerVoiceMute(res, req, GUID, auth){
     if (CheckServerAuth(auth) || (await CheckPlayerAuth(GUID, auth))){
         let dsInfo = GetDiscordObj(GUID);
         let RawData = req.body;
-        let ToMute = (RawData.ToMute === 1);
+        let State = (RawData.State === 1);
         let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
         dsInfo = await dsInfo;
         if (dsInfo !== undefined && dsInfo.id !== undefined &&  dsInfo.id !== "0"){
@@ -699,7 +699,7 @@ async function PlayerVoiceMute(res, req, GUID, auth){
                 let player = await guild.members.fetch(dsInfo.id);
                 try {
                     if (player.voice.channelID !== null && player.voice.channelID !== undefined){
-                        let result = await player.voice.setMute(ToMute);
+                        let result = await player.voice.setMute(State);
                         log(`Muted Discord User(${GUID}) in a channel ${player.voice.channelID}`);
                         res.json({Status: "Success", Error: ""})
                     } else {

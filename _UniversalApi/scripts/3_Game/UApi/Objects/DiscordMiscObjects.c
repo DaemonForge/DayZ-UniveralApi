@@ -14,3 +14,18 @@ class UApiDiscordStatusObject extends StatusObject {
 	string oid;
 
 }
+
+
+class UApiDiscordMute extends UApiObject_Base{
+	
+	bool State = true;
+	
+	void UApiDiscordMute(bool state){
+		State = state;
+	}
+	
+	override string ToJson(){
+		string jsonString = JsonFileLoader<UApiDiscordMute>.JsonMakeData(this);
+		return jsonString;
+	}
+}
