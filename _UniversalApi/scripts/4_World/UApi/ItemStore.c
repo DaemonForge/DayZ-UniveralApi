@@ -51,6 +51,7 @@ modded class UApiEntityStore extends UApiObject_Base {
 			}
 			m_LiquidType = itemB.GetLiquidType();
 			m_Agents = itemB.GetAgents();
+			m_Cleanness = itemB.m_Cleanness;
 			itemB.OnUApiSave(this);
 		}
 		Magazine_Base mag;
@@ -192,6 +193,7 @@ modded class UApiEntityStore extends UApiObject_Base {
 			}
 			itemB.RemoveAllAgents();//Removes any default agents then add the needed ones.
 			itemB.TransferAgents(m_Agents);
+			itemB.SetCleanness(m_Cleanness);
 			itemB.OnUApiLoad(this);
 		}
 		PlayerBase HoldingPlayer;

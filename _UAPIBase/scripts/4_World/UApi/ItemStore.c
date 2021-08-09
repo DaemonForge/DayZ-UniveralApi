@@ -20,6 +20,7 @@ class UApiEntityStore extends UApiObject_Base {
 	bool m_IsOn;
 	int m_QuickBarSlot;
 	int m_Agents;
+	int m_Cleanness;
 	protected autoptr array<autoptr UApiZoneHealthData> m_HealthZones;
 	
 	protected autoptr array<autoptr UApiEntityStore> m_Cargo;
