@@ -114,7 +114,7 @@
         "properties": {
           "main": {
             "type": "object",
-            "required": [],
+            "required": ["Endpoint","EndpointKey","MinScore","LogUnAnswerable"],
             "properties": {
               "Endpoint": {
                 "type": "string"
@@ -129,24 +129,6 @@
                 "type": "boolean"
               }
             }
-          }
-        }
-      },
-      "Translate": {
-        "type": "object",
-        "required": [],
-        "properties": {
-          "Endpoint": {
-            "type": "string"
-          },
-          "Type": {
-            "type": "string"
-          },
-          "SubscriptionRegion": {
-            "type": "string"
-          },
-          "SubscriptionKey": {
-            "type": "string"
           }
         },
         "additionalProperties": {
@@ -167,6 +149,25 @@
             }
           }
        }
+      },
+      "Translate": {
+        "type": "object",
+        "required": ["Endpoint","Type"],
+        "properties": {
+          "Endpoint": {
+            "type": "string"
+          },
+          "Type": {
+            "type": "string",
+            "enum": ["LibreTranslate","Microsoft"]
+          },
+          "SubscriptionRegion": {
+            "type": "string"
+          },
+          "SubscriptionKey": {
+            "type": "string"
+          }
+        }
       },
       "CheckForNewVersion": {
         "type": "boolean"
