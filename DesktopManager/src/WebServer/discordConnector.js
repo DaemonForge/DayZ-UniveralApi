@@ -1059,7 +1059,7 @@ async function GetMessagesChannel(res, req, id, auth){
                     if (isServerAuth || (isClientAuth && perms)){
                         let messages = (await channel.messages.fetch(filter)).array();
                         //console.log(messages);
-                        let msgs = messages.map(obj => ({id: obj.id, AuthorId: obj.author.id, Embed: obj.embeds[0], Content: obj.content, ChannelId: obj.channel.id, TimeStamp: obj.createdTimestamp}));
+                        let msgs = await Promise.all( messages.map(ReMapMessage));
                         res.status(200);
                         res.json({Status: "Success", Error: ``, Messages: msgs});
                     } else {
@@ -1087,6 +1087,13 @@ async function GetMessagesChannel(res, req, id, auth){
         res.json({Status: "Error", Error: `Invalid Auth Key`, Messages: []});
         log("AUTH ERROR: " + req.url, "warn");
     }
+}
+
+async function ReMapMessage(obj) {
+    let guid = await GetGUIDFromDiscordId(obj.author.id);
+    let RepliedTo = obj?.reference?.messageID || "";
+    return {id: obj.id, AuthorId: obj.author.id, AuthorGUID: guid, RepliedTo: RepliedTo, Embed: obj.embeds[0], Content: obj.content, ChannelId: obj.channel.id, TimeStamp: obj.createdTimestamp}
+    
 }
 
 async function CheckId(res, req, id, guid){
@@ -1129,6 +1136,33 @@ async function CheckId(res, req, id, guid){
         } finally{
             await mongo.close();
         }
+}
+
+
+async function GetGUIDFromDiscordId(dsid){
+    const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+    let guid = "";
+    try{
+        await mongo.connect();
+        // Connect the client to the server
+        const db = mongo.db(global.config.DB);
+        let collection = db.collection("Players");
+        let query = { "Discord.id": dsid };
+        let results = collection.find(query);
+        if ((await results.count()) == 0){
+            //log("Can't find Player with Discord dsid " + guid, "warn"); 
+        } else {
+            let dataarr = await results.toArray(); 
+            let data = dataarr[0]; 
+            guid = data.GUID || "";
+        }
+    }catch(err){
+        log(`Error Fetching Player Obj ${err}`, "warn");
+    }finally{
+        // Ensures that the client will close when you finish/error
+        mongo.close();
+        return guid;
+    }
 }
 
 async function GetDiscordObj(guid){

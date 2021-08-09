@@ -21,6 +21,10 @@ class UApiDiscordChannelFilter extends UApiObject_Base {
 
 class UApiDiscordMessagesResponse extends StatusObject {
 	
-	autoptr array<UApiDiscordMessage> Messages;
+	autoptr array<autoptr UApiDiscordMessage> Messages;
 	
+	
+	array<autoptr UApiDiscordMessage> GetMessages(){
+		return Messages;
+	}
 }

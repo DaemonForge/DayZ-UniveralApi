@@ -26,12 +26,14 @@ class UApiDiscordObject extends UApiObject_Base {
 }
 
 class UApiDiscordMessage extends UApiObject_Base {
-	string id;
-	string AuthorId;
-	string Content;
-	string ChannelId;
-	autoptr UApiDiscordEmbed Embed;
-	int TimeStamp;
+	string id; //Message Id
+	string AuthorId; // Discord ID of the player
+	string AuthorGUID; // if player has discord connected in database this will be there GUID
+	string Content; // Text content of the message
+	string ChannelId; //Channel id for the message
+	string RepliedTo; //Message id of the message if this message is a reply
+	autoptr UApiDiscordEmbed Embed; //If the message has an Embed this will be the embed object
+	int TimeStamp; //Time stamp of the message
 	
 	override string ToJson(){
 		string jsonString = JsonFileLoader<UApiDiscordMessage>.JsonMakeData(this);
