@@ -19,12 +19,12 @@
         </div>
     </main>
         <script>
+            const configData = <%- JSON.stringify(config) -%>;
+            const container = document.getElementById("jsoneditor");
+            console.log(configData);
+            
             async function SetUpConfigEditor(){
-
-                const configData = <%- JSON.stringify(config) -%>;
-                console.log(configData);
                 let schema = await fetch("../lib/configschema.json").then(response => {return response.json().catch(error => console.log(error));}).catch(error => console.log(error));
-                const container = document.getElementById("jsoneditor")
                 let options = {
                     mode: 'tree',
                     schema: schema
