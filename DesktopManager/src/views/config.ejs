@@ -19,12 +19,21 @@
         </div>
     </main>
         <script>
-            const configData = <%- JSON.stringify(config) -%>;
-            console.log(configData);
-            const container = document.getElementById("jsoneditor")
-        const options = {};
-        const editor = new JSONEditor(container, options);
-        editor.set(configData);
+            async function SetUpConfigEditor(){
+
+                const configData = <%- JSON.stringify(config) -%>;
+                console.log(configData);
+                let schema = await fetch("../lib/configschema.json").then(response => {return response.json().catch(error => console.log(error));}).catch(error => console.log(error));
+                const container = document.getElementById("jsoneditor")
+                let options = {
+                    mode: 'tree',
+                    schema: schema
+                }
+                const editor = new JSONEditor(container, options);
+                editor.set(configData);
+            }
+
+            SetUpConfigEditor();
         </script>
 <%- include('../sections/footer'); -%>
 </body>
