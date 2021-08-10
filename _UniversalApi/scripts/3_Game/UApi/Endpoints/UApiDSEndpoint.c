@@ -205,6 +205,29 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}		
 	
+	int SetNickname(string GUID, string Nickname, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
+		if (GUID == "" || Nickname == ""){
+			return -1;
+		}
+		int cid = UApi().CallId();
+		autoptr RestCallback DBCBX;
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, GUID);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(cbInstance, cbFunction, GUID), cid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = "SetNickname/" + GUID;
+		
+		autoptr UApiDiscordNickname nickObject = new UApiDiscordNickname(Nickname);
+		
+		Post(url, nickObject.ToJson(), DBCBX);
+		
+		return cid;
+	}	
+	
 	int ChannelCreate(string Name, UApiChannelOptions Options = NULL, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
 		int cid = UApi().CallId();
 		

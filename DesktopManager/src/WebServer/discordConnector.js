@@ -270,6 +270,25 @@ router.post('/Send/:GUID', (req, res) => {
 
 
 /**
+ *  Set Nickname
+ *  Post: Discord/SetNickname/[GUID]
+ *  
+ *  Description: Checks if the user is connected to a voice channel and returns the channel id
+ * 
+ *  Accepts: `{ "Nickname": "|NewNickname|" }`
+ * 
+ *  Returns: `{
+ *               Status: "|STATUSOFREQUEST|", 
+ *               Error: "|ANYERRORMESSAGE|"
+ *            }`
+ * 
+ */
+ router.post('/SetNickname/:GUID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.GUID);
+    SetNicknameUser(res,req, GUID, req.headers['auth-key']);
+});
+
+/**
  *  Check User
  *  Post: Discord/Check/[GUID]
  *  
@@ -833,6 +852,43 @@ async function SendMessageUser(res, req, guid, auth){
             }
         } else {
             log(`Failed to send Discord Direct Message to ${guid} user not configured`);
+            res.status(200);
+            res.json({Status: "NotSetup", Error: "Discord User Found", oid: "" });
+        }
+    } else {
+        res.status(401);
+        res.json({Status: "Error", Error: `Invalid Auth`, oid: ""});
+        log("AUTH ERROR: " + req.url, "warn");
+    }
+}
+
+async function SetNicknameUser(res, req, guid, auth){
+    if (CheckServerAuth(auth) || ((await CheckPlayerAuth(guid, auth)) && global.config.AllowClientWrite)){
+        let RawData = req.body; 
+        let guild = client.guilds.fetch(global.config.Discord.Guild_Id);
+        let nickname = RawData.Nickname;
+        let userObj = await GetDiscordObj(guid);
+        guild = await guild;
+        if (userObj !== undefined && userObj.id !== "0"){
+            try {
+                if (nickname !== undefined && nickname !== ""){
+                    let user = await guild.members.fetch(userObj.id);
+                    let result = await user.setNickname(nickname);
+                    log(`Successfully changed nickname of ${guid} to ${nickname}`);
+                    res.status(200);
+                    res.json({Status: "Success", Error: ""});
+                } else {
+                    log(`Error can't change nickname of ${guid} to ""`);
+                    res.status(200);
+                    res.json({Status: "Error", Error: "Can't change nickname to Empty String"});
+                }
+            } catch(e) {
+                log(`Error changing nickname for ${guid} - ${e}`,"warn");
+                res.status(500);
+                res.json({Status: "Error", Error: `${e}`});
+            }
+        } else {
+            log(`Failed changing nickname for ${guid} - ${e} user not configured`);
             res.status(200);
             res.json({Status: "NotSetup", Error: "Discord User Found", oid: "" });
         }

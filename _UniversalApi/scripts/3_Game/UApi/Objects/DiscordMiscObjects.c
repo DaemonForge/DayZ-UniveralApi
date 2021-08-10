@@ -29,3 +29,17 @@ class UApiDiscordMute extends UApiObject_Base{
 		return jsonString;
 	}
 }
+
+class UApiDiscordNickname extends UApiObject_Base{
+	
+	string Nickname = "";
+	
+	void UApiDiscordNickname(string nickname){
+		Nickname = nickname;
+	}
+	
+	override string ToJson(){
+		string jsonString = JsonFileLoader<UApiDiscordNickname>.JsonMakeData(this);
+		return jsonString;
+	}
+}
