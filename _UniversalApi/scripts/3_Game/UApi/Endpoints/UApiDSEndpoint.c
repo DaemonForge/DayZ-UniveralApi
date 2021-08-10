@@ -182,7 +182,7 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 		return cid;
 	}
 	
-	int MuteUser(string GUID, bool ToMute, Class cbInstance, string cbFunction, bool ReturnString = false) {
+	int MuteUser(string GUID, bool ToMute, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
 		if (GUID == ""){
 			return -1;
 		}
