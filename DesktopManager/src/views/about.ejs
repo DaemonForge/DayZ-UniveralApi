@@ -124,8 +124,12 @@
         }
         async function GetStatus(){
             let Port = <%= global.config.Port %>;
+            let url = `https://localhost:${Port}/Status`;
+            if (Port === 443){
+                url = `https://localhost/Status`;
+            }
             try {
-                let data = await fetch(`https://localhost:${Port}/Status`, {method: "post"}).then(response => response.json());
+                let data = await fetch(url, {method: "post"}).then(response => response.json());
                 statusele.style.display = "inline";
                 if (data.Status == "Success"){
                     updateHtml("dbstatus", "Online", data.Status);

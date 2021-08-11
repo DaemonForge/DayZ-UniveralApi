@@ -126,7 +126,7 @@ app.on('activate', () => {
   }
 });
 app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
-  if (url === `https://localhost:${global.config.Port}/Status`) {
+  if (url === `https://localhost:${global.config.Port}/Status` || url === `https://localhost/Status`) {
     // Verification logic.
     //console.log("preventing cert error")
     event.preventDefault()
