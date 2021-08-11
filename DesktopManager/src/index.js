@@ -434,7 +434,7 @@ autoUpdater.on('error', message => {
   if (global.logs !== undefined) global.logs.push({type: "warn", message: `Error Checking for updates ${feed} - ${message}`});
 })
 
-setTimeout(StartCheckingForUpdates, 3000);
+setTimeout(StartCheckingForUpdates, 6000);
 
 
 
