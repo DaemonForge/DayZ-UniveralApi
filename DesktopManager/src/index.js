@@ -371,7 +371,7 @@ function StartCheckingForUpdates(){
       
       autoUpdater.checkForUpdates();
   
-    }, 3600000);
+    }, 1200000); //Changed to 20 minutes
     
   }
 }
@@ -391,7 +391,7 @@ autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
     isQuiting = true;
     autoUpdater.quitAndInstall();
     
-  }, 3000);
+  }, 10000); // 10 seconds after warning message restart and install new version.
   } else {
     const dialogOpts = {
       type: 'info',
@@ -415,8 +415,7 @@ autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
 })
 
 autoUpdater.on('checking-for-update', () => {
-  if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: 'Checking for Unversial API Webservice updates . . .'})
-  if (global.logs !== undefined) global.logs.push({type: "info", message: 'Checking for Unversial API Webservice updates . . .'})
+  
 });
 
 autoUpdater.on('error', message => {
