@@ -69,12 +69,13 @@
     "jsonwebtoken": "^8.5.1",
     "languagedetect": "^2.0.0",
     "log4js": "^6.3.0",
-    "mongodb": "^3.6.10",
+    "mongodb": "^3.6.11",
     "node-fetch": "^2.6.1",
     "node-wit": "^6.0.1",
     "saslprep": "^1.0.3",
     "serve-favicon": "^2.5.0",
-    "trim-newlines": "^4.0.2"
+    "trim-newlines": "^4.0.2",
+    "xmldom": "github:xmldom/xmldom#0.7.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.59",
