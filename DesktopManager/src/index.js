@@ -7,7 +7,9 @@ let {createHash} = require('crypto');
 
 const server = "https://hazel.daemonforge.dev"
 const feed = `${server}/update/${process.platform}/${app.getVersion()}`
-autoUpdater.setFeedURL({url: feed, serverType: 'json'})
+
+autoUpdater.setFeedURL({url: feed, serverType: 'json'});
+
 global.PENDINGUPDATE = false;
 global.SAVEPATH = (app || remote.app).getPath('userData') + "/";
 global.APIVERSION = app.getVersion();
@@ -387,11 +389,11 @@ autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
     if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: 'A new version has been downloaded. AutoUpdate Enabled Restarting the WebService.'})
     if (global.logs !== undefined) global.logs.push({type: "info", message: 'A new version has been downloaded. AutoUpdate Enabled Restarting the WebService.'});
     
-  setTimeout(() => {
-    isQuiting = true;
-    autoUpdater.quitAndInstall();
-    
-  }, 10000); // 10 seconds after warning message restart and install new version.
+    setTimeout(() => {
+      isQuiting = true;
+      autoUpdater.quitAndInstall();
+      
+    }, 10000); // 10 seconds after warning message restart and install new version.
   } else {
     const dialogOpts = {
       type: 'info',
@@ -413,9 +415,18 @@ autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
     })
   }
 })
+autoUpdater.on('update-available', ()=> {
+  if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: `A new update is availbe downloading it now`})
+  if (global.logs !== undefined) global.logs.push({type: "info", message: `A new update is availbe downloading it now`});
+});
+autoUpdater.on('update-not-available', ()=> {
+  /*if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: `No new updates availbe`})
+  if (global.logs !== undefined) global.logs.push({type: "info", message: `No new updates availbe`});*/
+});
 
 autoUpdater.on('checking-for-update', () => {
-  
+  /*if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: `Checking for update ${feed}`})
+  if (global.logs !== undefined) global.logs.push({type: "info", message: `Checking for update ${feed}`});*/
 });
 
 autoUpdater.on('error', message => {
