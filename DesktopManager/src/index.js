@@ -143,7 +143,7 @@ ipcMain.on('message', (event, arg) => {
   tmp = arg;
 })
 ipcMain.on('OpenTemplatesFolder', (event, arg) => {
-  shell.openPath(global.SAVEPATH + 'templates\\') // Show the given file in a file manager. If possible, select the file.
+  shell.openPath(global.SAVEPATH + 'templates\\') // Show the given file in a file manager.
 })
 ipcMain.on('RestartApp', (event, arg) => {
   
@@ -155,7 +155,7 @@ ipcMain.on('RestartApp', (event, arg) => {
   }
 })
 ipcMain.on('OpenLogsFolder', (event, arg) => {
-  shell.openPath(global.SAVEPATH + 'logs\\') // Show the given file in a file manager. If possible, select the file.
+  shell.openPath(global.SAVEPATH + 'logs\\') // Show the given file in a file manager.
 })
 
 
