@@ -7,9 +7,15 @@ const {createHash} = require('crypto');
 const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
 const {render} = require('ejs');
 const log = require("./log");
-const {Client, User, GuildMember, Guild} = require("discord.js");
+const {Client, User, GuildMember, Guild,Intents} = require("discord.js");
 const Discord  = require("discord.js");
-const client = new Discord.Client();
+const myIntents = new Intents();
+myIntents.add(Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS);
+myIntents.add(Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.DIRECT_MESSAGE_REACTIONS);
+myIntents.add(Intents.FLAGS.GUILD_INVITES);
+myIntents.add(Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS);
+myIntents.add(Intents.FLAGS.GUILD_VOICE_STATES);
+const client = new Client({ intents: myIntents });
 const fetch = require('node-fetch');
 const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
@@ -557,7 +563,7 @@ async function AddRole(res, req, GUID, auth){
             res.status(202);
             res.json(resObj);
         }catch(err){
-            console.log(err);
+            //console.log(err);
             res.status(203);
             res.json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
             log("ERROR: " + err, "warn");
@@ -835,13 +841,16 @@ async function SendMessageUser(res, req, guid, auth){
         //console.log(userObj);
         if (userObj !== undefined && userObj !== null && userObj.id !== "0"){
             try {
-                let user = await guild.members.fetch(userObj.id);
-                let result = await user.send(message);
+                let did = userObj.id;
+                let user = await client.users.fetch(did);
+                let dm = await user.createDM();
+                let result = await dm.send(message);
                 log(`Successfully sent Discord Direct Message to ${guid}`);
                 res.status(200);
                 let oid = result?.id || "";
                 res.json({Status: "Success", Error: "", oid: `${oid}`});
             } catch(e) {
+                //console.log(e);
                 let error = `${e}`;
                 if (error === `DiscordAPIError: Cannot send messages to this user`){
                     log(`Error sending message to ${guid} they may block dms - ${e}`,"warn");
