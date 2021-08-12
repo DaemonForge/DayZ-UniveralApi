@@ -4,16 +4,21 @@ const dialog = document.getElementById("dialog");
 const DialogHeader = document.getElementById("DialogHeader");
 const DialogText = document.getElementById("DialogText");
 const GlobalsSelector = document.getElementById("GlobalsSelector");
+const ModListList = document.getElementById("ModList");
 const JsonEditorDiv = document.getElementById("JsonEditor");
 const JsonEditorWrapper = document.getElementById("JsonEditorWrapper");
 const dialogOkay = document.getElementById("dialogOkay");
 const copyFrom = document.getElementById("copyFrom");
 
+const DatabaseSelector = document.getElementById("DatabaseSelector");
+const SearchButton = document.getElementById("SearchButton");
+const SearchBar = document.getElementById("SearchBar");
+
 const pasteTo = document.getElementById("pasteTo");
 const Paste = document.getElementById("Paste");
 
 let ModListArray = [];
-
+let LastId = "";
 const Options = {
   mode: 'tree'
 };
@@ -53,21 +58,21 @@ ipcRenderer.send('RequestModListGlobals', {});
 ipcRenderer.on('ModListGlobals', function(event, data){
     console.log(data)
 	ModListArray = data;
-    GlobalsSelector.innerHTML = "";
+    ModListList.innerHTML = "";
     ModListArray.forEach(e => {
-
-        var option = document.createElement("option");
-        option.text = e.Mod;
-        option.value = e.Mod;
-        GlobalsSelector.add(option);
+        let option = document.createElement('option');
+        option.value = e.Mod; 
+        ModListList.appendChild(option);
     })
-    if (ModListArray[0] !== undefined){
-        SetUpEditor(ModListArray[0].mod,ModListArray[0]["Data"], )
-    }
+    LastId = "";
+    SetUpEditor("", {},DatabaseSelector.value);
 })
 
-async function SetUpEditor(mod, data){
-    let schema = await CheckForSchema(mod);
+async function SetUpEditor(mod, data, database){
+    let schema;
+    if (mod !== "" && database === "Globals"){
+        schema = await CheckForSchema(mod);
+    }
     delete editor;
     JsonEditorDiv.innerHTML = "";
     if (schema){
@@ -94,13 +99,73 @@ ipcRenderer.on('UpdateModGlobal', function(event, data){
     }
 })
 
-async function OnGlobalsSelectorChange(event){
-    ModListArray.forEach(e => {
-        if (e.Mod === GlobalsSelector.value){
-            SetUpEditor(GlobalsSelector.value, e["Data"]);
+ipcRenderer.on('ReceiveDatabaseData', function(event, data){
+    if (data?.Results[0] !== undefined){
+        LastId = data.ID;
+        SetUpEditor("", data.Results[0], DatabaseSelector.value);
+    }
+})
+
+async function OnDatabaseSelectorChange(){
+    if (DatabaseSelector.value == "Globals"){
+        SearchBar.style.display = "none";
+        SearchButton.style.display = "none";
+        LastId = "";
+        SetUpEditor("", {}, DatabaseSelector.value);
+    } else if (DatabaseSelector.value == "Players"){
+        SearchBar.placeholder = "SteamID/GUID"
+        SearchBar.style.display = "block";
+        SearchButton.style.display = "block";
+        LastId = "";
+        SetUpEditor("", {}, DatabaseSelector.value);
+        GlobalsSelector.value = "";
+    } else {
+        SearchBar.placeholder = "Object ID"
+        SearchBar.style.display = "block";
+        SearchButton.style.display = "block";
+        LastId = "";
+        SetUpEditor("", {}, DatabaseSelector.value);
+        GlobalsSelector.value = "";
+    }
+
+}
+
+async function SearchDatabase(){
+    if ( GlobalsSelector.value !== "" && SearchBar.value !== "") {
+        ipcRenderer.send('RequestFromDatabase', {ID: SearchBar.value, Collection: DatabaseSelector.value,Mod: GlobalsSelector.value});
+    }
+}
+async function OnModSelectorChange(){
+    if (DatabaseSelector.value == "Globals"){
+        if ("" === GlobalsSelector.value){
+            LastId = "";
+            SetUpEditor("", {}, DatabaseSelector.value);
         }
-    })
+        ModListArray.forEach(e => {
+            if (e.Mod === GlobalsSelector.value){
+                LastId = "";
+                SetUpEditor(GlobalsSelector.value, e["Data"], DatabaseSelector.value);
+            }
+        })
+    } else {    
+        if (SearchBar.value !== "" && GlobalsSelector.value !== ""){
+            ipcRenderer.send('RequestFromDatabase', {ID: SearchBar.value, Collection: DatabaseSelector.value, Mod: GlobalsSelector.value});
+        }
+    }
 };
+function SaveData(){
+    if (DatabaseSelector.value === "Globals"){
+        SaveGlobal();
+    } else {
+        SaveOtherData()
+    }
+}
+
+function SaveOtherData(){
+    if (LastId !== ""){
+        ipcRenderer.send('SaveOtherData', {Collection: DatabaseSelector.value, ID: LastId, Mod: GlobalsSelector.value, Data: editor.get()});
+    }
+}
 
 function SaveGlobal(){
     console.log("Save Global " + GlobalsSelector.value)    

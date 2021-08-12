@@ -27,18 +27,7 @@ router.post('/Update/:ObjectId/:mod', (req, res)=>{
     runUpdate(req, res, req.params.ObjectId, req.params.mod, req.headers['auth-key']);
 });
 
-//TO REMOVE
-router.post('/Load/:ObjectId/:mod/:auth', (req, res)=>{
-    runGet(req, res, req.params.ObjectId, req.params.mod, req.params.auth);
-});
 
-router.post('/Save/:ObjectId/:mod/:auth', (req, res)=>{
-    runSave(req, res, req.params.ObjectId, req.params.mod, req.params.auth);
-});
-
-router.post('/Update/:ObjectId/:mod/:auth', (req, res)=>{
-    runUpdate(req, res, req.params.ObjectId, req.params.mod, req.params.auth);
-});
 async function runGet(req, res, ObjectId, mod, auth) {
     if (CheckServerAuth(auth) || (await CheckAuth(auth)) ){
         const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });

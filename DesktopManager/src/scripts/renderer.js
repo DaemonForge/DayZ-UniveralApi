@@ -48,11 +48,13 @@ function UpdateAndRestart(){
   ipcRenderer.send('UpdateAndRestart', {})
 }
 function CloseDialog(){
+  
   if (dialogOkay !== undefined){
     dialogOkay.innerHTML = 'Okay';
   }
   if (pasteTo !== undefined){
     pasteTo.style.display = 'none';
+    pasteTo.value = '';
   }
   if (Paste !== undefined){
     Paste.style.display = 'none';

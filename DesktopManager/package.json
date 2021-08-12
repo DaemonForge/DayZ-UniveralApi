@@ -1,7 +1,7 @@
 {
   "name": "universalapiwebservice",
   "productName": "UniversalAPIWebService",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "UniveralApi Web Service",
   "main": "src/index.js",
   "scripts": {
@@ -54,10 +54,11 @@
   "dependencies": {
     "@tensorflow-models/toxicity": "^1.2.2",
     "@tensorflow/tfjs": "^3.8.0",
+    "@tensorflow/tfjs-converter": "^3.8.0",
     "@tensorflow/tfjs-core": "^3.8.0",
     "body-parser": "^1.19.0",
     "crypto": "^1.0.1",
-    "discord.js": "^12.5.3",
+    "discord.js": "^13.0.1",
     "ejs": "^3.1.6",
     "ejs-electron": "^2.1.1",
     "ejs-lint": "^1.2.1",
@@ -69,12 +70,13 @@
     "jsonwebtoken": "^8.5.1",
     "languagedetect": "^2.0.0",
     "log4js": "^6.3.0",
-    "mongodb": "^3.6.10",
+    "mongodb": "^3.6.11",
     "node-fetch": "^2.6.1",
     "node-wit": "^6.0.1",
     "saslprep": "^1.0.3",
     "serve-favicon": "^2.5.0",
-    "trim-newlines": "^4.0.2"
+    "trim-newlines": "^4.0.2",
+    "xmldom": "github:xmldom/xmldom#0.7.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.59",

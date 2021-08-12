@@ -5,42 +5,46 @@ const { Router } = require('express');
 
 const { CheckAuth, CheckServerAuth } = require('./AuthChecker')
 const log = require("./log");
-const {isArray} = require('./utils');
+const {isArray,GenerateLimiter} = require('./utils');
 
 
 const router = Router();
 
 
+router.use(GenerateLimiter(global.config.RequestLimitServerQuery || 200 ,5));
 
-var RateLimit = require('express-rate-limit');
-var limiter = new RateLimit({
-  windowMs: 10*1000, // 20 req/sec
-  max: global.config.RequestLimitServerQuery || 200,
-  message:  '{ "Status": "Error", "Error": "RateLimited" }',
-  keyGenerator: function (req /*, res*/) {
-    return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-  },
-  onLimitReached: function (req, res, options) {
-    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    log("RateLimit Reached("  + ip + ") you may be under a DDoS Attack or you may need to increase your request limit");
-  },
-  skip: function (req, res) {
-    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    return (global.config.RateLimitWhiteList !== undefined && ip !== undefined && ip !== null && isArray(global.config.RateLimitWhiteList) && (global.config.RateLimitWhiteList.find(element => element === ip) === ip));
-  }
-});
 
-// apply rate limiter to all requests
-router.use(limiter);
 
+
+/**
+ *  DayZ Server SteamQuery
+ *  Post: /ServerQuery/Status/[IP]/[PORT]
+ *  
+ *  Description: This runs a Steam Query to the specified IP and port to get some 
+ *    basic server information, like player count and Queue
+ * 
+ *  Returns: `{ 
+ *               "Status": "|STATUSOFSERVER|", 
+ *               "Error": "|ANYERRORMESSAGE|",
+ *               "IP": "|Servers IP|",
+ *               "GamePort": |GAME PORT|,
+ *               "QueryPort": |STEAMQUERYPORT|,
+ *               "Name": "|SERVERNAME|",
+ *               "ServerVersion": "|SERVERSVERSION|",
+ *               "Players": |#OFPLAYERSONLINE|,
+ *               "QueuePlayers": |#OFPLAYERSINQUEUE|,
+ *               "MaxPlayers": |MAX#OFPLAYERCANBEONSERVER|,
+ *               "GameTime": "|CURRENTINGAMETIME|",
+ *               "GameMap": "|MAPSERVERISRUNNING|",
+ *               "Password": |1?0HASPASSWORD|,
+ *               "FirstPerson": |1?0ISFIRSTPERSON|
+ *            }`
+ * 
+ */
 router.post('/Status/:ip/:port', (req, res)=>{
     GetServerStatus(req, res, req.params.ip, req.params.port, req.headers['auth-key']);
 });
 
-//TO REMOVE
-router.post('/Status/:ip/:port/:auth', (req, res)=>{
-    GetServerStatus(req, res, req.params.ip, req.params.port, req.params.auth);
-});
 
 async function QueryServer(ip, port){
     try{

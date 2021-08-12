@@ -39,7 +39,7 @@ async function CheckAuthAgainstGUID(auth, guid, ignoreError = false){
     return verify(auth, GetSigningAuth(), function(err, decoded) {
         if (err) {
             if (err.name == "TokenExpiredError"){
-                log("Error: Auth Token for " + decoded?.GUID + " is expired, it expired at " + err.expiredAt, "warn");
+                log("Error: Auth Token for " + decoded.GUID + "is expired, it expired at " + err.expiredAt, "warn");
             } else if (ignoreError){ //Used in the status check to avoid the logs from filling up
                 return false;
             } else if (err.name == "JsonWebTokenError") {
@@ -60,7 +60,7 @@ function AuthPlayerGuid(auth, ignoreError = false){
     let guid = verify(auth, GetSigningAuth(), function(err, decoded) {
         if (err) {
             if (err.name == "TokenExpiredError"){
-                log("Error: Auth Token for " + decoded.GUID + "is expired, it expired at " + err.expiredAt, "warn");
+                log("Error: Auth Token for " + decoded?.GUID + " is expired, it expired at " + err.expiredAt, "warn");
             } else if (ignoreError){ //Used in the status check to avoid the logs from filling up
                 return "";
             } else if (err.name == "JsonWebTokenError") {
@@ -122,6 +122,7 @@ function GetSigningAuth(){
 
 function makeAuthToken(GUID) {
     const player = { GUID: GUID }; 
-    let result = sign(player, GetSigningAuth(), { expiresIn: 2800 });
+    //Token expires in 46.5 minutes, tokens renew every 21-23 Minutes ensuring that if the API is down at the time of the renewal token will last till next retry
+    let result = sign(player, GetSigningAuth(), { expiresIn: 2800 }); 
     return result;
  }

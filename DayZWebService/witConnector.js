@@ -1,6 +1,6 @@
 const {Wit} = require('node-wit');
 const {Router} = require('express');
-const {isArray, isObject, RemoveBadProperties} = require('./utils')
+const {isArray, isObject, RemoveBadProperties,GenerateLimiter} = require('./utils')
 const {CheckAuth,CheckServerAuth} = require("./AuthChecker");
 
 
@@ -8,27 +8,8 @@ const log = require("./log");
 
 const router = Router();
 
-var RateLimit = require('express-rate-limit');
-var limiter = new RateLimit({
-  windowMs: 10*1000, // 30 req/sec
-  max: global.config.RequestLimitWit || 300,
-  message:  '{ "Status": "Error", "Error": "RateLimited" }',
-  keyGenerator: function (req /*, res*/) {
-    return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-  },
-  onLimitReached: function (req, res, options) {
-    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    log("RateLimit Reached("  + ip + ") you may be under a DDoS Attack or you may need to increase your request limit");
-  },
-  skip: function (req, res) {
-    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    if (global.config.RateLimitWhiteList !== undefined && ip !== undefined && ip !== null && isArray(global.config.RateLimitWhiteList) && (global.config.RateLimitWhiteList.find(element => element === ip) === ip)) return true;
-    return false;
-  }
-});
-
 // apply rate limiter to all requests
-router.use(limiter);
+router.use(GenerateLimiter(global.config.RequestLimitWit || 300, 10));
 
 const clients = {};
   

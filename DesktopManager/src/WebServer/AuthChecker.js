@@ -122,6 +122,7 @@ function GetSigningAuth(){
 
 function makeAuthToken(GUID) {
     const player = { GUID: GUID }; 
-    let result = sign(player, GetSigningAuth(), { expiresIn: 2800 });
+    //Token expires in 46.5 minutes, tokens renew every 21-23 Minutes ensuring that if the API is down at the time of the renewal token will last till next retry
+    let result = sign(player, GetSigningAuth(), { expiresIn: 2800 }); 
     return result;
  }

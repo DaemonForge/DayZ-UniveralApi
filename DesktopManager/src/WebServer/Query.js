@@ -3,7 +3,7 @@ const { MongoClient } = require("mongodb");
 
 
 const log = require("./log");
-const {isArray,isObject} = require('./utils');
+const {isArray,isObject,CleanRegEx, GenerateLimiter} = require('./utils');
 
 const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
 
@@ -11,34 +11,15 @@ const {CheckAuth,CheckServerAuth} = require('./AuthChecker');
 
 const router = Router();
 
-var RateLimit = require('express-rate-limit');
-var limiter = new RateLimit({
-  windowMs: 10*1000, // 40 req/sec
-  max: global.config.RequestLimitQuery || 400,
-  message:  '{ "Status": "Error", "Error": "RateLimited" }',
-  keyGenerator: function (req /*, res*/) {
-    return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-  },
-  onLimitReached: function (req, res, options) {
-    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    log("RateLimit Reached("  + ip + ") you may be under a DDoS Attack or you may need to increase your request limit");
-  },
-  skip: function (req, res) {
-    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    return (global.config.RateLimitWhiteList !== undefined && ip !== undefined && ip !== null && isArray(global.config.RateLimitWhiteList) && (global.config.RateLimitWhiteList.find(element => element === ip) === ip));
-  }
-});
-
 // apply rate limiter to all requests
-router.use(limiter);
+router.use(GenerateLimiter(global.config.RequestLimitQuery || 400, 10));
 
+/**
+ * Post: /[Collection]/[Mod]
+ * 
+ */
 router.post('/:mod', (req, res)=>{
     runQuery(req, res, req.params.mod, req.headers['auth-key'], GetCollection(req.baseUrl));
-});
-
-//TO REMOVE
-router.post('/:mod/:auth', (req, res)=>{
-    runQuery(req, res, req.params.mod, req.params.auth, GetCollection(req.baseUrl));
 });
 
 function GetCollection(URL){
@@ -125,7 +106,7 @@ async function runQuery(req, res, mod, auth, COLL) {
 function FixQuery(query, prefix){
     if (isObject(query)){
         for (const [key, value] of Object.entries(query)) {
-            if(!key.match(/^\$/i) && !key.match(new RegExp(`^${prefix}\\.`, "g"))){
+            if(!key.match(/^\$/i) && !key.match(new RegExp(`^${CleanRegEx(prefix)}\\.`, "g"))){
                 query[`${prefix}.${key}`] = FixQuery(value, prefix);
                 delete query[key]
             } else {

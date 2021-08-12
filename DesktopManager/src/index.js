@@ -3,10 +3,13 @@ const ejse = require('ejs-electron');
 const { MongoClient } = require("mongodb");
 var iconpath = `${__dirname}/icon.ico`; // pa
 const {writeFileSync} = require('fs');
+let {createHash} = require('crypto');
 
 const server = "https://hazel.daemonforge.dev"
 const feed = `${server}/update/${process.platform}/${app.getVersion()}`
-autoUpdater.setFeedURL({url: feed, serverType: 'json'})
+
+autoUpdater.setFeedURL({url: feed, serverType: 'json'});
+
 global.PENDINGUPDATE = false;
 global.SAVEPATH = (app || remote.app).getPath('userData') + "/";
 global.APIVERSION = app.getVersion();
@@ -125,7 +128,7 @@ app.on('activate', () => {
   }
 });
 app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
-  if (url === `https://localhost:${global.config.Port}/Status`) {
+  if (url === `https://localhost:${global.config.Port}/Status` || url === `https://localhost/Status`) {
     // Verification logic.
     //console.log("preventing cert error")
     event.preventDefault()
@@ -140,7 +143,7 @@ ipcMain.on('message', (event, arg) => {
   tmp = arg;
 })
 ipcMain.on('OpenTemplatesFolder', (event, arg) => {
-  shell.openPath(global.SAVEPATH + 'templates\\') // Show the given file in a file manager. If possible, select the file.
+  shell.openPath(global.SAVEPATH + 'templates\\') // Show the given file in a file manager.
 })
 ipcMain.on('RestartApp', (event, arg) => {
   
@@ -152,14 +155,11 @@ ipcMain.on('RestartApp', (event, arg) => {
   }
 })
 ipcMain.on('OpenLogsFolder', (event, arg) => {
-  shell.openPath(global.SAVEPATH + 'logs\\') // Show the given file in a file manager. If possible, select the file.
+  shell.openPath(global.SAVEPATH + 'logs\\') // Show the given file in a file manager.
 })
 
 
 ipcMain.on('OpenConfirmationDialog', (event, arg) => {
-  //console.log(arg);
-  //console.log(arg.mod)
-  //console.log(arg.collection)
   let options  = {
       buttons: ["Cancel",`Delete all "${arg.collection}" data for "${arg.mod}"`],
       message: `Are you sure?`,
@@ -180,11 +180,93 @@ ipcMain.on('SaveGlobalMod', (event, arg) => {
 
 })
 
+ipcMain.on('RequestFromDatabase', (event, arg) => {
+  RequestFromDatabase(arg)
+
+})
+
 ipcMain.on('SaveConfig', (event, arg) => {
   SaveConfig(arg)
 
 })
 
+async function RequestFromDatabase(arg){
+  
+  const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+  try {
+    await mongo.connect();
+    const db = mongo.db(global.config.DB);
+    let collection = db.collection(arg.Collection);
+    let query = {};
+    let returnValue = "Data";
+    if (arg.Collection === "Players"){
+      query["GUID"] = NormalizeToGUID(arg.ID);
+      returnValue = arg.Mod;
+    } else {
+      query["Mod"] = arg.Mod 
+      query["ObjectId"] = arg.ID;
+    }
+    let result = collection.find(query);
+    let count = await result.count();
+    if (count > 0){
+      let res = [];
+      await result.forEach(e => {
+        res.push(e[returnValue])
+      });
+      let response = { status: true, Results: res, ID: arg.ID, Mod: arg.Mod, col: arg.Collection}
+      global.mainWindow.send("ReceiveDatabaseData", response);
+    } else {
+      
+      global.mainWindow.send("ReceiveDatabaseData", { n: 0, status: false, Results: [], ID: arg.ID, Mod: arg.Mod, col: arg.Collection})
+    }
+  } catch (err) {
+    console.log(err);
+  } finally {
+      mongo.close();
+  }
+}
+
+async function SaveOtherData(arg){
+  
+  const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+  try {
+    await client.connect();
+    const db = client.db(global.config.DB);
+    let collection = db.collection(arg.Collection);
+    let query = {};
+    let returnValue = "Data";
+    if (arg.Collection === "Players"){
+      query["GUID"] = NormalizeToGUID(arg.ID);
+      returnValue = arg.Mod;
+    } else {
+      query["Mod"] = arg.Mod 
+      query["ObjectId"] = arg.ID;
+    }
+    let data = {};
+    data[returnValue] = arg.Data;
+    let result = await collection.updateOne(query, {"$set": data}, { upsert: false });
+    console.log(result.result);
+
+  } catch (err) {
+    console.log(err)
+  } finally {
+    client.close();
+  }
+}
+
+
+ipcMain.on('SaveOtherData', (event, arg) => {
+  SaveOtherData(arg)
+
+})
+  function NormalizeToGUID(idorguid){
+    if (idorguid.match(/[1-9][0-9]{16}/g)){
+        idorguid = createHash('sha256').update(idorguid).digest('base64');
+        idorguid = idorguid.replace(/\+/g, '-'); 
+        idorguid = idorguid.replace(/\//g, '_');
+    }
+    return idorguid;
+  }
 async function SaveConfig(data){
   try{
     global.config = data;
@@ -288,7 +370,7 @@ function StartCheckingForUpdates(){
       
       autoUpdater.checkForUpdates();
   
-    }, 3600000);
+    }, 1200000); //Changed to 20 minutes
     
   }
 }
@@ -304,11 +386,11 @@ autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
     if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: 'A new version has been downloaded. AutoUpdate Enabled Restarting the WebService.'})
     if (global.logs !== undefined) global.logs.push({type: "info", message: 'A new version has been downloaded. AutoUpdate Enabled Restarting the WebService.'});
     
-  setTimeout(() => {
-    isQuiting = true;
-    autoUpdater.quitAndInstall();
-    
-  }, 3000);
+    setTimeout(() => {
+      isQuiting = true;
+      autoUpdater.quitAndInstall();
+      
+    }, 10000); // 10 seconds after warning message restart and install new version.
   } else {
     const dialogOpts = {
       type: 'info',
@@ -330,10 +412,18 @@ autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
     })
   }
 })
+autoUpdater.on('update-available', ()=> {
+  if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: `A new update is availbe downloading it now`})
+  if (global.logs !== undefined) global.logs.push({type: "info", message: `A new update is availbe downloading it now`});
+});
+autoUpdater.on('update-not-available', ()=> {
+  /*if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: `No new updates availbe`})
+  if (global.logs !== undefined) global.logs.push({type: "info", message: `No new updates availbe`});*/
+});
 
 autoUpdater.on('checking-for-update', () => {
-  if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: 'Checking for Unversial API Webservice updates . . .'})
-  if (global.logs !== undefined) global.logs.push({type: "info", message: 'Checking for Unversial API Webservice updates . . .'})
+  /*if (global.mainWindow !== undefined) global.mainWindow.send("log",{type: "info", message: `Checking for update ${feed}`})
+  if (global.logs !== undefined) global.logs.push({type: "info", message: `Checking for update ${feed}`});*/
 });
 
 autoUpdater.on('error', message => {
@@ -341,7 +431,7 @@ autoUpdater.on('error', message => {
   if (global.logs !== undefined) global.logs.push({type: "warn", message: `Error Checking for updates ${feed} - ${message}`});
 })
 
-setTimeout(StartCheckingForUpdates, 3000);
+setTimeout(StartCheckingForUpdates, 6000);
 
 
 

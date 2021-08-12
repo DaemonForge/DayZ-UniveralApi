@@ -7,6 +7,20 @@ const log = require("./log");
 
 const router = Router();
 
+/**
+ *  Generate Auth Token
+ *  Post: Auth/[GUID]
+ *  
+ *  Description: This generates a auth token for the specified GUID and 
+ *   updates the database so that way we can validate that the user has 
+ *   already be issued a new. The AUTHTOKEN will expire 
+ * 
+ *  Returns: `{ 
+ *                "GUID": "|THEPASSEDGUID|", 
+ *                "AUTH": "|AUTHTOKEN|" 
+ *            }`
+ * 
+ */
 router.post('/:GUID', (req, res)=>{
     if ( CheckServerAuth(req.headers['auth-key']) ){
         runGetAuth(req, res, req.params.GUID);
@@ -17,16 +31,7 @@ router.post('/:GUID', (req, res)=>{
     }
 });
 
-//TO REMOVE
-router.post('/:GUID/:auth', (req, res)=>{
-    if ( CheckServerAuth(req.params.auth) ){
-        runGetAuth(req, res, req.params.GUID);
-    }else{
-        res.status(401);
-        res.json({ GUID: req.params.GUID, AuthToken: "ERROR" });
-        log("AUTH ERROR: " + req.url + " Invalid Server Token", "warn");
-    }
-});
+
 
 async function runGetAuth(req, res, GUID) {
     const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });

@@ -1,36 +1,45 @@
 const {Router} = require('express');
 const log = require("./log");
-const {isArray} = require('./utils');
+const {isArray,GenerateLimiter} = require('./utils');
 
 const { CheckAuth, CheckServerAuth} = require('./AuthChecker')
 
 const router = Router();
 
-var RateLimit = require('express-rate-limit');
-var limiter = new RateLimit({
-  windowMs: 10*1000, // 30 req/sec
-  max: global.config.RequestLimitToxicity || 300,
-  message:  '{ "Status": "Error", "Error": "RateLimited" }',
-  keyGenerator: function (req /*, res*/) {
-    return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-  },
-  onLimitReached: function (req, res, options) {
-    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    log("RateLimit Reached("  + ip + ") you may be under a DDoS Attack or you may need to increase your request limit");
-  },
-  skip: function (req, res) {
-    let ip = req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
-    return (global.config.RateLimitWhiteList !== undefined && ip !== undefined && ip !== null && isArray(global.config.RateLimitWhiteList) && (global.config.RateLimitWhiteList.find(element => element === ip) === ip));
-    }
-});
+router.use(GenerateLimiter(global.config.RequestLimitToxicity || 200, 10));
 
-// apply rate limiter to all requests
-router.use(limiter);
-
+/**
+ *  Quantum Random Number Generator 0 to 65535
+ *  Post: /Random
+ *  
+ *  Description: This endpoint generates the specified amount of random numbers from 
+ *    ANU's Quantum Random number API within the range of 0 to 65535
+ * 
+ *  Accepts: `{ "Count": |NumberToGenerate| }`
+ *
+ *  Returns: `{ "Status": "|STATUSOFREQUEST|", "Error": "|ANYERRORMESSAGE|", "Numbers": [|ARRAYOFINTEGERS|] }`
+ * 
+ */
 router.post('', (req, res)=>{
     GetRandom(req, res, req.headers['auth-key']);
 });
 
+/**
+ *  Quantum Random Number Generator -2147483647 to 2147483647
+ *  Post: /Random/Full
+ *  
+ *  Description: This endpoint generates the specified amount of random numbers from 
+ *    ANU's Quantum Random number API within the range of -2147483647 to 2147483647
+ * 
+ *  Accepts: `{ "Count": |NumberToGenerate| }`
+ *
+ *  Returns: `{ 
+ *                 "Status": "|STATUSOFREQUEST|", 
+ *                 "Error": "|ANYERRORMESSAGE|",
+ *                  "Numbers": [|ARRAYOFINTEGERS|] 
+ *            }`
+ * 
+ */
 router.post('/Full', (req, res)=>{
     GetFullRandom(req, res, req.headers['auth-key']);
 });
