@@ -7,8 +7,9 @@ const {createHash} = require('crypto');
 const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
 const {render} = require('ejs');
 const log = require("./log");
-const {Client, GuildMember, Guild} = require("discord.js");
-const client = new Client();
+const {Client, User, GuildMember, Guild} = require("discord.js");
+const Discord  = require("discord.js");
+const client = new Discord.Client();
 const fetch = require('node-fetch');
 const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
@@ -831,13 +832,15 @@ async function SendMessageUser(res, req, guid, auth){
         let message = RawData.Message;
         let userObj = await GetDiscordObj(guid);
         guild = await guild;
-        if (userObj !== undefined && userObj.id !== "0"){
+        //console.log(userObj);
+        if (userObj !== undefined && userObj !== null && userObj.id !== "0"){
             try {
                 let user = await guild.members.fetch(userObj.id);
                 let result = await user.send(message);
                 log(`Successfully sent Discord Direct Message to ${guid}`);
                 res.status(200);
-                res.json({Status: "Success", Error: "", oid: result.id});
+                let oid = result?.id || "";
+                res.json({Status: "Success", Error: "", oid: `${oid}`});
             } catch(e) {
                 let error = `${e}`;
                 if (error === `DiscordAPIError: Cannot send messages to this user`){
@@ -1236,7 +1239,8 @@ async function GetDiscordObj(guid){
         } else {
             let dataarr = await results.toArray(); 
             let data = dataarr[0]; 
-            if (data.Discord === undefined || data.Discord === {} || data.Discord.id === undefined || data.Discord.id === "" || data.Discord.id === "0" ){
+            if (data.Discord === undefined || data.Discord === null || data.Discord === {} || data.Discord.id === undefined || data.Discord.id === "" || data.Discord.id === "0" ){
+                log("Can't find player's discord with ID " + guid, "warn"); 
             } else {
                 obj = data.Discord;
             }
