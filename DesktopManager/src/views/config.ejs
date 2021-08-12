@@ -22,14 +22,14 @@
             const configData = <%- JSON.stringify(config) -%>;
             const container = document.getElementById("jsoneditor");
             console.log(configData);
-            
+            let  editor 
             async function SetUpConfigEditor(){
                 let schema = await fetch("../lib/configschema.json").then(response => {return response.json().catch(error => console.log(error));}).catch(error => console.log(error));
                 let options = {
                     mode: 'tree',
                     schema: schema
                 }
-                const editor = new JSONEditor(container, options);
+                editor = new JSONEditor(container, options);
                 editor.set(configData);
             }
 
