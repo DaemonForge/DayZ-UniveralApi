@@ -9,13 +9,7 @@ const {render} = require('ejs');
 const log = require("./log");
 const {Client, User, GuildMember, Guild,Intents} = require("discord.js");
 const Discord  = require("discord.js");
-const myIntents = new Intents();
-myIntents.add(Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS);
-myIntents.add(Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.DIRECT_MESSAGE_REACTIONS);
-myIntents.add(Intents.FLAGS.GUILD_INVITES);
-myIntents.add(Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS);
-myIntents.add(Intents.FLAGS.GUILD_VOICE_STATES);
-const client = new Client({ intents: myIntents });
+const client = new Discord.Client();
 const fetch = require('node-fetch');
 const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
@@ -63,7 +57,15 @@ client.on('ready', () => {
     }
     log(`Discord Intergration Ready and is Logged in as ${tag}!`);
   });
-
+client.on('disconnect', () => {
+    log(`Discord Intergration Disconnected!`, "warn");
+});
+client.on('error', (error) => {
+    log(`Error: ${error}`, "warn")
+});
+client.on('warn', (error) => {
+    log(`Warning: ${error}`, "warn")
+});
 /**
  * Sign Up Page
  *
@@ -91,6 +93,27 @@ router.get('/login/:id', (req, res) => {
    RenderLogin(req, res);
 });
 
+
+
+/*
+router.get('/test/:id', (req, res) => {
+    TestFunction(req.params.id,res)
+ });
+
+
+
+async function TestFunction(id,res){
+    try {
+    let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
+    player = await guild.members.fetch(id);
+
+    res.json(player)
+    } catch (e) {
+        log(e)
+        res.json(e)
+    }
+}
+*/
 /**
  * User Related Endpoints
  *
@@ -390,13 +413,16 @@ async function RenderLogin(req, res){
                return res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${global.config.Discord.Client_Id}&scope=identify&response_type=code&redirect_uri=${url}&state=${id}`);
            }
         }
-    } catch (e) {            
+    } catch (e) {        
         log(`User Failed Singed up under restictive mode - ${id} - ${e}`, "warn");
+        log(e.stack, "warn");    
         return res.send(render(ErrorTemplate, {TheError: `Error Validating the signup proccess - ${e}`, Type: "ValidationError"}));
     }
     log(`User Failed Singed up under restictive mode - ${id} - ${responsejson.query} - ${responsejson.countryCode} - ${responsejson.regionName} - ${responsejson.isp}`, "warn");
     return res.send(render(ErrorTemplate, {TheError: `Error validating the signup proccess`, Type: "ValidationError"}));
 }
+
+
 
 async function HandleCallBack(req, res){
     if (ErrorTemplate === undefined) LoadErrorTemplate();
@@ -440,7 +466,8 @@ async function HandleCallBack(req, res){
         try {
             player = await guild.members.fetch(discordjson.id);
         } catch (e) {
-            log(e, "warn")
+            log(e, "warn");
+            log(JSON.stringify(e), "warn");
             msg = "User not found in discord";
             errType = "UserNotFound";
         }
@@ -508,7 +535,8 @@ async function HandleCallBack(req, res){
             res.send(render(ErrorTemplate, {TheError: msg, Type: errType}));
         }
     } catch (e){
-        log(e, "warn")
+        log(`Error: ${e}`, "warn")
+        log(JSON.stringify(e), "warn");
         try {
             res.send(render(ErrorTemplate, {TheError: e, Type: "System"}));
         } catch(err){

@@ -58,7 +58,7 @@
     "@tensorflow/tfjs-core": "^3.8.0",
     "body-parser": "^1.19.0",
     "crypto": "^1.0.1",
-    "discord.js": "^13.0.1",
+    "discord.js": "^12.5.3",
     "ejs": "^3.1.6",
     "ejs-electron": "^2.1.1",
     "ejs-lint": "^1.2.1",
