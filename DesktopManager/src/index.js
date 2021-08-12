@@ -160,9 +160,6 @@ ipcMain.on('OpenLogsFolder', (event, arg) => {
 
 
 ipcMain.on('OpenConfirmationDialog', (event, arg) => {
-  //console.log(arg);
-  //console.log(arg.mod)
-  //console.log(arg.collection)
   let options  = {
       buttons: ["Cancel",`Delete all "${arg.collection}" data for "${arg.mod}"`],
       message: `Are you sure?`,
