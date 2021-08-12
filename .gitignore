@@ -4,3 +4,5 @@ Build
 DesktopManager/templates/discordError.ejs
 DesktopManager/templates/discordLogin.ejs
 DesktopManager/templates/discordSuccess.ejs
+DayZWebService/dayzwebservice.exe
+DayZWebService/dayzwebservice
