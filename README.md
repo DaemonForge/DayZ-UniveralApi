@@ -17,12 +17,12 @@ _(I will accept pull requests if someone wants to add features for there own ide
 - Create/Edit/Delete Channels
 - Send Message to Channels
 - Get Messages from Channels
-- Move User to Voice Channel (Coming Soon Next Update)
-- Mute User in Voice Channel (Coming Soon Next Update)
-- Kick User from Voice Channel (Coming Soon Next Update)
-- Get User's current Voice Channel (Coming Soon Next Update)
+- Move User to Voice Channel
+- Mute User in Voice Channel
+- Kick User from Voice Channel
+- Get User's current Voice Channel
 ### Other Stuff
 - Quantum Random Numbers
-- Toxicity Checker (TensorFlow Toxicity) (Coming Soon Next Update)
-- Translate (Libre Translate) (Coming Soon Next Update)
+- Toxicity Checker (TensorFlow Toxicity)
+- Translate (Libre Translate)
 - And More
