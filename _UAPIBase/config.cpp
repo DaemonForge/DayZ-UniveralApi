@@ -23,7 +23,7 @@ class CfgMods
 		credits = "";
 		author = "DaemonForge";
 		authorID = "0"; 
-		version = "1.1.2"; 
+		version = "1.1.3"; 
 		extra = 0;
 		type = "mod";
 		
