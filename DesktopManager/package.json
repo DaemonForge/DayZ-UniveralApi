@@ -52,10 +52,8 @@
     }
   },
   "dependencies": {
-    "@tensorflow-models/toxicity": "^1.2.2",
-    "@tensorflow/tfjs": "^3.8.0",
-    "@tensorflow/tfjs-converter": "^3.8.0",
-    "@tensorflow/tfjs-core": "^3.8.0",
+    "@tensorflow-models/toxicity": "^1.0.3",
+    "@tensorflow/tfjs": "^3.9.0",
     "body-parser": "^1.19.0",
     "crypto": "^1.0.1",
     "discord.js": "^12.5.3",
@@ -72,7 +70,7 @@
     "log4js": "^6.3.0",
     "mongodb": "^3.6.11",
     "node-fetch": "^2.6.1",
-    "node-wit": "^6.0.1",
+    "node-wit": "^4.0.0",
     "saslprep": "^1.0.3",
     "serve-favicon": "^2.5.0",
     "trim-newlines": "^4.0.2",

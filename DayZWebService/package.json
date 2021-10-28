@@ -12,12 +12,10 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@tensorflow-models/toxicity": "^1.2.2",
-    "@tensorflow/tfjs": "^3.8.0",
-    "@tensorflow/tfjs-converter": "^3.8.0",
-    "@tensorflow/tfjs-core": "^3.8.0",
+    "@tensorflow/tfjs": "^3.9.0",
     "body-parser": "^1.19.0",
     "crypto": "^1.0.1",
-    "discord.js": "^13.0.1",
+    "discord.js": "^12.5.3",
     "ejs": "^3.1.6",
     "ejs-lint": "^1.2.1",
     "express": "^4.17.1",
@@ -35,7 +33,7 @@
     "websocket": "^1.0.34"
   },
   "devDependencies": {
-    "nodemon": "^2.0.12",
+    "nodemon": "^2.0.14",
     "pkg": "^5.3.1"
   },
   "pkg": {
