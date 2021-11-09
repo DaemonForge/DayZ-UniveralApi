@@ -13,21 +13,21 @@ class UApiBaseEndpoint extends Managed {
 	
 	protected RestContext Api()
 	{
-		if (!m_Context){
-			RestApi clCore = GetRestApi();
-			if (!clCore)
-			{
-				clCore = CreateRestApi();
-				clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
-			}
-			m_Context = clCore.GetRestContext(EndpointBaseUrl());
-			m_Context.SetHeader(AuthToken());
+		RestApi clCore = GetRestApi();
+		if (!clCore)
+		{
+			clCore = CreateRestApi();
+			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 30);
+			clCore.EnableDebug(true);
 		}
+		m_Context = clCore.GetRestContext(EndpointBaseUrl());
+		m_Context.SetHeader(AuthToken());
 		return m_Context;
 	}
 	
 	protected void Post(string route, string jsonString, RestCallback UCBX)
 	{
+		//Print(EndpointBaseUrl() + route);
 		Api().POST(UCBX, route, jsonString);
 	}
 	
