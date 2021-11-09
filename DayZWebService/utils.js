@@ -262,6 +262,12 @@ async function CheckRecentVersion(){
       req.headers['auth-key'] = req.headers['auth-key'] || req.headers['content-type'] || '';
       req.headers['content-type'] = 'application/json';
     }
+    if (global.config.debug !== undefined && global.config.debug === 1) {
+      console.log("Request: " + req.url);
+    }
+    if (global.config.debug !== undefined && global.config.debug === 2) {
+      console.log("Request: " + req.url + " " + req.headers['auth-key'] + req.body);
+    }
     next();
   }
   
