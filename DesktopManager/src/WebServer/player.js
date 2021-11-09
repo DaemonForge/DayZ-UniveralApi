@@ -216,6 +216,7 @@ async function runUpdate(req, res, GUID, mod, auth) {
     }
 };
 
+
 async function runGetPublic(req, res, GUID, mod, auth) {
     const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     try{ 
@@ -251,7 +252,7 @@ async function runGetPublic(req, res, GUID, mod, auth) {
             }
             if (sent !== true){
                 if (auth !== "null" && (CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite))){
-                    const updateDocValue  = JSON.parse(`{ "Public": { "${mod}": "${RawData.Value}" } }`);
+                    const updateDocValue  = JSON.parse(`{ "Public.${mod}": "${RawData.Value}" }`);
                     const updateDoc = { $set: updateDocValue, };
                     const options = { upsert: false };
                     await collection.updateOne(query, updateDoc, options);
@@ -284,7 +285,7 @@ async function runSavePublic(req, res, GUID, mod, auth) {
             let collection = db.collection("Players");
             let query = { GUID: GUID };
             const options = { upsert: true };
-            const jsonString = `{ "GUID": "${GUID}", "Public": { "${mod}": "${RawData.Value}" } }`;
+            const jsonString = `{ "GUID": "${GUID}", "Public.${mod}": "${RawData.Value}" }`;
             const updateDocValue  = JSON.parse(jsonString);
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
@@ -311,6 +312,7 @@ async function runSavePublic(req, res, GUID, mod, auth) {
         log("AUTH ERROR: " + req.url, "warn");
     }
 };
+
 
 module.exports = router;
 
