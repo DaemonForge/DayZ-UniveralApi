@@ -179,6 +179,8 @@ class UniversalApi extends Managed {
 	
 	//Stuff that you don't need to worry about :P
 	
+	protected bool m_IsServer = false;
+	
 	protected int m_CallId = 0;
 	protected int m_AuthRetries = 0;
 	
@@ -254,12 +256,16 @@ class UniversalApi extends Managed {
 	
 	
 	void ~UniversalApi(){
-		if (GetGame() && GetGame().IsServer() && UAPI_Init){
+		if (m_IsServer && UAPI_Init){
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.CheckAndRenewQRandom);
 		}
 	}
 	
 	void Init(){
+		#ifdef NO_GUI
+			Print("[UAPI] Detected Server");
+			m_IsServer = true;
+		#endif
 		if (!UAPI_Init){
 			Print("[UAPI] First Init");
 			UAPI_Init = true;
@@ -267,7 +273,7 @@ class UniversalApi extends Managed {
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestQnAConfig", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestRetry", this, SingeplayerExecutionType.Both );
-			if(GetGame().IsServer()){
+			if (m_IsServer){
 				int cid = UApi().api().Status(this, "CBStatusCheck");
 				CheckAndRenewQRandom();
 				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.CheckAndRenewQRandom, 10 * 60 * 1000, true);
@@ -315,7 +321,7 @@ class UniversalApi extends Managed {
 	}
 	
 	void RequestAuthToken(bool first = false){
-		if (!GetGame().IsServer()){
+		if (!m_IsServer){
 			GetRPCManager().SendRPC("UAPI", "RPCRequestAuthToken", new Param1<bool>(first), true);
 		}
 	}
@@ -360,7 +366,7 @@ class UniversalApi extends Managed {
 		Param1<bool> data; 
 		if ( !ctx.Read( data ) ) return;
 		PlayerIdentity identity = PlayerIdentity.Cast(sender);
-		if (GetGame().IsServer() && identity){
+		if (m_IsServer && identity){
 			UApiConfig();
 			string authtoken = "";
 			if (UApiConfig().ServerAuth != "" && UApiConfig().ServerAuth != "null" ){
