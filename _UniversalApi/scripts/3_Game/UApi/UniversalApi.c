@@ -256,7 +256,7 @@ class UniversalApi extends Managed {
 	
 	
 	void ~UniversalApi(){
-		if (m_IsServer && UAPI_Init){
+		if (m_IsServer && UAPI_Init && GetGame()f){
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.CheckAndRenewQRandom);
 		}
 	}
