@@ -5,12 +5,13 @@ static const int LOG_DEBUG = 3;
 
 class UApiLog extends LoggerBase {
 	override static void CreateInstance(){
+		m_type = "UAPI";
 		m_LoggerBaseInstance = new LoggerBaseInstance("UAPI");
 	}
 }
 
 class LoggerBase extends Managed {
-		
+	protected static string m_type = "";
 	protected static ref LoggerBaseInstance m_LoggerBaseInstance;
 	
 	static void CreateInstance(){

@@ -9,8 +9,8 @@ class UUtil extends Managed {
 	static string GetSteamId(){
 		DayZPlayer player;
 		if (GetGame() && GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
-			return GetUserManager().GetTitleInitiator().GetUid();
-		} else if (GetGame() && GetGame().IsClient() && Class.CastTo(player, GetPlayer()) && player.GetIdentity() && player.GetIdentity().GetPlainId() != "" ){
+			return GetGame().GetUserManager().GetTitleInitiator().GetUid();
+		} else if (GetGame() && GetGame().IsClient() && Class.CastTo(player, GetGame().GetPlayer()) && player.GetIdentity() && player.GetIdentity().GetPlainId() != "" ){
 			return player.GetIdentity().GetPlainId();
 		} 
 		return "";
@@ -46,7 +46,7 @@ class UUtil extends Managed {
 		TStringArray Chars = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","0","1","2","3","4","5","6","7","8","9"};
 		string id = "";
 		for (int i = 0; i <= number; i++){
-			int idx = Math.QRandomInt(0,Chars.Count()-1);
+			int idx = Math.QRandomInt(0,(Chars.Count() - 1));
 			id = id + Chars.Get(idx);
 		}
 		return id;
@@ -158,13 +158,13 @@ class UUtil extends Managed {
 	    return false;
 	}
 	
-	static string GetDateInt() {
+	static int GetDateInt() {
 		int yr, mth, day;
 		GetYearMonthDay(yr, mth, day);
 		int count = day;
 		for (int i = 0; i < mth; i++){
-			count = count + mth[i];
-			if (IsLeapYear(yr) && i = 1){
+			count = count + DaysInMonth[i];
+			if (IsLeapYear(yr) && i == 1){
 				count++;
 			}
 		}
@@ -172,7 +172,7 @@ class UUtil extends Managed {
 		return count;
 	}
 	
-	static string GetUnixDateInt() {
+	static int GetUnixDateInt() {
 		int hr, min, sec;
 		GetHourMinuteSecond(hr, min, sec);
 		return (GetDateInt() * 86400) + (hr * 3600) + (min * 60) + sec;

@@ -1,5 +1,5 @@
 modded class LoggerBaseInstance extends Managed {
-	override protected SendToApi(string jsonString){
+	override protected void SendToApi(string jsonString){
 		UApi().Rest().Log(jsonString);
 	}
 }
