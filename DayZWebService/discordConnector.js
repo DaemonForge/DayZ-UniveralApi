@@ -89,17 +89,25 @@ router.get('/:id', (req, res) => {
     if (LoginTemplate === undefined) LoadLoginTemplate();
     if (ErrorTemplate === undefined) LoadErrorTemplate();
     let id = req.params.id;
+    let GUID = NormalizeToGUID(id);
     if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined )
         res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}));
-    else if (id.match(/[1-9][0-9]{16,16}/)) 
-        res.send(render(LoginTemplate, {SteamId: id, Login_URL: `/discord/login/${id}`}));
-    else
+    else if (id.match(/[1-9][0-9]{16,16}/)) {
+        SendLoginPage(res,id,GUID)
+    } else
         res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}));
 });
 router.get('/login/:id', (req, res) => {
-   RenderLogin(req, res);
+    let id = req.params.id;
+    let GUID = NormalizeToGUID(id);
+   RenderLogin(req, res, GUID);
 });
 
+async function SendLoginPage(res, id, guid){
+    let userObj = await GetDiscordObj(guid);
+    res.send(render(LoginTemplate, {SteamId: id, Login_URL: `/discord/login/${id}`, Connected: (userObj !== undefined)}));
+    
+}
 
 
 /*
@@ -378,11 +386,14 @@ router.post('/Channel/Messages/:id', (req, res) => {
 
 
 
-async function RenderLogin(req, res){
+async function RenderLogin(req, res, guid){
     if (ErrorTemplate === undefined) LoadErrorTemplate();
+    let userObj = await GetDiscordObj(guid);
     let id = req.params.id;
     let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    
+    if (userObj !== undefined && (global.config.Discord?.AllowToReRegister !== true) === false){
+        return res.send(render(ErrorTemplate, {TheError: "Trying to connect to a Steam ID that already has a Discord connected.", Type: "AlreadyLinked"}))
+    }
 
     let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
     if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined ){
