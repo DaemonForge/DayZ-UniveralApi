@@ -274,7 +274,7 @@ class UniversalApi extends Managed {
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
 			GetRPCManager().AddRPC( "UAPI", "RPCRequestRetry", this, SingeplayerExecutionType.Both );
 			if (m_IsServer){
-				int cid = UApi().api().Status(this, "CBStatusCheck");
+				UApi().api().Status(this, "CBStatusCheck");
 				CheckAndRenewQRandom();
 				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.CheckAndRenewQRandom, 10 * 60 * 1000, true);
 			}
@@ -292,16 +292,7 @@ class UniversalApi extends Managed {
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnTokenReceived);
 	}
 	
-	protected void UpdateAllAuthTokens(){
-		this.ds().UpdateAuthToken();
-		this.db(PLAYER_DB).UpdateAuthToken();
-		this.db(OBJECT_DB).UpdateAuthToken();
-		this.globals().UpdateAuthToken();
-		this.api().UpdateAuthToken();
-	}
-	
 	protected void OnTokenReceived(){
-		UpdateAllAuthTokens();
 		UApi().api().Status(this, "CBStatusCheck");
 		if (m_UniversalApiConfig.QnAEnabled){
 			GetRPCManager().SendRPC("UAPI", "RPCRequestQnAConfig", new Param1<UApiQnAMakerServerAnswers>(NULL), true);
@@ -313,8 +304,7 @@ class UniversalApi extends Managed {
 	}
 	
 	
-	void RPCRequestRetry( CallType type, ParamsReadContext ctx, PlayerIdentity sender, ref Object target )
-	{
+	void RPCRequestRetry( CallType type, ParamsReadContext ctx, PlayerIdentity sender, ref Object target ) {
 		if (GetGame().IsClient() && ++m_AuthRetries <= 20){
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestAuthToken, m_AuthRetries * 2200, false, true);
 		}
@@ -412,8 +402,12 @@ class UniversalApi extends Managed {
 	void AuthError(string guid){
 		Print("[UAPI] Auth Error for " + guid);
 		//If Auth Token Failed just try again in 3 minutes 
-		if (guid != ""){
+		if (guid != "" && IsOnline()){
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuth, 180 * 1000, false, guid);
+		} 
+		if (!m_IsServer && !IsOnline()){
+			UApi().api().Status(this, "CBStatusCheck");
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.AuthError, 300 * 1000, false, guid);
 		}
 	}
 	
@@ -491,6 +485,7 @@ class UniversalApi extends Managed {
 				Print("[UAPI] WebService Online Version: " + data.Version + " Mod Version: " + UAPI_VERSION);
 			}
 			if (data.Error == "noauth"){
+				m_UApiOnline = false;
 				Print("[UAPI] Auth Key is not vaild");
 			}
 			if (data.Error == "noerror" && data.Discord == "Enabled"){
