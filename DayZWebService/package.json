@@ -15,7 +15,6 @@
     "@tensorflow/tfjs": "^3.11.0",
     "body-parser": "^1.19.0",
     "crypto": "^1.0.1",
-    "crypto-convert": "^1.0.4",
     "discord.js": "^13.1.0",
     "ejs": "^3.1.6",
     "ejs-lint": "^1.2.1",
