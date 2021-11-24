@@ -46,6 +46,7 @@ const RouterTranslate = require("./TranslateConnector");
 const RouterServerQuery = require("./serverQuery");
 const RouterToxicity = require("./toxicityConnector");
 const RouterTrueRandom = require("./TrueRandom");
+const RouterCrypto = require("./crypto");
 
 var RateLimit = require('express-rate-limit');
 var limiter = new RateLimit({
@@ -104,6 +105,7 @@ function startWebServer() {
   webapp.use('/ServerQuery', RouterServerQuery);
   webapp.use('/Toxicity', RouterToxicity);
   webapp.use('/Random', RouterTrueRandom);
+  webapp.use('/Crypto', RouterCrypto);
 
   webapp.use('/', (req,res)=>{
     if (req.url != '/'){

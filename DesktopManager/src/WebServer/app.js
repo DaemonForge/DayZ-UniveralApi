@@ -46,12 +46,13 @@ const RouterTranslate = require("./TranslateConnector");
 const RouterServerQuery = require("./serverQuery");
 const RouterToxicity = require("./toxicityConnector");
 const RouterTrueRandom = require("./TrueRandom");
+const RouterCrypto = require("./crypto");
 
 var RateLimit = require('express-rate-limit');
 var limiter = new RateLimit({
   windowMs: 10*1000, // 50 req/sec
   max: global.config.RequestLimit || 500,
-  message:  '{ "Status": "Error", "Error": "RateLimited" }',
+  message:  `{ "Status": "Error", "Error": "RateLimited" }`,
   keyGenerator: function (req /*, res*/) {
     return req.headers['CF-Connecting-IP'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip;
   },
@@ -107,6 +108,7 @@ function startWebServer() {
   webapp.use('/ServerQuery', RouterServerQuery);
   webapp.use('/Toxicity', RouterToxicity);
   webapp.use('/Random', RouterTrueRandom);
+  webapp.use('/Crypto', RouterCrypto);
 
   webapp.use('/', (req,res)=>{
     if (req.url != '/'){
