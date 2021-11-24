@@ -10,7 +10,7 @@ class UApiUpdateData extends UApiObject_Base {
 	}
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiUpdateData>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiUpdateData>.ToString(this);
 		return jsonString;
 	}
 	

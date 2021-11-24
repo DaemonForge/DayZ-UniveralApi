@@ -16,7 +16,7 @@ class UApiCreateChannelObject extends UApiObject_Base{
 	
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiCreateChannelObject>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiCreateChannelObject>.ToString(this);
 		return jsonString;
 	}
 
@@ -33,7 +33,7 @@ class UApiUpdateChannelObject extends UApiObject_Base{
 	}
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiUpdateChannelObject>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiUpdateChannelObject>.ToString(this);
 		return jsonString;
 	}
 }
