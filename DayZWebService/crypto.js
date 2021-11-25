@@ -52,7 +52,7 @@ async function DoBulkCryptoConvert(res, req, auth, from){
             let rValues = {};
             value.forEach(element => {
                 let v;
-                if ((RawData.From !== undefined)){
+                if (RawData.From !== undefined){
                     v = GetRate(element,from);
                 } else {
                     v = GetRate(from,element);
@@ -72,6 +72,7 @@ async function DoBulkCryptoConvert(res, req, auth, from){
         log("AUTH ERROR: " + req.url, "warn");
     }
 }
+
 
 async function GetRate(from, to){
     if ((Date.now() - 4000) > LastCache){
@@ -98,27 +99,71 @@ async function GetRate(from, to){
     return rate2/rate1;
 }
 
-UpdateCache();
+
+
+let binance;
+let binanceIsPending = false;
+let coinconvert;
+let coinconvertIsPending = false;
+let currency;
+let currencyIsPending = false;
+const regex = /([A-Z]{2,5})(EUR)/im;
 async function UpdateCache(){
-    LastCache = Date.now();
-    const regex = /([A-Z]{3,4})(EUR)$/gm;
     try {
-        let binance = await (await fetch(`https://api.binance.com/api/v3/ticker/price`)).json();
+        if (!binanceIsPending){
+            binanceIsPending = true;
+            binance = (await fetch(`https://api.binance.com/api/v3/ticker/price`)).json().then(value => { 
+                binanceIsPending = false;
+                return value;
+            }).catch(err =>{
+                console.log(err);
+                log(`Error Getting data from Binance.com ${err}`);
+            });
+        }
+        if (!coinconvertIsPending){
+            coinconvertIsPending = true;
+            coinconvert = (await fetch(`https://api.coinconvert.net/ticker`)).json().then(value => { 
+                coinconvertIsPending = false;
+                return value;
+            }).catch(err =>{
+                console.log(err);
+                log(`Error Getting data from Binance.com ${err}`);
+            });
+        }
+        if (!currencyIsPending){
+            currencyIsPending = true;
+            currency = (await fetch(`https://open.er-api.com/v6/latest/EUR`)).json().then(value => { 
+                currencyIsPending = false;
+                return value;
+            }).catch(err =>{
+                console.log(err);
+                log(`Error Getting data from Binance.com ${err}`);
+            });
+        }
+    } catch (err){
+        console.log(err);
+    }
+    try {
+        binance = await binance;
+        //console.log(binance);
         binance.forEach(element => { 
             let key = regex.exec(element.symbol);
             if (key){
+                //console.log(key[1]);
                 CryptoCache[`${key[1]}`]= 1 / (element.price * 1);
             }
         });
+        LastCache = Date.now();
     } catch (err) {
         log(`Error Getting data from Binance.com ${err}`);
     } 
     try {
-        let coinconvert = await (await fetch(`https://api.coinconvert.net/ticker`)).json();
+        coinconvert = await coinconvert;
         let crypto = coinconvert.crypto;
         for (const [key, value] of Object.entries(crypto)) {
             let mkey = regex.exec(key);
             if (mkey){
+                //console.log(mkey[1]);
                 CryptoCache[`${mkey[1]}`]= 1 / (value * 1);
             }
         }
@@ -126,17 +171,21 @@ async function UpdateCache(){
         for (const [key, value] of Object.entries(cur)) {
             CurrencyCache[`${key}`]= value * 1;
         }
+        LastCache = Date.now();
     } catch(err) {
         log(`Error Getting data from CoinConvert.net ${err}`);
     }
     try {
-        let currency = await (await fetch(`https://open.er-api.com/v6/latest/EUR`)).json();
+        currency = await currency;
         for (const [key, value] of Object.entries(currency.rates)) {
             CurrencyCache[`${key}`]= value * 1;
         }
+        LastCache = Date.now();
     } catch(err) {
         log(`Error Getting data from open.er-api.com ${err}`);
     }
+    log(`Crypto currencys cache updated for ${Object.keys(CryptoCache).length} currencys`);
+    //console.log(CryptoCache);
     return;
 }
 

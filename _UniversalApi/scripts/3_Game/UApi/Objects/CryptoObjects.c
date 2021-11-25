@@ -35,8 +35,10 @@ class UApiCryptoConvertResult extends StatusObject{
 }
 
 class UApiCryptoResults extends StatusObject{
-	map<string,float> Values;
-	float Get(string key){
-		return Values.Get(key);
+	autoptr map<string,float> Values;
+	map<string,float> Get(){
+		autoptr map<string,float> rValue = new  map<string,float>;
+		rValue.Copy(Values);
+		return rValue;
 	}
 }
