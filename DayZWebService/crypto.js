@@ -50,13 +50,15 @@ async function DoBulkCryptoConvert(res, req, auth, from){
             let RawData = req.body; 
             let value = RawData.From || RawData.To;
             let rValues = {};
+            let skiplogs = false;
             value.forEach(element => {
                 let v;
                 if (RawData.From !== undefined){
-                    v = GetRate(element,from);
+                    v = GetRate(element,from,skiplogs);
                 } else {
-                    v = GetRate(from,element);
+                    v = GetRate(from,element,skiplogs);
                 }
+                skiplogs = true;
                 rValues[element] = v;
             });
             let rvalues = await promisedProperties(rValues)
@@ -74,11 +76,11 @@ async function DoBulkCryptoConvert(res, req, auth, from){
 }
 
 
-async function GetRate(from, to){
+async function GetRate(from, to, skiplog = false){
     if ((Date.now() - 4000) > LastCache){
-        await UpdateCache();
-    } else  if ((Date.now() - 2500) > LastCache){
-        UpdateCache();
+        await UpdateCache(skiplog);
+    } else  if ((Date.now() - 2000) > LastCache){
+        UpdateCache(skiplog);
     } 
     let rate1 = -1;
     let rate2 = -1;
@@ -108,7 +110,7 @@ let coinconvertIsPending = false;
 let currency;
 let currencyIsPending = false;
 const regex = /([A-Z]{2,5})(EUR)/im;
-async function UpdateCache(){
+async function UpdateCache(skiplog = false){
     try {
         if (!binanceIsPending){
             binanceIsPending = true;
@@ -144,8 +146,8 @@ async function UpdateCache(){
         console.log(err);
     }
     try {
+        while (binance === undefined) await wait(9);
         binance = await binance;
-        //console.log(binance);
         binance.forEach(element => { 
             let key = regex.exec(element.symbol);
             if (key){
@@ -153,11 +155,11 @@ async function UpdateCache(){
                 CryptoCache[`${key[1]}`]= 1 / (element.price * 1);
             }
         });
-        LastCache = Date.now();
     } catch (err) {
         log(`Error Getting data from Binance.com ${err}`);
     } 
     try {
+        while (coinconvert === undefined) await wait(9);
         coinconvert = await coinconvert;
         let crypto = coinconvert.crypto;
         for (const [key, value] of Object.entries(crypto)) {
@@ -171,23 +173,26 @@ async function UpdateCache(){
         for (const [key, value] of Object.entries(cur)) {
             CurrencyCache[`${key}`]= value * 1;
         }
-        LastCache = Date.now();
     } catch(err) {
         log(`Error Getting data from CoinConvert.net ${err}`);
     }
     try {
+        while (currency === undefined) await wait(9);
         currency = await currency;
         for (const [key, value] of Object.entries(currency.rates)) {
             CurrencyCache[`${key}`]= value * 1;
         }
-        LastCache = Date.now();
     } catch(err) {
         log(`Error Getting data from open.er-api.com ${err}`);
     }
-    log(`Crypto currencys cache updated for ${Object.keys(CryptoCache).length} currencys`);
-    //console.log(CryptoCache);
+    if (!skiplog) log(`Crypto currencys cache updated for ${Object.keys(CryptoCache).length} currencys`);
+    LastCache = Date.now();
     return;
 }
-
+async function wait(ms) {
+    return new Promise(resolve => {
+      setTimeout(resolve, ms);
+    });
+  }
 
 module.exports = router;
