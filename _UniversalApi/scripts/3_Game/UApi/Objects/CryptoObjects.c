@@ -32,7 +32,7 @@ class UApiCryptoConvertResult extends StatusObject{
 	float Get(){
 		return Value;
 	}
-}
+} 
 
 class UApiCryptoResults extends StatusObject{
 	autoptr map<string,float> Values;

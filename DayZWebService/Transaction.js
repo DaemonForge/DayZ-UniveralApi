@@ -66,7 +66,7 @@ async function RunTransaction(data, res, mod, id, COLL){
         let stringData = "{ \"$inc\": { \""+Element+"\": " + data.Value + " } }";
         let options = { upsert: false };
         let Results = await collection.updateOne(query, JSON.parse(stringData), options);
-        if (Results.result.ok == 1 && Results.result.n > 0){
+        if (Results.matchedCount >= 1 || Results.upsertedCount >= 1){
             let Value = await collection.distinct(Element, query);
             log("Transaction " + mod + " id " + id + " incermented " + Element + " by " + data.Value + " now " + Value[0], "info");
             res.json({Status: "Success", ID: id, Mod: mod,  Value: Value[0], Element: data.Element})
@@ -113,7 +113,7 @@ async function RunValidatedTransaction(data, res, mod, id, COLL){
             if (NewValue <= data.Max && NewValue >= data.Min){
                 let options = { upsert: false };
                 let Results = await collection.updateOne(query, JSON.parse(stringData), options);
-                if (Results.result.ok == 1 && Results.result.n > 0){
+                if (Results.matchedCount >= 1 || Results.upsertedCount >= 1){
                     let Value = await collection.distinct(Element, query);
                     log("Transaction " + mod + " id " + id + " incermented " + Element + " by " + data.Value + " now " + Value[0], "info");
                     res.json({Status: "Success", Error: "", ID: id, Mod: mod,  Value: Value[0], Element: data.Element})

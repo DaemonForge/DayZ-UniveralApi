@@ -47,6 +47,9 @@ async function DoCryptoConvert(res, req, auth, from, to, amount){
 async function DoBulkCryptoConvert(res, req, auth, from){
     if (CheckServerAuth(auth) || (await CheckAuth(auth))){
         try {
+            if ((Date.now() - 4000) > LastCache){
+                await UpdateCache();
+            }
             let RawData = req.body; 
             let value = RawData.From || RawData.To;
             let rValues = {};

@@ -531,7 +531,7 @@ async function HandleCallBack(req, res){
                 const updateDoc = { $set: data, };
                 const result = await collection.updateOne(query, updateDoc, options);
 
-                if (result.result.ok == 1){
+                if ( result.matchedCount === 1 || result.upsertedCount === 1 ){
                     log("Player: " + guid + " Connected to Discord ID: " + discordjson.id);
                     res.send(render(SuccessTemplate, {DiscordId: discordjson.id, DiscordUsername: discordjson.username, DiscordAvatar: discordjson.avatar, DiscordDiscriminator: discordjson.discriminator, SteamId: discordjson.steamid}))
                 } else {
