@@ -8,6 +8,7 @@ modded class PlayerBase extends ManBase{
 	int UGetPlayerBalance(string key){
 		int PlayerBalance = 0;
 		if (!UCurrency.GetCurrency(key) || UCurrency.GetCurrency(key).Count() < 1){
+			UCurrency.UDebug();
 			UApiLog.Err("Currency key: " + key + " is not configured");
 			return 0;
 		}
@@ -18,6 +19,11 @@ modded class PlayerBase extends ManBase{
 		for (int i = 0; i < inventory.Count(); i++){
 			if (Class.CastTo(item, inventory.Get(i))){
 				for (int j = 0; j < UCurrency.GetCurrency(key).Count(); j++){
+					if (!UCurrency.GetCurrency(key).Get(j)){
+						UApiLog.Err("Currency key: " + key + " idx " + j + " is NULL");
+						UCurrency.UDebug();
+						break;
+					}
 					if (item.GetType() == UCurrency.GetCurrency(key).Get(j).TypeClass() && UCanAcceptCurrency(key, item)){
 						PlayerBalance += UCurrentQuantity(item) * UCurrency.GetCurrency(key).Get(j).Value();
 					}

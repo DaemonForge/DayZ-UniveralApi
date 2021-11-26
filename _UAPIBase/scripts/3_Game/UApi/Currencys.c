@@ -18,10 +18,10 @@ class UCurrencyValue extends Managed {
 
 
 
-typedef array<ref UCurrencyValue> UCurrencyBase;
+typedef array<autoptr UCurrencyValue> UCurrencyBase;
 
 class UCurrency extends UCurrencyBase{
-	protected static ref map<string, ref UCurrency> m_UCurrencysMap = new map<string, ref UCurrency>;
+	protected static autoptr map<string, autoptr UCurrency> m_UCurrencysMap = new map<string, autoptr UCurrency>;
 	
 	static UCurrency GetCurrency(string key){
 		return m_UCurrencysMap.Get(key);
@@ -45,7 +45,7 @@ class UCurrency extends UCurrencyBase{
 	static UCurrency InsertNew(string key, UCurrency values){
 		autoptr UCurrency uCurrency = new UCurrency;
 		for (int i = 0; i < values.Count(); i++){
-			uCurrency.Insert(new UCurrencyValue(values.Get(i).TypeClass(), values.Get(i).Value()));
+			uCurrency.Insert( new UCurrencyValue(values.Get(i).TypeClass(), values.Get(i).Value()) );
 		}
 		m_UCurrencysMap.Set(key, uCurrency);
 		return uCurrency;
@@ -58,6 +58,17 @@ class UCurrency extends UCurrencyBase{
 		return 0;
 	}
 	
+	static void UDebug(){
+		Print("[UAPI] UCurrency Debug Start ---------");
+		for (int i = 0; i < m_UCurrencysMap.Count(); i++){
+			Print("- - - - - - - - - - -");
+			Print(m_UCurrencysMap.GetKey(i));
+			Print(m_UCurrencysMap.GetElement(i));
+			m_UCurrencysMap.GetElement(i).Debug();
+			Print("- - - - - - - - - - -");
+		}
+		Print("[UAPI] UCurrency Debug End  ---------");
+	}
 	
 	protected bool m_IsSorted = false;
 	protected bool m_CanUseRuined = true;
@@ -72,26 +83,29 @@ class UCurrency extends UCurrencyBase{
 	
 	void SortCurrency(){
 		if (m_IsSorted) return;
+		array<autoptr UCurrencyValue> StartingValues =  new array<autoptr UCurrencyValue>;
+		array<autoptr UCurrencyValue> SortedMoneyValues = new array<autoptr UCurrencyValue>;
 		
-		array<UCurrencyValue> StartingValues =  new array<UCurrencyValue>;
 		for (int h = 0; h < Count(); h++){
 			StartingValues.Insert(Get(h));
 		}
-		array<UCurrencyValue> SortedMoneyValues = new array<UCurrencyValue>;
 		while (StartingValues.Count() > 0){
-			autoptr UCurrencyValue HighestValue = StartingValues.Get(0);
+			UCurrencyValue HighestValue = StartingValues.Get(0);
 			for (int i = 1; i < StartingValues.Count(); i++){
 				if (StartingValues.Get(i).Value() > HighestValue.Value()){
 					HighestValue = StartingValues.Get(i);
 				}
 			}
-			StartingValues.RemoveItem(HighestValue);
 			SortedMoneyValues.Insert(HighestValue);
+			StartingValues.RemoveItem(HighestValue);
 		}
 		if (StartingValues.Count() == 1){
 			SortedMoneyValues.Insert(StartingValues.Get(0));
 		}
-		Copy(SortedMoneyValues);
+		Clear();
+		for (int j = 0; j < SortedMoneyValues.Count(); j++){
+			Insert(SortedMoneyValues.Get(j));
+		}
 		m_IsSorted = true;
 	}
 	
