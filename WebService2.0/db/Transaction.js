@@ -15,16 +15,16 @@ router.post('/:id/:mod', (req, res)=>{
     if (collection === "Players") {
         GUID = NormalizeToGUID(req.params.id);
     }
-    Transaction(req, res, req.params.mod, GUID, req.headers['auth-key'], collection);
+    Transaction(req, res, req.params.mod, GUID, collection);
 });
 
 
-async function Transaction(req, res, mod, id, auth, COLL){
+async function Transaction(req, res, mod, id, COLL){
     let RawData = req.body;
     if (RawData.Min !== undefined && RawData.Max !== undefined && RawData.Min !== RawData.Max) {
-        RunValidatedTransaction(RawData,res,mod,COLL)
+        RunValidatedTransaction(RawData,res,mod,id,COLL)
     } else {
-        RunTransaction(RawData, res, mod, COLL)
+        RunTransaction(RawData, res, mod,id, COLL)
     }
 }
 
@@ -54,14 +54,17 @@ async function RunTransaction(data, res, mod, id, COLL){
             let Value = await collection.distinct(Element, query);
             log("Transaction " + mod + " id " + id + " incermented " + Element + " by " + data.Value + " now " + Value[0], "info");
             res.json({Status: "Success", ID: id, Mod: mod,  Value: Value[0], Element: data.Element})
+            IncermentAPICount(req.ClientInfo.ClientId);
         } else {
             log("Error in Transaction:  " + mod + " id " + id + " for " + COLL + " error: Invaild ID", "warn");
             res.json({Status: "NotFound", ID: id, Mod: mod,  Value: 0, Element: data.Element})
+            IncermentAPICount(req.ClientInfo.ClientId);
         }
     }catch(err){
         log("Error in Transaction:  " + mod + " id " + id + " for " + COLL + " error: " + err, "warn");
         res.status(500);
         res.json({Status: "Error", ID: id, Mod: mod,  Value: 0, Element: data.Element });
+        IncermentAPICount(req.ClientInfo.ClientId);
     }finally{
         // Ensures that the client will close when you finish/error
         await client.close();

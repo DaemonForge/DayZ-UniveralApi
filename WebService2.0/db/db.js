@@ -3,6 +3,7 @@ const { MongoClient } = require("mongodb");
 const {isArray, isObject, isEmpty,HandleBadAuthkey, NormalizeToGUID,IncermentAPICount} = require('../utils')
 const log = require("../log");
 
+const {runGetPublic,runSavePublic}= require("./public");
 
 const queryHandler = require("./Query");
 const TransactionHandler = require("./Transaction");
@@ -32,36 +33,36 @@ router.post('/Update/:GUID/:mod', (req, res)=>{
 
 router.post('/PublicLoad/:GUID/:mod', (req, res)=>{
     let GUID = NormalizeToGUID(req.params.GUID);
-    runGetPublic(req, res, GUID, req.params.mod, req.headers['auth-key']);
+    runGetPublic(req, res, GUID, req.params.mod, req.ClientInfo.DB,req.Collection);
 });
+
 
 router.post('/PublicSave/:GUID/:mod', (req, res)=>{
     if (req.IsServer !== true) return HandleBadAuthkey(res);
     let GUID = NormalizeToGUID(req.params.GUID);
-    runSavePublic(req, res, GUID, req.params.mod, req.headers['auth-key']);
+    runSavePublic(req, res, GUID, req.params.mod);
 });
 
 
 function ExtractDataBase (req, res, next) {
-    req.Collection = GetCollection(req.url);
+    req.Collection = GetCollection(req.baseUrl);
+    if (req.Collection === ""){
+        res.status(404);
+        res.json({ Status: "Error", Error: "Invalid Collection"});
+        return;
+    }
     next();
   }
 
 
   function GetCollection(URL){
-      if (URL.match(/$\/Player\//gi)){
+      if (URL.match(/^\/Player/gi)){
           return "Players"
       }
-      if (URL.match(/$\/Players\//gi)){
-          return "Players"
-      }
-      if (URL.includes(/$\/Object\//gi)){
+      if (URL.match(/^\/Object/gi)){
           return "Objects"
       }
-      if (URL.includes(/$\/Objects\//gi)){
-          return "Objects"
-      }
-      if (URL.includes(/$\/Globals\//gi)){
+      if (URL.match(/^\/Globals/gi)){
           return "Globals"
       }
       return "";
@@ -229,96 +230,6 @@ async function runUpdate(req, res, GUID, mod, auth) {
         }catch(err){
             res.status(203);
             res.json({ Status: "Error", Element: RawData.Element, Mod: mod, ID: GUID});
-            log("ERROR: " + err, "warn");
-        }finally{
-            // Ensures that the client will close when you finish/error
-            await client.close();
-        }
-};
-
-async function runGetPublic(req, res, GUID, mod, auth) {
-    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
-    try{ 
-        await client.connect();
-        // Connect the client to the server
-        const db = client.db(req.ClientInfo.DB);
-        let collection = db.collection(req.Collection);
-        let query = { GUID: GUID };
-        let results = collection.find(query);
-        let RawData = req.body;
-        
-        if ((await results.count()) == 0){
-            if (auth !== "null" && req.IsServer){
-                log("Can't find Player with ID " + GUID + " Creating it now");
-                const doc  = JSON.parse(`{ "GUID": "${GUID}", "Public": { "${mod}": "${RawData.Value}" } }`);
-                await collection.insertOne(doc);
-            } else {
-                 log("Can't find Player with ID " + GUID, "warn");
-            }
-            res.status(201);
-            res.json(RawData);
-        } else {
-            let dataarr = await results.toArray(); 
-            let data = dataarr[0]; 
-            let sent = false;
-            if (data !== undefined && data.Public !== undefined)
-            for (const [key, value] of Object.entries(data.Public)) {
-                if(key === mod){
-                    sent = true;
-                    res.json({ "Value": value });
-                    log("Retrieving "+ mod + " Data for GUID: " + GUID);
-                }
-            }
-            if (sent !== true){
-                if (req.IsServer){
-                    const updateDocValue  = JSON.parse(`{ "Public.${mod}": "${RawData.Value}" }`);
-                    const updateDoc = { $set: updateDocValue, };
-                    const options = { upsert: false };
-                    await collection.updateOne(query, updateDoc, options);
-                    log("Can't find "+ mod + " Data for GUID: " + GUID +  " Creating it now");
-                } else {
-                    log("Can't find "+ mod + " Data for GUID: " + GUID, "warn");
-                }
-                res.status(203);
-                res.json(RawData);
-            }
-        }
-    }catch(err){
-        res.status(203);
-        res.json({Value: "Error"});
-        log("ERROR: " + err, "warn");
-    }finally{
-        // Ensures that the client will close when you finish/error
-        client.close();
-    }
-};
-async function runSavePublic(req, res, GUID, mod, auth) {
-        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
-        try{
-            await client.connect();
-
-            let RawData = req.body;
-            // Connect the client to the server
-            const db = client.db(req.ClientInfo.DB);
-            let collection = db.collection(req.Collection);
-            let query = { GUID: GUID };
-            const options = { upsert: true };
-            const jsonString = `{ "GUID": "${GUID}", "Public.${mod}": "${RawData.Value}" }`;
-            const updateDocValue  = JSON.parse(jsonString);
-            const updateDoc = { $set: updateDocValue, };
-            const result = await collection.updateOne(query, updateDoc, options);
-            if ( result.matchedCount === 1 || result.upsertedCount === 1 ){
-                log("Updated "+ mod + " Data for GUID: " + GUID);
-                res.status(200);
-                res.json(RawData);
-            } else {
-                log("Error with Updating "+ mod + " Data for GUID: " + GUID, "warn");
-                res.status(203);
-                res.json(RawData);
-            }
-        }catch(err){
-            res.status(203);
-            res.json(req.body);
             log("ERROR: " + err, "warn");
         }finally{
             // Ensures that the client will close when you finish/error

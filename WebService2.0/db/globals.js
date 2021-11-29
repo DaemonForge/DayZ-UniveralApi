@@ -34,7 +34,7 @@ async function runGet(req, res, mod) {
             // Connect the client to the server
             await client.connect();
             
-            const db = client.db(global.config.DB);
+            const db = client.db(req.ClientInfo.DB);
             let collection = db.collection("Globals");
             let query = { Mod: mod };
             let results = collection.find(query);
@@ -70,7 +70,7 @@ async function runSave(req, res, mod) {
         try{
             await client.connect();
             // Connect the client to the server
-            const db = client.db(global.config.DB);
+            const db = client.db(req.ClientInfo.DB);
             let collection = db.collection("Globals");
             let query = { Mod: mod };
             const options = { upsert: true };
@@ -107,7 +107,7 @@ async function runTransaction(req, res, mod){
             // Connect the client to the server
             await client.connect();
             
-            const db = client.db(global.config.DB);
+            const db = client.db(req.ClientInfo.DB);
             let collection = db.collection("Globals");
             let  query = { Mod: mod };
             let Element =  "Data." + RawData.Element;
@@ -152,7 +152,7 @@ async function runUpdate(req, res, mod) {
                 StringData = RawData.Value;
             }
             // Connect the client to the server
-            const db = client.db(global.config.DB);
+            const db = client.db(req.ClientInfo.DB);
             let collection = db.collection("Globals");
             let query = { Mod: mod };
             const options = { upsert: false };

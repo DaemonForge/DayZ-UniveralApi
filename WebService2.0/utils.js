@@ -27,8 +27,32 @@ module.exports ={
     GenerateCerts,
     promisedProperties,
     HandleBadAuthkey,
-    IncermentAPICount
+    IncermentAPICount,
+    GetClientInfoById
 }
+
+async function GetClientInfoById(clientId){
+  const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+  let obj;
+  try {
+    await client.connect();
+    const db = client.db(global.config.MasterDB);
+    let collection = db.collection("Clients");
+    let query = { ClientId: clientId, Status: "active" };
+    let results = collection.find(query);
+    let dataarr = await results.toArray(); 
+    if ( dataarr[0] !== undefined) {
+      obj = dataarr[0];
+    }
+  } catch (err){
+    console.log(err);
+  } finally{
+    client.close();
+    return obj;
+  }
+
+}
+
 
 async function IncermentAPICount(clientId){
   const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });

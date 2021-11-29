@@ -1,7 +1,7 @@
 const {sign, verify} = require('jsonwebtoken');
 const { MongoClient } = require("mongodb");
 const {createHash, Hash} = require('crypto');
-const { isArray ,IncermentAPICount} = require('./utils');
+const { isArray,GetClientInfoById ,IncermentAPICount} = require('./utils');
 module.exports ={
     ValidateAuth,
     makeAuthToken
@@ -9,27 +9,22 @@ module.exports ={
 
 
 async  function ValidateAuth (req, res, next) {
+  //console.log(`${req.method} | ${req.url}`);
     if (req.url.match(/^\/Discord/gi) && req.method === "GET"){
       next();
       return;
     }
-    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
     req.KeyType = "null";
     req.IsServer = false;
     if (TestJWT(req.headers['auth-key'])){
       let data = GetDecode(req.headers['auth-key']);
-      await client.connect();
       data = await data;
       if (data.Passed && data.Data.C !== undefined){
-        const db = client.db(global.config.MasterDB);
-        let collection = db.collection("Clients");
-        let query = { ClientId: data.Data.C, Status: "active" };
-        let results = collection.find(query);
-        let dataarr = await results.toArray(); 
-        if ( dataarr[0] !== undefined) {
-            let hasAuth = await CheckIsAuthStored(data.Data.GUID, dataarr[0].DB, req.headers['auth-key'])
+        let Cdata = await GetClientInfoById(data.Data.C);
+        if ( Cdata !== undefined) {
+            let hasAuth = await CheckIsAuthStored(data.Data.GUID, Cdata.DB, req.headers['auth-key'])
             if (hasAuth){
-              req.ClientInfo = dataarr[0];
+              req.ClientInfo = Cdata;
               req.KeyType = "client";
               req.GUID = data.Data.GUID;
               req.IsServer = false;
@@ -38,13 +33,21 @@ async  function ValidateAuth (req, res, next) {
         }
       }
     } else {
-        await client.connect();
-        const db = client.db(global.config.MasterDB);
-        let collection = db.collection("Clients");
-        let query = { APIKey: req.headers['auth-key'], Status: "active" };
-        let results = collection.find(query);
-        let dataarr = await results.toArray(); 
-        if (dataarr[0] !== undefined){
+        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+        let dataarr;
+        try {
+          await client.connect();
+          const db = client.db(global.config.MasterDB);
+          let collection = db.collection("Clients");
+          let query = { APIKey: req.headers['auth-key'], Status: "active" };
+          let results = collection.find(query);
+          dataarr = await results.toArray(); 
+        } catch(err){
+          console.log(err);
+        } finally{
+          client.close();
+        }
+        if (dataarr !== undefined && dataarr[0] !== undefined){
             req.ClientInfo = dataarr[0];
             req.KeyType = "server";
             req.IsServer = true;
@@ -53,11 +56,12 @@ async  function ValidateAuth (req, res, next) {
     }
     if (req.KeyType === "null" && (req.url.match(/^\/Status$/gi) || req.url.match(/^\/Discord\/Check\/[1-9][0-9]{16}$/gi)) ){
       next();
+    } else if (req.KeyType === "null" && req.url.match(/^\/[A-Za-z]{3,32}\/Player\/PublicLoad\/[A-Za-z_\-0-9]{42,45}\=\/[A-Za-z\_0-9]{1,128}$/g) ){
+      next();
     } else if (req.KeyType === "null") {
       res.status(401);
       res.json({Status: "Error", Error: `Invalid URL Or Auth`});
     }
-    await client.close();
   }
 
   function TestJWT(key){

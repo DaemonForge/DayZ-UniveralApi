@@ -37,6 +37,7 @@ const ServerQueryEndpoint = require('./apis/serverquery');
 const ToxicityEndpoint = require('./apis/toxicityConnector');
 const dbEndpoint = require('./db/db');
 const GlobalsEndpoint = require('./db/globals')
+const {publicLoad}= require("./db/public");
 
 const {isArray, CheckRecentVersion, CheckIndexes, ExtractAuthKey,GenerateCerts,GenerateLimiter} = require('./utils');
 
@@ -81,6 +82,7 @@ async function startWebServer() {
     webapp.use('/Status', StatusEndpoint);
     webapp.use('/Random',TrueRandomEndpoint)
     webapp.use('/Crypto', CryptoEndpoint);
+    webapp.post('/:ClientId/Player/PublicLoad/:GUID/:mod', publicLoad);
 
     webapp.use('/', (req,res)=>{
       if (req.url != '/'){
