@@ -473,6 +473,7 @@ class UniversalApi extends Managed {
 		LastRandomNumberRequestCall = -1;
 		if (status == UAPI_SUCCESS && data){
 			Math.AddQRandomNumber(data.Numbers);
+			Math.Randomize(Math.QRandom()); //Randomize the Vanilla Randomization a bit more.
 			return;
 		}
 		Print("[UAPI] Failed to update the Q Random Numbers");
