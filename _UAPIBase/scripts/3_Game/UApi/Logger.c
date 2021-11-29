@@ -4,9 +4,14 @@ static const int LOG_INFO = 2;
 static const int LOG_DEBUG = 3;
 
 class UApiLog extends LoggerBase {
+	protected static ref LoggerBaseInstance m_ULoggerBaseInstance;
 	override static void CreateInstance(){
 		m_type = "UAPI";
-		m_LoggerBaseInstance = new LoggerBaseInstance("UAPI");
+		m_ULoggerBaseInstance = new LoggerBaseInstance("UAPI");
+	}
+	override static LoggerBaseInstance GetInstance(){
+		if (!m_ULoggerBaseInstance){CreateInstance();}
+		return m_ULoggerBaseInstance;
 	}
 }
 
