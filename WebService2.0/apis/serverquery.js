@@ -1,15 +1,23 @@
-const { query } = require('gamedig');
+const {
+    query
+} = require('gamedig');
 
-const { Router } = require('express');
+const {
+    Router
+} = require('express');
 
 const log = require("../log");
-const {isArray,GenerateLimiter,IncermentAPICount} = require('../utils');
+const {
+    isArray,
+    GenerateLimiter,
+    IncermentAPICount
+} = require('../utils');
 
 
 const router = Router();
 
 
-router.use(GenerateLimiter(global.config.RequestLimitServerQuery || 200 ,5));
+router.use(GenerateLimiter(global.config.RequestLimitServerQuery || 200, 5));
 
 
 
@@ -39,23 +47,23 @@ router.use(GenerateLimiter(global.config.RequestLimitServerQuery || 200 ,5));
  *            }`
  * 
  */
-router.post('/Status/:ip/:port', (req, res)=>{
+router.post('/Status/:ip/:port', (req, res) => {
     GetServerStatus(req, res, req.params.ip, req.params.port, req.headers['auth-key']);
 });
-router.post('/:ip/:port', (req, res)=>{
+router.post('/:ip/:port', (req, res) => {
     GetServerStatus(req, res, req.params.ip, req.params.port, req.headers['auth-key']);
 });
 
 
 
-async function QueryServer(ip, port){
-    try{
-        let data = query( {
+async function QueryServer(ip, port) {
+    try {
+        let data = query({
             type: 'dayz',
             host: ip,
             port: port,
             requestRules: true
-        } ).then((state) => {
+        }).then((state) => {
             let keywords = state.raw.tags;
             return {
                 ip: state.connect.split(':')[0],
@@ -80,74 +88,83 @@ async function QueryServer(ip, port){
                 dlc_enabled: keywords.some(tag => tag.includes('isDLC')),
                 ping: state.ping
             }
-        }
-        ).catch((error) => {
+        }).catch((error) => {
             log(error, "warn");
-            return {ip: ip, query_port: parseInt(port), status: "offline", error: "Server is offline or wrong ip/query port"};
+            return {
+                ip: ip,
+                query_port: parseInt(port),
+                status: "offline",
+                error: "Server is offline or wrong ip/query port"
+            };
         });
         theData = await data;
         return theData;
-    } catch (error){
+    } catch (error) {
         log(error, "warn");
-        return {ip: ip, query_port: parseInt(port), status: "offline", error: "Server is offline or wrong ip/query port"};
+        return {
+            ip: ip,
+            query_port: parseInt(port),
+            status: "offline",
+            error: "Server is offline or wrong ip/query port"
+        };
     }
 };
 
 
 
-async function GetServerStatus(req, res, ip, port, auth){
-        let response;
-        let isSent = false;
-        try {
-            response =  await QueryServer(ip, port);
-            if (response.error === undefined) {
-                let statusobj = {
-                    Status: response.status,
-                    Error: "", 
-                    IP: response.ip,
-                    GamePort: response.game_port,
-                    QueryPort: response.query_port,
-                    Name: response.name,
-                    ServerVersion: response.version,
-                    Players: response.players,
-                    QueuePlayers: response.queue,
-                    MaxPlayers: response.max_players,
-                    GameTime: response.time,
-                    GameMap: response.map,
-                    Password: response.password ? 1 : 0,
-                    FirstPerson: response.first_person ? 1 : 0
-                }
-                isSent = true;
-                log("Server Status Check requested for " + response.ip + ":" + response.query_port);
-                res.status(200);
-                res.json(statusobj);
-                IncermentAPICount(req.ClientInfo.ClientId);
-
-                return;
+async function GetServerStatus(req, res, ip, port, auth) {
+    let response;
+    let isSent = false;
+    try {
+        response = await QueryServer(ip, port);
+        if (response.error === undefined) {
+            let statusobj = {
+                Status: response.status,
+                Error: "",
+                IP: response.ip,
+                GamePort: response.game_port,
+                QueryPort: response.query_port,
+                Name: response.name,
+                ServerVersion: response.version,
+                Players: response.players,
+                QueuePlayers: response.queue,
+                MaxPlayers: response.max_players,
+                GameTime: response.time,
+                GameMap: response.map,
+                Password: response.password ? 1 : 0,
+                FirstPerson: response.first_person ? 1 : 0
             }
-        } catch (e) {
-            log(e, "warn");
-        }
-            if(isSent) return;
-             res.status(200);
-             res.json( {
-                Status: "Offline",
-                Error: response.error || "Error Unknown", 
-                IP: ip,
-                GamePort: -1,
-                QueryPort: parseInt(port),
-                Name: "",
-                ServerVersion: "",
-                Players: 0,
-                QueuePlayers: 0,
-                MaxPlayers: 0,
-                GameTime: "",
-                GameMap: "",
-                Password: 0,
-                FirstPerson: 0
-            } );
+            isSent = true;
+            log("Server Status Check requested for " + response.ip + ":" + response.query_port);
+            res.status(200);
+            res.json(statusobj);
             IncermentAPICount(req.ClientInfo.ClientId);
+
             return;
+        }
+    } catch (e) {
+        log(e, "warn");
+    }
+    if (isSent) return;
+    res.status(200);
+    res.json({
+        Status: "Offline",
+        Error: response.error || "Error Unknown",
+        IP: ip,
+        GamePort: -1,
+        QueryPort: parseInt(port),
+        Name: "",
+        ServerVersion: "",
+        Players: 0,
+        QueuePlayers: 0,
+        MaxPlayers: 0,
+        GameTime: "",
+        GameMap: "",
+        Password: 0,
+        FirstPerson: 0
+    });
+    IncermentAPICount(req.ClientInfo.ClientId);
+    return;
 }
 
 module.exports = router;
