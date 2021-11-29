@@ -4,19 +4,21 @@ const {
 const {
     IncermentAPICount,
     GetClientInfoById,
-    HandleBadAuthkey
+    HandleBadAuthkey,
+    NormalizeToGUID
 } = require('../utils');
 const log = require("../log");
 module.exports = {
-    publicLoad,
+    publicPlayerLoad,
     runGetPublic,
     runSavePublic
 }
 
-async function publicLoad(req, res, next) {
+async function publicPlayerLoad(req, res, next) {
     let clientData = await GetClientInfoById(req.params.ClientId);
     if (clientData === undefined) return HandleBadAuthkey(res)
-    runGetPublic(req, res, req.params.GUID, req.params.mod, clientData.DB, "Players")
+    let GUID = NormalizeToGUID(req.params.GUID);
+    runGetPublic(req, res, GUID, req.params.mod, clientData.DB, "Players")
 }
 
 async function runGetPublic(req, res, GUID, mod, database, COLL) {
@@ -35,7 +37,7 @@ async function runGetPublic(req, res, GUID, mod, database, COLL) {
         let RawData = req.body;
 
         if ((await results.count()) == 0) {
-            if (auth !== "null" && req.IsServer) {
+            if (req.KeyType !== "null" && req.IsServer) {
                 log("Can't find Player with ID " + GUID + " Creating it now");
                 const doc = JSON.parse(`{ "GUID": "${GUID}", "Public": { "${mod}": "${RawData.Value}" } }`);
                 await collection.insertOne(doc);
@@ -59,7 +61,7 @@ async function runGetPublic(req, res, GUID, mod, database, COLL) {
                     }
                 }
             if (sent !== true) {
-                if (req.IsServer) {
+                if (req.IsServer === true) {
                     const updateDocValue = JSON.parse(`{ "Public.${mod}": "${RawData.Value}" }`);
                     const updateDoc = {
                         $set: updateDocValue,
@@ -69,6 +71,7 @@ async function runGetPublic(req, res, GUID, mod, database, COLL) {
                     };
                     await collection.updateOne(query, updateDoc, options);
                     log("Can't find " + mod + " Data for GUID: " + GUID + " Creating it now");
+                    IncermentAPICount(req.ClientInfo.ClientId);
                 } else {
                     log("Can't find " + mod + " Data for GUID: " + GUID, "warn");
                 }
