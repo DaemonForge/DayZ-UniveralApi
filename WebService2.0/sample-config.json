@@ -1,0 +1,22 @@
+{
+    "DBServer": "mongodb://localhost:27017",
+    "MasterDB": "DayZ",
+    "JWTToken": "72sdv7u4oy364nBba50",
+    "EncKey": "anv2434fgfs",
+    "Port": 443,
+    "Certificate": "",
+    "CertificateKey": "",
+    "RateLimitWhiteList": ["127.0.0.1"],
+    "Discord" :{
+        "Client_Id": "",
+        "Client_Secret": "",
+        "Bot_Token": ""
+    },
+    "Translate":{
+        "Endpoint": "https://translate.daemonforge.dev/translate",
+        "Type": "LibreTranslate",
+        "SubscriptionRegion": "",
+        "SubscriptionKey":""
+    }
+
+}

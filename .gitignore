@@ -6,3 +6,7 @@ DesktopManager/templates/discordLogin.ejs
 DesktopManager/templates/discordSuccess.ejs
 DayZWebService/dayzwebservice.exe
 DayZWebService/dayzwebservice
+*/node_modules
+WebService2.0/webservice2-linux
+WebService2.0/webservice2-macos
+WebService2.0/webservice2-win.exe
