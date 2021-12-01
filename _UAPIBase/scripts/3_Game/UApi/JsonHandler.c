@@ -66,10 +66,10 @@ class UApiJSONHandler<Class T>
 			bool success = m_Serializer.ReadFromString(data, jsonData, error);
 			
 			if (error != "" || !success) {
-				Print("File At" + path + " could not be parsed");
+				Error2("File At" + path + " could not be parsed",error);
 			}
 		} else {
-			Print("File At" + path + " could not be opened");
+			Error2("File At" + path + " could not be opened","");
 		}
 	}
 	
@@ -87,6 +87,8 @@ class UApiJSONHandler<Class T>
 
 		if (success && jsonData != string.Empty) {
 			FPrintln(fh, jsonData);
+		} else {
+			Error2("File At" + path + " could not be saved","");
 		}
 		CloseFile(fh);
 	}

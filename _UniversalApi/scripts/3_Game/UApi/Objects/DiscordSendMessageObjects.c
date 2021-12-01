@@ -7,7 +7,7 @@ class UApiDiscordBasicMessage extends UApiObject_Base {
 	}
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordBasicMessage>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiDiscordBasicMessage>.ToString(this);
 		return jsonString;
 	}
 	
@@ -20,7 +20,7 @@ class UApiDiscordObject extends UApiObject_Base {
 	autoptr array<autoptr UApiDiscordEmbed> embeds = new array<autoptr UApiDiscordEmbed>;
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordObject>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiDiscordObject>.ToString(this);
 		return jsonString;
 	}
 }
@@ -36,7 +36,7 @@ class UApiDiscordMessage extends UApiObject_Base {
 	int TimeStamp; //Time stamp of the message
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordMessage>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiDiscordMessage>.ToString(this);
 		return jsonString;
 	}
 }
@@ -55,7 +55,7 @@ class UApiDiscordEmbed extends UApiObject_Base{
 	autoptr UApiDiscordFooter footer; 
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordEmbed>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiDiscordEmbed>.ToString(this);
 		return jsonString;
 	}
 }
@@ -66,7 +66,7 @@ class UApiDiscordAuthor extends UApiObject_Base {
     string icon_url= "";
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordAuthor>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiDiscordAuthor>.ToString(this);
 		return jsonString;
 	}
 }
@@ -77,7 +77,7 @@ class UApiDiscordField extends UApiObject_Base {
 	bool inline = false;
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordField>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiDiscordField>.ToString(this);
 		return jsonString;
 	}
 }
@@ -93,7 +93,7 @@ class UApiDiscordImage extends UApiObject_Base {
 	}
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordImage>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiDiscordImage>.ToString(this);
 		return jsonString;
 	}
 }
@@ -109,7 +109,7 @@ class UApiDiscordFooter extends UApiObject_Base{
 	}
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordFooter>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiDiscordFooter>.ToString(this);
 		return jsonString;
 	}
 }

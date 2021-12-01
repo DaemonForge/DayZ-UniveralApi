@@ -147,6 +147,7 @@ async function GetServerStatus(req, res, ip, port, auth){
             return;
     } else {
         res.status(401);
+        log("Invalid Authkey Server Query");
         res.json({Status: "Error", Error: "Invalid Auth" });
         return;
     }

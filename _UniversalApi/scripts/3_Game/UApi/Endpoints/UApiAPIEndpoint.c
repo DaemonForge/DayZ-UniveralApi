@@ -259,6 +259,70 @@ class UApiAPIEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
+	//Gets the value of the set value amount market prices for Crypto currencys `UApiCryptoConvertResult`
+	int CryptoPrice(string from, string to, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
+		int cid = UApi().CallId();
+		string endpoint = "Crypto/Price/" + from + "/" + to;
+		autoptr RestCallback DBCBX;
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiCryptoConvertResult>(cbInstance, cbFunction, oid), cid);
+		}
+		
+		if ( from && to && DBCBX){
+			Post(endpoint, "{}", DBCBX);
+		} else {
+			Error2("[UAPI] [Api] Error Crypto Price", "From: " +  from + " To: " +  to + " CID:" + cid);
+			cid = -1;
+		}
+		return cid;
+	}
+	
+	//Gets the value of the set value amount market prices for Crypto currencys `UApiCryptoConvertResult`
+	int CryptoConvert(string from, string to, float value, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
+		int cid = UApi().CallId();
+		string endpoint = "Crypto/Convert/" + from + "/" + to;
+		autoptr RestCallback DBCBX;
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiCryptoConvertResult>(cbInstance, cbFunction, oid), cid);
+		}
+		
+		autoptr UApiCryptoConvertRequest req = new UApiCryptoConvertRequest(value);
+		
+		if ( from && to && value > 0 && DBCBX){
+			Post(endpoint, req.ToJson(), DBCBX);
+		} else {
+			Error2("[UAPI] [Api] Error Crypto Convert", "From: " +  from + " To: " +  to + " Value: " + value + " CID:" + cid);
+			cid = -1;
+		}
+		return cid;
+	}
+	
+	//Gets a map of live market prices for Crypto currencys `UApiCryptoResults`
+	int Crypto(TStringArray from, string to, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
+		int cid = UApi().CallId();
+		string endpoint = "Crypto/" + to;
+		autoptr RestCallback DBCBX;
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<UApiCryptoResults>(cbInstance, cbFunction, oid), cid);
+		}
+		
+		autoptr UApiCryptoRequest req = new UApiCryptoRequest(from);
+		
+		if ( from && from.Count() > 0 && to && DBCBX){
+			Post(endpoint, req.ToJson(), DBCBX);
+		} else {
+			Error2("[UAPI] [Api] Error Crypto", "From: " +  from.Count() + " To: " +  to + " CID:" + cid);
+			cid = -1;
+		}
+		return cid;
+	}
+	
 	//Request a status check from the api so you can get version number and such returns a `UApiStatus` object
 	int Status(Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = UApi().CallId();

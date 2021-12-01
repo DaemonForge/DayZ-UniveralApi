@@ -20,7 +20,7 @@ class UApiForwarder extends Managed{
 	} 
 	
 	string ToJson(){
-		return JsonFileLoader<UApiForwarder>.JsonMakeData(this);;
+		return UApiJSONHandler<UApiForwarder>.ToString(this);;
 	}
 }
 
