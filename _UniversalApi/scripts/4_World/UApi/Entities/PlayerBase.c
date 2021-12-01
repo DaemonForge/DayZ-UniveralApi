@@ -99,6 +99,69 @@ modded class PlayerBase extends ManBase{
 	}
 	
 	//Return how much left still to remove
+	int URemoveItemFromInventory(string removeItemType, float Amount = 1 ){
+		int AmountToRemove = Amount;
+		if (AmountToRemove > 0){
+			array<EntityAI> itemsArray = new array<EntityAI>;
+			this.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, itemsArray);
+			for (int i = 0; i < itemsArray.Count(); i++){
+				ItemBase item = ItemBase.Cast(itemsArray.Get(i));
+				if ( item ){
+					string ItemType = item.GetType();
+					ItemType.ToLower();
+					string RemoveItemType = removeItemType;
+					RemoveItemType.ToLower();
+					if (ItemType == RemoveItemType){
+						int CurQuantity = item.GetQuantity();
+						int AmountRemoved = 0;
+						if (!item.HasQuantity()){
+							CurQuantity = 1;
+						} 
+						if (AmountToRemove < CurQuantity){
+							AmountRemoved = AmountToRemove;
+							item.USetQuantity(CurQuantity - AmountToRemove);
+							this.UpdateInventoryMenu(); // RPC-Call needed?
+							return Amount - AmountRemoved;
+						} else if (AmountToRemove == CurQuantity){
+							AmountRemoved = AmountToRemove;
+							GetGame().ObjectDelete(item);
+							this.UpdateInventoryMenu(); // RPC-Call needed?
+							return Amount - AmountRemoved;
+						} else {
+							AmountRemoved = CurQuantity;
+							AmountToRemove = AmountToRemove - CurQuantity;
+							GetGame().ObjectDelete(item);
+							Amount = Amount - AmountRemoved;
+						}
+						if (AmountToRemove <= 0){
+							this.UpdateInventoryMenu(); // RPC-Call needed?
+							return Amount;
+						}
+					}
+				}
+			}
+		}
+		this.UpdateInventoryMenu(); // RPC-Call needed?
+		return Amount;
+	}
+	
+	int UGetItemCount(string itemType, bool CountRuined = true){
+		int PlayerBalance = 0;
+		array<EntityAI> inventory = new array<EntityAI>;
+		this.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, inventory);
+		
+		ItemBase item;
+		for (int i = 0; i < inventory.Count(); i++){
+			if (Class.CastTo(item, inventory.Get(i))){
+				if (item.GetType() == itemType && ( !item.IsRuined() || CountRuined)){
+					PlayerBalance += UCurrentQuantity(item);;
+				}
+			}
+		}
+		return PlayerBalance;
+	}
+	
+	//Return how much left still to remove
 	int URemoveMoneyInventory(string key, UCurrencyValue MoneyValue, float Amount ){
 		int AmountToRemove = UCurrency.GetAmount(MoneyValue, Amount);
 		if (AmountToRemove > 0){
