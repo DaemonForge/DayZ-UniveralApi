@@ -158,23 +158,138 @@ class UUtil extends Managed {
 	    return false;
 	}
 	
+	//Get Date since JAN 01 1970
 	static int GetDateInt() {
 		int yr, mth, day;
 		GetYearMonthDay(yr, mth, day);
 		int count = day;
-		for (int i = 0; i < mth; i++){
+		for (int i = 0; i < (mth - 1); i++){
 			count = count + DaysInMonth[i];
 			if (IsLeapYear(yr) && i == 1){
 				count++;
 			}
 		}
-		count = count + Math.Floor((yr - 1971) * 365.25);
+		count = count + Math.Floor((yr - UnixStartYear) * 365.25);
 		return count;
 	}
 	
-	static int GetUnixDateInt() {
+	//Get Date since JAN 01 1970
+	static int GetUTCDateInt() {
+		int yr, mth, day;
+		GetYearMonthDayUTC(yr, mth, day);
+		int count = day;
+		for (int i = 0; i < (mth - 1); i++){
+			count = count + DaysInMonth[i];
+			if (IsLeapYear(yr) && i == 1){
+				count++;
+			}
+		}
+		count = count + Math.Floor((yr - UnixStartYear) * 365.25);
+		return count;
+	}
+	
+	static int GetUnixInt() {
 		int hr, min, sec;
 		GetHourMinuteSecond(hr, min, sec);
 		return (GetDateInt() * 86400) + (hr * 3600) + (min * 60) + sec;
+	}
+	
+	static int GetUTCUnixInt() {
+		int hr, min, sec;
+		GetHourMinuteSecondUTC(hr, min, sec);
+		return (GetDateInt() * 86400) + (hr * 3600) + (min * 60) + sec;
+	}
+	
+	
+	
+	static bool GetConfigInt(string type, string varible, out int value){
+		
+		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			value = GetGame().ConfigGetInt(  CFG_MAGAZINESPATH  + " " + type + " " + varible);
+			return true;
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
+			value = GetGame().ConfigGetInt(  CFG_WEAPONSPATH  + " " + type + " " + varible);
+			return true;
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			value = GetGame().ConfigGetInt( CFG_VEHICLESPATH + " " + type + " " + varible );
+			return true;
+		}
+		return false;
+	}
+	static bool GetConfigFloat(string type, string varible, out float value){
+		
+		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			value = GetGame().ConfigGetFloat(  CFG_MAGAZINESPATH  + " " + type + " " + varible);
+			return true;
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH + " " + type + " " + varible ) ){
+			value = GetGame().ConfigGetFloat( CFG_WEAPONSPATH + " " + type + " " + varible );
+			return true;
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			value = GetGame().ConfigGetFloat( CFG_VEHICLESPATH + " " + type + " " + varible );
+			return true;
+		}
+		return false;
+	}
+	static bool GetConfigString(string type, string varible, out string value){
+		
+		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			return GetGame().ConfigGetText(  CFG_MAGAZINESPATH  + " " + type + " " + varible,value);
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
+			return GetGame().ConfigGetText(  CFG_WEAPONSPATH  + " " + type + " " + varible,value);
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			return GetGame().ConfigGetText( CFG_VEHICLESPATH + " " + type + " " + varible,value);
+		}
+		return false;
+	}
+	static bool GetConfigTStringArray(string type, string varible, out TStringArray value){
+		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			GetGame().ConfigGetTextArray(  CFG_MAGAZINESPATH  + " " + type + " " + varible, value);
+			return true;
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
+			GetGame().ConfigGetTextArray(  CFG_WEAPONSPATH  + " " + type + " " + varible, value);
+			return true;
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			GetGame().ConfigGetTextArray( CFG_VEHICLESPATH + " " + type + " " + varible, value);
+			return true;
+		}
+		return false;
+	}
+	static bool GetConfigTFloatArray(string type, string varible, out TFloatArray value){
+		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			GetGame().ConfigGetFloatArray(  CFG_MAGAZINESPATH  + " " + type + " " + varible, value);
+			return true;
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
+			GetGame().ConfigGetFloatArray(  CFG_WEAPONSPATH  + " " + type + " " + varible, value);
+			return true;
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			GetGame().ConfigGetFloatArray( CFG_VEHICLESPATH + " " + type + " " + varible, value);
+			return true;
+		}
+		return false;
+	}
+	static bool GetConfigTIntArray(string type, string varible, out TIntArray value){
+		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			GetGame().ConfigGetIntArray(  CFG_MAGAZINESPATH  + " " + type + " " + varible, value);
+			return true;
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
+			GetGame().ConfigGetIntArray(  CFG_WEAPONSPATH  + " " + type + " " + varible, value);
+			return true;
+		}
+		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			GetGame().ConfigGetIntArray( CFG_VEHICLESPATH + " " + type + " " + varible, value);
+			return true;
+		}
+		return false;
 	}
 }

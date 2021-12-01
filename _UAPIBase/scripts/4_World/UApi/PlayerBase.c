@@ -5,7 +5,7 @@ modded class PlayerBase extends ManBase {
 	}
 	
 	//Return How many Items it faild to create in the Inventory
-	int UCreateItemInInventory(string itemType, int amount)
+	int UCreateItemInInventory(string itemType, int amount = 1)
 	{
 		array<EntityAI> itemsArray = new array<EntityAI>;
 		this.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, itemsArray);
@@ -96,7 +96,7 @@ modded class PlayerBase extends ManBase {
 		return currentAmount;
 	}
 	
-	void UCreateItemGround(string Type, int Amount){
+	void UCreateItemGround(string Type, int Amount = 1){
 		int AmountToSpawn = Amount;
 		bool HasQuantity = ((UMaxQuantity(Type) > 0) || UHasQuantity(Type));
 		int MaxQuanity = UMaxQuantity(Type);

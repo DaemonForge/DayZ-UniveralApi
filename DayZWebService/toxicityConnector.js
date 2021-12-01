@@ -1,5 +1,7 @@
 
 const tf = require('@tensorflow/tfjs');
+const tfjscore  = require('@tensorflow/tfjs-core');
+const tfjsconverter  = require('@tensorflow/tfjs-converter');
 const toxicity  = require('@tensorflow-models/toxicity');
 const {Router} = require('express');
 const log = require("./log");

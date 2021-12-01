@@ -1,6 +1,6 @@
 class UApiCryptoRequest extends UApiObject_Base {
 	
-	autoptr TStringArray From;
+	autoptr TStringArray From = new TStringArray;
 	
 	void UApiCryptoRequest(TStringArray from){
 		From.Copy(from);

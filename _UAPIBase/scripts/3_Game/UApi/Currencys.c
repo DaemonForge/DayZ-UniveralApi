@@ -42,10 +42,12 @@ class UCurrency extends UCurrencyBase{
 		return uCurrency;
 	}
 	
-	static UCurrency InsertNew(string key, UCurrency values){
+	static UCurrency InsertNew(string key, array<autoptr UCurrencyValue> values){
 		autoptr UCurrency uCurrency = new UCurrency;
 		for (int i = 0; i < values.Count(); i++){
-			uCurrency.Insert( new UCurrencyValue(values.Get(i).TypeClass(), values.Get(i).Value()) );
+			UCurrencyValue value = UCurrencyValue.Cast(values.Get(i));
+			autoptr UCurrencyValue v = new UCurrencyValue(value.TypeClass(), value.Value());
+			uCurrency.Insert( v );
 		}
 		m_UCurrencysMap.Set(key, uCurrency);
 		return uCurrency;
