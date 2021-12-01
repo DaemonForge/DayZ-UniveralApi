@@ -63,7 +63,7 @@ class UApiConfigBase : RestCallback {
 	
 	string ToJson(){
 		// Override and Replace with your class Name
-		string jsonString = JsonFileLoader<UApiConfigBase>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiConfigBase>.ToString(this);
 		Print("[UAPI] Error You didn't override ToJson: " + jsonString); 
 		return jsonString;
 	}

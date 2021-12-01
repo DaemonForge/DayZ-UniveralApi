@@ -6,7 +6,7 @@ class UApiDiscordUser extends StatusObject{
 	string Discriminator;
 	string Avatar;
 	
-	TStringArray Roles;
+	autoptr TStringArray Roles;
 	
 	string VoiceChannel;
 	

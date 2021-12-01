@@ -16,7 +16,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 			return -1;
 		}
 		int cid = UApi().CallId();	
-		string endpoint = "/Save/" + oid + "/" + mod;
+		string endpoint = "Save/" + oid + "/" + mod;
 		
 		Post(endpoint,jsonString,new UApiSilentCallBack());
 		
@@ -29,7 +29,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 			return -1;
 		}
 		int cid = UApi().CallId();	
-		string endpoint = "/Save/" + oid + "/" + mod;
+		string endpoint = "Save/" + oid + "/" + mod;
 
 		Post(endpoint,jsonString, new UApiDBCallBack(cbInstance, cbFunction, cid, oid));
 		
@@ -42,7 +42,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 			return -1;
 		}
 		int cid = UApi().CallId();	
-		string endpoint = "/Save/" + oid + "/" + mod;
+		string endpoint = "Save/" + oid + "/" + mod;
 		
 		cb.SetOID(oid); //Only sets if not set
 		
@@ -57,7 +57,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 			return -1;
 		}
 		int cid = UApi().CallId();
-		string endpoint = "/Load/" + oid + "/" + mod;
+		string endpoint = "Load/" + oid + "/" + mod;
 		
 		cb.SetOID(oid); //Only sets if not set
 		
@@ -72,7 +72,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 			return -1;
 		}
 		int cid = UApi().CallId();
-		string endpoint = "/Load/" + oid + "/" + mod;
+		string endpoint = "Load/" + oid + "/" + mod;
 		
 		Post(endpoint,jsonString, new UApiDBCallBack(cbInstance, cbFunction, cid, oid));
 		
@@ -86,7 +86,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 			return -1;
 		}
 		int cid = UApi().CallId();
-		string endpoint = "/Query/" + mod;
+		string endpoint = "Query/" + mod;
 				
 		if ( query && mod && cb){
 			cb.SetOID(mod); //Only sets if not set
@@ -104,7 +104,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 			return -1;
 		}
 		int cid = UApi().CallId();
-		string endpoint = "/Query/" + mod;
+		string endpoint = "Query/" + mod;
 				
 		Post(endpoint,query.ToJson(),new UApiDBCallBack(cbInstance, cbFunction, cid, ""));
 		
@@ -126,7 +126,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		}
 		int cid = UApi().CallId();
 				
-		string endpoint = "/Transaction/" + oid   + "/" + mod;
+		string endpoint = "Transaction/" + oid   + "/" + mod;
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
@@ -142,7 +142,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		}
 		int cid = UApi().CallId();
 		
-		string endpoint = "/Transaction/" + oid   + "/" + mod;
+		string endpoint = "Transaction/" + oid   + "/" + mod;
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
@@ -160,7 +160,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		}
 		int cid = UApi().CallId();
 		
-		string endpoint = "/Transaction/" + oid   + "/" + mod;
+		string endpoint = "Transaction/" + oid   + "/" + mod;
 		
 		autoptr UApiValidatedTransaction transaction = new UApiValidatedTransaction(element, value, min, max);
 		
@@ -180,7 +180,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		
 		autoptr RestCallback DBCBX = ;
 		
-		string endpoint = "/Transaction/" + oid   + "/"+ mod;
+		string endpoint = "Transaction/" + oid   + "/"+ mod;
 		
 		autoptr UApiTransaction transaction = new UApiTransaction(element, value);
 		
@@ -198,7 +198,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		
 		autoptr RestCallback DBCBX = ;
 		
-		string endpoint = "/Transaction/" + oid   + "/"+ mod;
+		string endpoint = "Transaction/" + oid   + "/"+ mod;
 		
 		autoptr UApiValidatedTransaction transaction = new UApiValidatedTransaction(element, value, min, max);
 		
@@ -214,7 +214,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		}
 		int cid = UApi().CallId();
 		
-		string endpoint = "/Update/" + oid   + "/"+ mod;
+		string endpoint = "Update/" + oid   + "/"+ mod;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
@@ -230,7 +230,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		}
 		int cid = UApi().CallId();
 
-		string endpoint = "/Update/" + oid   + "/"+ mod;
+		string endpoint = "Update/" + oid   + "/"+ mod;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
@@ -253,7 +253,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 			DBCBX = new UApiSilentCallBack();
 		}
 		
-		string endpoint = "/Update/" + oid   + "/"+ mod;
+		string endpoint = "Update/" + oid   + "/"+ mod;
 		
 		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
 		
@@ -268,7 +268,7 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 	int PublicSave(string mod, string oid, string jsonString, Class cbInstance = NULL, string cbFunction = "") {	
 		if (m_Collection != "Player") return -1;
 		int cid = UApi().CallId();	
-		string endpoint = "/PublicSave/" + oid + "/" + mod;
+		string endpoint = "PublicSave/" + oid + "/" + mod;
 		autoptr RestCallback DBCBX;
 		if (cbInstance && cbFunction != ""){
 			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, oid);
@@ -285,10 +285,10 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		return cid;
 	}
 	
-	int PublicLoad(string mod, string oid, Class cbInstance, string cbFunction, string jsonString = "{}") {		
+	int PublicLoad(string mod, string oid, Class cbInstance, string cbFunction, string jsonString = "{}", string baseUrl = "") {		
 		if (m_Collection != "Player") return -1;
 		int cid = UApi().CallId();
-		string endpoint = "/PublicLoad/" + oid + "/" + mod;
+		string endpoint = "PublicLoad/" + oid + "/" + mod;
 		
 		autoptr RestCallback DBCBX;
 		if (cbInstance && cbFunction != ""){
@@ -296,8 +296,11 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		} else {
 			DBCBX = new UApiSilentCallBack();
 		}
-		
-		if (DBCBX){
+		if ( baseUrl != "" && DBCBX ){
+			string url = baseUrl + m_Collection + "/" + endpoint;
+			//Print("[UAPI] Public Load with custom Base: " + url);
+			UApi().Post(url,jsonString,DBCBX);
+		} else if (DBCBX){
 			Post(endpoint,jsonString,DBCBX);
 		} else {
 			Print("[UAPI] [Api] Error Loading Player Data for " + mod);
@@ -305,5 +308,6 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 		}
 		return cid;
 	}
+
 
 }

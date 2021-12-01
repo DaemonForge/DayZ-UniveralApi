@@ -5,7 +5,7 @@ class UApiDiscordRoleReq extends UApiObject_Base{
 	}
 	
 	override string ToJson(){
-		return JsonFileLoader<UApiDiscordRoleReq>.JsonMakeData(this);
+		return UApiJSONHandler<UApiDiscordRoleReq>.ToString(this);
 	}
 }
 
@@ -25,7 +25,7 @@ class UApiDiscordMute extends UApiObject_Base{
 	}
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordMute>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiDiscordMute>.ToString(this);
 		return jsonString;
 	}
 }
@@ -39,7 +39,7 @@ class UApiDiscordNickname extends UApiObject_Base{
 	}
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<UApiDiscordNickname>.JsonMakeData(this);
+		string jsonString = UApiJSONHandler<UApiDiscordNickname>.ToString(this);
 		return jsonString;
 	}
 }

@@ -101,7 +101,7 @@ async function runSave(req, res, ObjectId, mod, auth) {
             const updateDocValue  =  {ObjectId: ObjectId, Mod: mod, Data: RawData};
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
-            if (result.result.ok == 1){
+            if (result.matchedCount === 1 || result.upsertedCount === 1 ){
                 log("Updated "+ mod + " Data for Object: " + ObjectId);
                 res.status(201);
                 res.json(RawData);
@@ -176,7 +176,7 @@ async function runUpdate(req, res, ObjectId, mod, auth) {
             
             const result = await collection.updateOne(query, updateDoc, options);
             //console.log(result.result)
-            if (result.result.ok == 1 && result.result.n > 0){
+            if (result.matchedCount >= 1 || result.upsertedCount >= 1){
                 log("Updated " + element +" for "+ mod + " Data for ObjectId: " + ObjectId);
                 res.status(200);
                 res.json({ Status: "Success", Element: element, Mod: mod, ID: ObjectId});

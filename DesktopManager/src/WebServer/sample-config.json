@@ -19,7 +19,8 @@
         "Required_Role": "",
         "BlackList_Role": "",
         "Restrict_Sign_Up": true,
-        "Restrict_Sign_Up_Countries": ["blacklist", "CN"]
+        "Restrict_Sign_Up_Countries": ["blacklist", "CN"],
+        "AllowToReRegister": false
     },
     "Wit":{
     },

@@ -39,7 +39,7 @@ async function CheckAuthAgainstGUID(auth, guid, ignoreError = false){
     return verify(auth, GetSigningAuth(), function(err, decoded) {
         if (err) {
             if (err.name == "TokenExpiredError"){
-                log("Error: Auth Token for " + decoded.GUID + "is expired, it expired at " + err.expiredAt, "warn");
+                log("Error: Auth Token for " + decoded?.GUID + "is expired, it expired at " + err.expiredAt, "warn");
             } else if (ignoreError){ //Used in the status check to avoid the logs from filling up
                 return false;
             } else if (err.name == "JsonWebTokenError") {

@@ -22,11 +22,28 @@ module.exports ={
     NormalizeToGUID,
     ExtractAuthKey,
     CleanRegEx,
-    GenerateLimiter
+    GenerateLimiter,
+    promisedProperties
 }
 
 
 
+function promisedProperties(object) {
+
+  let promisedProperties = [];
+  const objectKeys = Object.keys(object);
+
+  objectKeys.forEach((key) => promisedProperties.push(object[key]));
+
+  return Promise.all(promisedProperties)
+    .then((resolvedValues) => {
+      return resolvedValues.reduce((resolvedObject, property, index) => {
+        resolvedObject[objectKeys[index]] = property;
+        return resolvedObject;
+      }, object);
+    });
+
+}
 
 function dynamicSortMultiple( props ) {
     /*
@@ -261,6 +278,12 @@ async function CheckRecentVersion(){
     } else {
       req.headers['auth-key'] = req.headers['auth-key'] || req.headers['content-type'] || '';
       req.headers['content-type'] = 'application/json';
+    }
+    if (global.config.debug !== undefined && global.config.debug === 1) {
+      console.log("Request: " + req.url);
+    }
+    if (global.config.debug !== undefined && global.config.debug === 2) {
+      console.log("Request: " + req.url + " " + req.headers['auth-key'] + req.body);
     }
     next();
   }

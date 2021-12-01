@@ -43,7 +43,7 @@ async function runGet(req, res, mod, auth) {
                 if ((CheckServerAuth(auth) || global.config.AllowClientWrite) && !isEmpty(RawData)){
                     let doc = { Mod: mod, Data: RawData };
                     let result = await collection.insertOne(doc);
-                    if (result.result.ok == 1){ 
+                    if ( result.matchedCount === 1 || result.upsertedCount === 1 ){ 
                         log("Created "+ mod + " Globals");
                         res.status(201);
                     }
@@ -83,7 +83,7 @@ async function runSave(req, res, mod, auth) {
                 $set: { Mod: mod, Data: RawData }
             };
             const result = await collection.updateOne(query, updateDoc, options);
-            if (result.result.ok == 1){
+            if ( result.matchedCount === 1 || result.upsertedCount === 1 ){
                 log("Updated "+ mod + " Globals");
                 res.status(201);
                 res.json(RawData);
@@ -124,7 +124,7 @@ async function runTransaction(req, res, mod, auth){
             let stringData = "{ \"$inc\": { \""+Element+"\": " + RawData.Value + " } }"
             let options = { upsert: false };
             let Results = await collection.updateOne(query, JSON.parse(stringData), options);
-            if (Results.result.ok == 1 && Results.result.n > 0){
+            if (Results.modifiedCount >= 1 || Results.upsertedCount >= 1){
                 let Value = await collection.distinct(Element, query);
                 log("Transaction " + mod + " incermented " + Element + " by " + RawData.Value + " now " + Value[0], "warn");
                 res.json({Status: "Success", ID: mod,  Value: Value[0], Element: RawData.Element})
@@ -197,7 +197,7 @@ async function runUpdate(req, res, mod, auth) {
             }
             
             const result = await collection.updateOne(query, updateDoc, options);
-            if (result.result.ok == 1 && result.result.n > 0){
+            if ( result.matchedCount >= 1 || result.upsertedCount >= 1){
                 log("Updated " + element +" for "+ mod + " Globals");
                 res.status(200);
                 res.json({ Status: "Success", Element: element, Mod: mod, ID: "Globals"});

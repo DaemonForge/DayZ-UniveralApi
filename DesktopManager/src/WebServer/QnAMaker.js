@@ -95,7 +95,7 @@ async function WriteQuestionToDataBase(question){
         let collection = db.collection("QnAMaker");
         const Doc  = { UnAnweredAbleQuestion: question }
         const result = await collection.insertOne(Doc);
-        if (result.result.ok == 1){
+        if (result.modifiedCount === 1 || result.upsertedCount === 1 ){
             log("Logged Question: " + question, "info");
         } else {
             log("Error Logging Question: " + question, "warn");

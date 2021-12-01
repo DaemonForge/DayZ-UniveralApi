@@ -46,8 +46,8 @@ async function runGetAuth(req, res, GUID) {
         let SaveToken = createHash('sha256').update(AuthToken).digest('base64');
         const updateDocValue  = { GUID: GUID, AUTH: SaveToken }
         const updateDoc = { $set: updateDocValue, };
-        const result = await collection.updateOne(query, updateDoc, options);
-        if (result.result.ok == 1){
+        let result = await collection.updateOne(query, updateDoc, options);
+        if ( result.matchedCount === 1 || result.upsertedCount === 1 ){
             res.json({GUID: GUID, AUTH: AuthToken});
             log("Auth Token Generated for: " + GUID);
         } else {

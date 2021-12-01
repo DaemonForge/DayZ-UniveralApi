@@ -73,7 +73,7 @@ async function runStatusCheck(req, res, auth) {
         const updateDocValue  = { Mod: "UniversalApiStatus", Description: "This Object Exsits as a test when ever the status url is called to make sure the database is writeable", TestVar: TestValue }
         const updateDoc = { $set: updateDocValue, };
         const result = await collection.updateOne(query, updateDoc, options);
-        if (result.result.ok == 1){
+        if (result.modifiedCount >= 1 || result.upsertedCount >= 1 ){
             res.json({Status: "Success", Error: returnError, Version: global.APIVERSION, Discord: global.DISCORDSTATUS, Translate: TranslatesEnabled, Wit: WitsEnabled, QnA: QnAEnabled, LUIS: LUISEnabled });
            // log("Status Check Called", "info"); 
         } else {

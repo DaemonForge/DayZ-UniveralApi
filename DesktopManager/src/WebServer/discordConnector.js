@@ -8,8 +8,15 @@ const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
 const {render} = require('ejs');
 const log = require("./log");
 const {Client, User, GuildMember, Guild,Intents} = require("discord.js");
-const Discord  = require("discord.js");
-const client = new Discord.Client();
+const myIntents = new Intents();
+myIntents.add(Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS);
+myIntents.add(Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.DIRECT_MESSAGE_REACTIONS);
+myIntents.add(Intents.FLAGS.GUILD_INVITES);
+myIntents.add(Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS);
+myIntents.add(Intents.FLAGS.GUILD_VOICE_STATES);
+const client = new Client({ intents: myIntents });
+//const Discord  = require("discord.js");
+//const client = new Discord.Client();
 const fetch = require('node-fetch');
 const DefaultTemplates = require("./templates/defaultTemplates.json");
 const ejsLint = require('ejs-lint');
@@ -82,17 +89,25 @@ router.get('/:id', (req, res) => {
     if (LoginTemplate === undefined) LoadLoginTemplate();
     if (ErrorTemplate === undefined) LoadErrorTemplate();
     let id = req.params.id;
+    let GUID = NormalizeToGUID(id);
     if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined )
         res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}));
-    else if (id.match(/[1-9][0-9]{16,16}/)) 
-        res.send(render(LoginTemplate, {SteamId: id, Login_URL: `/discord/login/${id}`}));
-    else
+    else if (id.match(/[1-9][0-9]{16,16}/)) {
+        SendLoginPage(res,id,GUID)
+    } else
         res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}));
 });
 router.get('/login/:id', (req, res) => {
-   RenderLogin(req, res);
+    let id = req.params.id;
+    let GUID = NormalizeToGUID(id);
+   RenderLogin(req, res, GUID);
 });
 
+async function SendLoginPage(res, id, guid){
+    let userObj = await GetDiscordObj(guid);
+    res.send(render(LoginTemplate, {SteamId: id, Login_URL: `/discord/login/${id}`, Connected: (userObj !== undefined)}));
+    
+}
 
 
 /*
@@ -371,11 +386,14 @@ router.post('/Channel/Messages/:id', (req, res) => {
 
 
 
-async function RenderLogin(req, res){
+async function RenderLogin(req, res, guid){
     if (ErrorTemplate === undefined) LoadErrorTemplate();
+    let userObj = await GetDiscordObj(guid);
     let id = req.params.id;
     let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    
+    if (userObj !== undefined && (global.config.Discord?.AllowToReRegister !== true) === false){
+        return res.send(render(ErrorTemplate, {TheError: "Trying to connect to a Steam ID that already has a Discord connected.", Type: "AlreadyLinked"}))
+    }
 
     let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
     if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined ){
@@ -513,7 +531,7 @@ async function HandleCallBack(req, res){
                 const updateDoc = { $set: data, };
                 const result = await collection.updateOne(query, updateDoc, options);
 
-                if (result.result.ok == 1){
+                if ( result.matchedCount === 1 || result.upsertedCount === 1 ){
                     log("Player: " + guid + " Connected to Discord ID: " + discordjson.id);
                     res.send(render(SuccessTemplate, {DiscordId: discordjson.id, DiscordUsername: discordjson.username, DiscordAvatar: discordjson.avatar, DiscordDiscriminator: discordjson.discriminator, SteamId: discordjson.steamid}))
                 } else {

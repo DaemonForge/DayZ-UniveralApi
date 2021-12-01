@@ -118,7 +118,7 @@ async function runSave(req, res, GUID, mod, auth) {
             const updateDocValue  = JSON.parse(jsonString);
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
-            if (result.result.ok == 1){
+            if (result.matchedCount === 1 || result.upsertedCount >= 1){
                 log("Updated "+ mod + " Data for GUID: " + GUID);
                 res.status(200);
                 res.json(RawData);
@@ -192,7 +192,7 @@ async function runUpdate(req, res, GUID, mod, auth) {
             }
 
             const result = await collection.updateOne(query, updateDoc, options);
-            if (result.result.ok == 1 && Results.result.n > 0){
+            if (result.matchedCount >= 1 || result.upsertedCount >= 1){
                 log("Updated " + element +" for "+ mod + " Data for GUID: " + GUID);
                 res.status(200);
                 res.json({ Status: "Success", Element: element, Mod: mod, ID: GUID});
@@ -251,7 +251,7 @@ async function runGetPublic(req, res, GUID, mod, auth) {
             }
             if (sent !== true){
                 if (auth !== "null" && (CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite))){
-                    const updateDocValue  = JSON.parse(`{ "Public": { "${mod}": "${RawData.Value}" } }`);
+                    const updateDocValue  = JSON.parse(`{ "Public.${mod}": "${RawData.Value}" }`);
                     const updateDoc = { $set: updateDocValue, };
                     const options = { upsert: false };
                     await collection.updateOne(query, updateDoc, options);
@@ -284,11 +284,11 @@ async function runSavePublic(req, res, GUID, mod, auth) {
             let collection = db.collection("Players");
             let query = { GUID: GUID };
             const options = { upsert: true };
-            const jsonString = `{ "GUID": "${GUID}", "Public": { "${mod}": "${RawData.Value}" } }`;
+            const jsonString = `{ "GUID": "${GUID}", "Public.${mod}": "${RawData.Value}" }`;
             const updateDocValue  = JSON.parse(jsonString);
             const updateDoc = { $set: updateDocValue, };
             const result = await collection.updateOne(query, updateDoc, options);
-            if (result.result.ok == 1){
+            if ( result.matchedCount === 1 || result.upsertedCount === 1 ){
                 log("Updated "+ mod + " Data for GUID: " + GUID);
                 res.status(200);
                 res.json(RawData);
