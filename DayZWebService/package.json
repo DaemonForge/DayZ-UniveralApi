@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.14",
-    "pkg": "^5.4.1"
+    "pkg": "^5.5.1"
   },
   "pkg": {
     "assets": [
