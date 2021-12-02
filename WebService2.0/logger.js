@@ -7,7 +7,8 @@ const {
 const {
     isArray,
     GenerateLimiter,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('./utils');
 let {
     createHash
@@ -51,20 +52,23 @@ async function runLoggerOne(req, res, id, auth) {
 
         const result = await collection.insertOne(RawData);
         if (result.insertedId != undefined) {
-            res.json({
+            log(`New Log Registered from ${RawData.ClientType} - Device ID: ${RawData.ClientId}`);
+            let resObj = {
                 Status: "Success",
                 Error: ""
-            });
-            log(`New Log Registered from ${RawData.ClientType} - Device ID: ${RawData.ClientId}`);
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             // log("Status Check Called", "info"); 
         } else {
             log("ERROR: Database Write Error", "warn");
             res.status(500);
-            res.json({
+            let resObj = {
                 Status: "Error",
                 Error: "Database Write Error"
-            });
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } catch (err) {
         log("ERROR: " + err, "warn");
@@ -101,18 +105,21 @@ async function runLoggerMany(req, res, id, auth) {
         const result = await collection.insertMany(RawData);
         console.log(result)
         if (result.insertedCount > 0) {
-            res.json({
+            let resObj = {
                 Status: "Success",
                 Error: ""
-            });
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             log(`New Log Array Registered from ${ClientType} - Device ID: ${ClientId}`);
         } else {
             res.status(500);
-            res.json({
+            let resObj = {
                 Status: "Error",
                 Error: "Database Write Error"
-            });
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             log("ERROR: Database Write Error", "warn");
         }
     } catch (err) {

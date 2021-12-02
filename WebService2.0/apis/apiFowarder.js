@@ -6,7 +6,8 @@ const fetch = require('node-fetch');
 const log = require("../log");
 const {
     isArray,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils');
 
 /*
@@ -91,7 +92,7 @@ async function runFowarder(req, res, auth) {
         }
     }
     res.json(ReturnValue);
-    IncermentAPICount(req.ClientInfo.ClientId);
+    IncermentAPICount(req.ClientInfo.ClientId, byteSize(ReturnValue));
 }
 
 

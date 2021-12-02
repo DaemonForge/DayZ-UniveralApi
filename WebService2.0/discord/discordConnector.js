@@ -8,7 +8,8 @@ const {
     NormalizeToGUID,
     GenerateLimiter,
     HandleBadAuthkey,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils')
 const {
     MongoClient
@@ -704,6 +705,7 @@ async function AddRole(res, req, GUID, auth) {
         }
         res.status(202);
         res.json(resObj);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
     } catch (err) {
         //console.log(err);
         res.status(203);
@@ -719,7 +721,6 @@ async function AddRole(res, req, GUID, auth) {
         });
         log("ERROR: " + err, "warn");
     }
-    IncermentAPICount(req.ClientInfo.ClientId);
 }
 
 async function RemoveRole(res, req, GUID, auth) {
@@ -777,7 +778,7 @@ async function RemoveRole(res, req, GUID, auth) {
         }
         res.status(202);
         res.json(resObj);
-        IncermentAPICount(req.ClientInfo.ClientId);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
     } catch (err) {
         res.status(203);
         res.json({
@@ -811,7 +812,7 @@ async function GetUserAndRoles(res, req, GUID, auth) {
         if ((await results.count()) == 0) {
             log("Can't find Player with ID " + GUID, "warn");
             res.status(201);
-            res.json({
+            let resObj = {
                 Status: "Error",
                 Error: `Player with ${GUID} Not Found`,
                 Roles: [],
@@ -820,7 +821,9 @@ async function GetUserAndRoles(res, req, GUID, auth) {
                 Username: "",
                 Discriminator: "",
                 Avatar: ""
-            });
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         } else {
             let dataarr = await results.toArray();
             let data = dataarr[0].Discord;
@@ -864,7 +867,7 @@ async function GetUserAndRoles(res, req, GUID, auth) {
             }
             res.status(200);
             res.json(resObj);
-            IncermentAPICount(req.ClientInfo.ClientId);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } catch (err) {
         res.status(203);
@@ -895,37 +898,41 @@ async function PlayerVoiceGetChannel(res, req, GUID, auth) {
             let player = await guild.members.fetch(dsInfo.id);
             let result = player.voice.channelID;
             if (result !== undefined && result !== null) {
-                res.json({
+                let resObj = {
                     Status: "Success",
                     Error: "",
                     oid: result
-                })
-                IncermentAPICount(req.ClientInfo.ClientId);
+                };
+                res.json(resObj);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             } else {
-                res.json({
+                let resObj = {
                     Status: "NotFound",
                     Error: "Player is not in a channel on discord",
                     oid: ""
-                })
-                IncermentAPICount(req.ClientInfo.ClientId);
+                };
+                res.json(resObj);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             }
         } catch (e) {
             log(`Error: Can't get discord voice channel, User(${GUID}) not found in discord`, "warn");
-            res.json({
+            let resObj = {
                 Status: "NotFound",
                 Error: `Player not a member of the discord server`,
                 oid: ""
-            })
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } else {
         log(`Error: Discord User(${GUID}) not found in discord`, "warn");
-        res.json({
+        let resObj = {
             Status: "NotSetup",
             Error: `Player not setup`,
             oid: ""
-        })
-        IncermentAPICount(req.ClientInfo.ClientId);
+        };
+        res.json(resObj);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
     }
 }
 
@@ -943,39 +950,48 @@ async function PlayerVoiceMute(res, req, GUID, auth) {
                 if (player.voice.channelID !== null && player.voice.channelID !== undefined) {
                     let result = await player.voice.setMute(State);
                     log(`Muted Discord User(${GUID}) in a channel ${player.voice.channelID}`);
-                    res.json({
+                    let resObj = {
                         Status: "Success",
                         Error: ""
-                    })
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 } else {
                     log(`Error: Can't Mute Discord User(${GUID}) Not in a channel on discord`, "warn");
-                    res.json({
+                    let resObj = {
                         Status: "NotFound",
                         Error: "Player is not in a channel on discord"
-                    })
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 }
             } catch (e) {
                 log(`Error: Discord User(${GUID}) Player Not in a channel on discord`, "warn");
-                res.json({
+                let resObj = {
                     Status: "NotFound",
                     Error: "Player is not in a channel on discord"
-                })
+                };
+                res.json(resObj);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             }
         } catch (e) {
             log(`Error: Discord User(${GUID}) not found in discord`, "warn");
-            res.json({
+            let resObj = {
                 Status: "NotFound",
                 Error: `Player not a member of the discord server`
-            })
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } else {
         log(`Error: Discord User(${GUID}) not found in discord`, "warn");
-        res.json({
+        let resObj = {
             Status: "NotSetup",
             Error: `Player not setup`
-        })
+        };
+        res.json(resObj);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
     }
-    IncermentAPICount(req.ClientInfo.ClientId);
 }
 async function PlayerVoiceKick(res, req, GUID, auth) {
     let dsInfo = GetDiscordObj(GUID);
@@ -989,94 +1005,114 @@ async function PlayerVoiceKick(res, req, GUID, auth) {
             try {
                 if (player.voice.channelID !== null && player.voice.channelID !== undefined) {
                     let result = await player.voice.kick(Reason);
-                    res.json({
+                    let resObj = {
                         Status: "Success",
                         Error: ""
-                    })
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 } else {
-                    res.json({
+                    let resObj = {
                         Status: "NotFound",
                         Error: "Player is not in a channel on discord"
-                    })
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 }
             } catch (e) {
                 log(`Error: Discord User(${GUID}) Player Not in a channel on discord`, "warn");
-                res.json({
+                let resObj = {
                     Status: "NotFound",
                     Error: "Player is not a channel on discord"
-                })
+                };
+                res.json(resObj);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             }
         } catch (e) {
             log(`Error: Discord User(${GUID}) not found in discord`, "warn");
-            res.json({
+            let resObj = {
                 Status: "NotFound",
                 Error: `Player not a member of the discord server`
-            })
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } else {
         log(`Error: Discord User(${GUID}) not found in discord`, "warn");
-        res.json({
+        let resObj = {
             Status: "NotSetup",
             Error: `Player not setup`
-        })
+        };
+        res.json(resObj);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
     }
-    IncermentAPICount(req.ClientInfo.ClientId);
 }
 async function ChannelVoiceMove(res, req, GUID, ChannelId, auth) {
-    let dsInfo = GetDiscordObj(GUID);
-    let guild = await client.guilds.fetch(req.ClientInfo.Discord.Guild_Id);
-    dsInfo = await dsInfo;
-    if (dsInfo !== undefined && dsInfo.id !== undefined && dsInfo.id !== "0") {
-        try {
-            let player = await guild.members.fetch(dsInfo.id);
-            let channel = await guild.channels.cache.get(ChannelId);
-            if (channel === undefined || channel === null) {
-                log(`Error: Discord User(${GUID}) Channel ${ChannelId} doesn't exist`, "warn");
-                res.json({
-                    Status: `Error`,
-                    Error: `Channel doesn't exsit`
-                });
-                IncermentAPICount(req.ClientInfo.ClientId);
-                return;
-            }
-            if (req.IsServer || (channel.permissionsFor(player).has('VIEW_CHANNEL') && channel.permissionsFor(player).has('CONNECT'))) {
-                try {
-                    let oldchannel = player.voice.channelID;
-                    let result = await player.voice.setChannel(ChannelId);
-                    log(`Moved Discord User(${GUID}) From ${oldchannel} to ${ChannelId}`);
-                    res.json({
-                        Status: "Success",
-                        Error: ""
-                    });
-                } catch (e) {
-                    log(`Error: Can't Move Discord User(${GUID}) Player Not in a channel on discord`, "warn");
-                    res.json({
-                        Status: "NotFound",
-                        Error: "Player is not in a channel on discord"
-                    })
-                }
-            } else {
-                log(`Error: Discord User(${GUID}) tried to move to channel but doesn't have permissions`, "warn");
-                res.json({
-                    Status: "NoPerms",
-                    Error: `Player doesn't have permissions to join the channel'`
-                })
-            }
-        } catch (e) {
-            log(`Error: Discord User(${GUID}) not found in discord`, "warn");
-            res.json({
-                Status: "NotFound",
-                Error: `Player not a member of the discord server`
-            })
-        }
-    } else {
-        log(`Error: Discord User(${GUID}) not found in discord`, "warn");
-        res.json({
-            Status: "NotSetup",
-            Error: `Player not setup`
-        })
+    let resObj = {
+        Status: `Error`,
+        Error: ``
     }
-    IncermentAPICount(req.ClientInfo.ClientId);
+    try {
+        let dsInfo = GetDiscordObj(GUID);
+        let guild = await client.guilds.fetch(req.ClientInfo.Discord.Guild_Id);
+        dsInfo = await dsInfo;
+        if (dsInfo !== undefined && dsInfo.id !== undefined && dsInfo.id !== "0") {
+            try {
+                let player = await guild.members.fetch(dsInfo.id);
+                let channel = await guild.channels.cache.get(ChannelId);
+                if (channel === undefined || channel === null) {
+                    log(`Error: Discord User(${GUID}) Channel ${ChannelId} doesn't exist`, "warn");
+                    let response = {
+                        Status: `Error`,
+                        Error: `Channel doesn't exsit`
+                    };
+                    res.json(response);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
+                    return;
+                }
+                if (req.IsServer || (channel.permissionsFor(player).has('VIEW_CHANNEL') && channel.permissionsFor(player).has('CONNECT'))) {
+                    try {
+                        let oldchannel = player.voice.channelID;
+                        let result = await player.voice.setChannel(ChannelId);
+                        log(`Moved Discord User(${GUID}) From ${oldchannel} to ${ChannelId}`);
+                        resObj= {
+                            Status: "Success",
+                            Error: ""
+                        };
+                    } catch (e) {
+                        log(`Error: Can't Move Discord User(${GUID}) Player Not in a channel on discord`, "warn");
+                        resObj= {
+                            Status: "NotFound",
+                            Error: "Player is not in a channel on discord"
+                        };
+                    }
+                } else {
+                    log(`Error: Discord User(${GUID}) tried to move to channel but doesn't have permissions`, "warn");
+                    resObj= {
+                        Status: "NoPerms",
+                        Error: `Player doesn't have permissions to join the channel'`
+                    };
+                }
+            } catch (e) {
+                log(`Error: Discord User(${GUID}) not found in discord`, "warn");
+                resObj= {
+                    Status: "NotFound",
+                    Error: `Player not a member of the discord server`
+                };
+            }
+        } else {
+            log(`Error: Discord User(${GUID}) not found in discord`, "warn");
+            resObj= {
+                Status: "NotSetup",
+                Error: `Player not setup`
+            }
+        }
+    } catch (err){
+        console.log(err);
+        resObj.Error = err;
+    }
+    res.json(resObj)
+    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
 }
 
 async function SendMessageUser(res, req, guid, auth) {
@@ -1096,44 +1132,48 @@ async function SendMessageUser(res, req, guid, auth) {
                 log(`Successfully sent Discord Direct Message to ${guid}`);
                 res.status(200);
                 let oid = result?.id || "";
-                res.json({
+                let resObj = {
                     Status: "Success",
                     Error: "",
                     oid: `${oid}`
-                });
-                IncermentAPICount(req.ClientInfo.ClientId);
+                };
+                res.json(resObj);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             } catch (e) {
                 //console.log(e);
                 let error = `${e}`;
                 if (error === `DiscordAPIError: Cannot send messages to this user`) {
                     log(`Error sending message to ${guid} they may block dms - ${e}`, "warn");
                     res.status(200);
-                    res.json({
+                    let resObj = {
                         Status: "Error",
                         Error: `Cannot send messages to this user, they may have dm's blocked`,
                         oid: ""
-                    });
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 } else {
                     log(`Error sending message to ${guid} - ${e}`, "warn");
                     res.status(500);
-                    res.json({
+                    let resObj = {
                         Status: "Error",
                         Error: `${e}`,
                         oid: ""
-                    });
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 }
             }
         } else {
             log(`Failed to send Discord Direct Message to ${guid} user not configured`);
             res.status(200);
-            res.json({
+            let resObj = {
                 Status: "NotSetup",
                 Error: "Discord User Found",
                 oid: ""
-            });
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } else {
         res.status(401);
@@ -1160,38 +1200,42 @@ async function SetNicknameUser(res, req, guid, auth) {
                     let result = await user.setNickname(nickname);
                     log(`Successfully changed nickname of ${guid} to ${nickname}`);
                     res.status(200);
-                    res.json({
+                    let resObj = {
                         Status: "Success",
                         Error: ""
-                    });
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 } else {
                     log(`Error can't change nickname of ${guid} to ""`);
                     res.status(200);
-                    res.json({
+                    let resObj = {
                         Status: "Error",
                         Error: "Can't change nickname to Empty String"
-                    });
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 }
             } catch (e) {
                 log(`Error changing nickname for ${guid} - ${e}`, "warn");
                 res.status(500);
-                res.json({
+                let resObj = {
                     Status: "Error",
                     Error: `${e}`
-                });
-                IncermentAPICount(req.ClientInfo.ClientId);
+                };
+                res.json(resObj);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             }
         } else {
             log(`Failed changing nickname for ${guid} - ${e} user not configured`);
             res.status(200);
-            res.json({
+            let resObj = {
                 Status: "NotSetup",
                 Error: "Discord User Found",
                 oid: ""
-            });
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } else {
         res.status(401);
@@ -1215,23 +1259,25 @@ async function CreateChannel(res, req, auth) {
             let id = channel.id;
 
             res.status(201);
-            res.json({
+            let resObj = {
                 Status: "Success",
                 Error: ``,
                 oid: `${id}`
-            });
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
 
         } catch (e) {
 
+            log("ERROR: " + e, "warn");
             res.status(400);
-            res.json({
+            let resObj = {
                 Status: "Error",
                 Error: `${e}`,
                 oid: "0"
-            });
-            log("AUTH ERROR: " + req.url, "warn");
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
 
         }
     } else {
@@ -1258,51 +1304,57 @@ async function DeleteChannel(res, req, id, auth) {
                     channel.delete(reason).then(() => {
                         log(`Deleted channel ${id} for ${reason}`);
                         res.status(200);
-                        res.json({
+                        res.json();
+                        let resObj = {
                             Status: "Success",
                             Error: ``,
                             oid: `${id}`
-                        });
-                        IncermentAPICount(req.ClientInfo.ClientId);
+                        };
+                        res.json(resObj);
+                        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                     }).catch((e) => {
                         log(`Error Deleteing channel ${id} for ${reason} Error - ${e}`, "warn");
                         res.status(200);
-                        res.json({
+                        let resObj = {
                             Status: "Error",
                             Error: `${e}`,
                             oid: `${id}`
-                        });
-                        IncermentAPICount(req.ClientInfo.ClientId);
+                        };
+                        res.json(resObj);
+                        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                     })
                 } else {
                     log(`Cloudn't delete channel ${id} for ${reason} as it does not exsit`, "warn");
                     res.status(200);
-                    res.json({
+                    let resObj = {
                         Status: "NotFound",
                         Error: ``,
                         oid: `${id}`
-                    });
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 }
             } catch (e) {
                 res.status(200);
-                res.json({
+                log(`Error Deleteing channel ${id} for ${reason} Error - ${e}`, "warn");
+                let resObj = {
                     Status: "NotFound",
                     Error: `${e}`,
                     oid: `${id}`
-                });
-                log(`Error Deleteing channel ${id} for ${reason} Error - ${e}`, "warn");
-                IncermentAPICount(req.ClientInfo.ClientId);
+                };
+                res.json(resObj);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             }
         } catch (e) {
             res.status(400);
-            res.json({
+            log(`Error Deleteing channel ${id} for ${reason} Error - ${e}`, "warn");
+            let resObj = {
                 Status: "Error",
                 Error: `${e}`,
                 oid: "0"
-            });
-            log(`Error Deleteing channel ${id} for ${reason} Error - ${e}`, "warn");
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } else {
         res.status(401);
@@ -1328,51 +1380,56 @@ async function EditChannel(res, req, id, auth) {
                     channel.edit(options, reason).then(() => {
                         log(`Edited channel ${id} for ${reason}`);
                         res.status(200);
-                        res.json({
+                        let resObj = {
                             Status: "Success",
                             Error: ``,
                             oid: `${id}`
-                        });
-                        IncermentAPICount(req.ClientInfo.ClientId);
+                        };
+                        res.json(resObj);
+                        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                     }).catch((e) => {
                         log(`Error editing channel ${id} for ${reason} Error - ${e}`, "warn");
                         res.status(200);
-                        res.json({
+                        let resObj = {
                             Status: "Error",
                             Error: `${e}`,
                             oid: `${id}`
-                        });
-                        IncermentAPICount(req.ClientInfo.ClientId);
+                        };
+                        res.json(resObj);
+                        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                     })
                 } else {
                     log(`Cloudn't edit channel ${id} for ${reason} as it does not exsit`, "warn");
                     res.status(200);
-                    res.json({
+                    let resObj = {
                         Status: "NotFound",
                         Error: ``,
                         oid: `${id}`
-                    });
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 }
             } catch (e) {
                 res.status(200);
-                res.json({
+                log(`Error editing channel ${id} for ${reason} Error - ${e}`, "warn");
+                let resObj = {
                     Status: "NotFound",
                     Error: `${e}`,
                     oid: `${id}`
-                });
-                log(`Error editing channel ${id} for ${reason} Error - ${e}`, "warn");
-                IncermentAPICount(req.ClientInfo.ClientId);
+                };
+                res.json(resObj);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             }
         } catch (e) {
             res.status(400);
-            res.json({
+            log(`Error editing channel ${id} for ${reason} Error - ${e}`, "warn");
+            let resObj = {
                 Status: "Error",
                 Error: `${e}`,
                 oid: "0"
-            });
-            log(`Error editing channel ${id} for ${reason} Error - ${e}`, "warn");
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } else {
         res.status(401);
@@ -1415,51 +1472,56 @@ async function SendMessageChannel(res, req, id, auth) {
                     let msg = await channel.send(message);
                     log(`Sent Message to channel ${cid} id: ${msg.id}`);
                     res.status(200);
-                    res.json({
+                    let resObj = {
                         Status: "Success",
                         Error: ``,
                         oid: `${msg.id}`
-                    });
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 } else {
                     log(`Error couldn't send message to channel ${cid} as user ${GUID} doesn't have permissions to send messagaes in the channel`, "warn");
                     res.status(200);
-                    res.json({
+                    let resObj = {
                         Status: "NoPerms",
                         Error: `User does not have permissions to use this channel`,
                         oid: `0`
-                    });
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 }
             } else {
                 log(`Error couldn't send message to channel ${cid} as it does not exsit`, "warn");
                 res.status(200);
-                res.json({
+                let resObj = {
                     Status: "NotFound",
                     Error: `Channel not found in discord`,
                     oid: `0`
-                });
-                IncermentAPICount(req.ClientInfo.ClientId);
+                };
+                res.json(resObj);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             }
         } catch (e) {
             res.status(200);
-            res.json({
+            log(`Error couldn't send message to channel ${id} Error - ${e}`, "warn");
+            let resObj = {
                 Status: "NotFound",
                 Error: `${e}`,
                 oid: `0`
-            });
-            log(`Error couldn't send message to channel ${id} Error - ${e}`, "warn");
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } catch (e) {
         res.status(400);
-        res.json({
+        log(`Error couldn't send message to channel  ${id}  Error - ${e}`, "warn");
+        let resObj = {
             Status: "Error",
             Error: `${e}`,
             oid: "0"
-        });
-        log(`Error couldn't send message to channel  ${id}  Error - ${e}`, "warn");
-        IncermentAPICount(req.ClientInfo.ClientId);
+        };
+        res.json(resObj);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
     }
 }
 
@@ -1499,51 +1561,56 @@ async function GetMessagesChannel(res, req, id, auth) {
                     //console.log(messages);
                     let msgs = await Promise.all(messages.map(ReMapMessage));
                     res.status(200);
-                    res.json({
+                    let resObj = {
                         Status: "Success",
                         Error: ``,
                         Messages: msgs
-                    });
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 } else {
                     log(`Error couldn't get messages from channel ${cid} as user ${GUID} doesn't have permissions to read message history in the channel`, "warn");
                     res.status(200);
-                    res.json({
+                    let resObj = {
                         Status: "NoPerms",
                         Error: `User does not have permissions to use this channel`,
                         Messages: []
-                    });
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(resObj);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
                 }
             } else {
                 log(`Error couldn't get messages from channel ${cid} as it does not exsit`, "warn");
                 res.status(200);
-                res.json({
+                let resObj = {
                     Status: "NotFound",
                     Error: `Channel not found in discord`,
                     Messages: []
-                });
-                IncermentAPICount(req.ClientInfo.ClientId);
+                };
+                res.json(resObj);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             }
         } catch (e) {
             res.status(200);
-            res.json({
+            log(`Error couldn't get messages from channel ${id} Error - ${e}`);
+            let resObj = {
                 Status: "NotFound",
                 Error: `${e}`,
                 Messages: []
-            });
-            log(`Error couldn't get messages from channel ${id} Error - ${e}`);
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
         }
     } catch (e) {
         res.status(400);
-        res.json({
+        log(`Error couldn't get messages from channel  ${id}  Error - ${e}`);
+        let resObj = {
             Status: "Error",
             Error: `${e}`,
             Messages: []
-        });
-        log(`Error couldn't get messages from channel  ${id}  Error - ${e}`);
-        IncermentAPICount(req.ClientInfo.ClientId);
+        };
+        res.json(resObj);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
     }
 }
 

@@ -5,7 +5,8 @@ const {
     IncermentAPICount,
     GetClientInfoById,
     HandleBadAuthkey,
-    NormalizeToGUID
+    NormalizeToGUID,
+    byteSize
 } = require('../utils');
 const log = require("../log");
 module.exports = {
@@ -71,12 +72,14 @@ async function runGetPublic(req, res, GUID, mod, database, COLL) {
                     };
                     await collection.updateOne(query, updateDoc, options);
                     log("Can't find " + mod + " Data for GUID: " + GUID + " Creating it now");
-                    IncermentAPICount(req.ClientInfo.ClientId);
                 } else {
                     log("Can't find " + mod + " Data for GUID: " + GUID, "warn");
                 }
                 res.status(203);
                 res.json(RawData);
+                if (req.KeyType !== "null") {
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(RawData));
+                }
             }
         }
     } catch (err) {
@@ -117,7 +120,7 @@ async function runSavePublic(req, res, GUID, mod) {
             log("Updated " + mod + " Data for GUID: " + GUID);
             res.status(200);
             res.json(RawData);
-            IncermentAPICount(req.ClientInfo.ClientId);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(RawData));
         } else {
             log("Error with Updating " + mod + " Data for GUID: " + GUID, "warn");
             res.status(203);

@@ -8,7 +8,8 @@ const log = require("../log");
 const {
     isArray,
     GenerateLimiter,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils');
 
 const router = Router();
@@ -89,7 +90,7 @@ async function runToxicity(req, res, auth, key) {
                     })
                     res.status(200);
                     res.json(response);
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
                 });
             } catch (e) {
                 log(e, "warn")

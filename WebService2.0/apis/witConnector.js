@@ -9,7 +9,8 @@ const {
     isObject,
     RemoveBadProperties,
     GenerateLimiter,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils')
 
 
@@ -50,7 +51,7 @@ async function AskWit(req, res, key, auth) {
         log("Wit AI Query: " + question + " Status: " + answer.Status);
         res.status(200);
         res.json(answer);
-        IncermentAPICount(req.ClientInfo.ClientId);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(answer));
     } catch (e) {
         res.status(401);
         res.json({

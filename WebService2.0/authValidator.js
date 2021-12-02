@@ -12,7 +12,8 @@ const {
 const {
   isArray,
   GetClientInfoById,
-  IncermentAPICount
+  IncermentAPICount,
+  byteSize
 } = require('./utils');
 module.exports = {
   ValidateAuth,

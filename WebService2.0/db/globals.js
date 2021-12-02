@@ -10,7 +10,8 @@ const {
     isObject,
     isEmpty,
     HandleBadAuthkey,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils')
 
 const log = require("../log");
@@ -65,16 +66,17 @@ async function runGet(req, res, mod) {
                 }
             }
             res.json(RawData);
-            IncermentAPICount(req.ClientInfo.ClientId);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(RawData));
         } else {
             let data = await results.toArray();
             log("Retrieving " + mod + " Globals");
             res.json(data[0].Data);
-            IncermentAPICount(req.ClientInfo.ClientId);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(data[0].Data));
         }
     } catch (err) {
         res.status(203);
         res.json(RawData);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(RawData));
         log("ERROR: " + err, "warn");
     } finally {
         // Ensures that the client will close when you finish/error
@@ -108,17 +110,18 @@ async function runSave(req, res, mod) {
             log("Updated " + mod + " Globals");
             res.status(201);
             res.json(RawData);
-            IncermentAPICount(req.ClientInfo.ClientId);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(RawData));
         } else {
             log("Error with Updating " + mod + "Globals", "warn");
             res.status(203);
             res.json(RawData);
-            IncermentAPICount(req.ClientInfo.ClientId);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(RawData));
         }
     } catch (err) {
+        log("ERROR: " + err, "warn");
         res.status(203);
         res.json(RawData);
-        log("ERROR: " + err, "warn");
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(RawData));
     } finally {
         // Ensures that the client will close when you finish/error
         await client.close();
@@ -149,32 +152,36 @@ async function runTransaction(req, res, mod) {
         if (Results.modifiedCount >= 1 || Results.upsertedCount >= 1) {
             let Value = await collection.distinct(Element, query);
             log("Transaction " + mod + " incermented " + Element + " by " + RawData.Value + " now " + Value[0], "warn");
-            res.json({
+            let response = {
                 Status: "Success",
                 ID: mod,
                 Value: Value[0],
                 Element: RawData.Element
-            })
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(response);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         } else {
             log("Error in Transaction:  " + mod + " for Globals error: Invaild mod", "warn");
-            res.json({
+            let response = {
                 Status: "Error",
                 ID: mod,
                 Value: 0,
                 Element: RawData.Element
-            })
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(response);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         }
     } catch (err) {
         log("Error in Transaction: :  " + mod + " for Globals error: " + err, "warn");
         res.status(203);
-        res.json({
+        let response = {
             Status: "Error",
             ID: mod,
             Value: 0,
             Element: RawData.Element
-        });
+        };
+        res.json(response);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
     } finally {
         // Ensures that the client will close when you finish/error
         await client.close();
@@ -253,34 +260,38 @@ async function runUpdate(req, res, mod) {
         if (result.matchedCount >= 1 || result.upsertedCount >= 1) {
             log("Updated " + element + " for " + mod + " Globals");
             res.status(200);
-            res.json({
+            let response = {
                 Status: "Success",
                 Element: element,
                 Mod: mod,
                 ID: "Globals"
-            });
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(response);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         } else {
             log("Error with Updating " + element + " for " + mod + " Globals", "warn");
             res.status(203);
-            res.json({
+            let response = {
                 Status: "Error",
                 Element: element,
                 Mod: mod,
                 ID: "Globals"
-            });
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(response);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         }
     } catch (err) {
         //console.log(err)
         log(`ERROR: ${err}`, "warn");
         res.status(203);
-        res.json({
+        let response = {
             Status: "Error",
             Element: RawData.Element,
             Mod: RawData.mod,
             ID: "Globals"
-        });
+        };
+        res.json(response);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
     } finally {
         // Ensures that the client will close when you finish/error
         await client.close();

@@ -10,7 +10,8 @@ const {
     isEmpty,
     HandleBadAuthkey,
     NormalizeToGUID,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils')
 const log = require("../log");
 
@@ -31,7 +32,7 @@ router.use('/Query', queryHandler);
 router.use('/Transaction', TransactionHandler);
 router.post('/Load/:GUID/:mod', (req, res) => {
     let GUID = NormalizeToGUID(req.params.GUID);
-    if (req.IsServer || (req.Collection != "Objects" && req.GUID != GUID)) return HandleBadAuthkey(res);
+    if (req.IsServer != true && req.Collection != "Objects" && req.GUID != GUID) return HandleBadAuthkey(res);
     runGet(req, res, GUID, req.params.mod, req.headers['auth-key']);
 });
 router.post('/Save/:GUID/:mod', (req, res) => {
@@ -115,7 +116,7 @@ async function runGet(req, res, GUID, mod, auth) {
             }
             res.status(201);
             res.json(RawData);
-            IncermentAPICount(req.ClientInfo.ClientId);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(RawData));
         } else {
             let dataarr = await results.toArray();
             let data = dataarr[0];
@@ -124,6 +125,7 @@ async function runGet(req, res, GUID, mod, auth) {
                 if (key === mod) {
                     sent = true;
                     res.json(value);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(value));
                     log("Retrieving " + mod + " Data for GUID: " + GUID);
                 }
             }
@@ -143,7 +145,7 @@ async function runGet(req, res, GUID, mod, auth) {
                 }
                 res.status(203);
                 res.json(RawData);
-                IncermentAPICount(req.ClientInfo.ClientId);
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(RawData));
             }
         }
     } catch (err) {
@@ -183,10 +185,12 @@ async function runSave(req, res, GUID, mod, auth) {
             log("Updated " + mod + " Data for GUID: " + GUID);
             res.status(200);
             res.json(RawData);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(RawData));
         } else {
             log("Error with Updating " + mod + " Data for GUID: " + GUID, "warn");
             res.status(203);
             res.json(req.body);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(req.body));
         }
     } catch (err) {
         res.status(203);
@@ -270,31 +274,37 @@ async function runUpdate(req, res, GUID, mod, auth) {
         if (result.matchedCount >= 1 || result.upsertedCount >= 1) {
             log("Updated " + element + " for " + mod + " Data for GUID: " + GUID);
             res.status(200);
-            res.json({
+            let response = {
                 Status: "Success",
                 Element: element,
                 Mod: mod,
                 ID: GUID
-            });
+            };
+            res.json(response);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         } else {
             log("Error with Updating " + element + " for " + mod + " Data for GUID: " + GUID, "warn");
             res.status(203);
-            res.json({
+            let response = {
                 Status: "NotFound",
                 Element: element,
                 Mod: mod,
                 ID: GUID
-            });
+            };
+            res.json(response);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         }
     } catch (err) {
+        log("ERROR: " + err, "warn");
         res.status(203);
-        res.json({
+        let response = {
             Status: "Error",
             Element: RawData.Element,
             Mod: mod,
             ID: GUID
-        });
-        log("ERROR: " + err, "warn");
+        };
+        res.json(response);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
     } finally {
         // Ensures that the client will close when you finish/error
         await client.close();

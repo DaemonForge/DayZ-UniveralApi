@@ -4,6 +4,7 @@ const {
 const {
   writeFileSync
 } = require('fs');
+const {Blob}  = require('buffer');
 const ConfigPath = "config.json";
 let {
   createHash,
@@ -36,7 +37,12 @@ module.exports = {
   promisedProperties,
   HandleBadAuthkey,
   IncermentAPICount,
-  GetClientInfoById
+  GetClientInfoById,
+  byteSize
+}
+function byteSize( data ){
+  let str = JSON.stringify(data);
+  return new Blob([str]).size;
 }
 
 async function GetClientInfoById(clientId) {
@@ -67,7 +73,8 @@ async function GetClientInfoById(clientId) {
 }
 
 
-async function IncermentAPICount(clientId) {
+async function IncermentAPICount(clientId, bytes) {
+  let dataUsed = bytes || 1;
   const client = new MongoClient(global.config.DBServer, {
     useUnifiedTopology: true
   });
@@ -89,7 +96,8 @@ async function IncermentAPICount(clientId) {
     };
     let data = {
       "$inc": {
-        Count: 1
+        Count: 1,
+        DataUsed: dataUsed
       }
     };
     let options = {
@@ -388,6 +396,7 @@ function ExtractAuthKey(req, res, next) {
 
 
 async function HandleBadAuthkey(res) {
+  //console.log("Handle Bad Auth Key");
   res.status(401);
   res.json({
     Status: "Error",

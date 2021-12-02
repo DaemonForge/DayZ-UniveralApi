@@ -12,7 +12,8 @@ const {
     isObject,
     CleanRegEx,
     GenerateLimiter,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils');
 
 
@@ -92,7 +93,7 @@ async function runQuery(req, res, mod, auth, COLL) {
                     }
                     log("Query:  " + JSON.stringify(query) + " against " + COLL + " for " + ReturnCol + " Got 0 Results", "info");
                     res.json(simpleReturn);
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(simpleReturn));
                 } else {
                     let simpleReturn = {
                         Status: "Success",
@@ -101,17 +102,19 @@ async function runQuery(req, res, mod, auth, COLL) {
                     }
                     log("Query:  " + JSON.stringify(query) + " against " + COLL + " for " + ReturnCol + " Got " + count + " Results", "info");
                     res.json(simpleReturn);
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(simpleReturn));
                 }
             }
         } catch (err) {
             log("Error in Query:  " + query + " against " + COLL + " for mod " + mod + " error: " + err, "warn");
             res.status(203);
-            res.json({
+            let response = {
                 Status: "Error",
                 Count: 0,
                 Results: []
-            });
+            };
+            res.json(response);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         } finally {
             // Ensures that the client will close when you finish/error
             await client.close();

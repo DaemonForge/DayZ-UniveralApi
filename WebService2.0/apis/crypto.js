@@ -5,7 +5,8 @@ const log = require("../log");
 const {
     promisedProperties,
     GenerateLimiter,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils');
 
 
@@ -21,35 +22,39 @@ let LastCache = 0;
 router.post('/Convert/:from/:to', (req, res) => {
     let RawData = req.body;
     let value = RawData.Value;
-    DoCryptoConvert(res, req, req.headers['auth-key'], req.params.from, req.params.to, value);
+    DoCryptoConvert(res, req, req.params.from, req.params.to, value);
 });
 
 router.post('/Price/:from/:to', (req, res) => {
-    DoCryptoConvert(res, req, req.headers['auth-key'], req.params.from, req.params.to, 1);
+    DoCryptoConvert(res, req, req.params.from, req.params.to, 1);
 });
 
 router.post('/:from', (req, res) => {
-    DoBulkCryptoConvert(res, req, req.headers['auth-key'], req.params.from);
+    DoBulkCryptoConvert(res, req, req.params.from);
 });
 
 
-async function DoCryptoConvert(res, req, auth, from, to, amount) {
+async function DoCryptoConvert(res, req, from, to, amount) {
     try {
-        let rvalue = (await GetRate(from, to)) * amount;
-        res.json({
+        let rvalue = (await GetRate(from, to)) * amount; 
+        let ReturnValue = {
             Status: "Success",
             Error: "",
             Value: rvalue
-        })
+        };
+        res.json(ReturnValue);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(ReturnValue));
     } catch (err) {
-        res.json({
+        console.log(err);
+        let ReturnValue = {
             Status: "Error",
             Error: `${err}`,
             Value: -1
-        });
+        };
+        res.json(ReturnValue);
     }
 }
-async function DoBulkCryptoConvert(res, req, auth, from) {
+async function DoBulkCryptoConvert(res, req, from) {
     try {
         if ((Date.now() - 4000) > LastCache) {
             await UpdateCache();
@@ -69,12 +74,14 @@ async function DoBulkCryptoConvert(res, req, auth, from) {
             rValues[element] = v;
         });
         let rvalues = await promisedProperties(rValues);
-        res.json({
+        let ReturnValue = {
             Status: "Success",
             Error: "",
             Values: rvalues
-        });
-        IncermentAPICount(req.ClientInfo.ClientId);
+        };
+        console.log(ReturnValue)
+        res.json(ReturnValue);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(ReturnValue));
     } catch (err) {
         console.log(err)
         res.json({

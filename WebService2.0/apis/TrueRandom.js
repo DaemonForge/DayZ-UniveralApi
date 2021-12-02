@@ -5,7 +5,8 @@ const log = require("../log");
 const {
     isArray,
     GenerateLimiter,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils');
 
 
@@ -76,12 +77,13 @@ async function GetRandom(req, res, auth) {
             ints = ints.concat(data.data);
             log("Random numbers requested");
             res.status(200);
-            res.json({
+            let response = {
                 Status: "Success",
                 Error: ``,
                 Numbers: ints
-            });
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(response);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         } else {
             res.status(203)
             log("Failed to generate random numbers due to error from qrng servers", "warn");
@@ -116,12 +118,13 @@ async function GetFullRandom(req, res, auth) {
     let cachedints = await GetFromCache(count);
     if (cachedints.length === count) {
         res.status(200);
-        res.json({
+        let response = {
             Status: "Success",
             Error: `Cached`,
             Numbers: cachedints
-        });
-        IncermentAPICount(req.ClientInfo.ClientId);
+        };
+        res.json(response);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         return;
     }
     try {
@@ -136,12 +139,13 @@ async function GetFullRandom(req, res, auth) {
             });
             log("Random numbers requested");
             res.status(200);
-            res.json({
+            let response = {
                 Status: "Success",
                 Error: `Live`,
                 Numbers: ints
-            });
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(response);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         } else {
             res.status(203)
             log("Failed to generate random numbers due to error from qrng servers", "warn");

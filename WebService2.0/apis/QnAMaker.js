@@ -11,7 +11,8 @@ const fetch = require('node-fetch');
 const {
     isArray,
     GenerateLimiter,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils');
 
 const router = Router();
@@ -76,7 +77,7 @@ async function runQnA(req, res, auth, QnAconfig) {
         }).then(response => response.json())
         let answer = GetHighestAnwser(json.answers, QnAconfig, question);
         res.json(answer);
-        IncermentAPICount(req.ClientInfo.ClientId);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(answer));
         if (answer.answer === "null" && QnAconfig.LogUnAnswerable) {
             WriteQuestionToDataBase(question);
         }

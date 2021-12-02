@@ -15,7 +15,8 @@ const {
 } = require('./authValidator')
 
 const {
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('./utils');
 const router = Router();
 
@@ -74,17 +75,20 @@ async function runGetAuth(req, res, GUID) {
         };
         const result = await collection.updateOne(query, updateDoc, options);
         if (result.modifiedCount === 1 || result.upsertedCount == 1) {
-            res.json({
+            let resObj = {
                 GUID: GUID,
                 AUTH: AuthToken
-            });
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             log("Auth Token Generated for: " + GUID);
         } else {
-            res.json({
+            let resObj = {
                 GUID: GUID,
                 AUTH: "ERROR"
-            });
+            };
+            res.json(resObj);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(resObj));
             log("Error Generating Auth Token  for: " + GUID, "warn");
         }
     } catch (err) {

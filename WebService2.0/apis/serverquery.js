@@ -10,7 +10,8 @@ const log = require("../log");
 const {
     isArray,
     GenerateLimiter,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils');
 
 
@@ -138,7 +139,7 @@ async function GetServerStatus(req, res, ip, port, auth) {
             log("Server Status Check requested for " + response.ip + ":" + response.query_port);
             res.status(200);
             res.json(statusobj);
-            IncermentAPICount(req.ClientInfo.ClientId);
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(statusobj));
 
             return;
         }
@@ -147,7 +148,7 @@ async function GetServerStatus(req, res, ip, port, auth) {
     }
     if (isSent) return;
     res.status(200);
-    res.json({
+    let responseObject = {
         Status: "Offline",
         Error: response.error || "Error Unknown",
         IP: ip,
@@ -162,8 +163,9 @@ async function GetServerStatus(req, res, ip, port, auth) {
         GameMap: "",
         Password: 0,
         FirstPerson: 0
-    });
-    IncermentAPICount(req.ClientInfo.ClientId);
+    };
+    res.json(responseObject);
+    IncermentAPICount(req.ClientInfo.ClientId, byteSize(responseObject));
     return;
 }
 

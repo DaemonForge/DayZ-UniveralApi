@@ -10,7 +10,8 @@ const log = require("../log");
 const {
     NormalizeToGUID,
     HandleBadAuthkey,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils');
 
 const router = Router();
@@ -70,36 +71,39 @@ async function RunTransaction(data, res, mod, id, COLL) {
         if (Results.matchedCount >= 1 || Results.upsertedCount >= 1) {
             let Value = await collection.distinct(Element, query);
             log("Transaction " + mod + " id " + id + " incermented " + Element + " by " + data.Value + " now " + Value[0], "info");
-            res.json({
+            let response = {
                 Status: "Success",
                 ID: id,
                 Mod: mod,
                 Value: Value[0],
                 Element: data.Element
-            })
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(response)
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         } else {
             log("Error in Transaction:  " + mod + " id " + id + " for " + COLL + " error: Invaild ID", "warn");
-            res.json({
+            let response = {
                 Status: "NotFound",
                 ID: id,
                 Mod: mod,
                 Value: 0,
                 Element: data.Element
-            })
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(response)
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         }
     } catch (err) {
         log("Error in Transaction:  " + mod + " id " + id + " for " + COLL + " error: " + err, "warn");
         res.status(500);
-        res.json({
+        let response = {
             Status: "Error",
             ID: id,
             Mod: mod,
             Value: 0,
             Element: data.Element
-        });
-        IncermentAPICount(req.ClientInfo.ClientId);
+        };
+        res.json(response)
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
     } finally {
         // Ensures that the client will close when you finish/error
         await client.close();
@@ -147,62 +151,68 @@ async function RunValidatedTransaction(data, res, mod, id, COLL) {
                 if (Results.matchedCount >= 1 || Results.upsertedCount >= 1) {
                     let Value = await collection.distinct(Element, query);
                     log("Transaction " + mod + " id " + id + " incermented " + Element + " by " + data.Value + " now " + Value[0], "info");
-                    res.json({
+                    let response = {
                         Status: "Success",
                         Error: "",
                         ID: id,
                         Mod: mod,
                         Value: Value[0],
                         Element: data.Element
-                    })
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(response)
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
                 } else {
                     log("Error in Transaction:  " + mod + " id " + id + " for " + COLL + " error: ", "warn");
-                    res.json({
+                    let response = {
                         Status: "Error",
                         Error: "Failed to Update",
                         ID: id,
                         Mod: mod,
                         Value: 0,
                         Element: data.Element
-                    })
-                    IncermentAPICount(req.ClientInfo.ClientId);
+                    };
+                    res.json(response)
+                    IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
                 }
             } else {
                 log("Transaction:  " + mod + " id " + id + " for " + COLL + " didn't incerment New Value would be above Max or below Min");
-                res.json({
+                let response = {
                     Status: "Error",
                     Error: "Out of Range",
                     ID: id,
                     Mod: mod,
                     Value: OldValue,
                     Element: data.Element
-                })
-                IncermentAPICount(req.ClientInfo.ClientId);
+                };
+                res.json(response)
+                IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
             }
         } else {
             log("Error in Transaction:  " + mod + " id " + id + " for " + COLL + " error: Invaild ID", "warn");
-            res.json({
+            let response = {
                 Status: "NotFound",
                 Error: "Element or object not found",
                 ID: id,
                 Mod: mod,
                 Value: 0,
                 Element: data.Element
-            })
-            IncermentAPICount(req.ClientInfo.ClientId);
+            };
+            res.json(response)
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
         }
     } catch (err) {
         log("Error in Transaction:  " + mod + " id " + id + " for " + COLL + " error: " + err, "warn");
         res.status(500);
-        res.json({
+        let response = {
             Status: "Error",
             Error: `Err: ${err}`,
             ID: id,
             Mod: mod,
             Value: 0,
             Element: data.Element
-        });
+        };
+        res.json(response)
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
     } finally {
         // Ensures that the client will close when you finish/error
         await client.close();

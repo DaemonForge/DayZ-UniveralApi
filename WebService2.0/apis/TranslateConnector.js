@@ -7,7 +7,8 @@ const fetch = require('node-fetch');
 const {
     isArray,
     GenerateLimiter,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils');
 
 const querystring = require('querystring');
@@ -83,7 +84,7 @@ async function runTranslate(req, res, auth) {
         log(`Translation successfully request proccessed with Microsoft Translate`);
         res.status(200);
         res.json(response);
-        IncermentAPICount(req.ClientInfo.ClientId);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
 
     } catch (e) {
         res.status(200);
@@ -161,7 +162,7 @@ async function runLibreTranslate(req, res, auth) {
         log(`Translation successfully request proccessed with Libre Translate`);
         res.status(200);
         res.json(response);
-        IncermentAPICount(req.ClientInfo.ClientId);
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(response));
 
     } catch (e) {
         console.log(e);

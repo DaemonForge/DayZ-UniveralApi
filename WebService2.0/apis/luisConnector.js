@@ -11,7 +11,8 @@ const fetch = require('node-fetch');
 const {
     isArray,
     GenerateLimiter,
-    IncermentAPICount
+    IncermentAPICount,
+    byteSize
 } = require('../utils');
 
 const querystring = require('querystring');
@@ -52,8 +53,8 @@ async function runLUIS(req, res, auth, key) {
 
         }
         res.status(200);
-        res.json(json);
-        IncermentAPICount(req.ClientInfo.ClientId);
+        res.json(json);;
+        IncermentAPICount(req.ClientInfo.ClientId, byteSize(json));
         log(`Queries ${key} with question ${query} - ${json.Status}`)
 
     } catch (e) {
