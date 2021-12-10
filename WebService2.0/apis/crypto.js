@@ -79,7 +79,6 @@ async function DoBulkCryptoConvert(res, req, from) {
             Error: "",
             Values: rvalues
         };
-        console.log(ReturnValue)
         res.json(ReturnValue);
         IncermentAPICount(req.ClientInfo.ClientId, byteSize(ReturnValue));
     } catch (err) {
