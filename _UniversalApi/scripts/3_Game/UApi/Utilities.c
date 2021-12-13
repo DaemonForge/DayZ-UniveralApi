@@ -79,6 +79,31 @@ class UUtil extends Managed {
 	}
 	
 	
+	static void SendNotification(string Header, string Text, PlayerIdentity player, string Icon = "_UniversalApi\\images\\info.edds") {
+		if (!player){return;}
+		NotificationSystem.CreateNotification(new StringLocaliser(Header), new StringLocaliser(Text), Icon, ARGB(255,255,255,255), 5, player);
+	}
+	
+	
+	static string ConvertIntToNiceString(int DollarAmount){
+		string NiceString = "";
+		string OrginalString = DollarAmount.ToString();
+		if (OrginalString.Length() <= 3){
+			return OrginalString;
+		} 
+		int StrLen = OrginalString.Length() - 3;
+		string StrSelection = OrginalString.Substring(StrLen,3);
+		NiceString = StrSelection;
+		while (StrLen > 3){
+			StrLen = StrLen - 3;
+			StrSelection = OrginalString.Substring(StrLen,3);
+			NiceString = StrSelection + "," + NiceString;
+		}
+		StrSelection = OrginalString.Substring(0,StrLen);
+		NiceString = StrSelection + "," + NiceString;
+		return NiceString;
+	}
+	
 	static string RestErrorToString(int ErrorCode){
 		switch ( ErrorCode )
 		{
@@ -292,4 +317,6 @@ class UUtil extends Managed {
 		}
 		return false;
 	}
+	
+	
 }

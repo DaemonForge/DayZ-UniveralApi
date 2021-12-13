@@ -1,0 +1,16 @@
+MetaFileClass {
+ Name "{D50C05942CFC85C1}_UniversalApi/images/info.png"
+ Author "desktop-cjp9n6b"
+ ChangeDate 880290699
+ Configurations {
+  PNGResourceClass PC {
+   SourceFile "info.png"
+  }
+  PNGResourceClass XBOX_ONE : PC {
+  }
+  PNGResourceClass PS4 : PC {
+  }
+  PNGResourceClass LINUX : PC {
+  }
+ }
+}
