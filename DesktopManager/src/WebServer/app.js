@@ -125,7 +125,68 @@ function startWebServer() {
       ServerCert = readFileSync(global.config.CertificateKey);
     }
   }
+  
   let Port = process.env.PORT || global.config.Port || 8443
+  if ( global.config.LetsEncypt != undefined && global.config.LetsEncypt.Enabled === true && global.config.LetsEncypt.Email !== undefined){
+
+    require("greenlock-express").init({
+      packageRoot: `${require('path').resolve('./')}`,
+      configDir: global.SAVEPATH + "/greenlock.d",
+      notify: function(type, object){
+        if(type === "challenge_status" || type === "cert_renewal" || type === "certificate_order" ){
+
+
+        } else {
+          console.log(type);
+          console.log(object);
+        }
+      },
+      // contact for security and critical bug notices
+      maintainerEmail: global.config.LetsEncypt.Email,
+
+      // whether or not to run at cloudscale
+      cluster: false
+    })
+    // Serves on 80 and 443
+    // Get's SSL certificates magically!
+    .ready(httpsGreenLockWorker);
+
+
+function httpsGreenLockWorker(glx) {
+  //
+  // HTTPS 1.1 is the default
+  // (HTTP2 would be the default but... https://github.com/expressjs/express/issues/3388)
+  //
+  // Get the raw https server:
+  var httpsServer = glx.httpsServer(null,webapp);
+  let ip = global.config.IP || "0.0.0.0";
+  let Port = process.env.PORT || global.config.Port || 8443
+  httpsServer.listen(Port, ip, function() {
+    log(`Listening on ${httpsServer.address().address}:${httpsServer.address().port} with Let's Encrypt`);
+  });
+  httpsServer.on('error', function (e) {
+    // Handle your error here
+    log(e, "warn");
+  });
+
+  // Note:
+  // You must ALSO listen on port 80 for ACME HTTP-01 Challenges
+  // (the ACME and http->https middleware are loaded by glx.httpServer)
+  var httpServer = glx.httpServer(function(req, res) {
+    res.statusCode = 301;
+    res.setHeader("Location", "https://" + req.headers.host + req.path);
+    res.end("Insecure connections are not allowed. Redirecting...");
+  });
+
+  httpServer.listen(80, ip, function() {
+    log(`Listening on ${httpServer.address().address}:${httpServer.address().port} for Let's Encrypt`);
+  });
+  httpServer.on('error', function (e) {
+    // Handle your error here
+    log(e, "warn");
+  });
+}
+  } else {
   const server = https.createServer({
       key: ServerKey,
       cert: ServerCert
@@ -138,6 +199,7 @@ function startWebServer() {
       log(e, "warn");
     });
 
+  }
 }
 
 function Start(isElectron){
