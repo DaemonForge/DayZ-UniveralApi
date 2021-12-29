@@ -3,6 +3,7 @@
     "DB": "DayZ",
     "ServerAuth": "Hk@1k77Fxrut.ltqpT5mY)-rYIrNOHQdZM~8@b@~UeZy",
     "AllowClientWrite": false,
+    "IP": "0.0.0.0",
     "Port": 443,
     "LogToFile": false,
     "Certificate": "",
@@ -44,6 +45,12 @@
         "Type": "LibreTranslate",
         "SubscriptionRegion": "",
         "SubscriptionKey":""
+    },
+    "LetsEncypt": {
+        "Enabled": false,
+        "Domain": "localhost.localhost",
+        "Email": "myemail@email.com",
+        "AltNames": []
     }
 
 }

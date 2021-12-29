@@ -136,9 +136,9 @@ function startWebServer() {
         if(type === "challenge_status" || type === "cert_renewal" || type === "certificate_order" ){
 
 
-        } else {
-          console.log(type);
+        } else if ('error' === type) {
           console.log(object);
+          log(`Error: ${object}`, "warn");
         }
       },
       // contact for security and critical bug notices
