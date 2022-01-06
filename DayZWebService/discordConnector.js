@@ -350,6 +350,10 @@ router.post('/Check/:ID/', (req, res) => {
     let GUID = NormalizeToGUID(req.params.ID);
     CheckId(res,req, req.params.ID, GUID);
 });
+router.post('/CheckRole/:ID/:ROLEID', (req, res) => {
+    let GUID = NormalizeToGUID(req.params.ID);
+    CheckIdHasRole(res,req, req.params.ID, GUID, req.params.ROLEID);
+});
 
 /**
  * Channel Related Endpoints
@@ -1231,6 +1235,69 @@ async function CheckId(res, req, id, guid){
                     logobj.Status = "Success";
                     logobj.Discord = data.Discord.id;
                     res.json({Status: "Success", Error: "" });
+                } else {
+                    res.status(200);
+                    logobj.Status = "NotFound";
+                    res.json({Status: "NotFound", Error: "Discord could not be found for user"  });
+                }
+            } else {
+                logobj.Status = "NotFound";
+                res.status(200);
+                res.json({Status: "NotFound", Error: "No User Found"  });
+            }
+            //await Logcollection.insertOne(logobj);
+            log(`Check status for user: ${guid} - ${datetime.toUTCString()} - ${logobj.Status}`)
+        } catch(err){
+            log("Error Checking for ID " + guid + " err" + err, "warn");
+            res.status(400);
+            res.json({Status: "Error", Error: err });
+        } finally{
+            await mongo.close();
+        }
+}
+
+async function CheckIdHasRole(res, req, id, guid, roleid){
+    const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+        try{
+            await mongo.connect();
+            // Connect the client to the server        
+            const db = mongo.db(global.config.DB);
+            let collection = db.collection("Players");
+            let query = { GUID: guid };
+            let results = collection.find(query);
+            let Logcollection = db.collection("Logs");
+            let datetime = new Date();
+            let ClientId = GetClientID(req);
+            let logobj = { Log: "DiscordRoleCheck", TimeStamp: datetime, GUID: guid, SteamId: id, ClientId: ClientId, Status: "Error" }
+            if ((await results.count()) > 0){
+                let dataarr = await results.toArray(); 
+                let data = dataarr[0]; 
+                if (data.Discord?.id !== undefined){
+                    res.status(200);
+                    logobj.Status = "Error";
+                    logobj.Discord = data.Discord.id;
+                    let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
+                    let resObj = {Status: "Error", Error:"Unknown Error"};
+                    try {
+                        let player = await guild.members.fetch(data.Discord.id);
+                        let Roles = player._roles || [];
+                        if (Roles.find(ele => ele === roleid) === roleid){
+                            resObj.Status = "Success";
+                            logobj.Status = "Success";
+                            resObj.Error = "";
+                        } else {
+                            resObj.Status = "NotFound"
+                            logobj.Status = "NotFound";
+                            resObj.Error = "User does not have role";
+                        }
+                        log(`Succefully found discord ID and Roles for ${guid}`);
+                    } catch (e) {
+                        log(`Found Discord ID but not roles for ${guid} `);
+                        resObj.Error = "User not found in discord";
+                        resObj.Status = "NotFound";
+                        logobj.Status = "NotFound";
+                    }
+                    res.json(resObj);
                 } else {
                     res.status(200);
                     logobj.Status = "NotFound";
