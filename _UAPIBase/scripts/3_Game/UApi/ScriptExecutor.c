@@ -2,7 +2,7 @@
 
 class UScriptExec
 {
-	static ref array<ref ScriptModule> m_ScriptModules = new array<ref ScriptModule>;
+	static ref array<ScriptModule> m_ScriptModules = new array<ScriptModule>;
     // fire and forget, method style execution
     static void Func(string code, bool deleteFile = true)
     {
