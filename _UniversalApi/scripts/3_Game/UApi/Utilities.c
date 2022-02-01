@@ -80,7 +80,7 @@ class UUtil extends Managed {
 	
 	
 	static void SendNotification(string Header, string Text, PlayerIdentity player, string Icon = "_UniversalApi\\images\\info.edds") {
-		if (!player){return;}
+		if (!player && GetGame().IsDedicatedServer()){return;}
 		NotificationSystem.CreateNotification(new StringLocaliser(Header), new StringLocaliser(Text), Icon, ARGB(255,255,255,255), 5, player);
 	}
 	
