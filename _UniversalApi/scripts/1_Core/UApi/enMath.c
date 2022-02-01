@@ -30,7 +30,7 @@ modded class Math
 	//returns a random number between int.MAX and int.MIN
 	static int QRandom(){
 		if (QRandomRemaining() <= 0){
-			Print("[UAPI] QRandomInt Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			Error2("[UAPI] QRandom", "Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
 			return RandomInt(int.MIN, int.MAX);
 		}
 		int number = GetAndRemoveNumber();
@@ -41,7 +41,7 @@ modded class Math
 	//Unless returning a number between 0 and int.MAX exactly I would recomend not doing more than a difference of 10,000(ish) use random float instead
 	static int QRandomInt(int min = 0, int max = int.MAX){
 		if (QRandomRemaining() <= 0){
-			Print("[UAPI] QRandomInt Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			Error2("[UAPI] QRandomInt", "Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
 			return RandomInt(min, max);
 		}
 		if (min == max){
@@ -66,7 +66,7 @@ modded class Math
 	//returns a random float
 	static float QRandomFloat(float min = 0, float max = 1){
 		if (QRandomRemaining() <= 0){
-			Print("[UAPI] QRandomFloat Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			Error2("[UAPI] QRandomFloat", "Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
 			return RandomFloat(min, max);
 		}
 		if (min == max){
@@ -87,7 +87,7 @@ modded class Math
 	//returns a random true or false value
 	static bool QRandomFlip(){
 		if (QRandomRemaining() <= 0){
-			Print("[UAPI] QRandomFlip Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
+			Error2("[UAPI] QRandomFlip", "Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
 			int retval = RandomInt(1, int.MAX) % 2;
 			return ( retval != 0);
 		}
