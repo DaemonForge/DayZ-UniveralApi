@@ -15,7 +15,7 @@ class UUtil extends Managed {
 		} 
 		return "";
 	}
-	
+
 	//Return an array of file names for all the files in the specified directory
 	static TStringArray FindFilesInDirectory(string directory)  { 
 		TStringArray fileList = new TStringArray;
@@ -183,7 +183,7 @@ class UUtil extends Managed {
 	    return false;
 	}
 	
-	//Get Date since JAN 01 1970
+	//Get Days since JAN 01 1970
 	static int GetDateInt() {
 		int yr, mth, day;
 		GetYearMonthDay(yr, mth, day);
@@ -198,7 +198,7 @@ class UUtil extends Managed {
 		return count;
 	}
 	
-	//Get Date since JAN 01 1970
+	//Get Days since JAN 01 1970
 	static int GetUTCDateInt() {
 		int yr, mth, day;
 		GetYearMonthDayUTC(yr, mth, day);
@@ -222,7 +222,7 @@ class UUtil extends Managed {
 	static int GetUTCUnixInt() {
 		int hr, min, sec;
 		GetHourMinuteSecondUTC(hr, min, sec);
-		return (GetDateInt() * 86400) + (hr * 3600) + (min * 60) + sec;
+		return (GetUTCDateInt() * 86400) + (hr * 3600) + (min * 60) + sec;
 	}
 	
 	
