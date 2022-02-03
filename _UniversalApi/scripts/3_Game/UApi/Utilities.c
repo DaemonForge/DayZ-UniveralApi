@@ -15,7 +15,7 @@ class UUtil extends Managed {
 		} 
 		return "";
 	}
-
+	
 	//Return an array of file names for all the files in the specified directory
 	static TStringArray FindFilesInDirectory(string directory)  { 
 		TStringArray fileList = new TStringArray;
@@ -37,7 +37,6 @@ class UUtil extends Managed {
 		    }
 			found = FindNextFile(fileHandler, fileName, fileAttr);
 	    }
-	
 		return fileList; 
 	};
 	
@@ -213,12 +212,16 @@ class UUtil extends Managed {
 		return count;
 	}
 	
+	//Gets the current unix time stamp for the current server timezone
+	//Due to int.MAX will break on Tue Jan 19 2038 03:14:07
 	static int GetUnixInt() {
 		int hr, min, sec;
 		GetHourMinuteSecond(hr, min, sec);
 		return (GetDateInt() * 86400) + (hr * 3600) + (min * 60) + sec;
 	}
 	
+	// Gets the current unix time stamp at UTC
+	//Due to int.MAX will break on Tue Jan 19 2038 03:14:07
 	static int GetUTCUnixInt() {
 		int hr, min, sec;
 		GetHourMinuteSecondUTC(hr, min, sec);
