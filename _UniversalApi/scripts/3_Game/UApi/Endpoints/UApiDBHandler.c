@@ -161,7 +161,7 @@ class UApiDBHandlerBase extends Managed {
 	}
 	
 	int Increment(string oid, string element, float value = 1){
-		return Transaction(Mod, element, value);
+		return Transaction(oid, element, value);
 	}
 	
 	/*
