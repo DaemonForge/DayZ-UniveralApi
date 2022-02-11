@@ -1,6 +1,5 @@
 if (global.APIVERSION === undefined) {
-  let pjson = require('./package.json');
-  global.APIVERSION = process.env.npm_package_version || pjson.version;
+  global.APIVERSION = process.env.npm_package_version || require('./package.json').version;
 }
 global.STABLEVERSION = '0.0.0';
 global.NEWVERSIONDOWNLOAD = `https://github.com/daemonforge/DayZ-UniveralApi/releases`;
@@ -49,7 +48,7 @@ const RouterTrueRandom = require("./TrueRandom");
 const RouterCrypto = require("./crypto");
 
 var RateLimit = require('express-rate-limit');
-var limiter = new RateLimit({
+var limiter = RateLimit({
   windowMs: 10*1000, // 50 req/sec
   max: global.config.RequestLimit || 500,
   message:  `{ "Status": "Error", "Error": "RateLimited" }`,
@@ -131,6 +130,7 @@ function startWebServer() {
 
     require("greenlock-express").init({
       packageRoot: `${require('path').resolve('./')}`,
+      packageAgent: `universalapiwebservice/${global.APIVERSION}`,
       configDir: global.SAVEPATH + "/greenlock.d",
       notify: function(type, object){
         if(type === "challenge_status" || type === "cert_renewal" || type === "certificate_order" ){

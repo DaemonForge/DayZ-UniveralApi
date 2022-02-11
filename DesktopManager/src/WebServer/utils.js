@@ -296,7 +296,7 @@ async function CheckRecentVersion(){
   function GenerateLimiter(limitRate, seconds){
     let Seconds = seconds || 10;
     let LimitRate = limitRate || 300
-    return new RateLimit({
+    return RateLimit({
       windowMs: Seconds * 1000, // 40 req/sec
       max: LimitRate,
       message:  '{ "Status": "Error", "Error": "RateLimited" }',

@@ -19,7 +19,7 @@ const {isArray} = require('./utils');
 const router = Router();
 
 var RateLimit = require('express-rate-limit');
-var limiter = new RateLimit({
+var limiter = RateLimit({
   windowMs: 10*1000, // 30 req/sec
   max: global.config.RequestLimitForwarder || 300,
   message:  '{ "Status": "Error", "Error": "RateLimited" }',
