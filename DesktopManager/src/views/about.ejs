@@ -123,11 +123,15 @@
             }
         }
         async function GetStatus(){
-            let Port = <%= global.config.Port %>;
-            let url = `https://localhost:${Port}/Status`;
-            if (Port === 443){
-                url = `https://localhost/Status`;
-            }
+            <% if (global.config?.LetsEncypt.Enabled === true) {-%>
+                let url = `https://<%= global.config.LetsEncypt.Domain %>/Status`;
+            <% } else { -%>
+                let Port = <%= global.config.Port %>;
+                let url = `https://localhost:${Port}/Status`;
+                if (Port === 443){
+                    url = `https://localhost/Status`;
+                }
+            <% } -%>
             try {
                 let data = await fetch(url, {method: "post"}).then(response => response.json());
                 statusele.style.display = "inline";

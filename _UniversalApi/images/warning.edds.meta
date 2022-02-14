@@ -1,0 +1,16 @@
+MetaFileClass {
+ Name "{BCD9418971A2936B}_UniversalApi/images/warning.edds"
+ Author "desktop-cjp9n6b"
+ ChangeDate -970593398
+ Configurations {
+  PNGResourceClass PC {
+   SourceFile "warning.png"
+  }
+  PNGResourceClass XBOX_ONE : PC {
+  }
+  PNGResourceClass PS4 : PC {
+  }
+  PNGResourceClass LINUX : PC {
+  }
+ }
+}

@@ -1,5 +1,5 @@
 
-const {readFileSync,writeFileSync,unlink,existsSync} = require('fs');
+const {readFileSync,writeFileSync,unlink,existsSync,mkdirSync} = require('fs');
 const {makeAuthToken} = require('./utils')
 
 const Defaultconfig = require('./sample-config.json');
@@ -36,100 +36,21 @@ try{
   }
 }
 
-
-//Some Code to update configs for people
-try {
-  if (existsSync(global.SAVEPATH + "QnAMaker.json")) {
-        //file exists
-      try {
-        let QnAconfig = JSON.parse(readFileSync(global.SAVEPATH + "QnAMaker.json")); 
-        log(`QnAConfig Present Converting to new format`);
-        if (config.QnA === undefined){
-          config.QnA = {};
-        }
-        config.QnA["main"] =  QnAconfig;
-        unlink(global.SAVEPATH + "QnAMaker.json", (err) => {
-          if (err) {
-            console.error(err)
-            return
-          }
-        
-          //file removed
-        });
-        writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
-      } catch(e){
-		log(`${e}`, "warn")
-      }
-  }
-} catch(err) {
-  console.error(err)
-}
-
-
-
-if (config.Discord === undefined){
-  config.Discord = {};
-  if (config.Discord_Client_Id !== undefined){
-    config.Discord.Client_Id = config.Discord_Client_Id;
-    delete config.Discord_Client_Id;
-  } else { config.Discord.Client_Id = ""; }
-
-  if (config.Discord_Client_Secret !== undefined){
-    config.Discord.Client_Secret = config.Discord_Client_Secret;
-    delete config.Discord_Client_Secret;
-  } else { config.Discord.Client_Secret = ""; }
-
-  if (config.Discord_Bot_Token !== undefined){
-    config.Discord.Bot_Token = config.Discord_Bot_Token;
-    delete config.Discord_Bot_Token;
-  } else {  config.Discord.Bot_Token = "";  }
-
-  if (config.Discord_Guild_Id !== undefined){
-    config.Discord.Guild_Id = config.Discord_Guild_Id;
-    delete config.Discord_Guild_Id;
-  } else { config.Discord.Guild_Id = ""; }
-
-  if (config.Discord_Required_Role !== undefined){
-    config.Discord.Required_Role = config.Discord_Required_Role;
-    delete config.Discord_Required_Role;
-  } else { config.Discord.Required_Role = ""; }
-
-  if (config.Discord_BlackList_Role !== undefined){
-    config.Discord.BlackList_Role = config.Discord_BlackList_Role;
-    delete config.Discord_BlackList_Role;
-  } else { config.Discord.BlackList_Role = ""; }
-  if (config.Discord_Restrict_Sign_Up !== undefined){
-    config.Discord.Restrict_Sign_Up = config.Discord_Restrict_Sign_Up;
-    delete config.Discord_Restrict_Sign_Up;
-  } else { config.Discord.Restrict_Sign_Up = false;}
-
-  if (config.Discord_Sign_Up_Countries !== undefined){
-    config.Discord.Sign_Up_Countries = config.Discord_Sign_Up_Countries;
-    delete config.Discord_Sign_Up_Countries;
-  } else {config.Discord.Sign_Up_Countries = ["blacklist", "CN"]; }
-
- try {
-  writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
- } catch(e) {
-   log(`${e}`, "warn")
- }
-}
-
-if (config.CheckForNewVersion === undefined || config.CheckForNewVersion === null){
-  config.CheckForNewVersion = true;
+if (config.IP === undefined || config.IP === null){
+  config.IP = "0.0.0.0";
   try {
    writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
   } catch(e) {
-   log(`${e}`, "warn")
+    console.log(e)
   }
 }
 
-if (config.RateLimitWhiteList === undefined || config.RateLimitWhiteList === null){
-  config.RateLimitWhiteList = ["127.0.0.1"];
+if (config.LetsEncypt === undefined || config.LetsEncypt === null){
+  config.LetsEncypt = {Enabled: false, Domain: "yourdomain.com", Email: "jon@example.com", AltNames: []};
   try {
    writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
   } catch(e) {
-   log(`${e}`, "warn")
+    console.log(e)
   }
 }
 
@@ -138,9 +59,40 @@ if (config.CreateIndexes === undefined || config.CreateIndexes === null){
   try {
    writeFileSync(global.SAVEPATH + ConfigPath, JSON.stringify(config, undefined, 4))
   } catch(e) {
-   log(`${e}`, "warn")
+    console.log(e)
   }
 }
 
+if (config.LetsEncypt.Enabled === true){
+  if (!config.LetsEncypt.AltNames.find(element => element === config.LetsEncypt.Domain) ){
+    config.LetsEncypt.AltNames.push(config.LetsEncypt.Domain);
+  }
+  let LEconfigjson = {
+    sites: [
+      {
+        subject: config.LetsEncypt.Domain,
+        altnames: config.LetsEncypt.AltNames
+      }
+    ]
+
+  }
+  try {
+    let path = global.SAVEPATH + "greenlock.d";
+    if (!existsSync(path)){
+        mkdirSync(path);
+    }
+    if (!existsSync(`${path}/config.json`)){
+      writeFileSync( `${path}/config.json`, JSON.stringify(LEconfigjson, undefined, 4))
+    } else {
+      let file = JSON.parse(readFileSync(`${path}/config.json`));
+      if (LEconfigjson.sites[0].subject != file.sites[0].subject || LEconfigjson.sites[0].altnames != file.sites[0].altnames){
+        writeFileSync( `${path}/config.json`, JSON.stringify(LEconfigjson, undefined, 4))
+      }
+    }
+   } catch(e) {
+    console.log(e)
+    config.LetsEncypt.Enabled = false;
+   }
+}
 
 module.exports = config;

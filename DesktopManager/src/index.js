@@ -12,7 +12,7 @@ autoUpdater.setFeedURL({url: feed, serverType: 'json'});
 
 global.PENDINGUPDATE = false;
 global.SAVEPATH = (app || remote.app).getPath('userData') + "/";
-global.APIVERSION = app.getVersion();
+global.APIVERSION = process.env.npm_package_version || app.getVersion();
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require

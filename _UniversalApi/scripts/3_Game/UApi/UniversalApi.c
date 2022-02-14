@@ -518,13 +518,13 @@ class UniversalApi extends Managed {
 			}					
 			return;
 		} else if (status == UAPI_ERROR){
-			Error2("UnviersalApi", "[UAPI] Something went wrong communicating with the webservice check to make sure it is installed correctly and the mongodb service is running correctly!");
+			Error2("UnviersalApi", "[UAPI] Something went wrong communicating with the webservice check to make sure it is installed correctly and the mongodb service is running correctly! URL: " + UApiConfig().GetBaseURL());
 			m_UApiOnline = false;
 		}  else if (status == UAPI_TIMEOUT){
-			Error2("UnviersalApi", "[UAPI] Webservice is offline or unreachable!");
+			Error2("UnviersalApi", "[UAPI] Webservice is offline or unreachable! URL: " + UApiConfig().GetBaseURL());
 			m_UApiOnline = false;
 		} else {
-			Error2("UnviersalApi", "[UAPI] Error with WebService! Status: " + status);
+			Error2("UnviersalApi", "[UAPI] Error with WebService! Status: " + status + " URL: " + UApiConfig().GetBaseURL());
 			m_UApiOnline = false;
 		}
 	}

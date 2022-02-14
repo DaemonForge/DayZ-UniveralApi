@@ -37,7 +37,6 @@ class UUtil extends Managed {
 		    }
 			found = FindNextFile(fileHandler, fileName, fileAttr);
 	    }
-	
 		return fileList; 
 	};
 	
@@ -78,6 +77,31 @@ class UUtil extends Managed {
 		return DayZPlayer.Cast(GetGame().GetObjectByNetworkId(lowBits, highBits));
 	}
 	
+	
+	static void SendNotification(string Header, string Text, PlayerIdentity player, string Icon = "_UniversalApi\\images\\info.edds") {
+		if (!player && GetGame().IsDedicatedServer()){return;}
+		NotificationSystem.CreateNotification(new StringLocaliser(Header), new StringLocaliser(Text), Icon, ARGB(255,255,255,255), 5, player);
+	}
+	
+	
+	static string ConvertIntToNiceString(int DollarAmount){
+		string NiceString = "";
+		string OrginalString = DollarAmount.ToString();
+		if (OrginalString.Length() <= 3){
+			return OrginalString;
+		} 
+		int StrLen = OrginalString.Length() - 3;
+		string StrSelection = OrginalString.Substring(StrLen,3);
+		NiceString = StrSelection;
+		while (StrLen > 3){
+			StrLen = StrLen - 3;
+			StrSelection = OrginalString.Substring(StrLen,3);
+			NiceString = StrSelection + "," + NiceString;
+		}
+		StrSelection = OrginalString.Substring(0,StrLen);
+		NiceString = StrSelection + "," + NiceString;
+		return NiceString;
+	}
 	
 	static string RestErrorToString(int ErrorCode){
 		switch ( ErrorCode )
@@ -158,7 +182,7 @@ class UUtil extends Managed {
 	    return false;
 	}
 	
-	//Get Date since JAN 01 1970
+	//Get Days since JAN 01 1970
 	static int GetDateInt() {
 		int yr, mth, day;
 		GetYearMonthDay(yr, mth, day);
@@ -173,7 +197,7 @@ class UUtil extends Managed {
 		return count;
 	}
 	
-	//Get Date since JAN 01 1970
+	//Get Days since JAN 01 1970
 	static int GetUTCDateInt() {
 		int yr, mth, day;
 		GetYearMonthDayUTC(yr, mth, day);
@@ -188,16 +212,20 @@ class UUtil extends Managed {
 		return count;
 	}
 	
+	//Gets the current unix time stamp for the current server timezone
+	//Due to int.MAX will break on Tue Jan 19 2038 03:14:07
 	static int GetUnixInt() {
 		int hr, min, sec;
 		GetHourMinuteSecond(hr, min, sec);
 		return (GetDateInt() * 86400) + (hr * 3600) + (min * 60) + sec;
 	}
 	
+	// Gets the current unix time stamp at UTC
+	//Due to int.MAX will break on Tue Jan 19 2038 03:14:07
 	static int GetUTCUnixInt() {
 		int hr, min, sec;
 		GetHourMinuteSecondUTC(hr, min, sec);
-		return (GetDateInt() * 86400) + (hr * 3600) + (min * 60) + sec;
+		return (GetUTCDateInt() * 86400) + (hr * 3600) + (min * 60) + sec;
 	}
 	
 	
@@ -292,4 +320,6 @@ class UUtil extends Managed {
 		}
 		return false;
 	}
+	
+	
 }

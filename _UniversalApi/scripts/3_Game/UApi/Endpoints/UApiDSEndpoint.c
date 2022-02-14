@@ -377,6 +377,29 @@ class UniversalDSEndpoint extends UApiBaseEndpoint
 	}
 	
 	//A way to check if a player's discord is set up before they connect to the server and get an authkey
+	int CheckRoleDiscord(string PlainId, string RoleId, Class cbInstance, string cbFunction,  string baseUrl = "", bool ReturnString = false){		
+		int cid = UApi().CallId();
+		if (baseUrl == ""){
+			baseUrl = UApiConfig().GetBaseURL();
+		}
+		
+		autoptr RestCallback DBCBX;
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, PlainId);
+		} else if (cbInstance && cbFunction != "") {
+			DBCBX = new UApiDBNestedCallBack(new UApiCallback<StatusObject>(cbInstance, cbFunction, PlainId), cid);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string url = baseUrl + "Discord/CheckRole/" + PlainId + "/" + RoleId;
+		
+		UApi().Post(url,"{}",DBCBX);
+		
+		return cid;
+	}
+	
+	//A way to check if a player's discord is set up before they connect to the server and get an authkey
 	int CheckDiscord(string PlainId, Class cbInstance, string cbFunction,  string baseUrl = "", bool ReturnString = false){		
 		int cid = UApi().CallId();
 		if (baseUrl == ""){
