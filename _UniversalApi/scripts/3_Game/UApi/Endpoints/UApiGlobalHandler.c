@@ -84,36 +84,36 @@ class UApiGlobalHandlerBase extends Managed {
 	
 	string Mod = "";
 	
-	void UApiDBHandlerBase(string mod){
+	void UApiGlobalHandlerBase(string mod){
 		Mod = mod;
 	}
 	
 	int Save(Class object) {
-		Error2("[UAPI] UApiDBHandlerBase SAVE","Incorrect Ussage class is not type of UApiDBHandler<T>");
+		Error2("[UAPI] UApiGlobalHandlerBase SAVE","Incorrect Ussage class is not type of UApiDBHandler<T>");
 		return -1;
 	}
 	
 	int Save(Class object, Class cbInstance, string cbFunction) {
-		Error2("[UAPI] UApiDBHandlerBase SAVE","Incorrect Ussage class is not type of UApiDBHandler<T>");
+		Error2("[UAPI] UApiGlobalHandlerBase SAVE","Incorrect Ussage class is not type of UApiDBHandler<T>");
 		return -1;
 	}
 	
 	int Load(Class cbInstance, string cbFunction) {
-		Error2("[UAPI] UApiDBHandlerBase LOAD","Incorrect Ussage class is not type of UApiDBHandler<T>");
+		Error2("[UAPI] UApiGlobalHandlerBase LOAD","Incorrect Ussage class is not type of UApiDBHandler<T>");
 		return -1;
 	}
 	
 	int Load(Class cbInstance, string cbFunction, string defaultJson) {
-		Error2("[UAPI] UApiDBHandlerBase LOAD","Incorrect Ussage class is not type of UApiDBHandler<T>");
+		Error2("[UAPI] UApiGlobalHandlerBase LOAD","Incorrect Ussage class is not type of UApiDBHandler<T>");
 		return -1;
 	}
 	
 	int Load(Class cbInstance, string cbFunction, Class inObject){
-		Error2("[UAPI] UApiDBHandlerBase LOAD","Incorrect Ussage class is not type of UApiDBHandler<T>");
+		Error2("[UAPI] UApiGlobalHandlerBase LOAD","Incorrect Ussage class is not type of UApiDBHandler<T>");
 		return -1;
 	}
 	int LoadSelf(Class cbInstance, string cbFunction = ""){
-		Error2("[UAPI] UApiDBHandlerBase LOAD","Incorrect Ussage class is not type of UApiDBHandler<T>");
+		Error2("[UAPI] UApiGlobalHandlerBase LOAD","Incorrect Ussage class is not type of UApiDBHandler<T>");
 		return -1;
 	}
 	
