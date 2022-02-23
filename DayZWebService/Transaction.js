@@ -33,9 +33,9 @@ async function Transaction(req, res, mod, id, auth, COLL){
     if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && global.config.AllowClientWrite) ){
         let RawData = req.body;
         if (RawData.Min !== undefined && RawData.Max !== undefined && RawData.Min !== RawData.Max) {
-            RunValidatedTransaction(RawData,res,mod,COLL)
+            RunValidatedTransaction(RawData,res,mod,id,COLL)
         } else {
-            RunTransaction(RawData, res, mod, COLL)
+            RunTransaction(RawData, res, mod,id, COLL)
         }
     } else {
         res.status(401);
@@ -75,6 +75,7 @@ async function RunTransaction(data, res, mod, id, COLL){
             res.json({Status: "NotFound", ID: id, Mod: mod,  Value: 0, Element: data.Element})
         }
     }catch(err){
+        console.log(err)
         log("Error in Transaction:  " + mod + " id " + id + " for " + COLL + " error: " + err, "warn");
         res.status(500);
         res.json({Status: "Error", ID: id, Mod: mod,  Value: 0, Element: data.Element });

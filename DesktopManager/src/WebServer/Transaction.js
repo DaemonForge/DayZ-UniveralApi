@@ -33,9 +33,9 @@ async function Transaction(req, res, mod, id, auth, COLL){
     if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && global.config.AllowClientWrite) ){
         let RawData = req.body;
         if (RawData.Min !== undefined && RawData.Max !== undefined && RawData.Min !== RawData.Max) {
-            RunValidatedTransaction(RawData,res,mod,COLL)
+            RunValidatedTransaction(RawData,res,mod,id,COLL)
         } else {
-            RunTransaction(RawData, res, mod, COLL)
+            RunTransaction(RawData, res, mod,id, COLL)
         }
     } else {
         res.status(401);

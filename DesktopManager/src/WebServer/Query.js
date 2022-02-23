@@ -52,11 +52,11 @@ async function runQuery(req, res, mod, auth, COLL) {
                     query[mod] = { "$exists": true };
                 }
             }
-            if (COLL == "Objects" && (query.Mod === undefined || query.Mod === null)){
-                query.Mod = mod;
-            }
             if (fixQuery === 1){
                 query = FixQuery(query,ReturnCol);
+            }
+            if (COLL == "Objects" && (query.Mod === undefined || query.Mod === null)){
+                query.Mod = mod;
             }
             let results = collection.find(query).sort(orderBy);
             if (RawData.MaxResults >= 1){
