@@ -1,4 +1,4 @@
-static const string UAPI_VERSION = "1.3.0";
+static const string UAPI_VERSION = "1.3.1";
 
 static const int UAPI_SUCCESS = 200;
 static const int UAPI_EMPTY = 204; //Means response was empty or query result returned no results

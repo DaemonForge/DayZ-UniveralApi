@@ -77,10 +77,17 @@ class UUtil extends Managed {
 		return DayZPlayer.Cast(GetGame().GetObjectByNetworkId(lowBits, highBits));
 	}
 	
+	static void SendNotificationEx(string Header, string Text, PlayerIdentity player, string Icon = "_UniversalApi\\images\\info.edds") {
+		if (GetGame().IsDedicatedServer()){
+			NotificationSystem.SendNotificationToPlayerIdentityExtended(player, 5, Header, Text, Icon );
+		} else if (GetGame().IsClient()){
+			NotificationSystem.AddNotificationExtended(5, Header, Text, Icon);
+		}
+	}
 	
 	static void SendNotification(string Header, string Text, PlayerIdentity player, string Icon = "_UniversalApi\\images\\info.edds") {
-		if (!player && GetGame().IsDedicatedServer()){return;}
-		NotificationSystem.CreateNotification(new StringLocaliser(Header), new StringLocaliser(Text), Icon, ARGB(255,255,255,255), 5, player);
+		if (!player) return;
+		SendNotificationEx(Header,Text,player,Icon);
 	}
 	
 	
