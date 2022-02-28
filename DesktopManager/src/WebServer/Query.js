@@ -192,7 +192,7 @@ async function runUpdateFromQuery(req, res, mod, auth, COLL) {
         }catch(err){
             log(`ERROR: ${err}`, "warn");
             res.status(203);
-            res.json({ Status: "Error", Element: RawData.Element, Mod: mod, Count: result.matchedCount});
+            res.json({ Status: "Error", Element: RawData.Element, Mod: mod, Count: 0});
             //console.log(err)
         }finally{
             // Ensures that the client will close when you finish/error
