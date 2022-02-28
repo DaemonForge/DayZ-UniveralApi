@@ -29,12 +29,16 @@ router.use(GenerateLimiter(global.config.RequestLimitQuery || 400, 10));
  * 
  */
 router.post('/:mod', (req, res) => {
-    runQuery(req, res, req.params.mod, req.headers['auth-key'], req.Collection);
+    if (req.IsServer !== true && COLL === "Players") return HandleBadAuthkey(res);
+    runQuery(req, res, req.params.mod, req.Collection);
 });
 
+router.post('/Update/:mod', (req, res) => {
+    if (req.IsServer !== true) return HandleBadAuthkey(res);
+    runUpdateFromQuery(req, res, req.params.mod, req.Collection);
+});
 
-async function runQuery(req, res, mod, auth, COLL) {
-    if (req.IsServer || COLL === "Objects") {
+async function runQuery(req, res, mod, COLL) {
         var RawData = req.body;
         const client = new MongoClient(global.config.DBServer, {
             useUnifiedTopology: true
@@ -52,6 +56,11 @@ async function runQuery(req, res, mod, auth, COLL) {
             let ReturnCol = "Data";
             if (COLL == "Players") {
                 ReturnCol = mod;
+            }
+            if (fixQuery === 1) {
+                query = FixQuery(query, ReturnCol);
+            }
+            if (COLL == "Players") {
                 if (query && Object.keys(query).length === 0 && query.constructor === Object) {
                     query[mod] = {
                         "$exists": true
@@ -60,9 +69,6 @@ async function runQuery(req, res, mod, auth, COLL) {
             }
             if (COLL == "Objects" && (query.Mod === undefined || query.Mod === null)) {
                 query.Mod = mod;
-            }
-            if (fixQuery === 1) {
-                query = FixQuery(query, ReturnCol);
             }
             let results = collection.find(query).sort(orderBy);
             if (RawData.MaxResults >= 1) {
@@ -119,15 +125,98 @@ async function runQuery(req, res, mod, auth, COLL) {
             // Ensures that the client will close when you finish/error
             await client.close();
         }
-    } else {
-        res.status(401);
-        res.json({
-            Status: "Error",
-            Error: "Invalid Auth",
-            Count: 0,
-            Results: []
-        });
-    }
+};
+
+async function runUpdateFromQuery(req, res, mod, COLL) {
+        let RawData = req.body;
+        const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+        try{
+            await client.connect();
+            let query = JSON.parse(RawData.Query.Query);
+            let orderBy = JSON.parse(RawData.Query.OrderBy);
+            let fixQuery = RawData.Query.FixQuery || 0;
+            let ReturnCol = "Data";
+            if (COLL == "Players"){
+                ReturnCol = mod;
+            }
+            if (fixQuery === 1){
+                query = FixQuery(query,ReturnCol);
+            }
+            if (COLL == "Players"){
+                if (query && Object.keys(query).length === 0 && query.constructor === Object){
+                    query[mod] = { "$exists": true };
+                }
+            }
+            if (COLL == "Objects" && (query.Mod === undefined || query.Mod === null)){
+                query.Mod = mod;
+            }
+            let element = RawData.Element;
+            let operation = RawData.Operation || "set";
+            let StringData;
+            if (isObject(RawData.Value)){
+                StringData = JSON.stringify(RawData.Value);
+            } else if (isArray(RawData.Value)) {
+                StringData = JSON.stringify(RawData.Value);
+            } else if (`${StringData}`.match(/^-?(0|[1-9]\d*)(\.\d+)?$/g)){
+                StringData = RawData.Value * 1;
+            } else {
+                StringData = RawData.Value;
+            }
+            // Connect the client to the server
+            const db = client.db(global.config.DB);
+            let collection = db.collection(COLL);
+            const options = { upsert: false };
+
+            let jsonString = `{ "Data.${element}": ${StringData} }`;
+            let updateDocValue;
+            try { //should use regex to check for a string without " but being lazy
+                updateDocValue  = JSON.parse(jsonString);
+            } catch (e){
+                jsonString = `{ "Data.${element}": "${StringData}" }`;
+                updateDocValue  = JSON.parse(jsonString);
+            }
+            //console.log(updateDocValue);
+            let updateDoc = { $set: updateDocValue, };
+            
+            if (operation === "pull"){
+                updateDoc = { $pull: updateDocValue, };
+            } else if (operation === "push"){
+                updateDoc = { $push: updateDocValue, };
+            } else if (operation === "unset"){
+                updateDoc = { $unset: updateDocValue, };
+            } else if (operation === "mul"){
+                updateDoc = { $mul: updateDocValue, };
+            } else if (operation === "rename"){
+                updateDoc = { $rename: updateDocValue, };
+            } else if (operation === "pullAll"){
+                updateDoc = { $pullAll: updateDocValue, };
+            }
+            //console.log(updateDoc)
+            let simpleReturn = {};
+            const result = await collection.updateOne(query, updateDoc, options);
+            //console.log(result.result)
+            if (result.matchedCount >= 1 || result.upsertedCount >= 1){
+                log("Updated " +  result.matchedCount + " items " + element +" for "+ mod + " Data for Query: " + JSON.stringify(query));
+                simpleReturn = { Status: "Success", Element: element, Mod: mod, Count:  result.matchedCount};
+                res.status(200);
+                res.json(simpleReturn);
+            } else {
+                //console.log(result.result)
+                log("Updated " +  result.matchedCount + " items " + element +" for "+ mod + " Data for Query: " + JSON.stringify(query));
+                simpleReturn = { Status: "NoResults", Element: element, Mod: mod, Count: 0}
+                res.status(203);
+                res.json(simpleReturn);
+            }
+            IncermentAPICount(req.ClientInfo.ClientId, byteSize(simpleReturn));
+        }catch(err){
+            log(`ERROR: ${err}`, "warn");
+            res.status(203);
+            res.json({ Status: "Error", Element: RawData.Element, Mod: mod, Count: 0});
+            //console.log(err)
+        }finally{
+            // Ensures that the client will close when you finish/error
+            await client.close();
+        }
 };
 
 function FixQuery(query, prefix) {
