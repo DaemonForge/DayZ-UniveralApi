@@ -48,3 +48,24 @@ class UApiDBQuery extends UApiQueryBase{
 	}
 	
 }
+
+class UApiDBQueryUpdate extends UApiObject_Base {
+	string Element;
+	string Operation = UpdateOpts.SET; // set | push | pull | unset | mul | rename | pullAll
+	string Value;
+	autoptr UApiQueryBase Query; 
+	
+	
+	void UApiDBQueryUpdate(UApiQueryBase query, string element, string value, string operation = UpdateOpts.SET){
+		Element = element;
+		Value = value;
+		Operation = operation;
+		Query = query;
+	}
+	
+	override string ToJson(){
+		string jsonString = UApiJSONHandler<UApiDBQueryUpdate>.ToString(this);
+		return jsonString;
+	}
+	
+}
