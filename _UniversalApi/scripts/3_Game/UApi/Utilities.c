@@ -92,10 +92,14 @@ class UUtil extends Managed {
 	
 	
 	static string ConvertIntToNiceString(int DollarAmount){
+		string prefix = "";
 		string NiceString = "";
-		string OrginalString = DollarAmount.ToString();
+		if (DollarAmount < 0){
+			prefix = "-";
+		}
+		string OrginalString = Math.AbsInt(DollarAmount).ToString();
 		if (OrginalString.Length() <= 3){
-			return OrginalString;
+			return prefix + OrginalString;
 		} 
 		int StrLen = OrginalString.Length() - 3;
 		string StrSelection = OrginalString.Substring(StrLen,3);
@@ -107,7 +111,7 @@ class UUtil extends Managed {
 		}
 		StrSelection = OrginalString.Substring(0,StrLen);
 		NiceString = StrSelection + "," + NiceString;
-		return NiceString;
+		return prefix + NiceString;
 	}
 	
 	static string RestErrorToString(int ErrorCode){
