@@ -56,6 +56,7 @@ async function runQuery(req, res, mod, auth, COLL) {
             }
             if (fixQuery === 1){
                 query = FixQuery(query,ReturnCol);
+                orderBy = FixQuery(orderBy,ReturnCol);
             }
             if (COLL == "Players"){
                 if (query && Object.keys(query).length === 0 && query.constructor === Object){
@@ -125,6 +126,7 @@ async function runUpdateFromQuery(req, res, mod, auth, COLL) {
             }
             if (fixQuery === 1){
                 query = FixQuery(query,ReturnCol);
+                orderBy = FixQuery(orderBy,ReturnCol);
             }
             if (COLL == "Players"){
                 if (query && Object.keys(query).length === 0 && query.constructor === Object){
