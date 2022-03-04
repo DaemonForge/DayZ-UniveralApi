@@ -162,7 +162,7 @@ modded class PlayerBase extends ManBase{
 	}
 	
 	//Return how much left still to remove
-	int URemoveMoneyInventory(string key, UCurrencyValue MoneyValue, float Amount ){
+	float URemoveMoneyInventory(string key, UCurrencyValue MoneyValue, float Amount ){
 		int AmountToRemove = UCurrency.GetAmount(MoneyValue, Amount);
 		if (AmountToRemove > 0){
 			array<EntityAI> itemsArray = new array<EntityAI>;

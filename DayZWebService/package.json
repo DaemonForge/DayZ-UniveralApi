@@ -1,6 +1,6 @@
 {
   "name": "dayzwebservice",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "",
   "main": "app.js",
   "bin": "bin.js",
@@ -29,7 +29,7 @@
     "languagedetect": "^2.0.0",
     "log4js": "^6.3.0",
     "mongodb": "^4.3.1",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "node-wit": "^6.0.1",
     "saslprep": "^1.0.3",
     "serve-favicon": "^2.5.0",

@@ -25,8 +25,7 @@ class UApiGlobalHandler<Class T> extends UApiGlobalHandlerBase{
 			//Do something with data
 		}
 	}*/
-	
-	
+		
 	override int Save(Class object) {
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
@@ -184,7 +183,7 @@ class UApiGlobalHandlerBase extends Managed {
 		
 		This allows you to cancel a call back to prevent access violations 
 	*/
-	void Cancel(int cid){
+	static void Cancel(int cid){
 		UApi().RequestCallCancel(cid);
 	}
 }

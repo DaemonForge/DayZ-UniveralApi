@@ -9,7 +9,7 @@ class UApiJSONHandler<Class T>
 			m_Serializer = new JsonSerializer;
 		
 		if (stringData == "" || !m_Serializer.ReadFromString(data, stringData, error)) {
-			Print(data);
+			Print(stringData);
 			Error2("[UAPI] FROM STRING", "Error Creating Data from Json : " + error);
 			return false;
 		}
@@ -23,6 +23,7 @@ class UApiJSONHandler<Class T>
 			m_Serializer = new JsonSerializer;
 
 		if (!m_Serializer.WriteToString(data, false, stringData)) {
+			Print(stringData);
 			Error2("[UAPI] TO STRING", "Error Creating JSON from Data");
 			return "{}";
 		}
@@ -36,6 +37,7 @@ class UApiJSONHandler<Class T>
 			m_Serializer = new JsonSerializer;
 
 		if (!m_Serializer.WriteToString(data, false, stringData)) {
+			Print(stringData);
 			Error2("[UAPI] GET STRING", "Error Creating JSON from Data");
 			return false;
 		}

@@ -202,6 +202,14 @@ class UApiDBHandlerBase extends Managed {
 	}
 	
 	
+	int QueryUpdate(UApiQueryBase query, string element, string value, string operation = UpdateOpts.SET) {
+		return UApi().db(Database).QueryUpdate(query, Mod, element, value, operation);
+	}
+	int QueryUpdate(UApiQueryBase query, string element, string value, string operation, Class cbInstance, string cbFunction) {	
+		return UApi().db(Database).QueryUpdate(query, Mod, element, value, operation, new UApiCallback<UApiQueryUpdateResponse>(cbInstance, cbFunction) );
+	}
+	
+	
 	int Query(UApiQueryBase query, Class cbInstance, string cbFunction) {
 		Error2("[UAPI] UApiDBHandlerBase QUERY","Incorrect Ussage class is not type of UApiDBHandler<T>");
 		return -1;

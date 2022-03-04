@@ -263,6 +263,62 @@ class UApiDBEndpoint extends UApiBaseEndpoint {
 	}
 	
 	
+	int QueryUpdate(UApiQueryBase query, string mod, string element, string value, string operation = UpdateOpts.SET) {	
+		if (!query || mod == "" || element == "" || operation == ""){
+			Error2("[UAPI] Error on DB Update","OID, Element, operation, and Mod must be valid strings");
+			return -1;
+		}
+		int cid = UApi().CallId();
+		
+		string endpoint = "Query/Update/" + mod;
+		
+		autoptr UApiDBQueryUpdate updatedata = new UApiDBQueryUpdate(query, element, value, operation);
+		
+		Post(endpoint, updatedata.ToJson(), new UApiSilentCallBack());
+		
+		return cid;
+	}
+	
+	int QueryUpdate(UApiQueryBase query, string mod, string element, string value, string operation, UApiCallbackBase cb) {	
+		if (!query || mod == "" || element == "" || operation == "" || !cb){
+			Error2("[UAPI] Error on DB Update","OID, callback, operation, Element and Mod must be valid");
+			return -1;
+		}
+		int cid = UApi().CallId();
+
+		string endpoint = "Query/Update/" + mod;
+		
+		autoptr UApiUpdateData updatedata = new UApiUpdateData(element, value, operation);
+		
+		cb.SetOID(mod); //Only sets if not set
+		Post(endpoint, updatedata.ToJson(), new UApiDBNestedCallBack(cb, cid));
+		
+		return cid;
+	}
+	
+	int QueryUpdate(UApiQueryBase query, string mod, string element, string value, string operation, Class cbInstance, string cbFunction) {
+		if (!query || mod == "" || element == "" || operation == ""){
+			Error2("[UAPI] Error on DB Update","OID, Element, operation, and Mod must be valid strings");
+			return -1;
+		}
+		int cid = UApi().CallId();
+		autoptr RestCallback DBCBX;
+		if (cbInstance && cbFunction != ""){
+			DBCBX = new UApiDBCallBack(cbInstance, cbFunction, cid, mod);
+		} else {
+			DBCBX = new UApiSilentCallBack();
+		}
+		
+		string endpoint = "Query/Update/" + mod;
+		
+		autoptr UApiDBQueryUpdate updatedata = new UApiDBQueryUpdate(query,element, value, operation);
+		
+		Post(endpoint, updatedata.ToJson(), DBCBX);
+		
+		return cid;
+		
+	}
+	
 	
 	//Only Works on Player Data	
 	int PublicSave(string mod, string oid, string jsonString, Class cbInstance = NULL, string cbFunction = "") {	

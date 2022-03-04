@@ -15,7 +15,11 @@ class UApiUpdateData extends UApiObject_Base {
 	}
 	
 };
-
+class UApiQueryUpdateResponse extends StatusObject {
+	string Element;
+	string Mod;
+	int Count;
+}
 
 class UApiUpdateResponse extends UApiTransactionResponse {
 	float Value;
