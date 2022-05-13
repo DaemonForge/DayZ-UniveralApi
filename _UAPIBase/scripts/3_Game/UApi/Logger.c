@@ -3,27 +3,27 @@ static const int LOG_VERBOSE = 1;
 static const int LOG_INFO = 2;
 static const int LOG_DEBUG = 3;
 
-class UApiLog extends LoggerBase {
-	protected static ref LoggerBaseInstance m_ULoggerBaseInstance;
+class UApiLog extends ULoggerBase {
+	protected static ref ULoggerBaseInstance m_ULoggerBaseInstance;
 	override static void CreateInstance(){
 		m_type = "UAPI";
-		m_ULoggerBaseInstance = new LoggerBaseInstance("UAPI");
+		m_ULoggerBaseInstance = new ULoggerBaseInstance("UAPI");
 	}
-	override static LoggerBaseInstance GetInstance(){
+	override static ULoggerBaseInstance GetInstance(){
 		if (!m_ULoggerBaseInstance){CreateInstance();}
 		return m_ULoggerBaseInstance;
 	}
 }
 
-class LoggerBase extends Managed {
+class ULoggerBase extends Managed {
 	protected static string m_type = "";
-	protected static ref LoggerBaseInstance m_LoggerBaseInstance;
+	protected static ref ULoggerBaseInstance m_LoggerBaseInstance;
 	
 	static void CreateInstance(){
-		m_LoggerBaseInstance = new LoggerBaseInstance(m_type);
+		m_LoggerBaseInstance = new ULoggerBaseInstance(m_type);
 	}
 	
-	static LoggerBaseInstance GetInstance(){
+	static ULoggerBaseInstance GetInstance(){
 		if (!m_LoggerBaseInstance){CreateInstance();}
 		return m_LoggerBaseInstance;
 	}
@@ -54,7 +54,7 @@ class LoggerBase extends Managed {
 	}
 	
 };
-class LoggerBaseInstance extends Managed {
+class ULoggerBaseInstance extends Managed {
 	
 	protected int				m_LogLevel	= 3;
 	protected int				m_LogToApiLevel = 3;
@@ -64,7 +64,7 @@ class LoggerBaseInstance extends Managed {
 	protected string m_LogType = "";
 	protected FileHandle		m_FileHandle;
 	
-	void LoggerBaseInstance(string logType, int level = 4) {	
+	void ULoggerBaseInstance(string logType, int level = 4) {	
 		m_LogLevel = level;	
 		m_LogType = logType;
 		if ( !GetGame().IsServer() || GetGame().IsClient() ){
@@ -76,7 +76,7 @@ class LoggerBaseInstance extends Managed {
 		}
 	}
 	
-	void ~LoggerBaseInstance() {
+	void ~ULoggerBaseInstance() {
 		if ( m_isInit ) {
 			CloseFile(m_FileHandle);
 		}
@@ -223,18 +223,18 @@ class LoggerBaseInstance extends Managed {
 				sLevel =  "INFO";
 				break;
 		}
-		autoptr LoggerObject obj = new LoggerObject( type, text, sLevel);
+		autoptr ULoggerObject obj = new ULoggerObject( type, text, sLevel);
 		return obj.ToJson();
 	}
 }
 
-class LoggerObject extends UApiObject_Base {
+class ULoggerObject extends UApiObject_Base {
 	
 	string Type;
 	string Message;
 	string Level;
 	
-	void LoggerObject(string type, string text, string level){
+	void ULoggerObject(string type, string text, string level){
 		Type = type;
 		Message = text;
 		Level = level;
@@ -242,7 +242,7 @@ class LoggerObject extends UApiObject_Base {
 	}
 	
 	override string ToJson(){
-		string jsonString = JsonFileLoader<LoggerObject>.JsonMakeData(this);
+		string jsonString = JsonFileLoader<ULoggerObject>.JsonMakeData(this);
 		return jsonString;
 	}
 	
