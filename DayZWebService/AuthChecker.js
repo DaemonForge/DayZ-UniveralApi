@@ -89,8 +89,7 @@ async function CheckPlayerAuth(guid, auth){
             let collection = db.collection("Players");
             let SavedAuth = createHash('sha256').update(auth).digest('base64');
             let query = { GUID: guid, AUTH: SavedAuth };
-            let results = collection.find(query);
-                if ((await results.countDocuments()) != 0){
+                if ((await collection.countDocuments(query)) != 0){
                     isAuth = true;
                 }
         } catch(err){

@@ -38,8 +38,7 @@ async function runGet(req, res, mod, auth) {
             const db = client.db(global.config.DB);
             let collection = db.collection("Globals");
             let query = { Mod: mod };
-            let results = collection.find(query);
-            if ((await results.countDocuments()) == 0){
+            if ((await collection.countDocuments(query)) == 0){
                 if ((CheckServerAuth(auth) || global.config.AllowClientWrite) && !isEmpty(RawData)){
                     let doc = { Mod: mod, Data: RawData };
                     let result = await collection.insertOne(doc);
@@ -50,6 +49,7 @@ async function runGet(req, res, mod, auth) {
                 }
                 res.json(RawData);
             } else {
+                let results = collection.find(query);
                 let data = await results.toArray(); 
                 log("Retrieving "+ mod + " Globals");
                 res.json(data[0].Data);
