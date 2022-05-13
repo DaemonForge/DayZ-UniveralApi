@@ -529,7 +529,7 @@ async function HandleCallBack(req, res){
             
             let query = { "Discord.id": discordjson.id };
             let results = collection.find(query);
-            if ((await results.count()) == 0){
+            if ((await results.countDocuments()) == 0){
                 query = { GUID: guid };
                 const options = { upsert: true };
                 const updateDoc = { $set: data, };
@@ -686,7 +686,7 @@ async function GetUserAndRoles(res, req, GUID, auth){
             let collection = db.collection("Players");
             let query = { GUID: GUID };
             let results = collection.find(query);
-            if ((await results.count()) == 0){
+            if ((await results.countDocuments()) == 0){
                 log("Can't find Player with ID " + GUID, "warn");
                 res.status(201);
                 res.json({Status: "Error", Error: `Player with ${GUID} Not Found`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
@@ -1227,7 +1227,7 @@ async function CheckId(res, req, id, guid){
             let datetime = new Date();
             let ClientId = GetClientID(req);
             let logobj = { Log: "DiscordStatusCheck", TimeStamp: datetime, GUID: guid, SteamId: id, ClientId: ClientId, Status: "Error" }
-            if ((await results.count()) > 0){
+            if ((await results.countDocuments()) > 0){
                 let dataarr = await results.toArray(); 
                 let data = dataarr[0]; 
                 if (data.Discord?.id !== undefined){
@@ -1269,7 +1269,7 @@ async function CheckIdHasRole(res, req, id, guid, roleid){
             let datetime = new Date();
             let ClientId = GetClientID(req);
             let logobj = { Log: "DiscordRoleCheck", TimeStamp: datetime, GUID: guid, SteamId: id, ClientId: ClientId, Status: "Error" }
-            if ((await results.count()) > 0){
+            if ((await results.countDocuments()) > 0){
                 let dataarr = await results.toArray(); 
                 let data = dataarr[0]; 
                 if (data.Discord?.id !== undefined){
@@ -1330,7 +1330,7 @@ async function GetGUIDFromDiscordId(dsid){
         let collection = db.collection("Players");
         let query = { "Discord.id": dsid };
         let results = collection.find(query);
-        if ((await results.count()) == 0){
+        if ((await results.countDocuments()) == 0){
             //log("Can't find Player with Discord dsid " + guid, "warn"); 
         } else {
             let dataarr = await results.toArray(); 
@@ -1356,7 +1356,7 @@ async function GetDiscordObj(guid){
         let collection = db.collection("Players");
         let query = { GUID: guid };
         let results = collection.find(query);
-        if ((await results.count()) == 0){
+        if ((await results.countDocuments()) == 0){
             log("Can't find Player with ID " + guid, "warn"); 
         } else {
             let dataarr = await results.toArray(); 

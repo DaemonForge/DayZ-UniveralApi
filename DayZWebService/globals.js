@@ -39,7 +39,7 @@ async function runGet(req, res, mod, auth) {
             let collection = db.collection("Globals");
             let query = { Mod: mod };
             let results = collection.find(query);
-            if ((await results.count()) == 0){
+            if ((await results.countDocuments()) == 0){
                 if ((CheckServerAuth(auth) || global.config.AllowClientWrite) && !isEmpty(RawData)){
                     let doc = { Mod: mod, Data: RawData };
                     let result = await collection.insertOne(doc);
