@@ -41,8 +41,7 @@ async function runGet(req, res, ObjectId, mod, auth) {
             let collection = db.collection("Objects");
             let query = { ObjectId: ObjectId, Mod: mod };
             let results = collection.find(query);
-            
-            if ((await results.count()) == 0){
+            if ((await collection.countDocuments(query)) == 0){
                 if ((CheckServerAuth(auth) || global.config.AllowClientWrite) && !isEmpty(RawData)){
                     if (ObjectId == "NewObject"){
                         ObjectId = makeObjectId();

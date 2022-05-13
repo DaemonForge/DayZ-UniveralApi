@@ -53,7 +53,7 @@ async function runGet(req, res, GUID, mod, auth) {
             let StringData = JSON.stringify(req.body);
             let RawData = req.body;
             
-            if ((await results.count()) == 0){
+            if ((await collection.countDocuments(query)) == 0){
                 if ((CheckServerAuth(auth) || global.config.AllowClientWrite) && !isEmpty(RawData)){
                     log("Can't find Player with ID " + GUID + "Creating it now");
                     const doc  = JSON.parse("{ \"GUID\": \"" + GUID + "\", \""+mod+"\": "+ StringData + " }");
@@ -227,7 +227,7 @@ async function runGetPublic(req, res, GUID, mod, auth) {
         let results = collection.find(query);
         let RawData = req.body;
         
-        if ((await results.count()) == 0){
+        if ((await collection.countDocuments(query)) == 0){
             if (auth !== "null" && (CheckServerAuth(auth) || ((await CheckPlayerAuth(GUID, auth)) && global.config.AllowClientWrite))){
                 log("Can't find Player with ID " + GUID + " Creating it now");
                 const doc  = JSON.parse(`{ "GUID": "${GUID}", "Public": { "${mod}": "${RawData.Value}" } }`);
