@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css" />
+    <!-- Light Theme <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/light.css"> -->
+    <!-- Auto Detect Theme <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"> -->
+
+    <title>Error - <%= Type %></title>
+
+    <!--
+        https://github.com/daemonforge/DayZ-UniveralApi/wiki/EJS-Syntax-Reference
+
+        Passed Varibles
+        `TheError` This will contain the error text, for the user, or the system error.
+        `Type` The type of error passed, you can use this for more advanced templating.
+                - "UserNotFound" - player was not part of the servers discord
+                - "RoleRequired" - player was missing the role specificed in the config
+                - "Blacklisted" - the player has the blacklisted role specificed in the config
+                - "Conflict" - player has already linked this discord to another steam id in your account
+                - "AlreadyLinked" - player has already linked a discord to the speicifed Steam Id
+
+                - "System" - System Errors
+                - "Database" - Error Connecting to the database
+                - "BadURL" - A bad URL
+                - "Discord" - An error from the discord call
+                - "NotSetup" - the discord intergration settings arn't set up on the API
+    -->
+</head>
+<body>
+
+    <% if (Type == "AlreadyLinked") { %>
+
+        <h1>You have already linked your discord account</h1>
+
+    <% } else if (Type == "Conflict") { %>
+
+        <h1>This discord account is already linked with another Steam Id</h1>
+
+    <% } else if ( Type == "UserNotFound") { %>
+
+        <h1>User not found in our disocrd</h1>
+        
+
+    <% } else if ( Type == "RoleRequired") { %>
+    
+        <h1>You are required to have a specific role in Discord</h1>
+
+    <% } else { %>
+
+        <h1>Error Invalid Link or Request</h1>
+    <code style="display: block; width: 100%; white-space: pre;">
+<%= TheError %>
+    </code>
+
+    <% } %>
+    
+</body>
+</html>

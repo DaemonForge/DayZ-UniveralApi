@@ -1,0 +1,44 @@
+{
+  "name": "ufserverservice",
+  "version": "2.0.0",
+  "description": "",
+  "main": "app.js",
+  "bin": "bin.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "author": "",
+  "repository": "daemonforge/DayZ-UniveralApi",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "crypto": "^1.0.1",
+    "discord.js": "^14.18.0",
+    "ejs": "^3.1.10",
+    "ejs-lint": "^2.0.1",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "gamedig": "^5.2.0",
+    "greenlock-express": "^4.0.3",
+    "https": "^1.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.14.0",
+    "openai": "^4.86.2",
+    "serve-favicon": "^2.5.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "pkg": "5.8.1"
+  },
+  "type": "commonjs",
+  "pkg": {
+    "assets": [
+      "node_modules/discord.js/**/*.*",
+      "node_modules/websocket/lib/*",
+      "node_modules/saslprep/code-points.mem",
+      "public/favicon.ico"
+    ]
+  }
+}

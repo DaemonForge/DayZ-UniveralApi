@@ -1,0 +1,56 @@
+{
+    "DBServer": "mongodb://localhost:27017",
+    "DB": "DayZ",
+    "ServerAuth": "Hk@1k77Fxrut.ltqpT5mY)-rYIrNOHQdZM~8@b@~UeZy",
+    "AllowClientWrite": false,
+    "IP": "0.0.0.0",
+    "Port": 443,
+    "LogToFile": false,
+    "Certificate": "",
+    "CertificateKey": "",
+    "CheckForNewVersion": true,
+    "CreateIndexes": true,
+    "RateLimitWhiteList": ["127.0.0.1"],
+    "Discord" :{
+        "Client_Id": "",
+        "Client_Secret": "",
+        "Bot_Token": "",
+        "Guild_Id": "",
+        "Required_Role": "",
+        "BlackList_Role": "",
+        "Restrict_Sign_Up": true,
+        "Restrict_Sign_Up_Countries": ["blacklist", "CN"],
+        "AllowToReRegister": false
+    },
+    "Wit":{
+    },
+    "LUIS":{
+        "sample": {
+            "Endpoint": "https://westus.api.cognitive.microsoft.com/luis/prediction/v3.0/apps/!!{THIS NEEDS TO BE CHANGED}!!/slots/production/predict",
+            "SubscriptionKey": "",
+            "Verbose": true,
+            "Log": true
+        }
+    },
+    "QnA":{
+        "sample": {
+            "Endpoint": "https://thoaz-qna.azurewebsites.net/qnamaker/knowledgebases/!!{THIS NEEDS TO BE CHANGED}!!/generateAnswer",
+            "EndpointKey": "",
+            "MinScore": 65,
+            "LogUnAnswerable": true
+        }
+    },
+    "Translate":{
+        "Endpoint": "https://translate.daemonforge.dev/translate",
+        "Type": "LibreTranslate",
+        "SubscriptionRegion": "",
+        "SubscriptionKey":""
+    },
+    "LetsEncypt": {
+        "Enabled": false,
+        "Domain": "localhost.localhost",
+        "Email": "myemail@email.com",
+        "AltNames": []
+    }
+
+}

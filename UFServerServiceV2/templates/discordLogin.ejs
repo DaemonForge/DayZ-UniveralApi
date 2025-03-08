@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css" />
+        <!-- Light Theme <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/light.css"> -->
+        <!-- Auto Detect Theme <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"> -->
+
+        <!--
+            https://github.com/daemonforge/DayZ-UniveralApi/wiki/EJS-Syntax-Reference
+
+            Passed Varibles
+            `SteamId` The steam id of the player.
+            `Login_URL` The link the player needs to click to be sent to discord
+            `Connected` true/false true if the player already has .
+        -->
+
+        <title>Connect To Discord</title>
+    </head>
+    <body>
+        <% if (Connected) { %>
+            <h2>You are attemping to link to a steam account that has already been connected</h2>
+        <% } else { %>
+        <div class="container">
+          <div id="SteamCard">
+            <table style="overflow: hidden; width: fit-content; display: inline-block; margin: 15px; border-radius: 15px; border: solid 1px #161f27; box-shadow:  1px 2px rgba(6, 13, 39, 0.3);">
+                <tbody>
+                    <tr>
+                        <td>Name: </td>
+                        <td id="cardName">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td>Steam Id: </td>
+                        <td id="cardId"><%= SteamId %></td>
+                    </tr>
+                </tbody>
+            </table>
+            <img id="cardAvatar" src="" style=" display: inline-block;  margin: 15px; border-radius: 15px; border: solid 1px #161f27; box-shadow:  1px 2px rgba(6, 13, 39, 0.3);"/>
+          </div>
+          <button onclick="login()" style="padding: 7px 10px; margin: 15px; display: flex; align-items: center; font-size: 1.5em; font-weight: bold; border: solid 1px #161f27; box-shadow:  1px 2px rgba(6, 13, 39, 0.3);"><svg style="height: 32px; width: 32px; fill: var(--form-text); margin-right:10px; display: inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M118.4 84.2c-5.7 0-10.2 4.9-10.2 11s4.6 11 10.2 11c5.7 0 10.2-4.9 10.2-11s-4.6-11-10.2-11zm-36.5 0c-5.7 0-10.2 4.9-10.2 11s4.6 11 10.2 11c5.7 0 10.2-4.9 10.2-11 .1-6.1-4.5-11-10.2-11zM167 1H33c-11.3 0-20.5 9.2-20.5 20.5v134c0 11.3 9.2 20.5 20.5 20.5h113.4l-5.3-18.3 12.8 11.8 12.1 11.1 21.6 18.7V21.5C187.5 10.2 178.3 1 167 1zm-38.6 129.5l-6.6-8c13.1-3.7 18.1-11.8 18.1-11.8-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.4-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.6-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.2-1.8-1-2.8-1.7-2.8-1.7s4.8 7.9 17.5 11.7c-3 3.8-6.7 8.2-6.7 8.2-22.1-.7-30.5-15.1-30.5-15.1 0-31.9 14.4-57.8 14.4-57.8 14.4-10.7 28-10.4 28-10.4l1 1.2c-18 5.1-26.2 13-26.2 13s2.2-1.2 5.9-2.8C76 54 84.5 52.8 88 52.4c.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.5 0 0-7.9-7.5-24.9-12.6l1.4-1.6s13.7-.3 28 10.4c0 0 14.4 25.9 14.4 57.8 0-.1-8.4 14.3-30.5 15z"/></svg> <span style="display: inline-block;">Connect</span></button>
+        </div>
+        <% } %>
+        <script>
+            function login(){
+                window.location.replace(`<%= Login_URL %>`); 
+            };
+            const fetch_retry = async (url, options, n) => {
+                try {
+                    return await fetch(url, options)
+                } catch(err) {
+                    if (n === 1) throw err;
+                    return await fetch_retry(url, options, n - 1);
+                }
+            };
+
+            fetch_retry(`https://api.daemonforge.dev/user/<%= SteamId %>`, {}, 3)
+                .then(data => data.json()
+                    .then( json => resolveID(json) ).catch(e => console.log(e))
+                ).catch(e => console.log(e));
+
+            function resolveID(res){
+                document.getElementById("cardName").innerText = res.name;
+                document.getElementById("cardAvatar").src = res.avatar_small;
+            };
+        </script>
+    </body>
+</html>
