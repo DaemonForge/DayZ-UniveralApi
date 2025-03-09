@@ -53,9 +53,11 @@
       "perMachine": true,
       "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
+      "license": "public/license.txt",
       "installerIcon": "public/universalFrameworklogo.ico",
       "uninstallerIcon": "public/universalFrameworklogo.ico",
-      "installerHeaderIcon": "public/universalFrameworklogo.ico"
+      "installerHeaderIcon": "public/universalFrameworklogo.ico",
+      "include": "installer.nsi"
     }
   },
   "bugs": {
