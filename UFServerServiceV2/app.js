@@ -55,6 +55,7 @@ const RouterTrueRandom = require('./controllers/trueRandom');
 const RouterCrypto = require('./controllers/crypto');
 const messagesRouter = require('./controllers/messages');
 const AIChatRouter = require('./controllers/aiChat');
+const AIAssistantRouter = require('./controllers/aiAssistant');
 
 /**
  * Configure rate limiting for API protection
@@ -134,6 +135,7 @@ function createExpressApp() {
   app.use('/Crypto', RouterCrypto);
   app.use('/Messages', messagesRouter);
   app.use('/AI/Chat', AIChatRouter);
+  app.use('/AI/Assistant', AIAssistantRouter);
   
   // Handle invalid routes
   app.use('/', (req, res) => {
