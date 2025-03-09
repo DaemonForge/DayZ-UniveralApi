@@ -3,6 +3,7 @@ const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
 const logger = global.logger; // take the logger from he global
 const client = require("./bot.js");
 const {render} = require('ejs');
+const DefaultTemplates = require('../templates/defaultTemplates.json');
 
 //Create Template Folder if it doesn't exist
 if (!existsSync(global.SAVEPATH + 'templates')) mkdirSync(global.SAVEPATH + 'templates');

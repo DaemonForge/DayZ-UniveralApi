@@ -10,7 +10,7 @@ const { makeObjectId, isEmpty, NormalizeToGUID } = require('../utils');
 const logger = global.logger;
 
 // Mount the legacy query handler if needed
-const queryHandler = require('./query.js');
+const queryHandler = require('./query');
 router.use('/Query', queryHandler);
 /**
  * POST /Load/:ObjectId/:mod

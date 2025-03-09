@@ -9,7 +9,7 @@ const { CheckAuth, CheckPlayerAuth, CheckServerAuth, requireServerAuth, requireP
 const { getPlayer, getPlayerModData, playerExists, newPlayer, updatePlayer, updatePlayerModData, updatePlayerField, runPlayerTransaction,runValidatedPlayerTransaction } = require('../models/player');
 
 // ----- Endpoint Handlers -----
-const queryHandler = require("./Query");
+const queryHandler = require("./query");
 
 router.use('/Query', queryHandler);
 /**

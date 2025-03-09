@@ -9,7 +9,7 @@ global.OPENAISTATUS = "Pending";
 const ajv = new Ajv({ allErrors: true });
 
 // Initialize OpenAI API client.
-const openai = new OpenAI({apiKey: global.config.OpenAIApi.ApiKey});
+let openai;
 
 const express = require('express');
 const router = express.Router();
@@ -23,6 +23,7 @@ async function testOpenAI() {
             global.OPENAISTATUS = "Offline";
         }
     } else {
+        openai = new OpenAI({apiKey: global.config.OpenAIApi.ApiKey});
         try{
             const questions = ['How do I find food?', 'How do I find water?', 'How do I fish?', 'How do I hunt?', 'How do I build a base?'];
             const qidx = Math.floor(Math.random()*questions.length);

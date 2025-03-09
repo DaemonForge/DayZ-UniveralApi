@@ -65,7 +65,7 @@ const {
   updatePlayerStatus,
   insertMessage,
   readMessages
-} = require("../Models/messages");
+} = require("../models/messages");
 const { AuthPlayerGuid, CheckServerAuth, requireServerAuth, requirePlayerOrServerAuth} = require('../auth/utils')
 const { GenerateLimiter } = require("../utils");
 const logger = global.logger;

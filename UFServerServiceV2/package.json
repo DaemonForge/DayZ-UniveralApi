@@ -1,15 +1,18 @@
 {
   "name": "ufserverservice",
   "version": "2.0.0",
-  "description": "",
-  "main": "app.js",
-  "bin": "bin.js",
+  "main": "main.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "electron .",
+    "dev": "nodemon app.js",
+    "build": "electron-builder",
+    "pkg": "pkg . --compress GZip && node build.js"
   },
   "author": "",
-  "repository": "daemonforge/DayZ-UniveralApi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daemonforge/DayZ-UniveralApi.git"
+  },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "ajv": "^8.17.1",
@@ -24,21 +27,40 @@
     "https": "^1.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.14.0",
+    "node-windows": "^1.0.0-beta.8",
     "openai": "^4.86.2",
     "serve-favicon": "^2.5.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9",
-    "pkg": "5.8.1"
+    "@yao-pkg/pkg": "^6.3.2",
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8",
+    "nodemon": "^3.1.9"
   },
-  "type": "commonjs",
-  "pkg": {
-    "assets": [
-      "node_modules/discord.js/**/*.*",
-      "node_modules/websocket/lib/*",
-      "node_modules/saslprep/code-points.mem",
-      "public/favicon.ico"
-    ]
-  }
+  "build": {
+    "appId": "com.daemonforge.ufserverservice",
+    "productName": "Universal Framework Service",
+    "directories": {
+      "output": "../Build/UFService"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/universalFrameworklogo.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "public/universalFrameworklogo.ico",
+      "uninstallerIcon": "public/universalFrameworklogo.ico",
+      "installerHeaderIcon": "public/universalFrameworklogo.ico"
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/daemonforge/DayZ-UniveralApi/issues"
+  },
+  "homepage": "https://github.com/daemonforge/DayZ-UniveralApi#readme",
+  "description": ""
 }

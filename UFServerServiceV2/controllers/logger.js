@@ -22,7 +22,7 @@ router.post('/Many/:id', (req, res)=>{
 
 
 async function runLoggerOne(req, res, id, auth) {
-    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+    const client = new MongoClient(global.config.DBServer);
     let RawData = req.body;
     let hasServerAuth = CheckServerAuth(auth);
     let hasClientAuth = await CheckAuth(auth, true);
@@ -62,7 +62,7 @@ async function runLoggerOne(req, res, id, auth) {
 }
 
 async function runLoggerMany(req, res, id, auth) {
-    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+    const client = new MongoClient(global.config.DBServer);
     let RawData = req.body;
     let hasServerAuth = CheckServerAuth(auth);
     let hasClientAuth = await CheckAuth(auth, true);

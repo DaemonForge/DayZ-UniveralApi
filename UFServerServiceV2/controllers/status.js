@@ -17,7 +17,7 @@ router.get('', (req, res)=>{
 });
 
 async function runStatusCheck(req, res, auth) {
-    const client = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+    const client = new MongoClient(global.config.DBServer);
     var returnError = "noauth"
     if (CheckServerAuth(auth) || (await CheckAuth(auth, true))){
         returnError = "noerror"

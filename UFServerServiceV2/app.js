@@ -47,11 +47,11 @@ const RouterItem = require('./controllers/object');
 const RouterPlayer = require('./controllers/player');
 const RouterGlobals = require('./controllers/global');
 const RouterAuth = require('./auth/controller');
-const RouterStatus = require('./controllers/Status');
+const RouterStatus = require('./controllers/status');
 const RouterLogger = require('./controllers/logger');
 const RouterDiscordConnector = require('./discord/router');
 const RouterServerQuery = require('./controllers/serverquery');
-const RouterTrueRandom = require('./controllers/TrueRandom');
+const RouterTrueRandom = require('./controllers/trueRandom');
 const RouterCrypto = require('./controllers/crypto');
 const messagesRouter = require('./controllers/messages');
 const AIChatRouter = require('./controllers/aiChat');
@@ -264,7 +264,6 @@ function Start(isElectron = false) {
     if (global.config?.CheckForNewVersion) {
       CheckRecentVersion();
     }
-    setTimeout(CheckIndexes, 1000);
   } else {
     // Single process mode
     startWebServer();
@@ -273,15 +272,10 @@ function Start(isElectron = false) {
       if (global.config?.CheckForNewVersion) {
         CheckRecentVersion();
       }
-      setTimeout(CheckIndexes, 1000);
     }
   }
+  setTimeout(CheckIndexes, 1000);
 }
 
-// Export the start function for potential use as a module
-module.exports = Start;
 
-// Auto-start the server if not imported as a module
-if (require.main === module) {
-  Start();
-}
+Start(global.isElectron);
