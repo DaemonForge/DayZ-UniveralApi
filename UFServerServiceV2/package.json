@@ -30,6 +30,7 @@
     "node-windows": "^1.0.0-beta.8",
     "openai": "^4.86.2",
     "serve-favicon": "^2.5.0",
+    "vm": "^0.1.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {
