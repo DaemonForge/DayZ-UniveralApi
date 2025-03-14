@@ -9,7 +9,7 @@ const { isArray, isObject, isEmpty,  processValue, buildUpdateDoc } = require(".
  * Connects to MongoDB and returns { client, collection } for the "Globals" collection.
  */
 async function getClientAndCollection() {
-  const client = new MongoClient(config.DBServer);;
+  const client = new MongoClient(config.DBServer);
   await client.connect();
   const db = client.db(config.DB);
   const collection = db.collection("Globals");

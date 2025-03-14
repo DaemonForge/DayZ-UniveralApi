@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Unviersal Framework Settings</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
+  <link rel="stylesheet" href="styles/settings.css">
+</head>
+<body>
+  <form id="configForm">
+    <!-- Server Authentication -->
+    <details>
+      <summary>Authentication Keys</summary>
+      <div id="serverAuthSection">
+        <div id="serverAuthList" class="list-container">
+          <!-- Dynamic auth entries will be injected here -->
+        </div>
+        <button type="button" id="generateServerAuth" class="small-btn" title="Generate a new authentication token">
+          <!-- Copy icon SVG reused for generate -->
+          <svg style="fill: #ffffff;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+          Generate New Auth
+        </button>
+      </div>
+    </details>
+
+    <!-- Database -->
+    <details>
+      <summary>Database</summary>
+      <label for="DBServer" title="Enter the MongoDB connection string, e.g. mongodb://localhost:27017">
+        DB Server:
+      </label>
+      <input type="text" id="DBServer" name="DBServer" required>
+
+      <label for="DB" title="Enter the name of the database">Database Name:</label>
+      <input type="text" id="DB" name="DB" required>
+
+    </details>
+
+    <!-- Web Server -->
+    <details>
+      <summary>Web Server</summary>
+      <label for="IP" title="Enter a valid IP address (e.g., 0.0.0.0)">IP Address:</label>
+      <input type="text" id="IP" name="IP" pattern="^((25[0-5]|2[0-4]\d|[01]?\d\d?)(\.|$)){4}$" required>
+
+      <label for="Port" title="Enter a port number between 1 and 65535">Port:</label>
+      <input type="number" id="Port" name="Port" min="1" max="65535" required>
+
+      <label title="List of IP addresses for rate limiting. 127.0.0.1 is pre-added.">
+        Rate Limit WhiteList (IPs):
+      </label>
+      <div id="rateLimitList" class="list-container">
+        <!-- Dynamic IP entries will be injected here -->
+      </div>
+      <button type="button" id="addRateLimit" class="small-btn" title="Add an IP address">
+        <!-- Add icon SVG -->
+        <svg style="fill: #ffffff;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7z"/>
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+        </svg>
+        Add IP
+      </button>
+
+      <label for="certType" title="Select the type of certificate to use">
+        Certificate Type:
+      </label>
+      <select id="certType" name="certType">
+        <option value="selfSigned">Self Signed</option>
+        <option value="letsEncrypt">Let's Encrypt</option>
+        <option value="ownCert">Own Certificates</option>
+      </select>
+
+      <!-- Own Certificates fields -->
+      <div id="ownCertFields" style="display: none;">
+        <label for="Certificate" title="Paste your certificate here">Certificate:</label>
+        <textarea id="Certificate" name="Certificate" rows="4"></textarea>
+
+        <label for="CertificateKey" title="Paste your certificate key here">Certificate Key:</label>
+        <textarea id="CertificateKey" name="CertificateKey" rows="4"></textarea>
+      </div>
+
+      <!-- Let's Encrypt fields -->
+      <div id="letsEncryptFields" style="display: none;">
+        <label for="LE_Domain" title="Enter your domain for Let's Encrypt">Domain:</label>
+        <input type="text" id="LE_Domain" name="LE_Domain">
+
+        <label for="LE_Email" title="Enter a valid email for Let's Encrypt registration">Email:</label>
+        <input type="email" id="LE_Email" name="LE_Email">
+
+        <label for="LE_AltNames" title="Enter alternative domain names separated by commas">Alt Names:</label>
+        <input type="text" id="LE_AltNames" name="LE_AltNames">
+      </div>
+    </details>
+
+    <!-- Discord Section -->
+<details>
+    <summary>Discord</summary>
+    <label for="Discord_Client_Id" title="Enter your Discord Client ID">Client ID:</label>
+    <input type="text" id="Discord_Client_Id" name="Discord_Client_Id">
+  
+    <label for="Discord_Client_Secret" title="Enter your Discord Client Secret">Client Secret:</label>
+    <input type="text" id="Discord_Client_Secret" name="Discord_Client_Secret">
+  
+    <label for="Discord_Bot_Token" title="Enter your Discord Bot Token (read-only after saving)">
+      Bot Token:
+    </label>
+    <input type="text" id="Discord_Bot_Token" name="Discord_Bot_Token">
+  
+    <label for="Discord_Guild_Id" title="Enter your Discord Guild ID">Guild ID:</label>
+    <input type="text" id="Discord_Guild_Id" name="Discord_Guild_Id">
+    <div class="toggle-container">
+        <label title="Allow discord users to Re Register their account" class="toggle-switch">
+          <input type="checkbox" id="Discord_AllowToReRegister" name="Discord_AllowToReRegister">
+          <span class="slider"></span>
+        </label>
+        <span>Allow To ReRegister</span>
+      </div>
+  </details>
+
+
+    <!-- OpenAI -->
+    <details>
+      <summary>OpenAI</summary>
+      <label for="OpenAIApi_ApiKey" title="Enter your OpenAI API Key">API Key:</label>
+      <input type="text" id="OpenAIApi_ApiKey" name="OpenAIApi_ApiKey">
+      <div class="toggle-container">
+        <label title="Enable prompt Protection on system prompts" class="toggle-switch">
+          <input type="checkbox" id="OpenAIApi_enablePromptProtection" name="OpenAIApi_enablePromptProtection">
+          <span class="slider"></span>
+        </label>
+        <span>Enable Prompt Protection</span>
+      </div>
+    </details>
+
+    <!-- Functions -->
+    <details>
+      <summary>Functions</summary>
+      <div id="functionsContainer" class="list-container">
+        <!-- Dynamic function entries will be injected here -->
+      </div>
+      <button type="button" id="addFunction" class="small-btn" title="Add a new function">
+        <!-- Add icon SVG -->
+        <svg style="fill: #ffffff;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7z"/>
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+        </svg>
+      </button>
+    </details>
+
+    <!-- Advanced -->
+    <details>
+      <summary>Advanced</summary>
+      <fieldset id="discordRestrictionsFieldset">
+        <legend>Discord Restrictions</legend>
+        <label for="Discord_Required_Role" title="Enter the required role for Discord access">Required Role:</label>
+        <input type="text" id="Discord_Required_Role" name="Discord_Required_Role">
+        <label for="Discord_BlackList_Role" title="Enter the blacklisted role for Discord">Blacklist Role:</label>
+        <input type="text" id="Discord_BlackList_Role" name="Discord_BlackList_Role">          
+      <div class="toggle-container">
+        <label title="Check to restrict sign up for Discord users" class="toggle-switch">
+          <input type="checkbox" id="Discord_Restrict_Sign_Up" name="Discord_Restrict_Sign_Up">
+          <span class="slider"></span>
+        </label>
+        <span>Restrict Discord Sign Up</span>
+      </div>
+        <label for="Restrict_Sign_Up_Countries" title="Enter country codes separated by commas (e.g., US, CA)">Restrict Sign Up Countries:</label>
+        <input type="text" id="Restrict_Sign_Up_Countries" name="Restrict_Sign_Up_Countries">
+      </fieldset>
+      
+      <div class="toggle-container">
+        <label title="Check to enable logging to file" class="toggle-switch">
+          <input type="checkbox" id="LogToFile" name="LogToFile">
+          <span class="slider"></span>
+        </label>
+        <span>Log To File</span>
+      </div>
+
+      <label title="Check to verify new versions on startup">
+        <input type="checkbox" id="CheckForNewVersion" name="CheckForNewVersion">
+        Check For New Version
+      </label>
+      
+      <div class="toggle-container">
+        <label title="Check to automatically create indexes" class="toggle-switch">
+          <input type="checkbox" id="CreateIndexes" name="CreateIndexes">
+          <span class="slider"></span>
+        </label>
+        <span>Create DB Indexes</span>
+      </div>
+    </details>
+
+    <div class="action-buttons">
+      <button type="submit" id="saveBtn" title="Save changes" hidden>Save</button>
+      <button type="button" id="cancelBtn" title="Discard changes and close" hidden>Cancel/Close</button>
+    </div>
+  </form>
+  <button id="floatingSaveBtn" title="Save Changes">
+    <svg style="fill: #ffffff;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" >
+      <path d="M0 0h24v24H0z" fill="none"/>
+      <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 
+      3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+    </svg>
+  </button>
+  <script src="../renderers/settings.js"></script>
+</body>
+</html>

@@ -17,6 +17,7 @@ router.get('', (req, res)=>{
 });
 
 async function runStatusCheck(req, res, auth) {
+    const { noLog } = req.query;
     const client = new MongoClient(global.config.DBServer);
     var returnError = "noauth"
     if (CheckServerAuth(auth) || (await CheckAuth(auth, true))){
@@ -35,17 +36,17 @@ async function runStatusCheck(req, res, auth) {
         const result = await collection.updateOne(query, updateDoc, options);
         if (result.modifiedCount >= 1 || result.upsertedCount >= 1 ){
             res.json({Status: "Success", Error: returnError, Version: global.APIVERSION, Discord: global.DISCORDSTATUS, OpenAI: global.OPENAISTATUS });
-            logger.info("Status Check Called");
+            if(!noLog) logger.info("Status Check Called");
         } else {
             res.status(500);
             res.json({Status: "Error", Error: "Database Write Error", Version: global.APIVERSION, Discord: global.DISCORDSTATUS, OpenAI: global.OPENAISTATUS });
-            logger.warn("Database Write Error", { operation: "status check" });
+            if(!noLog) logger.warn("Database Write Error", { operation: "status check" });
         }
     }catch(err){
         console.log(err);
         res.status(500);
         res.json({Status: "Error", Error: `Error: ${err}`, Version: global.APIVERSION, Discord: global.DISCORDSTATUS, OpenAI: global.OPENAISTATUS });
-        logger.warn("Status check error", { error: err.message, stack: err.stack });
+        if(!noLog) logger.warn("Status check error", { error: err.message, stack: err.stack });
     }finally{
         // Ensures that the client will close when you finish/error
         client.close();

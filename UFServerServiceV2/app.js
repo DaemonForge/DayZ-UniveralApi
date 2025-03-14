@@ -12,6 +12,9 @@ global.NEWVERSIONDOWNLOAD = 'https://github.com/daemonforge/DayZ-UniveralApi/rel
 if (global.SAVEPATH === undefined) {
   global.SAVEPATH = './';
 }
+// Initialize logger
+const logger = require('./log').initializeLogger();
+global.logger = logger;
 
 // Load configuration
 global.config = require('./configLoader');
@@ -29,9 +32,6 @@ const os = require('os');
 const nodeFetch = require('node-fetch');
 const RateLimit = require('express-rate-limit');
 
-// Initialize logger
-const logger = require('./log').initializeLogger();
-global.logger = logger;
 
 // Import utility functions
 const { isArray, CheckRecentVersion, CheckIndexes, ExtractAuthKey } = require('./utils');

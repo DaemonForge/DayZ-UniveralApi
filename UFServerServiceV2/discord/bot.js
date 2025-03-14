@@ -24,6 +24,7 @@ try {
     }
 } catch (e){
     logger.warn("Discord Bot Token is invalid", { error: e });
+    global.DISCORDSTATUS = "Error";
 }
 
 client.on('ready', () => {

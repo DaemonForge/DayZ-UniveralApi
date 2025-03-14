@@ -1,10 +1,10 @@
 {
     "DBServer": "mongodb://localhost:27017",
     "DB": "DayZ",
-    "ServerAuth": "Hk@1k77Fxrut.ltqpT5mY)-rYIrNOHQdZM~8@b@~UeZy",
+    "ServerAuth": ["Hk@1k77Fxrut.ltqpT5mY)-rYIrNOHQdZM~8@b@~UeZy"],
     "IP": "0.0.0.0",
     "Port": 443,
-    "LogToFile": false,
+    "LogToFile": true,
     "Certificate": "",
     "CertificateKey": "",
     "CheckForNewVersion": true,
@@ -25,6 +25,13 @@
         "ApiKey": "",
         "enablePromptProtection": true
     },
+	"Functions":{
+		"ModName": {
+			"AllowDB": false,
+			"AllowDiscordBot": false,
+			"AllowMsgQueue": false
+		}
+	},
     "LetsEncypt": {
         "Enabled": false,
         "Domain": "localhost.localhost",

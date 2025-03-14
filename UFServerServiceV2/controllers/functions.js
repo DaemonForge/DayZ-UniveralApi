@@ -113,6 +113,7 @@ function getSandboxEnv(req, mod) {
     const modConfig = (global.config.functions && global.config.functions[mod]) || {};
     const allowDB = modConfig.AllowDB;
     const allowDSBot = modConfig.AllowDiscordBot;
+    const allowMsg = modConfig.AllowMsgQueue;
     const functionName = req.params?.FunctionName;
     return {    
         // Provide DB access as a helper. User functions can call env.db.getCollection().

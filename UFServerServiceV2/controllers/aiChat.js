@@ -20,7 +20,7 @@ async function testOpenAI() {
     if (global.config.OpenAIApi?.ApiKey === undefined || global.config.OpenAIApi.ApiKey === ""){
         if (global.OPENAISTATUS !== "Offline"){
             logger.warn("OpenAI API Key is not configured, AI Chat will not work");
-            global.OPENAISTATUS = "Offline";
+            global.OPENAISTATUS = "Disabled";
         }
     } else {
         openai = new OpenAI({apiKey: global.config.OpenAIApi.ApiKey});
