@@ -9,7 +9,7 @@ class UTranslation extends Managed {
 	string to;
 }
 
-class UTranslationRequest extends UApiObject_Base{
+class UTranslationRequest extends UFObject_Base{
 
 	string Text = "";
 	autoptr TStringArray To = {"en"};
