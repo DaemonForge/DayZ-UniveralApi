@@ -487,11 +487,6 @@ async function checkMessageStatus(req, res) {
     logger.error(`Error checking message status: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to check message status" });
   }
- * Expected URL Parameter: ThreadId
- * 
- * Expected Response:
- * { "Status": "Success", "Thread": { ThreadId, AssistantId, Mod, messages: [ ... ] } }
- */
 }
 
 /**
