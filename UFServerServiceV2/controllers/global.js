@@ -1,16 +1,16 @@
 const { Router } = require('express');
 const router = Router();
 const { requirePlayerOrServerAuth, requireServerAuth, CheckServerAuth } = require('../auth/utils');
-const {getGlobal,globalExist,newGlobal,transactionGlobal, updateGlobal} = require('../models/global');
-const {createLogger} = require('../utils');
+const { getGlobal, globalExist, newGlobal, transactionGlobal, updateGlobal } = require('../models/global');
+const { createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'DB.global');
-
 
 // Apply authentication middleware before calling the controller functions.
 router.post('/Load/:mod', requirePlayerOrServerAuth, runGet);
 router.post('/Save/:mod', requireServerAuth, runSave);
 router.post('/Transaction/:mod', requireServerAuth, runTransaction);
 router.post('/Update/:mod', requireServerAuth, runUpdate);
+
 /**
  * Retrieves the global data for a given module.
  * If no document exists and a non-empty payload is provided,
@@ -36,7 +36,7 @@ async function runGet(req, res) {
       res.json(data);
     }
   } catch (error) {
-    logger.error("Error in runGet", { mod, error: error.message });
+    logger.error(`runGet error for module "${mod}": ${error.message}`, { mod, error });
     res.status(500).json(defaultData);
   }
 }
@@ -84,7 +84,7 @@ async function runSave(req, res) {
       }
     }
   } catch (error) {
-    logger.error("Error in runSave", { mod, error: error.message });
+    logger.error(`runSave error for module "${mod}": ${error.message}`, { mod, error });
     res.status(500).json(rawData);
   }
 }
@@ -107,27 +107,20 @@ async function runTransaction(req, res) {
   try {
     const newValue = await transactionGlobal(mod, req.body);
     if (newValue !== null) {
-      logger.info("Transaction successful", { mod, element: req.body.Element, newValue });
+      logger.info(`Transaction successful for module "${mod}" on element "${req.body.Element}". New value: ${newValue}`, { mod, element: req.body.Element, newValue });
       res.json({ Status: "Success", ID: mod, Value: newValue, Element: req.body.Element });
     } else {
-      logger.warn("Transaction failed", { mod, element: req.body.Element });
+      logger.warn(`Transaction failed for module "${mod}" on element "${req.body.Element}"`, { mod, element: req.body.Element });
       res.status(203).json({ Status: "Error", ID: mod, Value: 0, Element: req.body.Element });
     }
   } catch (error) {
-    logger.error("Error in runTransaction", { mod, error: error.message });
+    logger.error(`runTransaction error for module "${mod}" on element "${req.body.Element}": ${error.message}`, { mod, error });
     res.status(500).json({ Status: "Error", ID: mod, Value: 0, Element: req.body.Element });
   }
 }
 
 /**
  * Updates a specific field in the global data document using a provided operation.
- *
- * Expects:
- *   - req.params.mod: the module name.
- *   - req.body: an object that must include:
- *       • Element: the field name (inside Data) to update.
- *       • Value: the value to update with.
- *       • Operation: optional update operator (defaults to "set").
  *
  * @async
  * @param {object} req - The Express request object.
@@ -138,18 +131,16 @@ async function runUpdate(req, res) {
   try {
     const updated = await updateGlobal(mod, req.body);
     if (updated !== null) {
-      logger.info("Update successful", { mod, element: req.body.Element });
-      res.status(200).json({ Status: "Success", Element: req.body.Element,  ID: mod });
+      logger.info(`Update successful for module "${mod}" on element "${req.body.Element}"`, { mod, element: req.body.Element });
+      res.status(200).json({ Status: "Success", Element: req.body.Element, ID: mod });
     } else {
-      logger.warn("Update failed", { mod, element: req.body.Element });
-      res.status(203).json({ Status: "Error", Element: req.body.Element,  ID: mod });
+      logger.warn(`Update failed for module "${mod}" on element "${req.body.Element}"`, { mod, element: req.body.Element });
+      res.status(203).json({ Status: "Error", Element: req.body.Element, ID: mod });
     }
   } catch (error) {
-    logger.error("Error in runUpdate", { mod, error: error.message });
-    res.status(500).json({ Status: "Error", Element: req.body.Element,  ID: mod });
+    logger.error(`runUpdate error for module "${mod}" on element "${req.body.Element}": ${error.message}`, { mod, error });
+    res.status(500).json({ Status: "Error", Element: req.body.Element, ID: mod });
   }
 }
-
-
 
 module.exports = router;
