@@ -8,6 +8,22 @@ const {render} = require('ejs');
 
 const router = Router();
 
+router.use((req, res, next) => {
+    if(global.DISCORDSTATUS === "Error"){
+        return res.json({Status: "Error", Error: "Discord Error"});
+    } else if(global.DISCORDSTATUS === "Disabled"){
+        return  res.json({Status: "Error", Error: "Discord Disabled"});
+    } else if(global.DISCORDSTATUS === "Disconnected"){
+        return res.json({Status: "Error", Error: "Discord Disconnected"});
+    } else if(global.DISCORDSTATUS === "Pending"){
+        return res.json({Status: "Error", Error: "Discord Pending"});
+    } else {
+        next();
+    }
+});
+
+
+
 // apply rate limiter to all requests
 router.use(GenerateLimiter(global.config.RequestLimitQuery || 400, 10));
 

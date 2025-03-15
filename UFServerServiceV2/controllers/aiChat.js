@@ -50,7 +50,18 @@ async function testOpenAI() {
     }
 }
 testOpenAI();
-
+router.use((req, res, next) => {
+    if (global.OPENAISTATUS === "Disabled"){
+        logger.warn("OpenAI is disabled, AI Chat will not work");
+        return res.status(501).json({ Status: "Error", Error: "OpenAI is disabled" });
+    }
+    if (global.OPENAISTATUS === "Error"){
+        logger.warn("Open AI Status Error, AI Chat will not work");
+        return res.status(501).json({ Status: "Error", Error: "OpenAI is in an error state" });
+    }
+    next();
+});
+    
 /**
  * Endpoint to create a new chat session.
  * Expects a JSON body containing:

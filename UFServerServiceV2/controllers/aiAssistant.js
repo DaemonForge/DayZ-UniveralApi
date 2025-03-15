@@ -20,6 +20,18 @@ if (global.config.OpenAIApi?.ApiKey != undefined && global.config.OpenAIApi.ApiK
 // Import authentication middlewares (adjust as needed)
 const { requirePlayerOrServerAuth, requireServerAuth } = require('../auth/utils');
 
+router.use((req, res, next) => {
+  if (global.OPENAISTATUS === "Disabled"){
+      logger.warn("OpenAI is disabled, AI Chat will not work");
+      return res.status(501).json({ Status: "Error", Error: "OpenAI is disabled" });
+  }
+  if (global.OPENAISTATUS === "Error"){
+      logger.warn("Open AI Status Error, AI Chat will not work");
+      return res.status(501).json({ Status: "Error", Error: "OpenAI is in an error state" });
+  }
+  next();
+});
+  
 /*
  * POST /AI/Assistant/Create
  * Body: { AssistantId, Name, Description, Tools (optional), Model (optional), ResponseFormat (optional) }
