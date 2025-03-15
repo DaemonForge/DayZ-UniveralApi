@@ -244,6 +244,10 @@ function updateTrayMenu() {
       {
         label: '🔄 Restart',
         click: () => {
+          if (settingsWindow) {
+            settingsWindow.removeAllListeners('close');
+            settingsWindow.close();
+          }
           app.relaunch();
           app.exit();
         }
@@ -267,6 +271,10 @@ function updateTrayMenu() {
           {
             label: '🛑 Stop',
             click: () => {
+              if (settingsWindow) {
+                settingsWindow.removeAllListeners('close');
+                settingsWindow.close();
+              }
               app.quit();
             }
           }
@@ -299,12 +307,20 @@ function openSettingsWindow() {
   settingsWindow.setMenu(null);
 
   settingsWindow.loadFile(path.join(__dirname, 'views', 'settings.html'));
-  
+  settingsWindow.webContents.openDevTools();
    
     // When the window is truly closed (app quit), then clean up.
     settingsWindow.on('closed', () => {
       
       settingsWindow = null;
+    });
+    // When creating the settings window
+    settingsWindow.on('close', (e) => {
+      console.log("Close event triggered");
+      // Prevent immediate close
+      e.preventDefault();
+      // Tell the renderer that a close was attempted.
+      settingsWindow.webContents.send('attempt-close');
     });
 }
 
@@ -330,6 +346,17 @@ ipcMain.handle('save-config', (event, newConfig) => {
     console.error("Error saving config:", err);
     return { success: false, error: err };
   }
+});
+ipcMain.on('force-close', () => {
+  // Remove the close event handler to avoid an infinite loop
+  settingsWindow.removeAllListeners('close');
+  settingsWindow.close();
+});
+ipcMain.on('restart-app', () => {
+  settingsWindow.removeAllListeners('close');
+  settingsWindow.close();
+  app.relaunch();
+  app.exit();
 });
 
 app.on('window-all-closed', (e) => {

@@ -222,4 +222,37 @@ html, body {
     background-color: #121212;
     color: #ffffff;
   }
+   /* Modal overlay covers the entire screen */
+   dialog {
+    border: none;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: #1e1e1e;
+    color: #ddd;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
+  
+  dialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+  }
+  
+  .modal-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+  }
+  
+  .modal-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #444;
+    color: #ddd;
+    transition: background-color 0.3s;
+  }
+  
+  .modal-actions button:hover {
+    background-color: #555;
+  }
   
