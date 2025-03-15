@@ -1,0 +1,9 @@
+# cloudflared-config.yaml
+tunnel: ufdev
+
+ingress:
+  - hostname: "dev10.dayzuf.com"   # Your local domain
+    service: "https://localhost"  # Your local service
+    originRequest:
+      noTLSVerify: true
+  - service: "http_status:404"        # Default rule to block other requests

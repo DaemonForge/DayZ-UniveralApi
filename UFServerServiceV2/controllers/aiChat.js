@@ -2,7 +2,8 @@
 const { OpenAI } = require('openai').default;
 const {saveChatSummary,createChatSummary, getSummaryById, updateChatSummaryStatus, createChat,  getChat,  addMessageToChat, updateMessageStatus, getMessageById, getChatHistory, resetChat, deleteChat} = require('../models/aiChat');
 const Ajv = require('ajv');
-const logger = global.logger || console;
+const {createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'aiChat');
 global.OPENAISTATUS = "Pending";
 
 // Initialize Ajv for JSON Schema validation.
@@ -30,7 +31,7 @@ async function testOpenAI() {
             const testRes = await openai.chat.completions.create({
                 model: 'gpt-4o-mini',
                 messages: [
-                    { role: 'system', content: 'You are a helpful but sassy & sarcastic assistant who knows everything there is to know about DayZ Standalone, provide the shortest possible answer to the questions. use only plain text responses' },
+                    { role: 'system', content: 'You are a helpful but very sassy & sarcastic NPC who knows everything there is to know about the video game DayZ Standalone, provide the shortest possible answer to the questions. use only plain text responses' },
                     { role: 'user', content: questions[qidx] }
                 ]
             });

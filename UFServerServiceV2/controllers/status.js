@@ -1,8 +1,8 @@
 const {Router} = require('express');
 const { MongoClient } = require("mongodb");
 const {CheckAuth,CheckServerAuth} = require('../auth/utils');
-const logger = global.logger;
-const {isArray,GenerateLimiter} = require('../utils');
+const {isArray,GenerateLimiter, createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'status');
 
 const router = Router();
 

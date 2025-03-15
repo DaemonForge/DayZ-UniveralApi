@@ -1,9 +1,9 @@
-const logger = global.logger;
 const client = require("./bot.js");
 const {User, GuildMember, Guild} = require("discord.js");
 
 const {requireServerAuth, requirePlayerOrServerAuth, CheckServerAuth} = require('../auth/utils');
-const {NormalizeToGUID} = require('../utils');
+const {NormalizeToGUID, createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'discord');
 const {GetDiscordObj, GetClientID} = require('./dsUtils');
 const {playerExists} = require('../models/player');
 
@@ -108,8 +108,8 @@ async function GetUserAndRoles(req, res){
     let GUID = NormalizeToGUID(req.params.GUID);
         try{
             let dsInfo = await GetDiscordObj(GUID);
-            if (dsInfo === undefined || dsInfo.id === "0" ){
-                logger.warn("Can't find Player in database", { GUID });
+            if (dsInfo?.id  === undefined || dsInfo.id === "0" ){
+                logger.info("Can't find Player in database", { GUID });
                 res.status(201);
                 res.json({Status: "Error", Error: `Player with ${GUID} Not Found`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
             } else {

@@ -1,10 +1,8 @@
 const gamedig = require('gamedig');
 const { Router } = require('express');
 const { requirePlayerOrServerAuth } = require("../auth/utils");
-const { GenerateLimiter} = require('../utils');
-
-// Replace the old logger with the new one
-const logger = global.logger;
+const { GenerateLimiter, createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'ServerQuery');
 
 const router = Router();
 

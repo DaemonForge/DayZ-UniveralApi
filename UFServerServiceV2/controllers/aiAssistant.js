@@ -3,10 +3,11 @@ const express = require('express');
 const router = express.Router();
 const aiAssistantModel = require('../models/aiAssistant');
 const {getSummaryById, updateChatSummaryStatus, createChatSummary} = require('../models/aiChat');
-
 const { OpenAI } = require('openai').default;
+
 const Ajv = require('ajv');
-const logger = global.logger || console;
+const {createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'aiAssistant');
 
 // Initialize Ajv.
 const ajv = new Ajv({ allErrors: true });

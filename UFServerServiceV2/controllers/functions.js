@@ -283,7 +283,7 @@ async function runFunction(req, res) {
  * Endpoint: DELETE /Functions/Delete/:Mod/:FunctionName
  * This route removes a function definition from the database.
  */
-router.delete('/Functions/Delete/:Mod/:FunctionName', requireServerAuth, runDeleteFunction);
+router.post('/Functions/Delete/:Mod/:FunctionName', requireServerAuth, runDeleteFunction);
 
 /**
  * Handles the deletion of a function.
@@ -314,7 +314,7 @@ async function runDeleteFunction(req, res) {
  * Endpoint: GET /Functions/Check/:Mod/:FunctionName
  * This route retrieves a function definition from the database and returns metadata if found.
  */
-router.get('/Functions/Check/:Mod/:FunctionName', requireServerAuth, runCheckFunction);
+router.post('/Functions/Check/:Mod/:FunctionName', requireServerAuth, runCheckFunction);
 
 /**
  * Handles checking if a function is registered.

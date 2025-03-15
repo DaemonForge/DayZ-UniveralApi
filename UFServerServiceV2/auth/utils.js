@@ -1,11 +1,13 @@
 
-const {isArray, isObject, isEmpty, NormalizeToGUID} = require('../utils')
-const logger = global.logger;
+const {isArray, isObject, createLogger, NormalizeToGUID} = require('../utils')
+
 const jwt = require('jsonwebtoken');
 const { verify, sign } = jwt;
 const { MongoClient } = require("mongodb");
 const { createHash } = require('crypto');
 
+// Use logger from global object instead of direct import
+const logger = createLogger(global.logger, 'auth');
 
 /**
  * Middleware to authenticate server requests using the auth-key header
@@ -21,7 +23,7 @@ const { createHash } = require('crypto');
 const requireServerAuth = async (req, res, next) => {
     const auth = req.headers['auth-key'];
     if (CheckServerAuth(auth)) {
-        req.params.isServer = true;
+        req.isServer = true;
         logger.debug('Server auth successful', { mod: req.params.mod });
         return next();
     }
@@ -51,11 +53,11 @@ const requireServerAuth = async (req, res, next) => {
 const requirePlayerOrServerAuth = async (req, res, next) => {
     const auth = req.headers['auth-key'];
     
-    req.params.isServer = false;
+    req.isServer = false;
     // Check for server auth first
     if (CheckServerAuth(auth)) {
         logger.debug('Server auth successful', { mod: req.params.mod });
-        req.params.isServer = true;
+        req.isServer = true;
         return next();
     }
 

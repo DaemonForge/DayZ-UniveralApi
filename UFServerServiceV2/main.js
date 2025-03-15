@@ -45,6 +45,9 @@ app.on('ready', () => {
   createLoggerStream();
   // Build initial context menu.
   updateTrayMenu();
+  setTimeout(updateTrayMenu, 2500);
+  setTimeout(updateTrayMenu, 6000);
+  setTimeout(updateTrayMenu, 10000);
   setInterval(updateTrayMenu, 15000);
 });
 

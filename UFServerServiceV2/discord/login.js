@@ -1,6 +1,8 @@
 const { MongoClient } = require("mongodb");
 const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
-const logger = global.logger; // take the logger from he global
+
+const {createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'discord');
 const client = require("./bot.js");
 const {render} = require('ejs');
 const DefaultTemplates = require('../templates/defaultTemplates.json');
@@ -118,7 +120,7 @@ async function HandleCallBack(req, res){
         res.send(render(ErrorTemplate, {TheError: "Invalid Response from Discord", Type: "Discord"}));
         return;
     }
-    const mongo = new MongoClient(global.config.DBServer, { useUnifiedTopology: true });
+    const mongo = new MongoClient(global.config.DBServer);
     try {
         let connect = mongo.connect();
         const response = await fetch(`https://discordapp.com/api/oauth2/token`,{

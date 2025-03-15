@@ -1,9 +1,10 @@
 const {Router} = require('express');
 const { requireServerAuth, makeAuthToken} = require('./utils');
 const { saveAuthToken } = require('../models/player');
+const { createLogger} = require('../utils');
 
 // Use logger from global object instead of direct import
-const logger = global.logger;
+const logger = createLogger(global.logger, 'auth');
 
 const router = Router();
 

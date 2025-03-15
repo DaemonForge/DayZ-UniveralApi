@@ -2,8 +2,10 @@
 
 const { MongoClient } = require("mongodb");
 const config = require("../config"); // Expects config.DBServer and config.DB
-const logger = global.logger;
-const { isArray, isObject, isEmpty,  processValue, buildUpdateDoc } = require("../utils");
+
+const { isArray, isObject, isEmpty, processValue, buildUpdateDoc, createLogger } = require("../utils");
+
+const logger = createLogger(global.logger, 'db.global');
 
 /**
  * Connects to MongoDB and returns { client, collection } for the "Globals" collection.
@@ -29,16 +31,18 @@ async function getGlobal(mod, defaultData = {}, isServer = false) {
   try {
     const doc = await findGlobalDocument(collection, mod);
     if (!doc) {
-      if (!isServer){
+      if (!isServer) {
+        logger.warn(`Global for module "${mod}" not found. Returning null.`, { mod });
         return null;
       }
+      logger.info(`Global for module "${mod}" not found. Creating new document.`, { mod, defaultData });
       return await createGlobalDocument(collection, mod, defaultData);
     } else {
-      logger.info("Retrieved Global", { mod });
+      logger.info(`Retrieved Global for module "${mod}".`, { mod });
       return doc.Data;
     }
   } catch (err) {
-    logger.error("Error in getGlobal", { mod, error: err.message });
+    logger.error(`Error in getGlobal: ${err.message}`, { mod, error: err });
     return null;
   } finally {
     await client.close();
@@ -70,10 +74,11 @@ async function createGlobalDocument(collection, mod, defaultData) {
     const newDoc = { Mod: mod, Data: defaultData };
     const result = await collection.insertOne(newDoc);
     if (result.insertedId) {
-      logger.info("Created new Global", { mod });
+      logger.info(`Created new Global for module "${mod}".`, { mod, newDoc });
       return defaultData;
     }
   }
+  logger.warn(`Default data is empty. Global for module "${mod}" was not created.`, { mod });
   return null;
 }
 
@@ -91,12 +96,13 @@ async function newGlobal(mod, rawData) {
     const newDoc = { Mod: mod, Data: rawData };
     const result = await collection.insertOne(newDoc);
     if (result.insertedId) {
-      logger.info("Created new Global", { mod });
+      logger.info(`Created new Global for module "${mod}".`, { mod, newDoc });
       return rawData;
     }
+    logger.warn(`Failed to create new Global for module "${mod}".`, { mod });
     return null;
   } catch (err) {
-    logger.error("Error in newGlobal", { mod, error: err.message });
+    logger.error(`Error in newGlobal: ${err.message}`, { mod, error: err });
     return null;
   } finally {
     await client.close();
@@ -128,16 +134,15 @@ async function updateGlobal(mod, rawData) {
     console.log(updateDoc);
     const result = await collection.updateOne(query, updateDoc, { upsert: false });
     if (result.matchedCount >= 1 || result.upsertedCount >= 1) {
-      logger.info("Updated Global", { mod, element });
+      logger.info(`Updated Global field "${element}" for module "${mod}".`, { mod, element, updateDoc });
       const doc = await collection.findOne(query, { projection: { [field]: 1 } });
       return doc && doc.Data ? doc.Data[element] : true;
     } else {
-      logger.warn("Failed to update Global", { mod, element });
+      logger.warn(`Failed to update Global field "${element}" for module "${mod}".`, { mod, element });
       return null;
     }
   } catch (err) {
-    console.log(err);
-    logger.error("Error in updateGlobal", { mod, error: err.message });
+    logger.error(`Error in updateGlobal: ${err.message}`, { mod, element: rawData?.Element, error: err });
     return null;
   } finally {
     await client.close();
@@ -165,10 +170,13 @@ async function transactionGlobal(mod, rawData) {
     await collection.updateOne(query, update, { upsert: false });
     const doc = await collection.findOne(query, { projection: { [field]: 1 } });
     const newValue = doc && doc.Data ? doc.Data[rawData.Element] : null;
-    logger.info("Transaction on Global", { mod, field, incrementBy: rawData.Value, newValue });
+    logger.info(
+      `Transaction on Global for module "${mod}": incremented "${rawData.Element}" by ${rawData.Value}. New value: ${newValue}`,
+      { mod, field, incrementBy: rawData.Value, newValue }
+    );
     return newValue;
   } catch (err) {
-    logger.error("Error in transactionGlobal", { mod, error: err.message });
+    logger.error(`Error in transactionGlobal: ${err.message}`, { mod, error: err });
     return null;
   } finally {
     await client.close();
@@ -188,7 +196,7 @@ async function globalExist(mod) {
     const doc = await collection.findOne(query);
     return !!doc;
   } catch (err) {
-    logger.error("Error in globalExist", { mod, error: err.message });
+    logger.error(`Error in globalExist: ${err.message}`, { mod, error: err });
     return false;
   } finally {
     await client.close();
@@ -209,11 +217,13 @@ async function getGlobalField(mod, field) {
     const projection = { [`Data.${field}`]: 1 };
     const doc = await collection.findOne(query, { projection });
     if (doc && doc.Data && Object.prototype.hasOwnProperty.call(doc.Data, field)) {
+      logger.info(`Retrieved field "${field}" from Global for module "${mod}".`, { mod, field });
       return doc.Data[field];
     }
+    logger.warn(`Field "${field}" not found in Global for module "${mod}".`, { mod, field });
     return null;
   } catch (err) {
-    logger.error("Error in getGlobalField", { mod, field, error: err.message });
+    logger.error(`Error in getGlobalField for module "${mod}" and field "${field}": ${err.message}`, { mod, field, error: err });
     return null;
   } finally {
     await client.close();

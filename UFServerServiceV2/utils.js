@@ -408,8 +408,53 @@ function processValue(value) {
       return value;
   }
 }
+/**
+ * Wraps the provided logger so that every log message is prefixed with "[mod.functionName]".
+ *
+ * @param {object} logger - The original logger object.
+ * @param {string} prefix - The mod identifier.
+ * @returns {object} A wrapped logger that prepends the prefix.
+ */
+function createLogger(logger, prefix) {
+  return {
+    info: (...args) => logger.info(`[${prefix}] ${args.shift()}`, ...args),
+    error: (...args) => logger.error(`[${prefix}] ${args.shift()}`, ...args),
+    warn: (...args) => logger.warn(`[${prefix}] ${args.shift()}`, ...args),
+    debug: (...args) => logger.debug(`[${prefix}] ${args.shift()}`, ...args)
+  };
+}
+
+/**
+ * Attempts to convert a string into an object.
+ * If the input is already an object, it is returned as is.
+ * If the string is a valid JSON representation, the parsed object is returned.
+ * Otherwise, returns an empty object.
+ *
+ * @param {string|object} input - The string to convert or an object.
+ * @returns {object} - The resulting object.
+ */
+function tryConvertToObject(input) {
+  if (typeof input === 'object' && input !== null) {
+    return input;
+  }
+  if (typeof input !== 'string') {
+    return input;
+  }
+  try {
+    const parsed = JSON.parse(input);
+    if (typeof parsed === 'object' && parsed !== null) {
+      return parsed;
+    }
+  } catch (e) {
+    return input;
+  }
+  return input;
+}
+
 
 module.exports = {
+  tryConvertToObject,
+  createLogger,
   processValue,
   buildUpdateDoc,
   promisedProperties,

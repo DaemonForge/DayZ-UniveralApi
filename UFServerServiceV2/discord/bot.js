@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits } = require("discord.js");
-const logger = global.logger;
+const {createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'discord');
 global.DISCORDSTATUS = "Pending";
 
 const intents = [
@@ -28,7 +29,7 @@ try {
 }
 
 client.on('ready', () => {
-    logger.info(`Discord Bot Ready!`, { username: client.user.tag });
+    logger.info(`Discord Bot Ready! ${client.user.tag}`, { username: client.user.tag });
     global.DISCORDSTATUS = "Online";
 });
 

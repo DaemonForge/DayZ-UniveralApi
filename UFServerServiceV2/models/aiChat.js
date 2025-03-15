@@ -1,15 +1,17 @@
 const { MongoClient, ObjectId } = require('mongodb');
 const config = require('../config'); // Exports { DBServer, DB }
+const { createLogger } = require('../utils');
+const logger = createLogger(global.logger, 'db.aiChat');
 
 /**
  * Connects to the database and returns the Chats collection.
- * @returns {Promise<{ client: MongoClient, chats: Collection }>}
+ * @returns {Promise<{ client: MongoClient, chats: Collection, chatSummaries: Collection }>}
  */
 async function getCollections() {
   const client = new MongoClient(config.DBServer);
   await client.connect();
   const db = client.db(config.DB);
-  return { client, chats: db.collection("Chats"), chatSummaries: db.collection("ChatSummaries")};
+  return { client, chats: db.collection("Chats"), chatSummaries: db.collection("ChatSummaries") };
 }
 
 /**
@@ -24,6 +26,7 @@ async function getCollections() {
 async function createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory) {
   const { client, chats } = await getCollections();
   try {
+    logger.info("Creating new chat", { SystemMessage, ResponseFormat });
     const chatData = {
       SystemMessage,
       ResponseFormat,
@@ -37,7 +40,11 @@ async function createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxH
     const result = await chats.insertOne(chatData);
     const ChatId = result.insertedId.toString();
     await chats.updateOne({ _id: result.insertedId }, { $set: { ChatId } });
+    logger.info(`Chat created successfully with ChatId ${ChatId}`);
     return { ChatId };
+  } catch (error) {
+    logger.error(`Error creating chat: ${error.message}`, { error });
+    throw error;
   } finally {
     await client.close();
   }
@@ -51,7 +58,13 @@ async function createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxH
 async function getChat(ChatId) {
   const { client, chats } = await getCollections();
   try {
-    return await chats.findOne({ ChatId });
+    logger.info(`Retrieving chat with ChatId ${ChatId}`);
+    const chat = await chats.findOne({ ChatId });
+    logger.info(`Chat retrieved`, { ChatId, found: !!chat });
+    return chat;
+  } catch (error) {
+    logger.error(`Error getting chat: ${error.message}`, { error });
+    throw error;
   } finally {
     await client.close();
   }
@@ -68,6 +81,7 @@ async function getChat(ChatId) {
 async function addMessageToChat(ChatId, role, content, status = "Success") {
   const { client, chats } = await getCollections();
   try {
+    logger.info(`Adding a new message to chat ${ChatId}`, { role });
     const MessageId = new ObjectId().toString();
     const message = {
       MessageId,
@@ -80,8 +94,15 @@ async function addMessageToChat(ChatId, role, content, status = "Success") {
       { ChatId },
       { $push: { Messages: message }, $set: { lastUpdated: new Date() } }
     );
-    if (result.modifiedCount > 0) return MessageId;
-    else throw new Error("Failed to add message");
+    if (result.modifiedCount > 0) {
+      logger.info(`Message added successfully with MessageId ${MessageId}`);
+      return MessageId;
+    } else {
+      throw new Error("Failed to add message");
+    }
+  } catch (error) {
+    logger.error(`Error adding message: ${error.message}`, { error });
+    throw error;
   } finally {
     await client.close();
   }
@@ -97,23 +118,33 @@ async function addMessageToChat(ChatId, role, content, status = "Success") {
  * @returns {Promise<boolean>}
  */
 async function updateMessageStatus(ChatId, MessageId, status, content = null) {
-    const { client, chats } = await getCollections();
-    try {
-        const now = new Date();
-        const updateFields = { 
-            "Messages.$.status": status, 
-            "Messages.$.timestamp": now,
-            lastUpdated: now 
-        };
-        if (content !== null) updateFields["Messages.$.content"] = content;
-        const result = await chats.updateOne(
-            { ChatId, "Messages.MessageId": MessageId }, 
-            { $set: updateFields }
-        );
-        return result.modifiedCount > 0;
-    } finally {
-        await client.close();
+  const { client, chats } = await getCollections();
+  try {
+    logger.info(`Updating message status for MessageId ${MessageId} in ChatId ${ChatId}`, { status });
+    const now = new Date();
+    const updateFields = {
+      "Messages.$.status": status,
+      "Messages.$.timestamp": now,
+      lastUpdated: now
+    };
+    if (content !== null) updateFields["Messages.$.content"] = content;
+    const result = await chats.updateOne(
+      { ChatId, "Messages.MessageId": MessageId },
+      { $set: updateFields }
+    );
+    if (result.modifiedCount > 0) {
+      logger.info(`Message status updated successfully for MessageId ${MessageId}`);
+      return true;
+    } else {
+      logger.warn(`No message updated for MessageId ${MessageId}`);
+      return false;
     }
+  } catch (error) {
+    logger.error(`Error updating message status: ${error.message}`, { error });
+    throw error;
+  } finally {
+    await client.close();
+  }
 }
 
 /**
@@ -124,10 +155,20 @@ async function updateMessageStatus(ChatId, MessageId, status, content = null) {
 async function getMessageById(MessageId) {
   const { client, chats } = await getCollections();
   try {
-    // Query without ChatId, search across all chats.
-    const chat = await chats.findOne({ "Messages.MessageId": MessageId }, { projection: { ChatId: 1, "Messages.$": 1 } });
-    if (!chat || !chat.Messages || chat.Messages.length === 0) return null;
+    logger.info(`Retrieving message with MessageId ${MessageId}`);
+    const chat = await chats.findOne(
+      { "Messages.MessageId": MessageId },
+      { projection: { ChatId: 1, "Messages.$": 1 } }
+    );
+    if (!chat || !chat.Messages || chat.Messages.length === 0) {
+      logger.warn(`Message not found for MessageId ${MessageId}`);
+      return null;
+    }
+    logger.info(`Message retrieved for MessageId ${MessageId}`);
     return { ChatId: chat.ChatId, message: chat.Messages[0] };
+  } catch (error) {
+    logger.error(`Error retrieving message: ${error.message}`, { error });
+    throw error;
   } finally {
     await client.close();
   }
@@ -141,7 +182,13 @@ async function getMessageById(MessageId) {
 async function getChatHistory(ChatId) {
   const { client, chats } = await getCollections();
   try {
-    return await chats.findOne({ ChatId });
+    logger.info(`Retrieving chat history for ChatId ${ChatId}`);
+    const chat = await chats.findOne({ ChatId });
+    logger.info(`Chat history retrieved for ChatId ${ChatId}`, { found: !!chat });
+    return chat;
+  } catch (error) {
+    logger.error(`Error retrieving chat history: ${error.message}`, { error });
+    throw error;
   } finally {
     await client.close();
   }
@@ -155,8 +202,21 @@ async function getChatHistory(ChatId) {
 async function resetChat(ChatId) {
   const { client, chats } = await getCollections();
   try {
-    const result = await chats.updateOne({ ChatId }, { $set: { Messages: [], Summary: "", lastUpdated: new Date() } });
-    return result.modifiedCount > 0;
+    logger.info(`Resetting chat for ChatId ${ChatId}`);
+    const result = await chats.updateOne(
+      { ChatId },
+      { $set: { Messages: [], Summary: "", lastUpdated: new Date() } }
+    );
+    if (result.modifiedCount > 0) {
+      logger.info(`Chat reset successfully for ChatId ${ChatId}`);
+      return true;
+    } else {
+      logger.warn(`Chat reset did not modify any document for ChatId ${ChatId}`);
+      return false;
+    }
+  } catch (error) {
+    logger.error(`Error resetting chat: ${error.message}`, { error });
+    throw error;
   } finally {
     await client.close();
   }
@@ -170,8 +230,18 @@ async function resetChat(ChatId) {
 async function deleteChat(ChatId) {
   const { client, chats } = await getCollections();
   try {
+    logger.info(`Deleting chat with ChatId ${ChatId}`);
     const result = await chats.deleteOne({ ChatId });
-    return result.deletedCount > 0;
+    if (result.deletedCount > 0) {
+      logger.info(`Chat deleted successfully for ChatId ${ChatId}`);
+      return true;
+    } else {
+      logger.warn(`No chat found to delete for ChatId ${ChatId}`);
+      return false;
+    }
+  } catch (error) {
+    logger.error(`Error deleting chat: ${error.message}`, { error });
+    throw error;
   } finally {
     await client.close();
   }
@@ -186,31 +256,51 @@ async function deleteChat(ChatId) {
  * @returns {Promise<boolean>} - Returns true if the update was successful.
  */
 async function saveChatSummary(ChatId, Summary) {
-    const { client, chats } = await getCollections();
-    try {
-        const date = new Date()
-        const result = await chats.updateOne(
-            { ChatId },
-            { $set: { Summary, lastUpdated: date, summaryUpdated: date } }
-        );
-        return result.modifiedCount > 0;
-    } finally {
-        await client.close();
+  const { client, chats } = await getCollections();
+  try {
+    logger.info(`Saving chat summary for ChatId ${ChatId}`);
+    const date = new Date();
+    const result = await chats.updateOne(
+      { ChatId },
+      { $set: { Summary, lastUpdated: date, summaryUpdated: date } }
+    );
+    if (result.modifiedCount > 0) {
+      logger.info(`Chat summary saved for ChatId ${ChatId}`);
+      return true;
+    } else {
+      logger.warn(`Chat summary not saved for ChatId ${ChatId}`);
+      return false;
     }
+  } catch (error) {
+    logger.error(`Error saving chat summary: ${error.message}`, { error });
+    throw error;
+  } finally {
+    await client.close();
+  }
 }
 
 async function updateChatSummaryStatus(SummaryId, Status, Summary) {
-    const { client, chatSummaries } = await getCollections();
-    try {
-        const date = new Date()
-        const result = await chatSummaries.updateOne(
-            { SummaryId },
-            { $set: { Summary, Status, lastUpdated: date, summaryUpdated: date } }
-        );
-        return result.modifiedCount > 0;
-    } finally {
-        await client.close();
+  const { client, chatSummaries } = await getCollections();
+  try {
+    logger.info(`Updating chat summary status for SummaryId ${SummaryId}`, { Status });
+    const date = new Date();
+    const result = await chatSummaries.updateOne(
+      { SummaryId },
+      { $set: { Summary, Status, lastUpdated: date, summaryUpdated: date } }
+    );
+    if (result.modifiedCount > 0) {
+      logger.info(`Chat summary status updated for SummaryId ${SummaryId}`);
+      return true;
+    } else {
+      logger.warn(`No update performed for chat summary with SummaryId ${SummaryId}`);
+      return false;
     }
+  } catch (error) {
+    logger.error(`Error updating chat summary status: ${error.message}`, { error });
+    throw error;
+  } finally {
+    await client.close();
+  }
 }
 
 /**
@@ -219,50 +309,60 @@ async function updateChatSummaryStatus(SummaryId, Status, Summary) {
  * @returns {Promise<{ SummaryId: string }>}
  */
 async function createChatSummary(ChatId) {
-    const { client, chatSummaries } = await getCollections();
-    try {
-        const summaryData = {
-            ChatId,
-            Status: "Pending",
-            Summary: "",
-            createdAt: new Date(),
-            lastUpdated: new Date()
-        };
-        const result = await chatSummaries.insertOne(summaryData);
-        const SummaryId = result.insertedId.toString();
-        await chatSummaries.updateOne({ _id: result.insertedId }, { $set: { SummaryId } });
-        return { SummaryId };
-    } finally {
-        await client.close();
-    }
+  const { client, chatSummaries } = await getCollections();
+  try {
+    logger.info(`Creating chat summary for ChatId ${ChatId}`);
+    const summaryData = {
+      ChatId,
+      Status: "Pending",
+      Summary: "",
+      createdAt: new Date(),
+      lastUpdated: new Date()
+    };
+    const result = await chatSummaries.insertOne(summaryData);
+    const SummaryId = result.insertedId.toString();
+    await chatSummaries.updateOne({ _id: result.insertedId }, { $set: { SummaryId } });
+    logger.info(`Chat summary created with SummaryId ${SummaryId}`);
+    return { SummaryId };
+  } catch (error) {
+    logger.error(`Error creating chat summary: ${error.message}`, { error });
+    throw error;
+  } finally {
+    await client.close();
+  }
 }
-      
-    /**
-     * Retrieves a chat summary by its SummaryId.
-     * @param {string} SummaryId
-     * @returns {Promise<object|null>} - Returns the summary document or null if not found.
-     */
-    async function getSummaryById(SummaryId) {
-        const { client, chatSummaries } = await getCollections();
-        try {
-            return await chatSummaries.findOne({ SummaryId });
-        } finally {
-            await client.close();
-        }
-    }
 
+/**
+ * Retrieves a chat summary by its SummaryId.
+ * @param {string} SummaryId
+ * @returns {Promise<object|null>} - Returns the summary document or null if not found.
+ */
+async function getSummaryById(SummaryId) {
+  const { client, chatSummaries } = await getCollections();
+  try {
+    logger.info(`Retrieving chat summary with SummaryId ${SummaryId}`);
+    const summary = await chatSummaries.findOne({ SummaryId });
+    logger.info(`Chat summary retrieved`, { SummaryId, found: !!summary });
+    return summary;
+  } catch (error) {
+    logger.error(`Error retrieving chat summary: ${error.message}`, { error });
+    throw error;
+  } finally {
+    await client.close();
+  }
+}
 
 module.exports = {
-    createChatSummary,
-    getSummaryById,
-    updateChatSummaryStatus,
-    saveChatSummary,
-    createChat,
-    getChat,
-    addMessageToChat,
-    updateMessageStatus,
-    getMessageById,
-    getChatHistory,
-    resetChat,
-    deleteChat
+  createChatSummary,
+  getSummaryById,
+  updateChatSummaryStatus,
+  saveChatSummary,
+  createChat,
+  getChat,
+  addMessageToChat,
+  updateMessageStatus,
+  getMessageById,
+  getChatHistory,
+  resetChat,
+  deleteChat
 };

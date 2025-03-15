@@ -17,7 +17,8 @@
 
 const { MongoClient } = require("mongodb");
 const config = require("../config");
-const logger = global.logger;
+const { createLogger } = require('../utils');
+const logger = createLogger(global.logger, 'db.messages');
 
 /**
  * Connects to MongoDB and returns the necessary collections.
@@ -64,9 +65,14 @@ async function getQueueMeta(Mod, Queue) {
     const meta = await messagesMeta.findOne({ Mod, Queue });
     if (meta) {
       meta.resetAt = meta.resetAt ? new Date(meta.resetAt) : new Date(0);
+      logger.info(`getQueueMeta: Retrieved meta for Mod: ${Mod} Queue: ${Queue}`);
       return meta;
     }
+    logger.info(`getQueueMeta: No meta found for Mod: ${Mod} Queue: ${Queue}, returning defaults`);
     return { Mod, Queue, ...defaultMeta };
+  } catch (error) {
+    logger.error(`getQueueMeta: Error retrieving meta for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
+    throw error;
   } finally {
     client.close();
   }
@@ -90,7 +96,11 @@ async function updateQueueMeta(Mod, Queue, metaData) {
       { $set: metaData },
       { upsert: true }
     );
+    logger.info(`updateQueueMeta: Updated meta for Mod: ${Mod} Queue: ${Queue}`, metaData);
     return await getQueueMeta(Mod, Queue);
+  } catch (error) {
+    logger.error(`updateQueueMeta: Error updating meta for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
+    throw error;
   } finally {
     client.close();
   }
@@ -110,7 +120,11 @@ async function getPlayerStatus(Mod, Queue, playerGuid) {
   const { client, playerStatus } = await getCollections();
   try {
     const status = await playerStatus.findOne({ Mod, Queue, playerGuid });
+    logger.info(`getPlayerStatus: Retrieved status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue}`);
     return status && status.lastRead ? new Date(status.lastRead) : new Date(0);
+  } catch (error) {
+    logger.error(`getPlayerStatus: Error retrieving status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
+    throw error;
   } finally {
     client.close();
   }
@@ -135,6 +149,10 @@ async function updatePlayerStatus(Mod, Queue, playerGuid, lastRead) {
       { $set: { lastRead } },
       { upsert: true }
     );
+    logger.info(`updatePlayerStatus: Updated status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue} to ${lastRead}`);
+  } catch (error) {
+    logger.error(`updatePlayerStatus: Error updating status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
+    throw error;
   } finally {
     client.close();
   }
@@ -148,7 +166,7 @@ async function updatePlayerStatus(Mod, Queue, playerGuid, lastRead) {
  * @param {string} Mod - The Mod identifier.
  * @param {string} Queue - The Queue identifier.
  * @param {string} Actor - The author of the Message, if Queue is only writeable by server this should only be "Server".
- * @param {any} content - The Message payload.
+ * @param {any} Message - The Message payload.
  * @returns {Promise<ObjectId>} The inserted Message's ID.
  */
 async function insertMessage(Mod, Queue, Actor, Message) {
@@ -162,7 +180,11 @@ async function insertMessage(Mod, Queue, Actor, Message) {
       createdAt: new Date()
     };
     const result = await messages.insertOne(doc);
+    logger.info(`insertMessage: Inserted message for Mod: ${Mod} Queue: ${Queue} by Actor: ${Actor}`, { insertedId: result.insertedId });
     return result.insertedId;
+  } catch (error) {
+    logger.error(`insertMessage: Error inserting message for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
+    throw error;
   } finally {
     client.close();
   }
@@ -193,7 +215,11 @@ async function readMessages(Mod, Queue, effectiveTime, sortOrder, limit) {
       cursor = cursor.limit(limit);
     }
     const msgs = await cursor.toArray();
+    logger.info(`readMessages: Retrieved ${msgs.length} messages for Mod: ${Mod} Queue: ${Queue}`);
     return msgs;
+  } catch (error) {
+    logger.error(`readMessages: Error reading messages for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
+    throw error;
   } finally {
     client.close();
   }
@@ -209,11 +235,17 @@ async function readMessages(Mod, Queue, effectiveTime, sortOrder, limit) {
  * @returns {Promise<Date>} The new reset timestamp.
  */
 async function resetQueue(Mod, Queue) {
-    const now = new Date();
+  const now = new Date();
+  try {
     await updateQueueMeta(Mod, Queue, { resetAt: now });
+    logger.info(`resetQueue: Reset queue for Mod: ${Mod} Queue: ${Queue} at ${now}`);
     return now;
+  } catch (error) {
+    logger.error(`resetQueue: Error resetting queue for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
+    throw error;
   }
-  
+}
+
 module.exports = {
   getQueueMeta,
   updateQueueMeta,

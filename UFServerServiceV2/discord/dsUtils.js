@@ -2,6 +2,8 @@
 const { MongoClient } = require("mongodb");
 const {getPlayerModData,playerExists} = require('../models/player');
 const {createHash} = require('crypto');
+const {createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'discord');
 
 
 async function GetGUIDFromDiscordId(dsid){

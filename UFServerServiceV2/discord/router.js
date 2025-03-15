@@ -6,6 +6,9 @@ const {GenerateLimiter} = require('../utils');
 const {renderRootErrorTemplate, HandleCallBack,RenderLogin, GetLoginTemplate, GetErrorTemplate, SendLoginPage} = require('./login');
 const {render} = require('ejs');
 
+const {createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'discord');
+
 const router = Router();
 
 router.use((req, res, next) => {

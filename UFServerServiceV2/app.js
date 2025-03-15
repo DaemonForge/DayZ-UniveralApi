@@ -57,6 +57,7 @@ const messagesRouter = require('./controllers/messages');
 const AIChatRouter = require('./controllers/aiChat');
 const AIAssistantRouter = require('./controllers/aiAssistant');
 
+
 /**
  * Configure rate limiting for API protection
  */
@@ -79,7 +80,7 @@ const limiter = RateLimit({
                  request.headers['x-forwarded-for'] || 
                  request.socket.remoteAddress || 
                  request.ip;
-      logger.warn('RateLimit reached - possible DDoS attack or need to increase request limit', { ip });
+      logger.warn('[WebServer] RateLimit reached - possible DDoS attack or need to increase request limit', { ip });
     }
     response.status(options.statusCode).send(options.message);
   },
@@ -104,21 +105,32 @@ function createExpressApp() {
   // Apply middleware
   app.use(limiter);
   app.use(ExtractAuthKey);
-  
+
+// Console log the request headers
+app.use((req, res, next) => {
+  //ignore favicon requests, and if the query is noLog=1
+  if (req.url === '/favicon.ico' || req.query.noLog ) {
+    next();
+    return;
+  }
+  console.log(req.headers);
+  next();
+});
+
   // Configure JSON parser with extended size limit
   app.use((req, res, next) => {
     json({
       limit: '64mb'
     })(req, res, (err) => {
       if (err) {
-        logger.error('Bad Request', { url: req.url, error: err.message });
+        logger.error('[WebServer] Bad Request', { url: req.url, error: err.message });
         res.status(400).json({ Status: "error", Error: `Bad Request ${err}` });
         return;
       }
       next();
     });
   });
-  
+
   // Serve favicon
   app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
   
@@ -140,7 +152,7 @@ function createExpressApp() {
   // Handle invalid routes
   app.use('/', (req, res) => {
     if (req.url !== '/') {
-      logger.warn('Invalid URL requested', { url: req.url, ip: req.ip });
+      logger.warn('[WebServer] Invalid URL requested', { url: req.url, ip: req.ip });
     }
     res.status(501).json({ Status: "Error", Error: "Requested bad URL" });
   });
@@ -182,7 +194,7 @@ function startWebServer() {
       configDir: `${global.SAVEPATH}/greenlock.d`,
       notify: function(type, object) {
         if (type === 'error') {
-          logger.warn("Let's Encrypt error", { error: JSON.stringify(object) });
+          logger.warn("[WebServer] Let's Encrypt error", { error: JSON.stringify(object) });
         }
       },
       maintainerEmail: letsEncrypt.Email,
@@ -194,7 +206,7 @@ function startWebServer() {
       const httpsServer = glx.httpsServer(null, webapp);
       
       httpsServer.listen(port, ip, function() {
-        logger.info("Server started", { 
+        logger.info("[WebServer] Server started", { 
           address: httpsServer.address().address, 
           port: httpsServer.address().port, 
           ssl: "Let's Encrypt" 
@@ -202,7 +214,7 @@ function startWebServer() {
       });
       
       httpsServer.on('error', function(e) {
-        logger.error("HTTPS server error", { error: e.message, stack: e.stack });
+        logger.error("[WebServer] HTTPS server error", { error: e.message, stack: e.stack });
       });
 
       // Also listen on port 80 for ACME challenges
@@ -213,7 +225,7 @@ function startWebServer() {
       });
 
       httpServer.listen(80, ip, function() {
-        logger.info("HTTP redirect server started", { 
+        logger.info("[WebServer] HTTP redirect server started", { 
           address: httpServer.address().address, 
           port: 80, 
           purpose: "Let's Encrypt ACME challenges" 
@@ -221,7 +233,7 @@ function startWebServer() {
       });
       
       httpServer.on('error', function(e) {
-        logger.error("HTTP server error", { error: e.message, stack: e.stack });
+        logger.error("[WebServer] HTTP server error", { error: e.message, stack: e.stack });
       });
     }
   } else {
@@ -229,11 +241,11 @@ function startWebServer() {
     const certificates = loadCertificates();
     const server = https.createServer(certificates, webapp)
       .listen(port, function() {
-        logger.info("API Webservice started", { port, address: ip });
+        logger.info("[App] API Webservice started", { port, address: ip });
       });
       
     server.on('error', function(e) {
-      logger.error("Server error", { error: e.message, stack: e.stack });
+      logger.error("[WebServer] Server error", { error: e.message, stack: e.stack });
     });
   }
 }
@@ -245,7 +257,7 @@ function startWebServer() {
 function Start(isElectron = false) {
   // Setup clustering if enabled and not in Electron
   if (cluster.isMaster && totalCPUs > 1 && !isElectron) {
-    logger.info("Starting server in cluster mode", { workers: totalCPUs });
+    logger.info("[App] Starting server in cluster mode", { workers: totalCPUs });
     
     // Fork worker processes
     for (let i = 0; i < totalCPUs; i++) {
@@ -254,7 +266,7 @@ function Start(isElectron = false) {
     
     // Restart worker if it crashes
     cluster.on('exit', (worker, code, signal) => {
-      logger.warn("Worker died, restarting", { 
+      logger.warn("[App] Worker died, restarting", { 
         workerId: worker.id, 
         exitCode: code, 
         signal 

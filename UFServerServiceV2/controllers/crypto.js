@@ -1,7 +1,7 @@
 const {Router} = require('express');
 // Remove the old logger import
-const {promisedProperties,GenerateLimiter} = require('../utils');
-const logger = global.logger;
+const {promisedProperties,GenerateLimiter, createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'crypto');
 const {requirePlayerOrServerAuth} = require("../auth/utils");
 
 const router = Router();

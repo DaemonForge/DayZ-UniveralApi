@@ -1,11 +1,10 @@
 const { Router } = require("express");
 const { MongoClient } = require("mongodb");
 
-const { isArray, isObject, CleanRegEx, GenerateLimiter } = require("../utils");
+const { isArray, isObject, CleanRegEx, GenerateLimiter, createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'DB.query');
 
 const { CheckAuth, CheckServerAuth } = require("../auth/utils");
-
-const logger = global.logger; // Take the logger from the global
 
 const router = Router();
 
@@ -18,11 +17,12 @@ router.use(GenerateLimiter(global.config.RequestLimitQuery || 400, 10));
  * 
  */
 router.post('/:mod', (req, res)=>{
-    runQuery(req, req, res.params.mod, req.headers['auth-key'], GetCollection(req.baseUrl));
+    console.log(req.params);
+    runQuery(req, res, req.params.mod, req.headers['auth-key'], GetCollection(req.baseUrl));
 });
 
 router.post('/Update/:mod', (req, res)=>{
-    runUpdateFromQuery(req, req, res.params.mod, req.headers['auth-key'], GetCollection(req.baseUrl));
+    runUpdateFromQuery(req, res, req.params.mod, req.headers['auth-key'], GetCollection(req.baseUrl));
 });
 
 function GetCollection(URL){

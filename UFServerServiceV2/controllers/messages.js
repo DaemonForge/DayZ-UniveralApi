@@ -67,8 +67,8 @@ const {
   readMessages
 } = require("../models/messages");
 const { AuthPlayerGuid, CheckServerAuth, requireServerAuth, requirePlayerOrServerAuth} = require('../auth/utils')
-const { GenerateLimiter } = require("../utils");
-const logger = global.logger;
+const { GenerateLimiter, createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'DB.global');
 
 // Apply rate limiting: 400 requests per 10 seconds.
 router.use(GenerateLimiter(global.config.RequestLimitQuery || 400, 10));

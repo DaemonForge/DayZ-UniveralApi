@@ -1,14 +1,14 @@
 const { Router } = require('express');
 const { MongoClient } = require("mongodb");
 const { CheckAuth, CheckServerAuth } = require("../auth/utils.js");
-const { isArray, GenerateLimiter } = require('../utils.js');
+const { isArray, GenerateLimiter, createLogger} = require('../utils');
 const { createHash } = require('crypto');
 
 // Remove the old logger import
 // const log = require("./log");
 
 const router = Router();
-const logger = global.logger;
+const logger = createLogger(global.logger, 'logger');
 
 router.use(GenerateLimiter(global.config.RequestLimitLogger || 500, 10));
 

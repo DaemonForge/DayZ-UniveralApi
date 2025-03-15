@@ -1,7 +1,7 @@
 const {Router} = require('express');
-const {GenerateLimiter} = require('../utils');
+const {GenerateLimiter, createLogger} = require('../utils');
+const logger = createLogger(global.logger, 'random');
 const { requirePlayerOrServerAuth} = require("../auth/utils");
-const logger = global.logger; // Use global logger instead of requiring "./log"
 const cluster = require('cluster');
 
 const router = Router();
