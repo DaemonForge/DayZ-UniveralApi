@@ -103,8 +103,8 @@ function OpenConsoleWindow() {
     return;
   }
   ConsoleWindow = new BrowserWindow({
-    width: 700,
-    height: 400,
+    width: 820,
+    height: 380,
     title: "Universal Framework Console", // sets the window title
     icon: path.join(__dirname, 'public', 'universalFrameworklogo.ico'), // Use .ico for Windows, or .png if preferred
     webPreferences: {

@@ -50,7 +50,7 @@ function initializeLogger() {
     level: global.config?.LogLevel || 'info',
     // Configure default log format with timestamp and JSON structure
     format: winston.format.combine(
-      winston.format.timestamp(),
+      winston.format.timestamp({ format: () => new Date().toLocaleString() }),
       winston.format.json()
     ),
     // Set up transports (output destinations)
