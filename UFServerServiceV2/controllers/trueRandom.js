@@ -181,8 +181,6 @@ async function FillRandomNumbers(bitsize) {
         errorCount++;
         if (errorCount >= errorLimit) {
             logger.error(`Failed to fetch random numbers from quantum source after ${errorCount} attempts: ${error.message}`, { error, stack: error.stack });
-        } else {
-            logger.warn(`Attempt ${errorCount} - Failed to fetch random numbers: ${error.message}`, { error: error.message });
         }
     }
     if (data.success) {

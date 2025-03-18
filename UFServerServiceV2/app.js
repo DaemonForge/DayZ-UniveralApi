@@ -106,17 +106,6 @@ function createExpressApp() {
   app.use(limiter);
   app.use(ExtractAuthKey);
 
-// Console log the request headers
-app.use((req, res, next) => {
-  //ignore favicon requests, and if the query is noLog=1
-  if (req.url === '/favicon.ico' || req.query.noLog ) {
-    next();
-    return;
-  }
-  console.log(req.headers);
-  next();
-});
-
   // Configure JSON parser with extended size limit
   app.use((req, res, next) => {
     json({

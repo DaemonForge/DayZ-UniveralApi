@@ -42,7 +42,7 @@ async function GetDiscordObj(guid){
         }
     }catch(err){
         logger.warn("Error Fetching Discord Obj", { error: err });
-        return null;
+        return undefined;
     }
 }
 

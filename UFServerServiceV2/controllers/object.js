@@ -5,7 +5,7 @@ const router = Router();
 
 const { requireServerAuth, requirePlayerOrServerAuth } = require('../auth/utils');
 const { updateObject, runObjectTransaction, runValidatedObjectTransaction, getObject, newObject, updateObjectField } = require('../models/object');
-const { makeObjectId, isEmpty, createLogger } = require('../utils');
+const { makeObjectId, isEmpty, createLogger, tryConvertToObject } = require('../utils');
 const logger = createLogger(global.logger, 'c.object');
 
 // Mount the legacy query handler if needed

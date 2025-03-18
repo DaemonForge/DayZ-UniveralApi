@@ -1,12 +1,12 @@
 const gamedig = require('gamedig');
 const { Router } = require('express');
 const { requirePlayerOrServerAuth } = require("../auth/utils");
-const { GenerateLimiter, createLogger} = require('../utils');
+const { GenerateLimiter, createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'ServerQuery');
 
 const router = Router();
 
-router.use(GenerateLimiter(global.config.RequestLimitServerQuery || 200 ,5));
+router.use(GenerateLimiter(global.config.RequestLimitServerQuery || 200, 5));
 
 /**
  *  DayZ Server SteamQuery
@@ -35,15 +35,14 @@ router.use(GenerateLimiter(global.config.RequestLimitServerQuery || 200 ,5));
  */
 router.post('/Status/:ip/:port', requirePlayerOrServerAuth, GetServerStatus);
 
-
-async function QueryServer(ip, port){
-    try{
-        let data = gamedig.query( {
+async function QueryServer(ip, port) {
+    try {
+        let data = gamedig.query({
             type: 'dayz',
             host: ip,
             port: port,
             requestRules: true
-        } ).then((state) => {
+        }).then((state) => {
             let keywords = state.raw.tags;
             return {
                 ip: state.connect.split(':')[0],
@@ -58,7 +57,8 @@ async function QueryServer(ip, port){
                 time: keywords.find(tag => tag.includes(':')),
                 first_person: keywords.some(tag => tag.includes('no3rd')),
                 map: state.map,
-                time_acceleration: parseFloat((keywords.find(tag => tag.includes('etm')) || '12').replace('etm', '')) + ", " + parseFloat((keywords.find(tag => tag.includes('entm')) || '1').replace('entm', '')),
+                time_acceleration: parseFloat((keywords.find(tag => tag.includes('etm')) || '12').replace('etm', '')) + ", " +
+                                  parseFloat((keywords.find(tag => tag.includes('entm')) || '1').replace('entm', '')),
                 day_time_acceleration: parseFloat((keywords.find(tag => tag.includes('etm')) || '12').replace('etm', '')),
                 night_time_acceleration: parseFloat((keywords.find(tag => tag.includes('entm')) || '1').replace('entm', '')),
                 password: state.password,
@@ -68,68 +68,66 @@ async function QueryServer(ip, port){
                 dlc_enabled: keywords.some(tag => tag.includes('isDLC')),
                 ping: state.ping
             }
-        }
-        ).catch((error) => {
-            logger.warn('Server query failed', { error, ip, port });
-            return {ip: ip, query_port: parseInt(port), status: "offline", error: "Server is offline or wrong ip/query port"};
+        }).catch((error) => {
+            logger.error(`Server query failed: ${error.message}`, { error, ip, port });
+            return { ip: ip, query_port: parseInt(port), status: "offline", error: "Server is offline or wrong ip/query port" };
         });
-        theData = await data;
+        const theData = await data;
         return theData;
-    } catch (error){
-        logger.warn('Server query exception', { error, ip, port });
-        return {ip: ip, query_port: parseInt(port), status: "offline", error: "Server is offline or wrong ip/query port"};
+    } catch (error) {
+        logger.error(`Server query exception: ${error.message}`, { error, ip, port });
+        return { ip: ip, query_port: parseInt(port), status: "offline", error: "Server is offline or wrong ip/query port" };
     }
 };
 
-async function GetServerStatus(req, res){
-    const {ip, port} = req.params
-        let response;
-        let isSent = false;
-        try {
-            response =  await QueryServer(ip, port);
-            if (response.error === undefined) {
-                let statusobj = {
-                    Status: response.status,
-                    Error: "", 
-                    IP: response.ip,
-                    GamePort: response.game_port,
-                    QueryPort: response.query_port,
-                    Name: response.name,
-                    ServerVersion: response.version,
-                    Players: response.players,
-                    QueuePlayers: response.queue,
-                    MaxPlayers: response.max_players,
-                    GameTime: response.time,
-                    GameMap: response.map,
-                    Password: response.password ? 1 : 0,
-                    FirstPerson: response.first_person ? 1 : 0
-                }
-                isSent = true;
-                logger.info("Server Status Check requested", { ip: response.ip, port: response.query_port });
-                return res.status(200).json(statusobj);
+async function GetServerStatus(req, res) {
+    const { ip, port } = req.params;
+    let response;
+    let isSent = false;
+    try {
+        response = await QueryServer(ip, port);
+        if (response.error === undefined) {
+            let statusobj = {
+                Status: response.status,
+                Error: "",
+                IP: response.ip,
+                GamePort: response.game_port,
+                QueryPort: response.query_port,
+                Name: response.name,
+                ServerVersion: response.version,
+                Players: response.players,
+                QueuePlayers: response.queue,
+                MaxPlayers: response.max_players,
+                GameTime: response.time,
+                GameMap: response.map,
+                Password: response.password ? 1 : 0,
+                FirstPerson: response.first_person ? 1 : 0
             }
-        } catch (e) {
-            logger.warn('Error getting server status', { error: e, ip, port });
+            isSent = true;
+            logger.info(`Server Status Check successful for ${response.ip}:${response.query_port} - ${response.name}`, { ip: response.ip, port: response.query_port });
+            return res.status(200).json(statusobj);
         }
-            if(isSent) return;
-             res.status(200);
-             res.json( {
-                Status: "Offline",
-                Error: response.error || "Error Unknown", 
-                IP: ip,
-                GamePort: -1,
-                QueryPort: parseInt(port),
-                Name: "",
-                ServerVersion: "",
-                Players: 0,
-                QueuePlayers: 0,
-                MaxPlayers: 0,
-                GameTime: "",
-                GameMap: "",
-                Password: 0,
-                FirstPerson: 0
-            } );
-            return;
+    } catch (e) {
+        logger.error(`Error getting server status: ${e.message}`, { error: e, ip, port });
+    }
+    if (isSent) return;
+    res.status(200).json({
+        Status: "Offline",
+        Error: response.error || "Error Unknown",
+        IP: ip,
+        GamePort: -1,
+        QueryPort: parseInt(port),
+        Name: "",
+        ServerVersion: "",
+        Players: 0,
+        QueuePlayers: 0,
+        MaxPlayers: 0,
+        GameTime: "",
+        GameMap: "",
+        Password: 0,
+        FirstPerson: 0
+    });
+    return;
 }
 
 module.exports = router;

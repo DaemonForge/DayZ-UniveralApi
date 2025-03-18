@@ -1,7 +1,9 @@
 const { MongoClient } = require("mongodb");
 const {readFileSync, writeFileSync, existsSync, mkdirSync} = require('fs');
 
-const {createLogger} = require('../utils');
+const {createLogger, NormalizeToGUID} = require('../utils');
+const {createHash} = require('crypto');
+const {GetDiscordObj} = require('./dsUtils');
 const logger = createLogger(global.logger, 'discord');
 const client = require("./bot.js");
 const {render} = require('ejs');
@@ -21,7 +23,8 @@ LoadErrorTemplate();
 
 async function SendLoginPage(res, id, guid){
     let userObj = await GetDiscordObj(guid);
-    res.send(render(LoginTemplate, {SteamId: id, Login_URL: `/discord/login/${id}`, Connected: (userObj !== undefined)}));
+    console.log(userObj);
+    res.send(render(LoginTemplate, {SteamId: id, Login_URL: `/Discord/login/${id}`, Connected: (userObj !== undefined && userObj !== null)}));
     
 }
 
@@ -30,12 +33,13 @@ async function RenderLogin(req, res){
     let GUID = NormalizeToGUID(id);
     if (ErrorTemplate === undefined) LoadErrorTemplate();
     let userObj = await GetDiscordObj(GUID);
+    console.log(userObj);
     let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     if (userObj !== undefined && (global.config.Discord?.AllowToReRegister !== true) === false){
         return res.send(render(ErrorTemplate, {TheError: "Trying to connect to a Steam ID that already has a Discord connected.", Type: "AlreadyLinked"}))
     }
 
-    let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
+    let url = encodeURIComponent(`https://${req.headers.host}/Discord/callback`); 
     if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined ){
         logger.warn("User tried to sign up for discord but Intergration is not setup for this server");
         return res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}))

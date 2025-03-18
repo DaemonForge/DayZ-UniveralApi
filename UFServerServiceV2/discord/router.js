@@ -2,7 +2,7 @@ const { Router } = require('express');
 const {requireServerAuth, requirePlayerOrServerAuth} = require('../auth/utils')
 const {CheckIdHasRole, CheckId, AddRole, RemoveRole, GetUserAndRoles, PlayerVoiceMute, PlayerVoiceKick, ChannelVoiceMove, SendMessageUser, PlayerVoiceGetChannel, SetNicknameUser} = require('./user');
 const {CreateChannel, DeleteChannel, EditChannel, InviteChannel, SendMessageChannel, GetMessagesChannel} = require('./channels');
-const {GenerateLimiter} = require('../utils');
+const {GenerateLimiter, NormalizeToGUID} = require('../utils');
 const {renderRootErrorTemplate, HandleCallBack,RenderLogin, GetLoginTemplate, GetErrorTemplate, SendLoginPage} = require('./login');
 const {render} = require('ejs');
 
@@ -15,7 +15,7 @@ router.use((req, res, next) => {
     if(global.DISCORDSTATUS === "Error"){
         return res.json({Status: "Error", Error: "Discord Error"});
     } else if(global.DISCORDSTATUS === "Disabled"){
-        return  res.json({Status: "Error", Error: "Discord Disabled"});
+        return  res.json({Status: "NotSetup", Error: "Discord Disabled"});
     } else if(global.DISCORDSTATUS === "Disconnected"){
         return res.json({Status: "Error", Error: "Discord Disconnected"});
     } else if(global.DISCORDSTATUS === "Pending"){

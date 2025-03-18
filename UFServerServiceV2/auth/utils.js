@@ -27,7 +27,7 @@ const requireServerAuth = async (req, res, next) => {
         logger.debug('Server auth successful', { mod: req.params.mod });
         return next();
     }
-    logger.warn('Unauthorized server access attempt', { mod: req.params.mod, auth });
+    logger.warn(`Unauthorized player data access attempt requireServerAuth ${req.url}`, { mod: req.params.mod, auth });
     return res.status(403).json({ Status: "NoAuth", Error: 'Unauthorized' });
 };
 
@@ -70,6 +70,8 @@ const requirePlayerOrServerAuth = async (req, res, next) => {
             logger.warn('No GUID available for authentication', { mod: req.params.mod });
             return res.status(403).json({Status: "NoAuth", Error: 'Unauthorized' });
         }
+    } else {
+        GUID = NormalizeToGUID(GUID);
     }
 
     // Check for player auth
@@ -78,7 +80,7 @@ const requirePlayerOrServerAuth = async (req, res, next) => {
             logger.debug('Player auth successful', { GUID });
             return next();
         }
-        logger.warn('Unauthorized player data access attempt', { GUID, mod: req.params.mod});
+        logger.warn(`Unauthorized player data access attempt requirePlayerOrServerAuth ${req.url}`, { GUID, mod: req.params.mod});
         return res.status(403).json({Status: "NoAuth", Error: 'Unauthorized' });
     } catch (err) {
         logger.error('Auth error', { error: err.message });

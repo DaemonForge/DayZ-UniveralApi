@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { isArray, isObject, isEmpty, NormalizeToGUID, createLogger } = require('../utils');
+const { NormalizeToGUID, createLogger, tryConvertToObject } = require('../utils');
 const logger = createLogger(global.logger, 'c.player');
 
-const { CheckAuth, CheckPlayerAuth, CheckServerAuth, requireServerAuth, requirePlayerOrServerAuth } = require('../auth/utils')
+const { requireServerAuth, requirePlayerOrServerAuth } = require('../auth/utils')
 
 // Import your player model functions
-const { getPlayer, getPlayerModData, playerExists, newPlayer, updatePlayer, updatePlayerModData, updatePlayerField, runPlayerTransaction, runValidatedPlayerTransaction } = require('../models/player');
+const { getPlayerModData, playerExists, newPlayer, updatePlayerModData, updatePlayerField, runPlayerTransaction, runValidatedPlayerTransaction } = require('../models/player');
 
 // ----- Endpoint Handlers -----
 const queryHandler = require("./query");
@@ -25,7 +25,7 @@ router.post('/PublicSave/:GUID/:mod', requireServerAuth, runSavePublic);
 router.post('/Transaction/:GUID/:mod', requireServerAuth, runTransaction);
 
 async function runGet(req, res) {
-    const GUID = req.params.GUID;
+    const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
     logger.debug(`Player data load request for GUID ${GUID} from: ${ req.isServer ? "Server": "Client"} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
     try {
@@ -35,7 +35,7 @@ async function runGet(req, res) {
             return res.status(404).json({ error: 'Player or mod data not found' });
         }
         logger.info(`Player data loaded successfully for GUID ${GUID} and mod ${mod}`, { GUID, mod });
-        return res.json(data);
+        return res.status(200).json(data);
     } catch (err) {
         logger.error(`Error loading player data for GUID ${GUID} and mod ${mod}: ${err.message}`, { error: err });
         return res.status(500).json({ error: err.message });
@@ -47,7 +47,7 @@ async function runGet(req, res) {
  * Requires server auth (handled by middleware).
  */
 async function runSave(req, res) {
-    const GUID = req.params.GUID;
+    const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
     logger.debug(`Player data save request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
     
@@ -77,7 +77,7 @@ async function runSave(req, res) {
  * Updates a specific field in a player's document.
  */
 async function runUpdate(req, res) {
-    const GUID = req.params.GUID;
+    const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
     logger.debug(`Player field update request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
     
@@ -160,7 +160,7 @@ async function runSavePublic(req, res) {
  * Runs a transaction that increments a specified field within a player's document.
  */
 async function runTransaction(req, res) {
-    const GUID = req.params.GUID;
+    const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
     try {
         const transactionData = req.body;
@@ -184,7 +184,7 @@ async function runTransaction(req, res) {
  * Runs a validated transaction that increments a field within limits.
  */
 async function runValidatedTx(req, res) {
-    const GUID = req.params.GUID;
+    const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
 
     try {
@@ -210,7 +210,7 @@ async function runValidatedTx(req, res) {
 }
 
 async function Transaction(req, res) {
-    const GUID = req.params.GUID;
+    const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
     let RawData = req.body;
     if (RawData.Min !== undefined && RawData.Max !== undefined && RawData.Min !== RawData.Max) {
