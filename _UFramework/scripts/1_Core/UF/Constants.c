@@ -1,4 +1,4 @@
-static const string UF_VERSION = "1.3.2";
+static const string UF_VERSION = "2.0.0";
 
 static const int UF_SUCCESS = 200;
 static const int UF_EMPTY = 204; //Means response was empty or query result returned no results

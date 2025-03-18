@@ -12,17 +12,24 @@ modded class DayZGame extends CGame
 	
 	
 	protected void CBCacheDiscordInfo(int cid, int status, string oid, UDiscordUser data){
+		Print("[UF] Attempting to Cache Discord info cid"+cid + " status: " + status);
 		if (IsClient() && status == UF_SUCCESS){
 			if (Class.CastTo(m_discordUser, data)){
 				Print("[UF] Discord is set up and cached " + m_discordUser.Username + "#" +  m_discordUser.Discriminator);
 			}
 		}
 		if (IsClient() && status == UF_NOTSETUP && UFConfig().PromptDiscordOnConnect >= 1){
+			Print("[UF] [Discord] Prompt on connect configured and no Discord info found");
 			OpenURL(U().ds().Link());
 		}
 	}
 	
-	
+	override void OnUpdate(bool doSim, float timeslice){
+		super.OnUpdate(doSim, timeslice);
+		if (UFramework.isGlobalInit()){
+			U().Cron().onUpdate();
+		}
+	}
 	
 	//Client side function to get the steam id
 	string GetSteamId(){
@@ -34,4 +41,6 @@ modded class DayZGame extends CGame
 		} 
 		return "";
 	}
+	
+	
 }

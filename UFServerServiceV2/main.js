@@ -272,6 +272,12 @@ function updateTrayMenu() {
             }
           },
           {
+            label: '📁 Discord Templates',
+            click: () => {
+              shell.openPath(path.join(global.SAVEPATH,'templates'));
+            }
+          },
+          {
             label: '🛑 Stop',
             click: () => {
               if (settingsWindow) {
@@ -310,7 +316,7 @@ function openSettingsWindow() {
   settingsWindow.setMenu(null);
 
   settingsWindow.loadFile(path.join(__dirname, 'views', 'settings.html'));
-  settingsWindow.webContents.openDevTools();
+  //settingsWindow.webContents.openDevTools();
    
     // When the window is truly closed (app quit), then clean up.
     settingsWindow.on('closed', () => {

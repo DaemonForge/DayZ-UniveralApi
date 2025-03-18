@@ -1,6 +1,33 @@
 //This meathod has to be used for the template class to work, you can't have a template class that exends RestCallback
 
 
+class UFRestCallBackBase : RestCallback
+{
+	int m_UFid = -1;
+	override void OnError(int errorCode) {
+		//Always call super to prevent memory leaks
+		string debugtrace;
+		DumpStackString(debugtrace);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
+	};
+	override void OnTimeout() {
+		//Always call super to prevent memory leaks
+		string debugtrace;
+		DumpStackString(debugtrace);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
+	};
+	override void OnSuccess(string data, int dataSize) {
+		//Always call super to prevent memory leaks
+		string debugtrace;
+		DumpStackString(debugtrace);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
+	};
+	
+	void SetId(int cid){
+		m_UFid = cid;
+	}
+};
+
 class UFCallback<Class T> extends UFCallbackBase{
 	
 	override void OnError(int errorCode, int cid) {
@@ -150,9 +177,8 @@ class UFCallbackBase extends Managed{
 	}
 }
 
-class UDBNestedCallBack : RestCallback
+class UDBNestedCallBack : UFRestCallBackBase
 {
-	protected int CallId;
 	protected autoptr UFCallbackBase m_CB;
 
 	
@@ -160,41 +186,52 @@ class UDBNestedCallBack : RestCallback
 		return m_CB;
 	}
 	
-	void UDBNestedCallBack(UFCallbackBase cb, int callId){
+	void UDBNestedCallBack(UFCallbackBase cb, int callId = -1){
 		m_CB = cb;
-		CallId = callId;
+		m_UFid = callId;
+	}
+	
+	void ~UDBNestedCallBack(){
+		if(m_CB) delete m_CB;
 	}
 	
 	override void OnError(int errorCode) {
-		if (U().IsCallCanceled(CallId)){
-			Print("[UF] Call " + CallId + " not called as it was requested to be canceled - OnError " + U().ErrorToString(errorCode));
+		if (U().IsCallCanceled(m_UFid)){
+			Print("[UF] Call " + m_UFid + " not called as it was requested to be canceled - OnError " + U().ErrorToString(errorCode));
+			super.OnError(errorCode);
 			return;
 		}
 		int rstatus = UF_SERVERERROR;
 		if (errorCode == ERestResultState.EREST_ERROR_CLIENTERROR){
 			rstatus = UF_CLIENTERROR;
 		}
-		GetCB().OnError(rstatus, CallId);
+		GetCB().OnError(rstatus, m_UFid);
+		super.OnError(errorCode);
 	};
 	
 	override void OnTimeout() {
-		if (U().IsCallCanceled(CallId)){
-			Print("[UF] Call " + CallId + " not called as it was requested to be canceled - OnTimeout");
+		if (U().IsCallCanceled(m_UFid)){
+			Print("[UF] Call " + m_UFid + " not called as it was requested to be canceled - OnTimeout");
+			super.OnTimeout();
 			return;
 		}
 		
-		GetCB().OnError(UF_TIMEOUT, CallId);
+		GetCB().OnError(UF_TIMEOUT, m_UFid);
+		super.OnTimeout();
 	};
 	
 	override void OnSuccess(string data, int dataSize) {
-		if (U().IsCallCanceled(CallId)){
-			Print("[UF] Call " + CallId + " not called as it was requested to be canceled - OnSuccess");
+		if (U().IsCallCanceled(m_UFid)){
+			Print("[UF] Call " + m_UFid + " not called as it was requested to be canceled - OnSuccess");
+			super.OnSuccess(data, dataSize);
 			return;
 		}
 		if (dataSize <= 0 || data == "{}" || data == "" || data == "{ }"){
-			GetCB().OnError(UF_EMPTY, CallId);
+			GetCB().OnError(UF_EMPTY, m_UFid);
+			super.OnSuccess(data, dataSize);
 			return;
 		}
-		GetCB().OnSuccess(data, CallId);
+		GetCB().OnSuccess(data, m_UFid);
+		super.OnSuccess(data, dataSize);
 	};
 };

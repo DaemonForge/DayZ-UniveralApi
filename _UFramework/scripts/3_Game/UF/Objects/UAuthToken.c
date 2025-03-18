@@ -1,4 +1,4 @@
-class ApiAuthToken extends UFConfigBase{
+class ApiAuthToken extends Managed{
 	string GUID = "";
 	string AUTH = "";
 	

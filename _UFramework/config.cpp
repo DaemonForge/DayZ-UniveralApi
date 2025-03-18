@@ -26,9 +26,11 @@ class CfgMods
 		version = "1.3.2"; 
 		extra = 0;
 		type = "mod";
-		
+		defines[] = {
+			"UNIVERSALFRAMEWORK",
+			"UNIVERSALFRAMEWORK_STABLE"
+		};
 		dependencies[] = {"Core", "Game", "World", "Mission"};
-
 		class defs
 		{
 			class engineScriptModule

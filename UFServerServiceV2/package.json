@@ -6,7 +6,8 @@
     "start": "electron .",
     "dev": "nodemon app.js",
     "build": "electron-builder",
-    "pkg": "pkg . --compress GZip && node build.js"
+    "pkg": "pkg . --compress GZip && node build.js",
+    "tunnel": "cloudflared tunnel --config .cloudflared/config.yaml run ufdev"
   },
   "author": "",
   "repository": {

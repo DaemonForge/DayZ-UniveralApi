@@ -43,6 +43,14 @@ class UFramework extends Managed {
 		return m_UApiEndpoint;
 	}
 	
+	UCronManager Cron(){
+		if (!m_UCronManager){
+			m_UCronManager = new UCronManager;
+			m_UCronManager.Init();
+		}
+		return m_UCronManager;
+	}
+
 	//Request a call to be canceled
 	void RequestCallCancel(int cid){
 		m_CanceledCalls.Insert(cid);
@@ -73,11 +81,11 @@ class UFramework extends Managed {
 	//A super simple Post Interface to help people
 	static int Post(string url, string jsonString, UFCallbackBase cb, string contentType = "application/json")
 	{
-		int cid = U().CallId();
+		int cid = -1;
 		if (cb){
 			RestContext ctx = RestCore().GetRestContext(url);
 			ctx.SetHeader(contentType);
-			ctx.POST(new UDBNestedCallBack(cb,cid), "", jsonString);
+			ctx.POST(U().RegisterCall(new UDBNestedCallBack(cb,cid),cid), "", jsonString);
 			return cid;
 		}
 		return -1;
@@ -104,10 +112,10 @@ class UFramework extends Managed {
 	//A super simple Get Interface to help people
 	static int Get(string url, UFCallbackBase cb)
 	{
-		int cid = U().CallId();
+		int cid = -1;
 		if (cb){
 			RestContext ctx =  RestCore().GetRestContext(url);
-			ctx.GET(new UDBNestedCallBack(cb,cid), "");
+			ctx.GET(U().RegisterCall(new UDBNestedCallBack(cb,cid), cid), "");
 			return cid;
 		}
 		return -1;
@@ -172,7 +180,14 @@ class UFramework extends Managed {
 	
 	
 	
+	protected static bool m_isInit = false;
 	
+	static bool isGlobalInit(){
+		return m_isInit;
+	}
+	static void setGlobalInit(){
+		m_isInit = true;
+	}
 	
 	//Stuff that you don't need to worry about :P
 	
@@ -186,13 +201,15 @@ class UFramework extends Managed {
 	protected bool m_UDiscordEnabled = false;
 	
 	protected bool UF_Init = false;
-	protected autoptr ApiAuthToken m_authToken;
+	protected autoptr ApiAuthToken m_UFauthToken;
 	
 	protected autoptr UniversalRest m_UniversalRest;
 	
 	protected autoptr UniversalDiscordRest m_UniversalDiscordRest;
 	protected autoptr UniversalDSEndpoint m_UniversalDSEndpoint;
 	protected autoptr UDBGlobalEndpoint m_UDBGlobalEndpoint;
+	
+	protected autoptr UCronManager m_UCronManager;
 	
 	protected autoptr UDiscordUser dsUser;
 		
@@ -209,7 +226,220 @@ class UFramework extends Managed {
 	
 	protected int LastRandomNumberRequestCall = -1;
 	
+	autoptr map<int,UFRestCallBackBase> m_UCallBacks = new map<int,UFRestCallBackBase>;
 		
+	/**
+	 * Returns the static RestApi instance. If it does not exist, the method creates a new one and sets its
+	 * read operation option to 15.
+	 *
+	 * @return RestApi instance used for API interactions.
+	 */
+
+	/**
+	 * Retrieves the authentication token. For client instances, if a valid m_UFauthToken exists, returns its token;
+	 * for server instances, returns the token from the server configuration (UFConfig().ServerAuth).
+	 * If neither condition is met, returns the string "null".
+	 *
+	 * @return String representing the authentication token.
+	 */
+
+	/**
+	 * Validates the current authentication token by ensuring it is neither "null", "error", "ERROR", nor an empty string.
+	 *
+	 * @return Boolean value indicating whether the authentication token is valid.
+	 */
+
+	/**
+	 * Returns the UniversalRest instance to handle REST callback endpoints (legacy system). Lazily initializes 
+	 * the instance if it is not already available.
+	 *
+	 * @return UniversalRest instance for processing REST callbacks.
+	 */
+
+	/**
+	 * Returns the UniversalDiscordRest instance to handle Discord-related REST calls. Lazily initializes 
+	 * the instance if it is not already available.
+	 *
+	 * @return UniversalDiscordRest instance.
+	 */
+
+	/**
+	 * Destructor of the UFramework class. On server instances where the framework is initialized, this method
+	 * removes scheduled callbacks from the game's system call queue and deallocates the m_UFauthToken to free resources.
+	 */
+
+	/**
+	 * Initializes the UFramework by detecting the server environment, setting global initialization flags,
+	 * and registering necessary RPC endpoints for subsequent REST API calls and authentication processes.
+	 * For servers, it also schedules periodic status checks and renewals for Q Random numbers.
+	 */
+
+	/**
+	 * RPC handler for receiving UFramework configuration and authentication token from the server.
+	 * Upon receiving valid data, this method resets authentication retry counts and schedules further processing,
+	 * such as updating service statuses and retrieving Discord user info.
+	 *
+	 * @param type CallType of the RPC.
+	 * @param ctx Context for reading parameters, expected to carry ApiAuthToken and UFrameworkConfig.
+	 * @param sender PlayerIdentity that sent the RPC call.
+	 * @param target The RPC call target object.
+	 */
+
+	/**
+	 * Callback function invoked after the authentication token has been received and processed.
+	 * It logs the receipt of the token, triggers a status update on the API, initiates Discord user info retrieval,
+	 * and notifies the mission object that the framework is ready.
+	 */
+
+	/**
+	 * RPC handler to manage retry requests for fetching an authentication token. If running on a client,
+	 * it increments a retry counter and schedules another token request after an increasing delay, up to 20 times.
+	 *
+	 * @param type CallType of the RPC.
+	 * @param ctx Context for reading the retry flag.
+	 * @param sender PlayerIdentity requesting the retry.
+	 * @param target The RPC call target object.
+	 */
+
+	/**
+	 * Requests an authentication token by sending the appropriate RPC call to the server.
+	 * This method is only executed on client instances.
+	 *
+	 * @param first Boolean flag indicating whether this is the initial request.
+	 */
+
+	/**
+	 * Initiates a REST-based authentication process for a given player by GUID.
+	 *
+	 * @param guid Unique identifier for the player.
+	 */
+
+	/**
+	 * Caches the player's authentication token in a map structure. If the player is currently connected,
+	 * the token is directly sent to the player's identity.
+	 *
+	 * @param guid Unique identifier for the player.
+	 * @param auth Authentication token to be cached and possibly delivered immediately.
+	 */
+
+	/**
+	 * Retrieves a cached authentication token for a player.
+	 * If the token is found in the cache, it is returned via the out parameter and the method returns true.
+	 * Otherwise, an error is logged and the method returns false.
+	 *
+	 * @param guid Unique identifier for the player.
+	 * @param auth Out parameter to hold the retrieved authentication token.
+	 * @return Boolean indicating whether a valid token was found.
+	 */
+
+	/**
+	 * RPC handler for client requests to fetch an authentication token.
+	 * Verifies server configuration and either sends a cached token, triggers a token renewal, or requests a retry.
+	 *
+	 * @param type CallType of the RPC.
+	 * @param ctx Context for reading the retry flag.
+	 * @param sender PlayerIdentity requesting the authentication token.
+	 * @param target The RPC call target object.
+	 */
+
+	/**
+	 * Sends the authentication token and partial configuration to a specified player's identity via RPC.
+	 * Ensures that the target identity and token are valid before transmission.
+	 *
+	 * @param idenitity PlayerIdentity receiving the token.
+	 * @param auth The authentication token string to be sent.
+	 */
+
+	/**
+	 * Handles authentication errors for a given player GUID.
+	 * Depending on the online status and whether the error occurs on the server or client,
+	 * schedules a retry for obtaining the authentication token after a predefined delay.
+	 *
+	 * @param guid Unique identifier for the player with the authentication error.
+	 */
+
+	/**
+	 * Sends a Discord message by constructing a Discord object with content, bot name, and avatar URL,
+	 * then posting it to the specified webhook URL.
+	 *
+	 * @param webhookUrl The Discord webhook URL to post the message.
+	 * @param message The message content.
+	 * @param botName Optional parameter for the bot's name.
+	 * @param botAvatarUrl Optional parameter for the bot's avatar URL.
+	 */
+
+	/**
+	 * Sends a Discord object by converting it to JSON format and posting it to the specified Discord webhook URL.
+	 *
+	 * @param webhookUrl The Discord webhook URL.
+	 * @param discordObject The constructed UDiscordObject containing message details.
+	 */
+
+	/**
+	 * Converts a REST error code into its corresponding human-readable string description.
+	 *
+	 * @param ErrorCode An integer representing the REST error code.
+	 * @return String description corresponding to the error code.
+	 */
+
+	/**
+	 * Generates a unique call identifier by incrementing an internal counter.
+	 *
+	 * @return Integer representing a new unique call ID.
+	 */
+
+	/**
+	 * Registers a REST callback by assigning it a unique call ID and inserting it into an internal map.
+	 * The method returns the registered callback instance.
+	 *
+	 * @param cb Instance of UFRestCallBackBase representing the callback.
+	 * @param cid Output parameter to store the unique call ID.
+	 * @return UFRestCallBackBase instance that has been registered.
+	 */
+
+	/**
+	 * Clears a previously registered callback based on its call ID.
+	 * If the callback is found, it is deleted and removed from the internal callbacks map.
+	 * Logs an error if the callback cannot be found.
+	 *
+	 * @param cid Unique call ID of the callback to clear.
+	 * @param traceDebug Additional debugging information for logging purposes.
+	 */
+
+	/**
+	 * Checks whether a given call (identified by its call ID) has been marked as cancelled.
+	 *
+	 * @param cid The unique call ID to check.
+	 * @return Boolean indicating whether the call has been cancelled.
+	 */
+
+	/**
+	 * Initiates a REST API call to fetch new random numbers (Q Random Numbers) for internal use.
+	 * Ensures that a previous request is not still in progress before making a new one.
+	 */
+
+	/**
+	 * Callback function handling the response from the Q Random Numbers request.
+	 * On success, updates the internal Q Random Numbers and reseeds the vanilla random number generator.
+	 * Logs an error if the retrieval fails.
+	 *
+	 * @param cid Unique call ID associated with the random number request.
+	 * @param status REST API status code for the request.
+	 * @param oid Operation identifier.
+	 * @param data Response data containing the new random numbers.
+	 */
+
+	/**
+	 * Callback function for processing the web service status check response.
+	 * Evaluates the service version, authentication status, Discord service availability, and general error conditions.
+	 * Depending on the received data, it sets internal status flags, logs warnings or errors,
+	 * and handles service version mismatches.
+	 *
+	 * @param cid Unique call ID for the status check request.
+	 * @param status REST API status code indicating success, error, or timeout.
+	 * @param oid Operation identifier.
+	 * @param data UFStatus object containing service details and potential errors.
+	 */
 	protected static RestApi RestCore()
 	{
 		RestApi clCore = GetRestApi();
@@ -221,8 +451,8 @@ class UFramework extends Managed {
 	}
 	
 	string GetAuthToken(){
-		if (m_authToken && !GetGame().IsServer()){
-			return m_authToken.GetAuthToken();
+		if (m_UFauthToken && !GetGame().IsServer()){
+			return m_UFauthToken.GetAuthToken();
 		} else if (GetGame().IsServer() && UFConfig().ServerAuth != ""){
 			return UFConfig().ServerAuth;
 		}
@@ -255,6 +485,7 @@ class UFramework extends Managed {
 		if (m_IsServer && UF_Init && GetGame()){
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.CheckAndRenewQRandom);
 		}
+		delete m_UFauthToken;
 	}
 	
 	void Init(){
@@ -263,6 +494,7 @@ class UFramework extends Managed {
 			m_IsServer = true;
 		#endif
 		if (!UF_Init){
+			setGlobalInit();
 			Print("[UF] First Init");
 			UF_Init = true;
 			GetRPCManager().AddRPC( "UF", "RPCUFrameworkConfig", this, SingeplayerExecutionType.Both );
@@ -282,12 +514,13 @@ class UFramework extends Managed {
 		Param2<ApiAuthToken, UFrameworkConfig> data; 
 		if ( !ctx.Read( data ) ) return;
 		m_AuthRetries = 0;
-		m_authToken = data.param1;
+		m_UFauthToken = data.param1;
 		m_UFrameworkConfig = data.param2;
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnTokenReceived);
 	}
 	
 	protected void OnTokenReceived(){
+		Print("[UF] [UAPI] Token received from server, initialize services");
 		U().api().Status(this, "CBStatusCheck");
 		U().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
 		GetGame().GameScript.CallFunction(GetGame().GetMission(), "UFrameworkReadyTokenReceived", NULL, NULL);
@@ -342,10 +575,10 @@ class UFramework extends Managed {
 			string authtoken = "";
 			if (UFConfig().ServerAuth != "" && UFConfig().ServerAuth != "null" ){
 				if (data.param1 && GetPlayerAuth(identity.GetId(), authtoken)){
-					//Print("[UF] RPCRequestAuthToken Sending Cached Token ");
+					Print("[UF] RPCRequestAuthToken Sending Cached Token ");
 					SendAuthToken(identity, authtoken);
 				} else if (FindPlayer(identity.GetId())){
-					//Print("[UF] RPCRequestAuthToken  Renewing Auth Token" );
+					Print("[UF] RPCRequestAuthToken  Renewing Auth Token" );
 					PreparePlayerAuth(identity.GetId());
 				}  else {
 					Print("[UF] RPCRequestAuthToken Requesting client retry." );
@@ -360,17 +593,17 @@ class UFramework extends Managed {
 	protected void SendAuthToken(PlayerIdentity idenitity, string auth){
 		if (idenitity && auth != ""){
 			Print("[UF] Sending PlayerAuth Token to " + idenitity.GetId());
-			autoptr UFrameworkConfig m_ClientConfig = new UFrameworkConfig;
-			m_ClientConfig.ConfigVersion = UFConfig().ConfigVersion;
-			m_ClientConfig.ServerURL = UFConfig().ServerURL;
-			m_ClientConfig.ServerID = UFConfig().ServerID;
-			m_ClientConfig.ServerAuth = "null";
-			m_ClientConfig.EnableBuiltinLogging = UFConfig().EnableBuiltinLogging;
-			m_ClientConfig.PromptDiscordOnConnect = UFConfig().PromptDiscordOnConnect;
-			autoptr ApiAuthToken m_authToken = new ApiAuthToken;
-			m_authToken.GUID = idenitity.GetId();
-			m_authToken.AUTH = auth;
-			GetRPCManager().SendRPC("UF", "RPCUFrameworkConfig", new Param2<ApiAuthToken, UFrameworkConfig>(m_authToken, m_ClientConfig), true, idenitity);
+			autoptr UFrameworkConfig cClientConfig = new UFrameworkConfig;
+			cClientConfig.ConfigVersion = UFConfig().ConfigVersion;
+			cClientConfig.ServerURL = UFConfig().ServerURL;
+			cClientConfig.ServerID = UFConfig().ServerID;
+			cClientConfig.ServerAuth = "null";
+			cClientConfig.EnableBuiltinLogging = UFConfig().EnableBuiltinLogging;
+			cClientConfig.PromptDiscordOnConnect = UFConfig().PromptDiscordOnConnect;
+			autoptr ApiAuthToken cUFauthToken = new ApiAuthToken;
+			cUFauthToken.GUID = idenitity.GetId();
+			cUFauthToken.AUTH = auth;
+			GetRPCManager().SendRPC("UF", "RPCUFrameworkConfig", new Param2<ApiAuthToken, UFrameworkConfig>(cUFauthToken, cClientConfig), true, idenitity);
 		} else {
 			Print("[UF] [UAuthCallBack] ERROR ");
 			if (idenitity){
@@ -437,6 +670,26 @@ class UFramework extends Managed {
 		return ++m_CallId;
 	}
 	
+	
+	RestCallback RegisterCall(UFRestCallBackBase cb, out int cid){
+		if (!cb) return null;
+		cid = this.CallId();
+		cb.SetId(cid);
+		m_UCallBacks.Insert(cid, UFRestCallBackBase.Cast(cb));
+		return UFRestCallBackBase.Cast(cb);
+	}
+			
+	void ClearCallback(int cid, string traceDebug){
+		if (!m_UCallBacks) return;
+		if (cid == -1) return;
+		autoptr UFRestCallBackBase cb;
+		if (m_UCallBacks.Find(cid, cb)){
+			delete cb;
+			m_UCallBacks.Remove(cid);
+		} else {
+			Error2("[UF] Error couldn't find call back", "CallId: " + cid + "\n--------\n " + traceDebug + "\n--------\n");
+		}
+	}
 	
 	bool IsCallCanceled(int cid){
 		return (m_CanceledCalls.Find(cid) != -1);

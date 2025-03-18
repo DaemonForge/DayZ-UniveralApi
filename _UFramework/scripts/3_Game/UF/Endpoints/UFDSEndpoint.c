@@ -20,9 +20,9 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Adding Role from User","GUID and RoleId must be valid strings");
 			return -1;
 		}
-		int cid = U().CallId();
+		int cid = -1;
 		
-		autoptr RestCallback DBCBX;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		}  else if (cbInstance && cbFunction != ""){
@@ -35,7 +35,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordRoleReq roleReq = new UDiscordRoleReq(RoleId);
 		
-		Post(url,roleReq.ToJson(),DBCBX);
+		Post(url,roleReq.ToJson(),U().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}
@@ -46,8 +46,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Removing Role from User","GUID and RoleId must be valid strings");
 			return -1;
 		}
-		int cid = U().CallId();
-		autoptr RestCallback DBCBX;
+		int cid = -1;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		}  else if (cbInstance && cbFunction != ""){
@@ -60,7 +60,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordRoleReq roleReq = new UDiscordRoleReq(RoleId);
 		
-		Post(url,roleReq.ToJson(),DBCBX);
+		Post(url,roleReq.ToJson(),U().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}
@@ -71,9 +71,9 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Sending DM to User","GUID must be valid string");
 			return -1;
 		}
-		int cid = U().CallId();
+		int cid = -1;
 		
-		autoptr RestCallback DBCBX;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		}  else if (cbInstance && cbFunction != ""){
@@ -85,7 +85,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		string url = "Send/" + GUID;
 		
 		autoptr UDiscordBasicMessage obj = new UDiscordBasicMessage(message);
-		Post(url,obj.ToJson(),DBCBX);	
+		Post(url,obj.ToJson(),U().RegisterCall(DBCBX, cid));	
 		return cid;	
 	}
 
@@ -95,8 +95,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Getting Users Object","GUID must be valid string");
 			return -1;
 		}
-		int cid = U().CallId();
-		autoptr RestCallback DBCBX;
+		int cid = -1;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
@@ -107,7 +107,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Get/" + GUID;
 		
-		Post(url,"{}",DBCBX);
+		Post(url,"{}",U().RegisterCall(DBCBX, cid));
 		return cid;
 	}	
 	
@@ -117,8 +117,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Getting Users Channel","GUID must be valid string");
 			return -1;
 		}
-		int cid = U().CallId();
-		autoptr RestCallback DBCBX;
+		int cid = -1;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
@@ -129,7 +129,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "GetChannel/" + GUID;
 		
-		Post(url,"{}",DBCBX);
+		Post(url,"{}",U().RegisterCall(DBCBX, cid));
 		return cid;
 	}	
 	
@@ -138,8 +138,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error moving user","GUID and ChannelId must be valid strings");
 			return -1;
 		}
-		int cid = U().CallId();
-		autoptr RestCallback DBCBX;
+		int cid = -1;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
@@ -150,7 +150,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Move/" + GUID + "/" + ChannelId;
 		
-		Post(url, "{}", DBCBX);
+		Post(url, "{}", U().RegisterCall(DBCBX, cid));
 		return cid;
 	}
 	
@@ -159,8 +159,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error kicking user","GUID must be valid string");
 			return -1;
 		}
-		int cid = U().CallId();
-		autoptr RestCallback DBCBX;
+		int cid = -1;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
@@ -172,7 +172,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		string url = "Kick/" + GUID;
 		autoptr UTextObject txtObj = new UTextObject(Reason);
 		
-		Post(url, txtObj.ToJson(), DBCBX);
+		Post(url, txtObj.ToJson(), U().RegisterCall(DBCBX, cid));
 		return cid;
 	}
 	
@@ -181,8 +181,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Muteing user","GUID must be valid string");
 			return -1;
 		}
-		int cid = U().CallId();
-		autoptr RestCallback DBCBX;
+		int cid = -1;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
@@ -195,7 +195,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordMute muteObject = new UDiscordMute(ToMute);
 		
-		Post(url, muteObject.ToJson(), DBCBX);
+		Post(url, muteObject.ToJson(), U().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}		
@@ -205,8 +205,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Setting Nickname","GUID and Nickname must be valid strings");
 			return -1;
 		}
-		int cid = U().CallId();
-		autoptr RestCallback DBCBX;
+		int cid = -1;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
@@ -219,7 +219,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordNickname nickObject = new UDiscordNickname(Nickname);
 		
-		Post(url, nickObject.ToJson(), DBCBX);
+		Post(url, nickObject.ToJson(), U().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}	
@@ -229,9 +229,9 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Creating channel","Channel ID must be valid string");
 			return -1;
 		}
-		int cid = U().CallId();
+		int cid = -1;
 		
-		autoptr RestCallback DBCBX;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, Name);
 		} else if (cbInstance && cbFunction != "") {
@@ -244,7 +244,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Create";
 			
-		Post(url,obj.ToJson(),DBCBX);	
+		Post(url,obj.ToJson(),U().RegisterCall(DBCBX, cid));	
 		
 		return cid;	
 	}
@@ -255,10 +255,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Deleting channel","Both Channel ID and reason must be valid strings");
 			return -1;
 		}
-		int cid = U().CallId();
+		int cid = -1;
 		
 		
-		autoptr RestCallback DBCBX;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, id);
 		} else if (cbInstance && cbFunction != "") {
@@ -271,7 +271,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Delete/" + id;
 		
-		Post(url,obj.ToJson(),DBCBX);
+		Post(url,obj.ToJson(),U().RegisterCall(DBCBX, cid));
 		return cid;	
 	}
 	
@@ -280,10 +280,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Editing channel","Both Channel ID and reason must be valid strings");
 			return -1;
 		}
-		int cid = U().CallId();
+		int cid = -1;
 		
 		
-		autoptr RestCallback DBCBX;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, id);
 		} else if (cbInstance && cbFunction != "") {
@@ -296,7 +296,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Edit/" + id;
 			
-		Post(url,obj.ToJson(),DBCBX);	
+		Post(url,obj.ToJson(),U().RegisterCall(DBCBX, cid));	
 		return cid;		
 	}
 	
@@ -305,10 +305,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Sending message to channel","Both Channel ID and message must be valid strings");
 			return -1;
 		}
-		int cid = U().CallId();
+		int cid = -1;
 		
 		
-		autoptr RestCallback DBCBX;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, id);
 		} else if (cbInstance && cbFunction != "") {
@@ -321,7 +321,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Send/" + id;
 			
-		Post(url,obj.ToJson(),DBCBX);		
+		Post(url,obj.ToJson(),U().RegisterCall(DBCBX, cid));		
 		return cid;	
 	}
 	
@@ -331,10 +331,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Sending Embed to channel","Both Channel ID and message must be valid");
 			return -1;
 		}
-		int cid = U().CallId();
+		int cid = -1;
 		
 		
-		autoptr RestCallback DBCBX;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, id);
 		} else if (cbInstance && cbFunction != "") {
@@ -345,7 +345,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Send/" + id;
 			
-		Post(url,message.ToJson(),DBCBX);	
+		Post(url,message.ToJson(),U().RegisterCall(DBCBX, cid));	
 		return cid;	
 	}
 	
@@ -355,14 +355,14 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Getting messages from channel","Channel ID must be valid");
 			return -1;
 		}
-		int cid = U().CallId();
+		int cid = -1;
 		
 		autoptr UDiscordChannelFilter vFilter = filter;
 		if (!vFilter){
 			vFilter = new UDiscordChannelFilter();
 		}
 		
-		autoptr RestCallback DBCBX;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, id);
 		} else if (cbInstance && cbFunction != "") {
@@ -373,18 +373,18 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Messages/" + id;
 		
-		Post(url,vFilter.ToJson(),DBCBX);	
+		Post(url,vFilter.ToJson(),U().RegisterCall(DBCBX, cid));	
 		return cid;	
 	}
 	
 	//A way to check if a player's discord is set up before they connect to the server and get an authkey
 	int CheckRoleDiscord(string PlainId, string RoleId, Class cbInstance, string cbFunction,  string baseUrl = "", bool ReturnString = false){		
-		int cid = U().CallId();
+		int cid = -1;
 		if (baseUrl == ""){
 			baseUrl = UFConfig().GetBaseURL();
 		}
 		
-		autoptr RestCallback DBCBX;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, PlainId);
 		} else if (cbInstance && cbFunction != "") {
@@ -395,19 +395,19 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = baseUrl + "Discord/CheckRole/" + PlainId + "/" + RoleId;
 		
-		U().Post(url,"{}",DBCBX);
+		U().Post(url,"{}",U().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}
 	
 	//A way to check if a player's discord is set up before they connect to the server and get an authkey
 	int CheckDiscord(string PlainId, Class cbInstance, string cbFunction,  string baseUrl = "", bool ReturnString = false){		
-		int cid = U().CallId();
+		int cid = -1;
 		if (baseUrl == ""){
 			baseUrl = UFConfig().GetBaseURL();
 		}
 		
-		autoptr RestCallback DBCBX;
+		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, PlainId);
 		} else if (cbInstance && cbFunction != "") {
@@ -418,46 +418,9 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = baseUrl + "Discord/Check/" + PlainId;
 		
-		U().Post(url,"{}",DBCBX);
+		U().Post(url,"{}",U().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}
-	
-	
-	
-	//Obsolete GetUser accepts both plainid or GUID
-	/*int GetUserWithPlainId(string plainId, Class cbInstance, string cbFunction) {
-		int cid = U().CallId();
-		autoptr RestCallback DBCBX;
-		if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, plainId);
-		} else {
-			DBCBX = new USilentCallBack();
-		}
 		
-		string url = "GetWithPlainId/" + plainId;
-		if (plainId && plainId != ""){
-			Post(url,"{}",DBCBX);
-		}
-		return cid;
-	}*/
-	
-	//Obsolete GetUserObj accepts both plainid or GUID
-	/*int GetUserObjWithPlainId(string plainId, Class cbInstance, string cbFunction) {
-		int cid = U().CallId();
-		autoptr RestCallback DBCBX;
-		if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordUser>(cbInstance, cbFunction, plainId), cid);
-		} else {
-			DBCBX = new USilentCallBack();
-		}
-		
-		string url = "GetWithPlainId/" + plainId;
-		if (plainId && plainId != ""){
-			Post(url,"{}",DBCBX);
-		}
-		return cid;
-	}*/
-	
-	
 }

@@ -6,7 +6,7 @@ but at the end of the day this is just a template to help modders newer to API s
 to start from
 
 */
-class UFConfigBase : RestCallback {
+class UFConfigBase : UFRestCallBackBase {
 	protected bool m_DataReceived = false;
 	
 	
@@ -99,13 +99,14 @@ class UFConfigBase : RestCallback {
 		} else {
 			Print("[UF] CallBack Failed errorCode: Invalid Data");
 		}
+		//dont' call super or it will delete the object
 	};
 	
 	
 		
 	// This Are Called by the API System on errors from the API System
 	override void OnError(int errorCode) {
-		Print("[UF] CallBack Failed errorCode: " + U().ErrorToString(errorCode));		
+		Print("[UF] CallBack Failed errorCode: " + U().ErrorToString(errorCode));
 	};
 	
 	override void OnTimeout() {

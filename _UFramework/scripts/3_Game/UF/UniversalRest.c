@@ -19,6 +19,7 @@ class UniversalRest extends Managed
 		}
 		RestContext ctx =  Api().GetRestContext(url);
 		ctx.SetHeader(U().GetAuthToken());
+		Print("[UF] [Api] POST " +  url);
 		ctx.POST(vUCBX , "", jsonString);
 	}
 	
@@ -39,13 +40,18 @@ class UniversalRest extends Managed
 	static void GetAuth( string guid ){
 		string url = BaseUrl() + "GetAuth/" + guid;
 		
-		Post(url, "{}", new UAuthCallBack(guid));
+		int cid = -1;
+		Post(url, "{}", U().RegisterCall(new UAuthCallBack(guid), cid));
+		Print("Get Auth Called got CID: " + cid);
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "GetAuth");
+		}
 	}
 	
-	static void GlobalsSave(string mod, string jsonString, RestCallback UCBX = NULL) {
+	static void GlobalsSave(string mod, string jsonString, UFRestCallBackBase UCBX = NULL) {
 
 		string url = BaseUrl() + "Globals/Save/" + mod;
-		autoptr RestCallback vUCBX = UCBX;
+		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
 			vUCBX = new USilentCallBack;
 		}
@@ -57,10 +63,10 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	static void GlobalsLoad(string mod, RestCallback UCBX, string jsonString = "{}") {
+	static void GlobalsLoad(string mod, UFRestCallBackBase UCBX, string jsonString = "{}") {
 
 		string url = BaseUrl() + "Globals/Load/" + mod;
-		autoptr RestCallback vUCBX = UCBX;
+		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
 			vUCBX = new USilentCallBack;
 		}
@@ -77,9 +83,9 @@ class UniversalRest extends Managed
 		GlobalsTransaction(mod, element, value, NULL);
 	}
 	
-	static void GlobalsTransaction(string mod, string element, float value = 1, RestCallback UCBX = NULL) {
+	static void GlobalsTransaction(string mod, string element, float value = 1, UFRestCallBackBase UCBX = NULL) {
 		
-		autoptr RestCallback vUCBX = UCBX;
+		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
 			vUCBX = new UDBTransactionCallBack;
 		}
@@ -87,97 +93,104 @@ class UniversalRest extends Managed
 
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
-		
+		int cid = -1;
 		if ( element && transaction && vUCBX){
-			Post(url,transaction.ToJson(),vUCBX);
+			Post(url,transaction.ToJson(), U().RegisterCall(vUCBX, cid));
 		} else {
 			Print("[UF] [Api] Error Transaction " +  mod);
+		}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "GetAuth");
 		}
 	}
 	
 	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
-	static void GlobalsUpdate(string mod, string element, string value, RestCallback UCBX = NULL) {
+	static void GlobalsUpdate(string mod, string element, string value, UFRestCallBackBase UCBX = NULL) {
 		
-		autoptr RestCallback vUCBX = UCBX;
+		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
 			vUCBX = new USilentCallBack;
 		}
 
 		string url = BaseUrl() + "Globals/Update/" + mod;
-
+		int cid = -1;
 		
 		autoptr UUpdateData updatedata = new UUpdateData(element, value);
 		
 		if ( element && updatedata && vUCBX){
-			Post(url,updatedata.ToJson(),vUCBX);
+			Post(url,updatedata.ToJson(),U().RegisterCall(vUCBX, cid));
 		} else {
 			Print("[UF] [Api] Error Transaction " +  mod);
 		}
 	}
 	
 	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
-	static void GlobalsUpdateAdv(string mod, string element, string value, string operation, RestCallback UCBX = NULL) {
+	static void GlobalsUpdateAdv(string mod, string element, string value, string operation, UFRestCallBackBase UCBX = NULL) {
 		
-		autoptr RestCallback vUCBX = UCBX;
+		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
 			vUCBX = new USilentCallBack;
 		}
+		int cid = -1;
 
 		string url = BaseUrl() + "Globals/Update/" + mod;
 		
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		if ( element && updatedata && vUCBX){
-			Post(url,updatedata.ToJson(),vUCBX);
+			Post(url,updatedata.ToJson(),U().RegisterCall(vUCBX, cid));
 		} else {
 			Print("[UF] [Api] Error Transaction " +  mod);
 		}
 	}
 	
-	static void Request(UApiForwarder data, RestCallback UCBX = NULL){
+	static void Request(UApiForwarder data, UFRestCallBackBase UCBX = NULL){
 				
-		autoptr RestCallback vUCBX = UCBX;
+		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
 			vUCBX = new USilentCallBack;
 		}
 		
+		int cid = -1;
 		
 		string url = BaseUrl() + "Forward";
 		
 		if ( data && vUCBX){
-			Post(url,data.ToJson(),vUCBX);
+			Post(url,data.ToJson(),U().RegisterCall(vUCBX, cid));
 		} else {
 			Print("[UF] [Api] Error Fowarding ");
 		}
 	}
 
-	static void Log(string jsonString, RestCallback UCBX = NULL){
+	static void Log(string jsonString, UFRestCallBackBase UCBX = NULL){
 		
-		autoptr RestCallback vUCBX = UCBX;
+		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
 			vUCBX = new USilentCallBack;
 		}
 		
+		int cid = -1;
 		string url = BaseUrl() + "Logger/One/" + UFConfig().ServerID;
 		
 		if ( jsonString && vUCBX){
-			Post(url,jsonString,vUCBX);
+			Post(url,jsonString,U().RegisterCall(vUCBX, cid));
 		} else {
 			Print("[UF] [Api] Error Fowarding ");
 		}
 	}
 	
 	//JsonFileLoader<array<autoptr LogObject>>.JsonMakeData(AnArrayOfYourObjects);
-	static void LogBulk(string jsonString, RestCallback UCBX = NULL){
+	static void LogBulk(string jsonString, UFRestCallBackBase UCBX = NULL){
 		
-		autoptr RestCallback vUCBX = UCBX;
+		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
 			vUCBX = new USilentCallBack;
 		}
+		int cid = -1;
 		
 		string url = BaseUrl() + "Logger/Many/" + UFConfig().ServerID;
 		if (jsonString && vUCBX){
-			Post(url,jsonString,vUCBX);
+			Post(url,jsonString,U().RegisterCall(vUCBX, cid));
 		} else {
 			Print("[UF] [Api] Error Fowarding ");
 		}

@@ -1,6 +1,13 @@
-class USilentCallBack : RestCallback
+class USilentCallBack : UFRestCallBackBase
 {
-	override void OnError(int errorCode) {};
-	override void OnTimeout() {};
-	override void OnSuccess(string data, int dataSize) {};
+	override void OnError(int errorCode) {
+		super.OnError(errorCode);
+	};
+	override void OnTimeout() {
+		super.OnTimeout();
+	
+	};
+	override void OnSuccess(string data, int dataSize) {
+		super.OnSuccess(data,dataSize);
+	};
 };

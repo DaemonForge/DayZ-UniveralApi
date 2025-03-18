@@ -1,4 +1,4 @@
-class UDBCallBack : RestCallback
+class UDBCallBack : UFRestCallBackBase
 {
 	protected Class Instance;
 	protected string Function;

@@ -1,4 +1,4 @@
-class UAuthCallBack : RestCallback
+class UAuthCallBack : UFRestCallBackBase
 {
 	protected int m_TryCount = 0;
 	protected string m_GUID = "";
@@ -12,17 +12,19 @@ class UAuthCallBack : RestCallback
 		if (m_GUID != ""){
 			U().AuthError(m_GUID);
 		}
+		super.OnError(errorCode);
 	};
 	override void OnTimeout() {
 		Print("[UF] [UAuthCallBack] Auth of a Player Failed errorCode: Timeout");
 		if (m_GUID != ""){
 			U().AuthError(m_GUID);
 		}
+		super.OnTimeout();
 	};
 	
 	override void OnSuccess(string data, int dataSize) {
 		
-		//Print("[UF] [UAuthCallBack] Auth of a Player Success data: " + data);
+		Print("[UF] [UAuthCallBack] Auth of a Player Success data: " + data);
 		autoptr ApiAuthToken authToken;
 		
 		JsonSerializer js = new JsonSerializer();
@@ -39,6 +41,7 @@ class UAuthCallBack : RestCallback
 				U().AuthError(m_GUID);
 			}
 		}
+		super.OnSuccess(data,dataSize);
 	};
 	
 };
