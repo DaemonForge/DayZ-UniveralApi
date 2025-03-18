@@ -1,3 +1,91 @@
+/*
+	Universal Framework Global Handler Documentation
+
+	Overview:
+	This documentation outlines the functionality of the Global Handler classes which provide an interface to interact
+	with the Universal Framework's MongoDB web service endpoints used in the modding environment. These classes allow for
+	saving and loading mod data, as well as updating and doing transactions on subelements within the saved JSON objects.
+	
+	-----------------------------------------------------------------------------
+	Class: UDBGlobalHandler<Class T>
+	-----------------------------------------------------------------------------
+	Description:
+	A template-based subclass of UDBGlobalHandlerBase designed for handling JSON conversions for objects of type T.
+	It provides overloaded methods to save and load objects to/from the database along with callback capabilities.
+
+	Provided Methods:
+	1. Save(Class object)
+	   - Converts the provided object of type T to a JSON string using UJSONHandler<T>.
+	   - Calls the globals().Save method to store the JSON string under the specified mod.
+	   - Returns a call ID or -1 if conversion or casting fails.
+	   
+	2. Save(Class object, Class cbInstance, string cbFunction)
+	   - Similar to Save(Class object) but includes a callback via UFCallback<T> for post-save operations.
+	   - Returns a call ID or -1 on error.
+	   
+	3. Load(Class cbInstance, string cbFunction)
+	   - Initiates a load operation from the database using a default JSON string.
+	   - Calls globals().Load with the mod and callback.
+	   - Returns the call ID.
+	   
+	4. Load(Class cbInstance, string cbFunction, string defaultJson)
+	   - Similar to the first Load but allows a custom default JSON string.
+	   - Returns the call ID.
+	   
+	5. Load(Class cbInstance, string cbFunction, Class inObject)
+	   - Attempts to cast the provided inObject to type T and convert it to a JSON string.
+	   - Uses a specialized UFCallbackLoader<T> to manage the callback with the given object.
+	   - Returns the call ID or -1 if conversion or casting fails.
+	   
+	6. LoadSelf(Class cbInstance, string cbFunction = "")
+	   - Uses the callback instance itself as the source to derive a JSON string via type T conversion.
+	   - Uses UFCallbackLoader<T> to handle the callback.
+	   - Returns the call ID or -1 if conversion or casting fails.
+
+	-----------------------------------------------------------------------------
+	Class: UDBGlobalHandlerBase
+	-----------------------------------------------------------------------------
+	Description:
+	The base class for managing mod-specific database interactions. It implements default error responses for methods that
+	should be overridden in subclasses and provides common functions for executing update and transaction calls on the data.
+
+	Provided Methods:
+	1. Save(Class object) & Save(Class object, Class cbInstance, string cbFunction)
+	   - Default implementations that log errors. They must be overridden by a subclass (i.e., UDBGlobalHandler<T>) to function.
+	   
+	2. Load methods (overloads):
+	   - Provide default error responses if improperly used.
+	   
+	3. LoadJson(Class cbInstance, string cbFunction, string defaultJson = "{}")
+	   - Loads raw JSON text from the database for the given mod using a callback.
+	   - Returns the call ID.
+	   
+	4. Increment & Transaction methods:
+	   - Alter sub-values (floats or integers only) inside the mod database object.
+	   - Increase a given element by a specified float value.
+	   - Transaction methods allow optional callback handling for change confirmation.
+	   
+	5. Update methods:
+	   - Update specific sub-elements of the mod data using provided JSON values.
+	   - Support various operations (default is UpdateOpts.SET) to change or push values.
+	   - Callback versions exist for asynchronous handling.
+	   
+	6. Cancel(int cid)
+	   - Static method to cancel an ongoing database call callback to prevent potential access violations.
+
+	General Notes:
+	- All operations interact with the global database via the U().globals() interface.
+	- JSON conversion operations utilize helper class UJSONHandler<T>.
+	- Callbacks are implemented through UFCallback<T> and UFCallbackLoader<T> which pass the call ID, status, mod
+	  identifier, and the JSON data or data object to the callback function.
+	- Error handling is centralized via Error2 calls to notify debug information when operations fail due to casting
+	  or JSON conversion issues.
+	
+	Usage:
+	Instantiate the UDBGlobalHandler<T> with the appropriate data class and mod identifier to enable saving and loading via
+	the Universal Framework’s MongoDB endpoint. The provided overloads provide flexibility to handle callback-based logic
+	tailored to the mod's requirements.
+*/
 /* 
 	Template Global Handler
 	This is the newest Method in which modders can interact with the Universal Framework's MongoDB Endpoints providing access to modders to be

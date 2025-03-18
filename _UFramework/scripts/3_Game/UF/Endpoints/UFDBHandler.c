@@ -1,3 +1,80 @@
+/*
+Documentation for Universal Framework Database Handlers
+
+Overview:
+	This module provides a generic framework for modders to interact with the Universal Framework's MongoDB endpoints. It simplifies operations such as saving, loading, querying, updating, and transacting on database objects by abstracting JSON conversion, database calls, and asynchronous callbacks.
+
+Classes:
+
+1. UDBHandler<T>
+	 - A templated database handler that extends UDBHandlerBase.
+	 - Handles conversion of class objects to JSON using UJSONHandler<T> for persistence in the database.
+	 - Methods:
+			 • Save(string oid, Class object)
+				 - Converts the provided object to JSON and calls the database Save operation.
+				 - Returns a call ID on success; logs an error if conversion or casting fails.
+			 
+			 • Save(string oid, Class object, Class cbInstance, string cbFunction)
+				 - Similar to Save(object) but includes a callback through UFCallback<T> to notify upon completion.
+			 
+			 • Load(string oid, Class cbInstance, string cbFunction)
+				 - Loads an object from the database identified by 'oid' and invokes the specified callback.
+			 
+			 • Load(string oid, Class cbInstance, string cbFunction, string defaultJson)
+				 - Loads an object, using 'defaultJson' if no existing record is found.
+			 
+			 • Load(string oid, Class cbInstance, string cbFunction, Class inObject)
+				 - Loads an object using an instance (inObject) to determine its type; performs JSON conversion before invoking the callback through UFCallbackLoader<T>.
+			 
+			 • Query(UDBQueryBase query, Class cbInstance, string cbFunction) & Query(string query, Class cbInstance, string cbFunction)
+				 - Executes a query based on either a UDBQueryBase instance or a JSON query string.
+				 - Returns a UDBQueryResult<T> via the callback function, containing matching results.
+
+2. UDBHandlerBase
+	 - Base class for database handlers, managing common properties and methods.
+	 - Contains:
+			 • Mod: A string identifier for the mod (or service) using this handler.
+			 • Database: Indicates which database to target (e.g., PLAYER_DB).
+	 - Provides default stub implementations for Save, Load, and Query methods that log errors if misused directly.
+	 - Additional Utility Methods:
+			 • LoadJson(string oid, Class cbInstance, string cbFunction, string defaultJson)
+				 - Loads a JSON string from the database, allowing the caller to handle JSON conversion externally.
+			 
+			 • Increment(string oid, string element, float value = 1)
+				 - Convenience function wrapping a numeric transaction to increment a sub-value.
+			 
+			 • Transaction(string oid, string element, float value)
+				 - Performs atomic numerical transactions on a specific sub-value inside the database record.
+				 - Overloaded to support callbacks and defined value boundaries.
+			 
+			 • Update(string oid, string element, string value, string operation)
+				 - Updates a sub-value within the JSON object using a specified update operation (e.g., SET).
+				 - Overloaded to support callback notifications.
+			 
+			 • QueryUpdate(UDBQueryBase query, string element, string value, string operation)
+				 - Applies an update operation to a group of objects identified by the query.
+				 - Includes overloaded versions to support asynchronous callbacks.
+			 
+			 • Cancel(int cid)
+				 - Cancels an in-progress callback-based database operation to prevent access violations.
+
+Callbacks:
+	- Callback mechanisms (via UFCallback and UFCallbackLoader<T>) enable asynchronous handling of the Save, Load, Query, Transaction, and Update operations.
+	- Typical callback function signatures include parameters such as call ID, status code (e.g., UF_SUCCESS, UF_EMPTY), a unique identifier (GUID), and the resultant data (object, JSON string, or query result).
+
+Usage:
+	- Create an instance of UDBHandler for a specific mod and database:
+				static autoptr UDBHandler<myClass> m_MyModHandler = new UDBHandler<myClass>("MyMod", PLAYER_DB);
+	- Save and Load operations support both synchronous operations and asynchronous operations with callbacks:
+				m_MyModHandler.Save("GUID", myObject);
+				m_MyModHandler.Load("GUID", player, "MyCallBackFunction");
+	- Queries are executed by passing a JSON-based query string or a UDBQueryBase instance to retrieve results matching specified conditions.
+
+Notes:
+	- Ensure that objects passed to Save and Load operations can be properly cast to the expected template type T.
+	- Error logging is employed to detect improper usage or failed JSON conversion/casting.
+	- This abstraction allows mod developers to integrate web-service based database operations into mods without having to handle underlying MongoDB interactions directly.
+*/
 /* 
 	Template DB Handler
 	This is the newest Method in which modders can interact with the Universal Framework's MongoDB Endpoints providing access to modders to be

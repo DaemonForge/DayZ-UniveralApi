@@ -1,3 +1,109 @@
+/**
+ * Class UniversalDSEndpoint
+ *
+ * Provides REST API endpoints to interact with Discord for various user and
+ * channel management tasks within the application. The methods in this class 
+ * handle operations such as linking a Discord account to a user's Steam ID,
+ * managing roles, sending direct messages, and performing channel operations 
+ * (create, delete, edit, send messages, etc.).
+ *
+ * Methods:
+ *
+ *  EndpointBaseUrl()
+ *      - Returns the base URL for Discord API endpoints by appending "Discord/" 
+ *        to the application's base URL.
+ *
+ *  Link(string PlainId = "")
+ *      - Generates a URL link for a player. If PlainId is empty and the game is 
+ *        running on a client, it uses the player's Steam ID, otherwise uses the 
+ *        given PlainId.
+ *
+ *  AddRole(string GUID, string RoleId, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Adds a role to the user's connected Discord account.
+ *      - Parameters:
+ *          GUID      : The unique identifier of the user.
+ *          RoleId    : The identifier of the role to be added.
+ *          cbInstance: Optional callback instance to process the response.
+ *          cbFunction: Optional callback function name.
+ *          ReturnString: Optional flag for return value format.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  RemoveRole(string GUID, string RoleId, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Removes a role from the user's connected Discord account.
+ *      - Parameters are similar to AddRole.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  UserSend(string GUID, string message, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Sends a direct message (DM) to the user’s Discord account.
+ *      - Parameters:
+ *          GUID   : The unique identifier of the user.
+ *          message: The message content to send.
+ *          cbInstance, cbFunction, ReturnString: Optional callback parameters.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  GetUser(string GUID, Class cbInstance, string cbFunction, bool ReturnString = false)
+ *      - Retrieves the Discord user object associated with the provided GUID.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  GetUsersChannel(string GUID, Class cbInstance, string cbFunction, bool ReturnString = false)
+ *      - Retrieves the current channel information (Discord status) for the 
+ *        specified user's Discord account.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  MoveTo(string GUID, string ChannelId, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Moves the user to a specified Discord channel.
+ *      - Parameters:
+ *          GUID     : The user's identifier.
+ *          ChannelId: The target Discord channel's identifier.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  KickUser(string GUID, string Reason = "", Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Kicks the user from Discord with an optional reason.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  MuteUser(string GUID, bool ToMute, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Mutes or unmutes a user on Discord based on the ToMute flag.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  SetNickname(string GUID, string Nickname, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Sets or updates the user's nickname on Discord.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  ChannelCreate(string Name, UChannelOptions Options = NULL, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Creates a new Discord channel with the specified name and optional 
+ *        configuration options.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  ChannelDelete(string id, string reason, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Deletes an existing Discord channel identified by id with a given reason.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  ChannelEdit(string id, string reason, UChannelUpdateOptions options, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Edits the properties of an existing Discord channel.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  ChannelSend(string id, string message, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Sends a text-based message to a specified Discord channel.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  ChannelSendEmbed(string id, UDiscordEmbed message, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false)
+ *      - Sends an embedded (rich content) message to a Discord channel.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  ChannelMessages(string id, Class cbInstance, string cbFunction, UDiscordChannelFilter filter = NULL, bool ReturnString = false)
+ *      - Retrieves messages from a Discord channel, possibly filtered by criteria.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  CheckRoleDiscord(string PlainId, string RoleId, Class cbInstance, string cbFunction, string baseUrl = "", bool ReturnString = false)
+ *      - Checks if a user's Discord account is set up and verifies if the user 
+ *        has a specific role.
+ *      - Returns an integer call ID or -1 on error.
+ *
+ *  CheckDiscord(string PlainId, Class cbInstance, string cbFunction, string baseUrl = "", bool ReturnString = false)
+ *      - Checks if a user's Discord account is properly set up before providing an 
+ *        authentication key.
+ *      - Returns an integer call ID or -1 on error.
+ */
 class UniversalDSEndpoint extends UFBaseEndpoint
 {	
 	

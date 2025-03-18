@@ -1,3 +1,90 @@
+/*
+ * Class: UEntityStore
+ * Description: 
+ *   UEntityStore extends UFObject_Base and provides serialization, deserialization,
+ *   and metadata management functionality for an EntityAI. It is used to capture the state
+ *   of an entity, including its type, health, physical properties, cargo contents, weapon or vehicle
+ *   specifics, and any additional metadata. The class also supports saving and retrieving health
+ *   data for specific zones of an entity.
+ *
+ * Members:
+ *   - m_Type: Identifier for the type of entity.
+ *   - m_pid1, m_pid2, m_pid3, m_pid4: Supplemental ID values (purpose defined by context).
+ *   - m_Health: Health value of the entity; a negative value implies uninitialized or invalid health.
+ *   - m_Quantity, m_Wet, m_Tempature, m_Energy: Various physical properties of the entity.
+ *   - m_LiquidType: Type identifier for the liquid, if applicable.
+ *   - m_Slot, m_Idx, m_Row, m_Col: Positional indices that could be used for inventory or grid positioning.
+ *   - m_Flip: Indicates if the entity has been flipped.
+ *   - m_IsInHands: Flag to denote if the entity is currently held.
+ *   - m_IsOn: Flag to indicate if the entity is switched on.
+ *   - m_QuickBarSlot: Slot index for quick access/inventory bar.
+ *   - m_Agents: Likely represents contamination or agent values (game-specific usage).
+ *   - m_Cleanness: Represents the cleanliness or dirtiness level of the entity.
+ *   - m_HealthZones: An array managing health data for different zones of the entity.
+ *   - m_Cargo: An array storing nested UEntityStore objects, representing items contained within.
+ *   - m_IsMagazine: Flag indicating if the entity functions as a magazine.
+ *   - m_MagAmmo: Array to manage ammunition data for magazines.
+ *   - m_IsWeapon: Flag to mark the entity as a weapon.
+ *   - m_IsVehicle: Flag to mark the entity as a vehicle.
+ *   - m_FireModes: Array listing available fire modes for a weapon.
+ *   - m_ChamberedRound: Represents the current round chambered in a weapon.
+ *   - m_MetaData: Array holding key-value metadata entries (UMetaData) supporting various data types.
+ *
+ * Methods:
+ *   - UEntityStore(EntityAI item = NULL):
+ *       Constructor that initializes the entity store. If an EntityAI is provided,
+ *       the SaveEntity method is invoked to capture its state.
+ *
+ *   - ~UEntityStore():
+ *       Destructor that correctly disposes of dynamically allocated arrays for cargo, ammo, fire modes,
+ *       chambered rounds, and metadata to prevent memory leaks.
+ *
+ *   - SaveEntity(EntityAI item, bool recursive = true):
+ *       Serializes the provided EntityAI's state into this UEntityStore.
+ *       The 'recursive' parameter, when true, indicates that nested properties (such as cargo)
+ *       may also be serialized.
+ *
+ *   - Create(EntityAI parent = NULL, bool RestoreOrginalLocation = true):
+ *       Creates a new EntityAI instance based on the stored state. An optional parent entity may be provided,
+ *       and RestoreOrginalLocation determines whether the original location is preserved during creation.
+ *
+ *   - CreateAtPos(vector Pos, vector Ori = "0 0 0"):
+ *       Creates an EntityAI instance at the specified position (and orientation, if provided).
+ *
+ *   - LoadEntity(EntityAI item):
+ *       Loads/stores the previously serialized data into the existing EntityAI instance passed as argument.
+ *
+ *   - ToJson():
+ *       Converts this UEntityStore instance to a JSON string representation.
+ *
+ *   - IsValid():
+ *       Checks if the entity store holds valid data, ensuring that m_Type is not empty and m_Health is non-negative.
+ *
+ *   - Write(...):
+ *       A series of overloaded methods allowing metadata (m_MetaData) to be stored.
+ *       Supports BOOL, INT, FLOAT, VECTOR, STRING and arrays of those types.
+ *       Attempts to store a non-primitive class will emit an error.
+ *
+ *   - Read(...):
+ *       Overloaded methods to retrieve metadata from m_MetaData based on a provided key.
+ *       These methods extract values as BOOL, INT, FLOAT, VECTOR, STRING, or corresponding arrays.
+ *
+ *   - GetInt/GetFloat/GetVector/GetString:
+ *       Helper methods to retrieve single metadata values of specified type directly by key.
+ *
+ *   - SaveZoneHealth(string zone, float health):
+ *       Stores health value for a given zone by inserting a new UZoneData entry in m_HealthZones.
+ *
+ *   - ReadZoneHealth(string zone, out float health):
+ *       Retrieves the health value for a specific zone from the m_HealthZones array.
+ *
+ * Notes:
+ *   - The class relies on other types such as EntityAI, UMetaData, UZoneData, UAmmoData,
+ *     and possibly JsonFileLoader, which are part of the broader system.
+ *   - Some method implementations (e.g., SaveEntity, Create, CreateAtPos, LoadEntity) are placeholders,
+ *     intended to be implemented with logic specific to the application.
+ *   - Memory management for dynamically allocated arrays is handled explicitly in the destructor.
+ */
 class UEntityStore extends UFObject_Base {
 	
 	string m_Type = "";

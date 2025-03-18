@@ -1,3 +1,136 @@
+/**
+ * Class: UApiEndpoint
+ * -------------------
+ * A subclass of UFBaseEndpoint that defines several methods for interacting with
+ * a server API. This class supports various endpoints including Steam server queries,
+ * random number generation, cryptocurrency pricing and conversion, as well as API status checks.
+ *
+ * Methods:
+ *
+ * SteamQuery(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false)
+ * -----------------------------------------------------------------------------------------------
+ * Executes a Steam-based server query which returns a UFServerStatus object.
+ *
+ * Parameters:
+ *   ip          - The IP address of the server.
+ *   queryPort   - The query port as a string.
+ *   cbInstance  - Callback instance to be notified upon query completion.
+ *   cbFunction  - Name of the callback function.
+ *   oid         - (Optional) An object identifier to help track the callback.
+ *   ReturnString- (Optional) If true, the callback will return a string response.
+ *
+ * Returns:
+ *   An integer callback id (cid). Returns -1 if there is an error (e.g., invalid parameters).
+ *
+ *
+ * ServerQuery(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = "")
+ * -----------------------------------------------------------------------------------------------
+ * Executes a server query to return a UFServerStatus object using a direct callback mechanism.
+ * (Note: This method is marked "To Be removed".)
+ *
+ * Parameters:
+ *   ip         - The IP address of the server.
+ *   queryPort  - The query port as a string.
+ *   cbInstance - Callback instance to be notified upon query completion.
+ *   cbFunction - Name of the callback function.
+ *   oid        - (Optional) An object identifier to help track the callback.
+ *
+ * Returns:
+ *   An integer callback id (cid). Returns -1 if there is an error.
+ *
+ *
+ * ServerQueryObj(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = "")
+ * -----------------------------------------------------------------------------------------------
+ * Executes a server query and utilizes a nested callback structure to return a UFServerStatus object.
+ *
+ * Parameters:
+ *   ip         - The IP address of the server.
+ *   queryPort  - The query port as a string.
+ *   cbInstance - Callback instance to be notified upon query completion.
+ *   cbFunction - Name of the callback function.
+ *   oid        - (Optional) An object identifier to help track the callback.
+ *
+ * Returns:
+ *   An integer callback id (cid). Returns -1 if there is an error.
+ *
+ *
+ * RandomNumbers(int count, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false)
+ * -----------------------------------------------------------------------------------------------
+ * Requests an array of random numbers and returns a URandomNumberResponse.
+ *
+ * Parameters:
+ *   count       - The number of random numbers requested. Defaults to 4096 if -1.
+ *   cbInstance  - Callback instance to be notified upon completion.
+ *   cbFunction  - Name of the callback function.
+ *   oid         - (Optional) An object identifier for the callback.
+ *   ReturnString- (Optional) If true, the response is returned as a string.
+ *
+ * Returns:
+ *   An integer callback id (cid). Returns -1 if there is an error (e.g., count is out of bounds).
+ *
+ *
+ * CryptoPrice(string from, string to, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false)
+ * -----------------------------------------------------------------------------------------------
+ * Retrieves the market price for a cryptocurrency conversion and returns a UCryptoConvertResult.
+ *
+ * Parameters:
+ *   from        - The source cryptocurrency.
+ *   to          - The target cryptocurrency.
+ *   cbInstance  - Callback instance to be notified upon query completion.
+ *   cbFunction  - Name of the callback function.
+ *   oid         - (Optional) An object identifier for the callback.
+ *   ReturnString- (Optional) If true, the response is returned as a string.
+ *
+ * Returns:
+ *   An integer callback id (cid). Returns -1 if there is an error.
+ *
+ *
+ * CryptoConvert(string from, string to, float value, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false)
+ * -----------------------------------------------------------------------------------------------
+ * Converts a specified value from one cryptocurrency to another, returning a UCryptoConvertResult.
+ *
+ * Parameters:
+ *   from        - The source cryptocurrency.
+ *   to          - The target cryptocurrency.
+ *   value       - The amount to be converted (must be greater than 0).
+ *   cbInstance  - Callback instance to handle the conversion result.
+ *   cbFunction  - Name of the callback function.
+ *   oid         - (Optional) An object identifier for the callback.
+ *   ReturnString- (Optional) If true, the response is returned as a string.
+ *
+ * Returns:
+ *   An integer callback id (cid). Returns -1 if there is an error.
+ *
+ *
+ * Crypto(TStringArray from, string to, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false)
+ * -----------------------------------------------------------------------------------------------
+ * Retrieves a map of live cryptocurrency market prices, returning a UCryptoResults object.
+ *
+ * Parameters:
+ *   from        - An array of source cryptocurrencies.
+ *   to          - The target cryptocurrency.
+ *   cbInstance  - Callback instance to handle the market prices response.
+ *   cbFunction  - Name of the callback function.
+ *   oid         - (Optional) An object identifier for the callback.
+ *   ReturnString- (Optional) If true, the response is returned as a string.
+ *
+ * Returns:
+ *   An integer callback id (cid). Returns -1 if there is an error (e.g., empty source array or invalid target).
+ *
+ *
+ * Status(Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false)
+ * -----------------------------------------------------------------------------------------------
+ * Retrieves the API status details, including version number and other metadata, returning a UFStatus object.
+ *
+ * Parameters:
+ *   cbInstance  - Callback instance to be notified upon retrieval of the status.
+ *   cbFunction  - Name of the callback function.
+ *   oid         - (Optional) An object identifier for the callback.
+ *   ReturnString- (Optional) If true, the response is returned as a string.
+ *
+ * Returns:
+ *   An integer callback id (cid). Returns -1 if there is an error.
+ */
 class UApiEndpoint extends UFBaseEndpoint {
 		
 	//Replacing ServerQuery Runs a Steam Query for a server returning a `UFServerStatus` object

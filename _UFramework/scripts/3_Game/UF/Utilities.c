@@ -1,4 +1,147 @@
 /**
+ * Utility Functions Documentation
+ *
+ * GetLogPlayerPosArray
+ * --------------------
+ * Summary:
+ *   Converts an array of ULogPlayerPos objects into a JSON string representation.
+ *
+ * Parameters:
+ *   - thePlayerlist: An array of autoptr ULogPlayerPos objects.
+ *
+ * Returns:
+ *   A string containing the JSON representation of the provided array.
+ *
+ *
+ * UUtil Class
+ * -----------
+ * A collection of static utility functions designed to help with various operations such as:
+ * - Retrieving player-related information (Steam ID, finding players by GUID or identity)
+ * - File system operations (finding files in a directory)
+ * - String manipulation (generating random IDs, formatting integers)
+ * - Time and date operations (obtaining date stamps, time stamps and Unix timestamps)
+ * - Configuration retrieval for different asset types (magazines, weapons, vehicles)
+ *
+ *
+ * Functions Within UUtil:
+ *
+ * 1. GetSteamId
+ *    -----------
+ *    Summary:
+ *      Retrieves the Steam ID for the current client player.
+ *    Logic:
+ *      - Checks for a valid title initiator from the UserManager.
+ *      - If not available, attempts to cast the current player as DayZPlayer and retrieves the plain ID.
+ *    Returns:
+ *      A string with the Steam ID, or an empty string if not available.
+ *
+ * 2. FindFilesInDirectory
+ *    ----------------------
+ *    Summary:
+ *      Scans the specified directory and returns a list of file names contained within.
+ *    Parameters:
+ *      - directory: A string with the path of the target directory.
+ *    Returns:
+ *      A TStringArray containing the names of the found files.
+ *
+ * 3. GetRandomId
+ *    ------------
+ *    Summary:
+ *      Generates a random alphanumeric string of a specified length.
+ *    Parameters:
+ *      - number: The desired length of the generated ID.
+ *    Returns:
+ *      A random string composed of upper and lower case letters and digits.
+ *    Note:
+ *      Utilizes a random number generator (ensuring it is checked and renewed) for index selection.
+ *
+ * 4. FindPlayer
+ *    ----------
+ *    Summary:
+ *      Searches for a player on the server by comparing each player's identity GUID.
+ *    Parameters:
+ *      - GUID: A string representing the player's unique identifier.
+ *    Returns:
+ *      The matched DayZPlayer object if found; otherwise, NULL.
+ *
+ * 5. FindPlayerByIdentity
+ *    ----------------------
+ *    Summary:
+ *      Locates a player based on their PlayerIdentity object by using the network ID.
+ *    Parameters:
+ *      - identity: A PlayerIdentity reference for detecting the player.
+ *    Returns:
+ *      The DayZPlayer associated with the supplied identity; returns NULL if not found or if identity is invalid.
+ *
+ * 6. SendNotificationEx & SendNotification
+ *    ----------------------------------------
+ *    Summary:
+ *      Sends an in-game notification to a specified player identity.
+ *    Parameters (for both functions):
+ *      - Header: A string representing the notification header.
+ *      - Text: The main message of the notification.
+ *      - player: The recipient's PlayerIdentity.
+ *      - Icon: (Optional) A path string to the icon image used in the notification; defaults to info icon.
+ *    Modes:
+ *      - Dedicated Server: Uses NotificationSystem.SendNotificationToPlayerIdentityExtended.
+ *      - Client: Uses NotificationSystem.AddNotificationExtended.
+ *
+ * 7. ConvertIntToNiceString
+ *    ------------------------
+ *    Summary:
+ *      Transforms an integer value representing a dollar amount into a formatted string with commas.
+ *    Parameters:
+ *      - DollarAmount: The integer value to format.
+ *    Behavior:
+ *      Handles negative values by prefixing with a minus sign.
+ *    Returns:
+ *      A string formatted with comma separations (e.g., "1,234,567").
+ *
+ * 8. RestErrorToString
+ *    -------------------
+ *    Summary:
+ *      Maps REST error codes to their corresponding string representations.
+ *    Parameters:
+ *      - ErrorCode: An integer representing the REST error state.
+ *    Returns:
+ *      A string describing the error state (e.g., "EREST_SUCCESS", "EREST_ERROR_TIMEOUT").
+ *
+ * 9. GetDateStamp & GetTimeStamp
+ *    -----------------------------
+ *    Summary:
+ *      Provide the current date and time in a human-readable format.
+ *    GetDateStamp:
+ *      Returns the date in "YYYY-MM-DD" format with leading zeros for single-digit days or months.
+ *    GetTimeStamp:
+ *      Returns the time in "HH:MM:SS" format.
+ *
+ * 10. Unix and UTC Date/Time Functions
+ *     ----------------------------------
+ *     Functions:
+ *       - GetDateInt / GetUTCDateInt:
+ *           Compute the number of days since January 1, 1970 based on local or UTC date.
+ *       - GetUnixInt / GetUTCUnixInt:
+ *           Calculate and return the Unix timestamp (seconds elapsed since Jan 1 1970) for local or UTC time.
+ *     Note:
+ *       Takes into account leap years using the IsLeapYear helper function.
+ *
+ * 11. Configuration Getters
+ *     -----------------------
+ *     Functions:
+ *       - GetConfigInt, GetConfigFloat, GetConfigString:
+ *           Retrieve single configuration values from predefined configuration paths (magazines, weapons, vehicles).
+ *       - GetConfigTStringArray, GetConfigTFloatArray, GetConfigTIntArray:
+ *           Retrieve arrays of configuration values for the respective data types.
+ *     Behavior:
+ *       - Each function attempts to locate the configuration value in multiple asset paths.
+ *       - Returns true if the configuration exists and has been successfully loaded, false otherwise.
+ *
+ * Notes:
+ *   - Many functions rely on global game objects (like GetGame()) and assume a proper game context.
+ *   - The configuration retrieval functions expect specific naming conventions for paths and variables.
+ *   - Error handling is minimal; functions typically return empty strings or NULL when they fail.
+ */
+/**
  * Converts an array of ULogPlayerPos objects into a JSON string.
  *
  * This function leverages the JsonFileLoader's JsonMakeData method to serialize an array

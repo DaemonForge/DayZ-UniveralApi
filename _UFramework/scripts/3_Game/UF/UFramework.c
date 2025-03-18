@@ -1,5 +1,96 @@
+/**
+ * UFramework Class Documentation
+ *
+ * The UFramework class acts as the central management hub for the Universal Framework within the DayZ mod environment.
+ * It consolidates various functionalities such as endpoint management (for database, Discord, globals, and API operations),
+ * REST API call handling, RPC communication, authentication token management, and periodic tasks scheduling.
+ *
+ * Main Functionalities:
+ * 
+ * 1. Endpoint Getters:
+ *    - db(int collection = OBJECT_DB): Returns the proper database endpoint instance depending on whether player data (PLAYER_DB) or object data (OBJECT_DB) is required.
+ *    - ds(): Retrieves the Discord endpoint, responsible for Discord-related functionality.
+ *    - globals(): Provides access to the global endpoint used in handling global data.
+ *    - api(): Returns the API endpoint that processes various application-specific REST API calls.
+ *    - Cron(): Provides the UCronManager for scheduling recurring tasks.
+ *
+ * 2. REST API Utilities:
+ *    - Post(string url): Simplified interface for sending POST requests with default JSON headers.
+ *    - Overloaded Post(string url, string jsonString, ...) methods: Several variants support providing JSON payloads, specifying content types, and handling callbacks.
+ *    - Get(string url): Simplified interface for sending GET requests.
+ *    - Overloaded Get(string url, ...) methods: Variants that support providing callbacks, both as RestCallback or UFCallbackBase.
+ *
+ * 3. Authentication and Player Management:
+ *    - GetAuthToken() & HasValidAuth(): Manage and validate the current authentication token based on context (client vs. server).
+ *    - FindPlayer(string GUID) & FindPlayerByIdentity(PlayerIdentity identity): Helper functions to locate player objects in the game based on GUID or identity.
+ *    - RequestAuthToken(bool first = false): Method used by clients to request a token via RPC.
+ *    - AddPlayerAuth() and GetPlayerAuth(): Enable the caching of player authentication tokens and retrieval on demand.
+ *
+ * 4. RPC Communication:
+ *    - RPCUFrameworkConfig: Processes RPC calls to update the framework configuration and authentication tokens.
+ *    - RPCRequestAuthToken & RPCRequestRetry: Handle the token renewal process and client-server communication for authentication.
+ *    - SendAuthToken: Dispatches a newly received authentication token to the corresponding client.
+ *
+ * 5. Callbacks and Async Task Management:
+ *    - RegisterCall(), ClearCallback(), and IsCallCanceled(): Mechanisms for managing asynchronous REST calls,
+ *      assigning unique call identifiers, and cleaning up completed or canceled calls.
+ *    - CheckAndRenewQRandom() and GetQRandomNumbers(): Functions for monitoring and renewing the pool of random numbers used
+ *      in various operations, with integration into the Cron manager for periodic execution.
+ *
+ * 6. Utility and Error Handling:
+ *    - ErrorToString(int ErrorCode): Converts REST error codes to human-readable string messages.
+ *    - DiscordNotification Methods:
+ *         - DiscordMessage() and DiscordObject(): Provide simple static interfaces to send messages or objects to Discord channels via webhooks.
+ *
+ * 7. Global Initialization:
+ *    - The static U() function ensures that there is a singleton instance of UFramework and initializes global settings and RPC listeners.
+ *
+ * Additional Notes:
+ *    - Designed to work in both client and server contexts with conditional behavior based on the execution environment.
+ *    - Integrates with external services including RESTful web services and Discord for broader functionality.
+ *    - Incorporates robust error handling and retry mechanisms, especially in the context of authentication and web service connectivity.
+ *    - The class destructor ensures cleanup of RPC queues and proper memory management for the authentication token.
+ *
+ * Overall, UFramework centralizes the operations required by the Universal Framework, facilitating communication,
+ * configuration, and periodic task execution, making it a fundamental component in the DayZ Universal API infrastructure.
+ */
 class UFramework extends Managed {
 		
+	/**
+	 * Getter function for the Database Endpoint.
+	 *
+	 * Function: db(int collection = OBJECT_DB)
+	 * - Returns a database endpoint, which is based on the provided collection type.
+	 * - When collection equals OBJECT_DB:
+	 *    - Returns an object endpoint, creating a new one if m_ObjectEndPoint has not been initialized.
+	 * - When collection equals PLAYER_DB:
+	 *    - Returns a player endpoint, creating a new one if m_PlayerEndPoint has not been initialized.
+	 * - Returns NULL if the collection type is neither OBJECT_DB nor PLAYER_DB.
+	 *
+	 * Getter function for the Discord Endpoint.
+	 *
+	 * Function: ds()
+	 * - Returns the Discord endpoint.
+	 * - If m_UniversalDSEndpoint is not yet initialized, a new instance is created.
+	 *
+	 * Getter function for the Globals Endpoint.
+	 *
+	 * Function: globals()
+	 * - Returns the globals endpoint.
+	 * - If m_UDBGlobalEndpoint is not yet created, a new one is instantiated.
+	 *
+	 * Getter function for the API Endpoint.
+	 *
+	 * Function: api()
+	 * - Returns the API endpoint.
+	 * - If m_UApiEndpoint is not yet instantiated, it's created.
+	 *
+	 * Getter function for the Cron Manager.
+	 *
+	 * Function: Cron()
+	 * - Returns the cron manager instance.
+	 * - If m_UCronManager has not been initialized, a new instance is created and its Init() function is called.
+	 */
 	//Getter function for the Database Endpoint using either OBJECT_DB or PLAYER_DB
 	// "PLAYER_DB" is only accessable on client for the player info being requested 
 	// "OBJECT_DB" all clients can access all data.
@@ -51,6 +142,152 @@ class UFramework extends Managed {
 		return m_UCronManager;
 	}
 
+	
+	/**
+	 * RequestCallCancel
+	 * -----------------
+	 * Requests the cancellation of an active call by inserting the provided call ID (cid) into a cancellation list.
+	 *
+	 * @param cid The call identifier to be canceled.
+	 */
+
+	/**
+	 * Post (overload 1)
+	 * -----------------
+	 * Sends a POST HTTP request to the specified URL using default parameters.
+	 * The content type is set to "application/json", and a silent callback is used.
+	 *
+	 * @param url The endpoint URL for the POST request.
+	 * @return An integer status value (typically 0).
+	 */
+
+	/**
+	 * Post (overload 2)
+	 * -----------------
+	 * Sends a POST HTTP request to the specified URL with a provided JSON string.
+	 * If no custom RestCallback is provided, a default silent callback is used.
+	 *
+	 * @param url The endpoint URL for the POST request.
+	 * @param jsonString The JSON formatted string to be sent in the request body.
+	 * @param UCBX (Optional) A custom RestCallback to handle the response.
+	 * @param contentType (Optional) The MIME type for the content header; defaults to "application/json".
+	 * @return An integer status value (typically 0).
+	 */
+
+	/**
+	 * Post (overload 3)
+	 * -----------------
+	 * Sends a POST HTTP request to the specified URL with a provided JSON string.
+	 * A user-defined callback derived from UFCallbackBase is registered to process the response.
+	 *
+	 * @param url The endpoint URL for the POST request.
+	 * @param jsonString The JSON formatted string to be sent in the request body.
+	 * @param cb A user-defined callback of type UFCallbackBase used to handle the response.
+	 * @param contentType (Optional) The MIME type for the content header; defaults to "application/json".
+	 * @return An integer call identifier if the callback is provided; otherwise, -1.
+	 */
+
+	/**
+	 * Get (overload 1)
+	 * ----------------
+	 * Sends a GET HTTP request to the specified URL using a default silent callback.
+	 *
+	 * @param url The endpoint URL for the GET request.
+	 * @return An integer status value (typically 0).
+	 */
+
+	/**
+	 * Get (overload 2)
+	 * ----------------
+	 * Sends a GET HTTP request to the specified URL with a provided RestCallback.
+	 *
+	 * @param url The endpoint URL for the GET request.
+	 * @param UCBX The RestCallback to handle the response.
+	 * @return An integer status value (typically 0).
+	 */
+
+	/**
+	 * Get (overload 3)
+	 * ----------------
+	 * Sends a GET HTTP request to the specified URL with a user-defined callback derived from UFCallbackBase.
+	 *
+	 * @param url The endpoint URL for the GET request.
+	 * @param cb A user-defined callback of type UFCallbackBase used to handle the response.
+	 * @return An integer call identifier if the callback is provided; otherwise, -1.
+	 */
+
+	/**
+	 * IsDiscordEnabled
+	 * ----------------
+	 * Checks whether the Discord endpoint is configured.
+	 *
+	 * @return True if the Discord endpoint is enabled; otherwise, false.
+	 */
+
+	/**
+	 * IsOnline
+	 * --------
+	 * Determines if the mod has successfully completed its operational status check.
+	 *
+	 * @return True if the mod is online and operational; otherwise, false.
+	 */
+
+	/**
+	 * VersionOffset
+	 * -------------
+	 * Returns the version offset to indicate compatibility:
+	 *  - 0: Versions match exactly.
+	 *  - ±1: Off by a patch version; minor issues.
+	 *  - ±2: Off by a minor version; some endpoints or features might be missing.
+	 *  - ±3: Off by a major version; mod functionality may be severely impacted.
+	 *
+	 * @return An integer representing the version offset.
+	 */
+
+	/**
+	 * CheckAndRenewQRandom
+	 * --------------------
+	 * Monitors the remaining pool of QRandom numbers and triggers a renewal process if the available
+	 * random numbers fall below 2000.
+	 */
+
+	/**
+	 * GetVersion
+	 * ----------
+	 * Retrieves the current version of the mod.
+	 *
+	 * @return A string representing the mod's version as defined by UF_VERSION.
+	 */
+
+	/**
+	 * FindPlayer
+	 * ----------
+	 * Searches for a player on the server by their Global Unique Identifier (GUID).
+	 *
+	 * @param GUID The unique identifier of the player.
+	 * @return A DayZPlayer object if a matching player is found; otherwise, null.
+	 */
+
+	/**
+	 * FindPlayerByIdentity
+	 * --------------------
+	 * Searches for a player using their PlayerIdentity object.
+	 *
+	 * @param identity The PlayerIdentity object associated with the player.
+	 * @return A DayZPlayer object if a matching player is found; otherwise, null.
+	 */
+
+	/**
+	 * Global Initialization Control (m_isInit, isGlobalInit, setGlobalInit)
+	 * ---------------------------------------------------------------------
+	 * m_isInit: A protected static boolean flag that indicates whether the framework has been globally initialized.
+	 *
+	 * isGlobalInit:
+	 * - A static function that returns the current global initialization state.
+	 *
+	 * setGlobalInit:
+	 * - A static function that sets the global initialization flag to true.
+	 */
 	//Request a call to be canceled
 	void RequestCallCancel(int cid){
 		m_CanceledCalls.Insert(cid);

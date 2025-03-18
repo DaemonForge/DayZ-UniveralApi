@@ -1,3 +1,82 @@
+/**
+ * Class: Math (modded)
+ *
+ * Description:
+ *   This class extends the basic Math functionality by providing a queue-based
+ *   pseudo-random number generator. It uses an internal pool (m_QRandomNumbers)
+ *   to produce random integer, float, and boolean values. When the pool becomes empty,
+ *   the implementation falls back to the vanilla random methods.
+ *
+ * Properties:
+ *   - m_QRandomNumbers:
+ *       A static, protected integer array that holds a pool of random numbers for use
+ *       by the various random generation methods.
+ *
+ * Methods:
+ *
+ *   - AddQRandomNumber(TIntArray numbers):
+ *       Description:
+ *         Inserts a set of integers into the internal random number pool.
+ *       Parameters:
+ *         - numbers: An array of integers to be added to the pool.
+ *       Remarks:
+ *         Should not be called directly; use U().CheckAndRenewQRandom() for automatic management.
+ *
+ *   - QRandomRemaining():
+ *       Description:
+ *         Returns the number of remaining random numbers in the pool.
+ *       Returns:
+ *         - int: The count of available random numbers.
+ *
+ *   - GetAndRemoveNumber():
+ *       Description:
+ *         Retrieves a random number from the pool by selecting a random index,
+ *         returns the number at that index, and removes it from the pool.
+ *       Returns:
+ *         - int: The retrieved random number.
+ *       Access Level:
+ *         Protected helper method.
+ *
+ *   - QRandom():
+ *       Description:
+ *         Returns a pseudo-random number. If the pool is not empty, a number is
+ *         retrieved from it; otherwise, it uses the vanilla random method to generate a number.
+ *       Returns:
+ *         - int: A pseudo-random integer.
+ *
+ *   - QRandomInt(int min = 0, int max = int.MAX):
+ *       Description:
+ *         Returns a pseudo-random integer within the specified range. It uses a number
+ *         from the pool to generate a value between min and max by applying the modulus operator.
+ *       Parameters:
+ *         - min: The lower bound of the return value range (default is 0).
+ *         - max: The upper bound of the return value range (default is int.MAX).
+ *       Returns:
+ *         - int: The generated random integer within the specified range.
+ *       Remarks:
+ *         If the internal pool is empty or min equals max, the traditional random method is used.
+ *
+ *   - QRandomFloat(float min = 0, float max = 1):
+ *       Description:
+ *         Returns a pseudo-random floating-point number within the specified range.
+ *         A number from the pool is used to calculate the float value based upon int.MAX normalization.
+ *       Parameters:
+ *         - min: The lower bound of the return value range (default is 0.0).
+ *         - max: The upper bound of the return value range (default is 1.0).
+ *       Returns:
+ *         - float: The generated random float within the specified range.
+ *       Remarks:
+ *         Similar to QRandomInt, defaults to vanilla random when the pool is empty.
+ *
+ *   - QRandomFlip():
+ *       Description:
+ *         Returns a pseudo-random boolean value. It determines the boolean outcome by
+ *         checking the parity of a number retrieved from the pool.
+ *       Returns:
+ *         - bool: True or false determined randomly.
+ *       Remarks:
+ *         Falls back to the vanilla random method if the pool is depleted.
+ */
 modded class Math
 {
 	

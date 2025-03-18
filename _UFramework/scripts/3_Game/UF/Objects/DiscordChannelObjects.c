@@ -1,3 +1,106 @@
+/**
+ * UCreateChannelObject
+ *
+ * Represents a request to create a new channel with a specified name and options.
+ *
+ * Members:
+ *   - string Name: The name of the channel to be created.
+ *   - UChannelCreateOptions Options: Options detailing properties of the channel creation,
+ *     such as type and reason. If no options are provided, defaults are used.
+ *
+ * Constructor:
+ *   - UCreateChannelObject(string name, UChannelCreateOptions options = NULL):
+ *       Initializes the new channel creation object with the given name and optional options.
+ *
+ * Methods:
+ *   - ToJson():
+ *       Serializes the current object to a JSON string using UJSONHandler.
+ */
+
+
+/**
+ * UUpdateChannelObject
+ *
+ * Represents a request to update an existing channel along with a reason and update options.
+ *
+ * Members:
+ *   - string Reason: The reason provided for the update.
+ *   - UChannelUpdateOptions Options: Options specifying the updates to apply to the channel.
+ *
+ * Constructor:
+ *   - UUpdateChannelObject(string reason, UChannelUpdateOptions options):
+ *       Initializes a channel update object with a provided reason and update options.
+ *
+ * Methods:
+ *   - ToJson():
+ *       Converts the current object state into a JSON string using UJSONHandler.
+ */
+
+
+/**
+ * UChannelUpdateOptions
+ *
+ * Inherits from UChannelOptions and provides additional properties for updating a channel.
+ *
+ * Members:
+ *   - string name: The updated channel name.
+ *
+ * Constructor:
+ *   - UChannelOptions(string Reason, string Name, string Topic = ""):
+ *       Initializes update options with a reason, a new name, and an optional topic.
+ */
+
+
+/**
+ * UChannelCreateOptions
+ *
+ * Inherits from UChannelOptions and holds options specifically for channel creation.
+ *
+ * Members:
+ *   - string type: The type of channel to create (default is "text").
+ *
+ * Constructor:
+ *   - UChannelCreateOptions(string Reason, string Type = "text", string Topic = ""):
+ *       Initializes the create options with a reason, a specified type, and an optional topic.
+ */
+
+
+/**
+ * UChannelOptions
+ *
+ * Base class representing common options for channel operations (creation and update).
+ *
+ * Members:
+ *   - string reason: Reason for the action (default "Created Via DayZ").
+ *   - string topic: The topic or description for the channel.
+ *   - bool nsfw: Indicates if the channel is marked as not safe for work.
+ *   - string parent: Identifier for the parent category or channel.
+ *   - array<autoptr UChannelPermissions> permissionOverwrites: List of permission overwrites for the channel.
+ *   - int position: The position of the channel (default -1).
+ *   - int rateLimitPerUser: The rate limit per user (default -1).
+ *
+ * Methods:
+ *   - AddPerm(string id, string perm, bool isAllow = true):
+ *       Adds or updates a single permission for the specified role or user.
+ *   - SetPerms(string id, TStringArray perms, bool isAllow = true):
+ *       Sets multiple permissions for the specified role or user.
+ */
+
+
+/**
+ * UChannelPermissions
+ *
+ * Represents permission overwrites for a specific role or user in a channel.
+ *
+ * Members:
+ *   - string id: Identifier for the role or user.
+ *   - TStringArray allow: List of permissions that are allowed.
+ *   - TStringArray deny: List of permissions that are denied.
+ *
+ * Constructor:
+ *   - UChannelPermissions(string Id, TStringArray Allow, TStringArray Deny):
+ *       Initializes the permission object with the provided allowed and denied permission lists.
+ */
 class UCreateChannelObject extends UFObject_Base{
 
 	string Name = "new-channel";
