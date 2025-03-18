@@ -31,7 +31,7 @@ class UDBQueryObject extends UDBQueryBase {
 		OrderBy = orderBy;
 		ReturnObject = returnObject;
 		MaxResults = maxResults;
-		FixQuery = false;
+		FixQuery = true;
 	}
 	
 	
