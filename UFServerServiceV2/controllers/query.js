@@ -103,7 +103,7 @@ async function runQuery(req, res, mod, auth, COLL) {
                         collection: COLL,
                         returnColumn: ReturnCol
                     });
-                    res.json({ Status: "NoResults", Count: 0, Results: [] });
+                    res.json({ Status: "Empty", Count: 0, Results: [] });
                 } else {
                     logger.info(`Query executed successfully. ${count} results returned. Query: ${JSON.stringify(query)}`, {
                         collection: COLL,
@@ -220,7 +220,7 @@ async function runUpdateFromQuery(req, res, mod, auth, COLL) {
                     element,
                     mod,
                 });
-                res.status(203).json({ Status: "NoResults", Element: element, Mod: mod, Count: 0 });
+                res.status(203).json({ Status: "Empty", Element: element, Mod: mod, Count: 0 });
             }
         } catch (err) {
             logger.error(`Error during update operation: ${err.message}`, { error: err });

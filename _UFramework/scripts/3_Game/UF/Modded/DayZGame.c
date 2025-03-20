@@ -42,5 +42,4 @@ modded class DayZGame extends CGame
 		return "";
 	}
 	
-	
 }

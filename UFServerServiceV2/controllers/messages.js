@@ -28,7 +28,7 @@
  *            {
  *              Status: "Success" | "Empty" | "Error",
  *              Error: "Error message if any",
- *              messages: [ Array of message contents ]
+ *              Messages: [ Array of message contents ]
  *            }
  *
  *  - POST /Messages/Write/:Mod/:Queue
@@ -288,15 +288,6 @@ async function runUpdateMeta(req, res) {
       metaData.allowPlayerWrites = (value === 1);
     } else {
       return res.status(400).json({ Status: "Error", Error: "Missing allowPlayerWrites field" }); 
-    }
-    
-    // Validate 'resetAt' if provided.
-    if (req.body.resetAt !== undefined) {
-      const resetDate = new Date(req.body.resetAt);
-      if (isNaN(resetDate)) {
-        return res.status(400).json({ Status: "Error", Error: "Invalid resetAt date format." });
-      }
-      metaData.resetAt = resetDate;
     }
 
     const updatedMeta = await updateQueueMeta(ModName, QueueName, metaData);

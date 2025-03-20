@@ -28,6 +28,7 @@ class UFRestCallBackBase : RestCallback
 	}
 };
 
+
 class UFCallback<Class T> extends UFCallbackBase{
 	
 	override void OnError(int errorCode, int cid) {
@@ -47,7 +48,7 @@ class UFCallback<Class T> extends UFCallbackBase{
 						case "NotFound":
 							rstatus = UF_NOTFOUND;
 							break;
-						case "NoResults":
+						case "Empty":
 							rstatus = UF_EMPTY;
 							break;
 						case "Error":

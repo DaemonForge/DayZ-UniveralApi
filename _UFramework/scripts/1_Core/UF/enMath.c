@@ -3,9 +3,10 @@
  *
  * Description:
  *   This class extends the basic Math functionality by providing a queue-based
- *   pseudo-random number generator. It uses an internal pool (m_QRandomNumbers)
+ *   quantum-random number generator. It uses an internal pool (m_QRandomNumbers)
  *   to produce random integer, float, and boolean values. When the pool becomes empty,
- *   the implementation falls back to the vanilla random methods.
+ *   the implementation falls back to the vanilla random methods, this is done since the
+ *   vanilla random methods are not very well designed and arn't very random.
  *
  * Properties:
  *   - m_QRandomNumbers:

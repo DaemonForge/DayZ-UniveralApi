@@ -705,6 +705,4 @@ class UUtil extends Managed {
 		}
 		return false;
 	}
-	
-	
 }
