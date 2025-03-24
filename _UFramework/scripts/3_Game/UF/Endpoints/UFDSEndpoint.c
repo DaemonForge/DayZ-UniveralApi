@@ -132,7 +132,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		}  else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordUser>(cbInstance, cbFunction, GUID), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordUser>(cbInstance, cbFunction, GUID));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -157,7 +157,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		}  else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordUser>(cbInstance, cbFunction, GUID), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordUser>(cbInstance, cbFunction, GUID));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -183,7 +183,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		}  else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, GUID), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, GUID));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -206,7 +206,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordUser>(cbInstance, cbFunction, GUID), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordUser>(cbInstance, cbFunction, GUID));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -228,7 +228,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, GUID), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, GUID));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -249,7 +249,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, GUID), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, GUID));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -270,7 +270,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, GUID), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, GUID));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -292,7 +292,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, GUID), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, GUID));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -316,7 +316,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, GUID);
 		} else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, GUID), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, GUID));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -341,7 +341,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, Name);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, Name), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, Name));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -368,7 +368,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, id);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, id), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, id));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -393,7 +393,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, id);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, id), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, id));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -418,7 +418,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, id);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, id), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, id));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -444,7 +444,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, id);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, id), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordStatusObject>(cbInstance, cbFunction, id));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -472,7 +472,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, id);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordMessagesResponse>(cbInstance, cbFunction, id), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<UDiscordMessagesResponse>(cbInstance, cbFunction, id));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -494,7 +494,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, PlainId);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, PlainId), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, PlainId));
 		} else {
 			DBCBX = new USilentCallBack();
 		}
@@ -517,7 +517,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, PlainId);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, PlainId), cid);
+			DBCBX = new UDBNestedCallBack(new UFCallback<StatusObject>(cbInstance, cbFunction, PlainId));
 		} else {
 			DBCBX = new USilentCallBack();
 		}

@@ -187,9 +187,9 @@ class UDBNestedCallBack : UFRestCallBackBase
 		return m_CB;
 	}
 	
-	void UDBNestedCallBack(UFCallbackBase cb, int callId = -1){
+	void UDBNestedCallBack(UFCallbackBase cb){
 		m_CB = cb;
-		m_UFid = callId;
+		m_UFid = -1;
 	}
 	
 	void ~UDBNestedCallBack(){

@@ -322,7 +322,7 @@ class UFramework extends Managed {
 		if (cb){
 			RestContext ctx = RestCore().GetRestContext(url);
 			ctx.SetHeader(contentType);
-			ctx.POST(U().RegisterCall(new UDBNestedCallBack(cb,cid),cid), "", jsonString);
+			ctx.POST(U().RegisterCall(new UDBNestedCallBack(cb),cid), "", jsonString);
 			return cid;
 		}
 		return -1;
@@ -352,7 +352,7 @@ class UFramework extends Managed {
 		int cid = -1;
 		if (cb){
 			RestContext ctx =  RestCore().GetRestContext(url);
-			ctx.GET(U().RegisterCall(new UDBNestedCallBack(cb,cid), cid), "");
+			ctx.GET(U().RegisterCall(new UDBNestedCallBack(cb), cid), "");
 			return cid;
 		}
 		return -1;
