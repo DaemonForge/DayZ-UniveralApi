@@ -1,8 +1,9 @@
 const { MongoClient } = require("mongodb");
-const { writeFileSync } = require('fs');
+const { writeFileSync, mkdirSync, existsSync } = require('fs');
 const ConfigPath = "config.json";
 const { createHash } = require('crypto');
 const RateLimit = require('express-rate-limit');
+const path = require('path');
 
 /**
  * Resolves all promises in an object and maintains the key structure
@@ -451,8 +452,19 @@ function tryConvertToObject(input) {
   return input;
 }
 
+/**
+ * Ensures that the temporary directory exists.
+ */
+function ensureDirExsist(folderPath) {
+  const tempDir = path.join(global.SAVEPATH, folderPath);
+  if (!existsSync(tempDir)) {
+    mkdirSync(tempDir, { recursive: true });
+  }
+  return tempDir;
+}
 
 module.exports = {
+  ensureDirExsist,
   tryConvertToObject,
   createLogger,
   processValue,

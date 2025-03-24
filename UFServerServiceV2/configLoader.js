@@ -1,5 +1,5 @@
 const { readFileSync, writeFileSync, existsSync, mkdirSync } = require('fs');
-const { makeAuthToken } = require('./utils');
+const { makeAuthToken, ensureDirExsist } = require('./utils');
 
 const Defaultconfig = require('./sample-config.json');
 const ConfigPath = "config.json";

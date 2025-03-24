@@ -33,13 +33,12 @@ async function RenderLogin(req, res){
     let GUID = NormalizeToGUID(id);
     if (ErrorTemplate === undefined) LoadErrorTemplate();
     let userObj = await GetDiscordObj(GUID);
-    console.log(userObj);
     let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     if (userObj !== undefined && (global.config.Discord?.AllowToReRegister !== true) === false){
         return res.send(render(ErrorTemplate, {TheError: "Trying to connect to a Steam ID that already has a Discord connected.", Type: "AlreadyLinked"}))
     }
 
-    let url = encodeURIComponent(`https://${req.headers.host}/Discord/callback`); 
+    let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
     if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined ){
         logger.warn("User tried to sign up for discord but Intergration is not setup for this server");
         return res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}))
@@ -127,9 +126,10 @@ async function HandleCallBack(req, res){
     const mongo = new MongoClient(global.config.DBServer);
     try {
         let connect = mongo.connect();
-        const response = await fetch(`https://discordapp.com/api/oauth2/token`,{
+        const response = await fetch(`https://discord.com/api/oauth2/token`,{
             method: 'POST',
             headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
             },
             body: new URLSearchParams({
                 client_id: global.config.Discord.Client_Id,
@@ -139,8 +139,8 @@ async function HandleCallBack(req, res){
                 redirect_uri: `https://${req.headers.host}/discord/callback`
             }),
         });
-        const json = await response.json();;
-        const discordres = await fetch(`https://discordapp.com/api/users/@me`, {
+        const json = await response.json();
+        const discordres = await fetch(`https://discord.com/api/users/@me`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${json.access_token}`
@@ -149,7 +149,7 @@ async function HandleCallBack(req, res){
         let discordjson = await discordres.json();
         discordjson.steamid = state;
         let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
-        let msg = "Unknown Error";
+        let msg = `Unknown Error, possible that call back isn't configured correctly should be "https://${req.headers.host}/discord/callback"`;
         let errType = "System";
         let player;
         try {
@@ -159,17 +159,16 @@ async function HandleCallBack(req, res){
             msg = "User not found in discord";
             errType = "UserNotFound";
         }
-        if(player !== undefined && player.roles !== undefined){
-            let roles = player._roles
-
+        if (player && player.roles && player.roles.cache) {
+            let roles = player.roles.cache;
             msg = "User is missing the role";
             errType = "RoleRequired";
-            if (global.config.Discord.BlackList_Role !== "" && global.config.Discord.BlackList_Role !== undefined && roles.find(element => element === global.config.Discord.BlackList_Role) !== undefined){
+            if (global.config.Discord.BlackList_Role && roles.some(r => r.id === global.config.Discord.BlackList_Role)){
                 msg = "You have a blacklisted role";
                 errType = "Blacklisted";
-            } else if (global.config.Discord.Required_Role === "" || global.config.Discord.Required_Role === undefined || roles.find(element => element === global.config.Discord.Required_Role) !== undefined){
+            } else if (!global.config.Discord.Required_Role || roles.some(r => r.id === global.config.Discord.Required_Role)){
                 msg = "Success";
-            } 
+            }
         }
 
         if (msg === "Success"){
@@ -236,10 +235,10 @@ async function HandleCallBack(req, res){
         } else {
             res.send(render(ErrorTemplate, {TheError: msg, Type: errType}));
         }
-    } catch (e){
+    } catch (error){
         logger.warn(`Error in HandleCallback`, { 
-            error: e, 
-            details: JSON.stringify(e) 
+            error, 
+            details: JSON.stringify(error) 
         });
         try {
             res.send(render(ErrorTemplate, {TheError: e, Type: "System"}));
