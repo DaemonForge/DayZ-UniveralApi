@@ -145,7 +145,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid); //Only sets if not set
 		
-		Post(endpoint,jsonString, U().RegisterCall(new UDBNestedCallBack(cb), cid));
+		Post(endpoint,jsonString, U().RegisterCall(new UNestedCallBack(cb), cid));
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Save");
@@ -163,7 +163,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid); //Only sets if not set
 		
-		Post(endpoint,jsonString, U().RegisterCall(new UDBNestedCallBack(cb),cid));
+		Post(endpoint,jsonString, U().RegisterCall(new UNestedCallBack(cb),cid));
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Load");
@@ -198,7 +198,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 				
 		if ( query && mod && cb){
 			cb.SetOID(mod); //Only sets if not set
-			Post(endpoint,query.ToJson(), U().RegisterCall(new UDBNestedCallBack(cb), cid));
+			Post(endpoint,query.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
 			
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Query");
@@ -266,7 +266,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid); //Only sets if not set
 			
-		Post(endpoint,transaction.ToJson(), U().RegisterCall(new UDBNestedCallBack(cb), cid));
+		Post(endpoint,transaction.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Transaction");
@@ -287,7 +287,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid); //Only sets if not set
 		
-		Post(endpoint,transaction.ToJson(), U().RegisterCall(new UDBNestedCallBack(cb), cid));
+		Post(endpoint,transaction.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Transaction");
@@ -367,7 +367,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		cb.SetOID(oid); //Only sets if not set
-		Post(endpoint, updatedata.ToJson(), U().RegisterCall(new UDBNestedCallBack(cb), cid));
+		Post(endpoint, updatedata.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Update");
@@ -432,7 +432,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		cb.SetOID(mod); //Only sets if not set
-		Post(endpoint, updatedata.ToJson(), U().RegisterCall(new UDBNestedCallBack(cb),cid));
+		Post(endpoint, updatedata.ToJson(), U().RegisterCall(new UNestedCallBack(cb),cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "QueryUpdate");

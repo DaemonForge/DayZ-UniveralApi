@@ -169,6 +169,10 @@ class UFCallbackBase extends Managed{
 		}
 	}
 	
+	string GetOID(){
+		return OID;
+	}
+	
 	void OnError(int errorCode, int cid) {
 		Error2("[UF] Callback Error", "Error calling back OnError, not set up correctly CallId: " + cid);
 	}
@@ -178,7 +182,7 @@ class UFCallbackBase extends Managed{
 	}
 }
 
-class UDBNestedCallBack : UFRestCallBackBase
+class UNestedCallBack : UFRestCallBackBase
 {
 	protected autoptr UFCallbackBase m_CB;
 
@@ -187,12 +191,12 @@ class UDBNestedCallBack : UFRestCallBackBase
 		return m_CB;
 	}
 	
-	void UDBNestedCallBack(UFCallbackBase cb){
+	void UNestedCallBack(UFCallbackBase cb){
 		m_CB = cb;
 		m_UFid = -1;
 	}
 	
-	void ~UDBNestedCallBack(){
+	void ~UNestedCallBack(){
 		if(m_CB) delete m_CB;
 	}
 	

@@ -1,4 +1,4 @@
-class ULogBase{
+class ULogBase extends UFObject_Base {
 	string Log = "";
 	string GUID = "";
 	vector Position;
@@ -12,13 +12,13 @@ class ULogBase{
 		}
 	}
 	
-	string ToJson(){
+	override string ToJson(){
 		return JsonFileLoader<ULogBase>.JsonMakeData(this);
 	}
 	
 }
 
-class ULogMisc{
+class ULogMisc extends UFObject_Base {
 	string Log = "";
 	string Action = "";
 	string Item = "";
@@ -39,13 +39,13 @@ class ULogMisc{
 		Target = target;
 	}
 	
-	string ToJson(){
+	override string ToJson(){
 		return JsonFileLoader<ULogMisc>.JsonMakeData(this);
 	}
 	
 }
 
-class ULogPlayerPos {
+class ULogPlayerPos extends UFObject_Base {
 	string Log = "PlayerPos";
 	
 	string GUID = "";
@@ -64,14 +64,14 @@ class ULogPlayerPos {
 		InTransport = inTransport;
 	}
 	
-	string ToJson(){
+	override string ToJson(){
 		return JsonFileLoader<ULogPlayerPos>.JsonMakeData(this);
 	}
 	
 }
 
 
-class ULogKilled{
+class ULogKilled extends Managed {
 	
 	string Log = "PlayerKilled";
 	

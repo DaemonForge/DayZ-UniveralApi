@@ -142,7 +142,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<UFServerStatus>(cbInstance, cbFunction, oid));
+			DBCBX = new UNestedCallBack(new UFCallback<UFServerStatus>(cbInstance, cbFunction, oid));
 		}
 		
 		if (  ip && ip != "" && queryPort && queryPort != "" && DBCBX){
@@ -183,7 +183,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
 		
 		if (  ip && ip != "" && queryPort && queryPort != "" ){
-			Post(endpoint,"{}",U().RegisterCall(new UDBNestedCallBack(new UFCallback<UFServerStatus>(cbInstance, cbFunction, oid)), cid));
+			Post(endpoint,"{}",U().RegisterCall(new UNestedCallBack(new UFCallback<UFServerStatus>(cbInstance, cbFunction, oid)), cid));
 		} else {
 			Print("[UF] [Api] Error ServerQuery IP:" +  ip + " Port:" + queryPort);
 			cid = -1;
@@ -202,7 +202,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else if (cbInstance && cbFunction != ""){
-			DBCBX = new UDBNestedCallBack(new UFCallback<URandomNumberResponse>(cbInstance, cbFunction, oid));
+			DBCBX = new UNestedCallBack(new UFCallback<URandomNumberResponse>(cbInstance, cbFunction, oid));
 		}
 		
 		autoptr URandomNumberRequest randomreq = new URandomNumberRequest(count);
@@ -225,7 +225,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<UCryptoConvertResult>(cbInstance, cbFunction, oid));
+			DBCBX = new UNestedCallBack(new UFCallback<UCryptoConvertResult>(cbInstance, cbFunction, oid));
 		}
 		
 		if ( from && to && DBCBX){
@@ -245,7 +245,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<UCryptoConvertResult>(cbInstance, cbFunction, oid));
+			DBCBX = new UNestedCallBack(new UFCallback<UCryptoConvertResult>(cbInstance, cbFunction, oid));
 		}
 		
 		autoptr UCryptoConvertRequest req = new UCryptoConvertRequest(value);
@@ -267,7 +267,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		if (cbInstance && cbFunction != "" && ReturnString){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, oid);
 		} else if (cbInstance && cbFunction != "") {
-			DBCBX = new UDBNestedCallBack(new UFCallback<UCryptoResults>(cbInstance, cbFunction, oid));
+			DBCBX = new UNestedCallBack(new UFCallback<UCryptoResults>(cbInstance, cbFunction, oid));
 		}
 		
 		autoptr UCryptoRequest req = new UCryptoRequest(from);
@@ -287,7 +287,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		if (ReturnString){	
 			Post("Status", "{}", new UDBCallBack(cbInstance, cbFunction, cid, oid));
 		} else {
-			Post("Status", "{}",  U().RegisterCall(new UDBNestedCallBack(new UFCallback<UFStatus>(cbInstance, cbFunction, oid)), cid));
+			Post("Status", "{}",  U().RegisterCall(new UNestedCallBack(new UFCallback<UFStatus>(cbInstance, cbFunction, oid)), cid));
 		}
 		return cid;
 	}
