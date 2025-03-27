@@ -9,7 +9,24 @@ const OpenAI = require('openai').default;
 const AudioModel = require('../models/tts');
 const { createLogger, ensureDirExsist } = require('../utils');
 const logger = createLogger(global.logger, 'TTS');
-const ffmpegPath = require('ffmpeg-static');
+const { app } = require('electron');
+let ffmpegPath;
+if (app && app.isPackaged && !process.pkg) {
+  // For production, use the unpacked binary at a known location.
+  ffmpegPath = path.join(path.dirname(process.execPath), 'ffmpeg.exe');
+} else if (process.pkg) {
+  // pkg: asset is inside the snapshot; extract it to a temporary location.
+  const targetPath = path.join(os.tmpdir(), 'ffmpeg.exe');
+  if (!fs.existsSync(targetPath)) {
+    // __dirname is inside the snapshot; use process.execPath to locate the bundled asset.
+    const sourcePath = path.join(path.dirname(process.execPath), 'node_modules', 'ffmpeg-static', 'ffmpeg.exe');
+    fs.copyFileSync(sourcePath, targetPath);
+  }
+  ffmpegPath = targetPath;
+} else {
+  // For development, use the ffmpeg-static module.
+  ffmpegPath = require('ffmpeg-static');
+}
 
 // Ensure the audio cache directory exists.
 const audioCachePath = path.join(global.SAVEPATH, 'audioCache');
@@ -72,7 +89,7 @@ function standardizeAudioFile(inputPath, outputPath, targetSampleRate = "44100")
     const proc = spawn(ffmpegPath, args);
     
     proc.stderr.on('data', (data) => {
-      logger.info('Standardize audio output:', data.toString().trim());
+      logger.debug(`Standardize audio output: ${data.toString().trim()}`, data.toString().trim());
     });
     
     proc.on('close', (code) => {
@@ -166,10 +183,14 @@ router.post('/Download/:TTSId', async (req, res) => {
     logger.info("TTS Download request", { params: req.params });
     const { TTSId } = req.params;
     const job = await AudioModel.getJob(TTSId);
-    if (!job ) return res.send("NotFound");
+    if (!job ) {
+      logger.warn("TTS Download request: Not found", { params: req.params });
+      return res.send("NotFound");
+    }
     if (job.status !== 'Success' ) return res.send(job.status);
     res.send(job.file);
   } catch (error) {
+    logger.info(`TTS Download request Error ${error.message}`, {error, params: req.params });
     res.send("Error");
   }
 });
@@ -188,9 +209,11 @@ async function processAudioClip(jobId, voiceId, message, instructions, staticLev
     const hash = crypto.createHash('sha512').update(message + instructions).digest('hex');
     const mp3Filename = hash + ".mp3";
     const mp3FilePath = path.join(audioCachePath, mp3Filename);
-    
-    if (!fs.existsSync(mp3FilePath)) {
-      logger.info("MP3 not found in cache. Calling OpenAI TTS API.", { hash });
+    const standardizedAudioFilename = "std_" + hash + ".wav";
+    const standardizedAudioPath = path.join(audioCachePath, standardizedAudioFilename);
+
+    if (!fs.existsSync(standardizedAudioPath)) {
+      logger.info("Audio File not found in cache. Calling OpenAI TTS API.", { hash });
       const openai = new OpenAI({ apiKey: global.config.OpenAIApi.ApiKey });
       const mp3Response = await openai.audio.speech.create({
         model: "gpt-4o-mini-tts",
@@ -201,17 +224,11 @@ async function processAudioClip(jobId, voiceId, message, instructions, staticLev
       const arrayBuffer = await mp3Response.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
       fs.writeFileSync(mp3FilePath, buffer);
-    } else {
-      logger.info("Using cached MP3.", { hash });
-    }
-
-    // Standardize the audio file by converting it to WAV.
-    // Change the extension to .wav so we know it's standardized.
-    const standardizedAudioFilename = "std_" + hash + ".wav";
-    const standardizedAudioPath = path.join(audioCachePath, standardizedAudioFilename);
-    if (!fs.existsSync(standardizedAudioPath)) {
-      logger.info("Standardizing audio file", { original: mp3FilePath, standardized: standardizedAudioPath });
+      logger.info(`Standardizing audio file ${hash}`, { original: mp3FilePath, standardized: standardizedAudioPath });
       await standardizeAudioFile(mp3FilePath, standardizedAudioPath, "44100");
+      fs.unlinkSync(mp3FilePath);
+    } else {
+      logger.info("Using cached File.", { hash });
     }
     
     // Convert the standardized WAV to an MP4 video.
@@ -228,10 +245,10 @@ async function processAudioClip(jobId, voiceId, message, instructions, staticLev
       updatedAt: new Date()
     });
     
-    // Optionally, cleanup the temporary MP4 file.
-    // fs.unlinkSync(mp4FilePath);
+    // cleanup the temporary MP4 file.
+    fs.unlinkSync(mp4FilePath);
   } catch (error) {
-    logger.error("Error processing audio clip", { error: error.message });
+    logger.error(`Error processing audio clip ${error.message}`, { error: error.message });
     await AudioModel.updateJob(jobId, {
       status: 'Error',
       error: error.message,
@@ -253,9 +270,9 @@ async function convertToMp4(inputPath, outputPath, staticLevel, visualMode) {
   let sampleRate;
   try {
     sampleRate = await getAudioSampleRate(inputPath);
-    logger.info("Detected sample rate", { sampleRate });
+    logger.debug("Detected sample rate", { sampleRate });
   } catch (err) {
-    logger.error("Could not retrieve sample rate, defaulting to 8000 Hz", { error: err.message });
+    logger.warn("Could not retrieve sample rate, defaulting to 8000 Hz", { error: err.message });
     sampleRate = "8000";
   }
   
@@ -353,7 +370,7 @@ async function convertToMp4(inputPath, outputPath, staticLevel, visualMode) {
     const ffmpegProc = spawn(ffmpegPath, ffmpegArgs);
     
     ffmpegProc.stderr.on('data', (data) => {
-      logger.info('FFmpeg processing:', {
+      logger.debug(`FFmpeg processing:${data.toString().trim()}`, {
         data: data.toString().trim(),
         inputPath,
         outputPath

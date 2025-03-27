@@ -43,20 +43,28 @@
     "electron-builder": "^25.1.8",
     "nodemon": "^3.1.9"
   },
+  "pkg": {
+  "assets": [
+    "node_modules/ffmpeg-static/ffmpeg.exe"
+  ]
+  },
   "build": {
     "appId": "com.daemonforge.ufserverservice",
     "productName": "Universal Framework Service",
     "directories": {
       "output": "../Build/UFService"
     },
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/ffmpeg.exe"
+    ],
     "win": {
       "target": "nsis",
       "icon": "public/universalFrameworklogo.ico"
     },
     "extraFiles": [
       {
-        "from": "node_modules/ffmpeg-static/ffmpeg.exe ",
-        "to": "ffmpeg",
+        "from": "node_modules/ffmpeg-static/ffmpeg.exe",
+        "to": "ffmpeg.exe",
         "filter": [
           "**/*"
         ]

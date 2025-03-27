@@ -106,8 +106,8 @@ function OpenConsoleWindow() {
     return;
   }
   ConsoleWindow = new BrowserWindow({
-    width: 820,
-    height: 380,
+    width: 980,
+    height: 392,
     title: "Universal Framework Console", // sets the window title
     icon: path.join(__dirname, 'public', 'universalFrameworklogo.ico'), // Use .ico for Windows, or .png if preferred
     webPreferences: {
@@ -256,6 +256,7 @@ function updateTrayMenu() {
         }
       },
       { type: 'separator' },
+      { label: "❤️ Donate", click: () => { shell.openExternal('https://github.com/sponsors/DaemonF0rge'); } },
       {
         label: '⚙️ Options',
         submenu: [
