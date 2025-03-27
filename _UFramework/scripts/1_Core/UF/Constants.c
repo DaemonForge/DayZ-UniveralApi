@@ -76,3 +76,48 @@ class DSPerms {
 	static string MANAGE_WEBHOOKS = "MANAGE_WEBHOOKS";
 	static string MANAGE_EMOJIS = "MANAGE_EMOJIS";	
 }
+
+
+class UTTSVoice {
+	static const string ALLOY = "alloy";
+	static const string ASH = "ash";
+	static const string BALLAD = "ballad";
+	static const string CORAL = "coral";
+	static const string ECHO = "echo";
+	static const string FABLE = "fable";
+	static const string ONYX = "onyx";
+	static const string NOVA = "nova"; 
+	static const string SAGE = "sage"; 
+	static const string SHIMMER = "shimmer";
+	static const string VERSE = "verse";
+}
+
+class UTTSVisual {
+	static const string LINE = "line";
+	static const string NONE = "none";
+}
+
+
+class UTTSPersonality {
+    static const string RAGED_SURVIVOR = "IMPORTANT: STRONG RUSSIAN ACCENT\nVoice: Ragged and explosive, each word a desperate cry.  \nTone: Frenzied and urgent.  \nDelivery: Rapid bursts with heavy static.  \nPhrasing: Abrupt commands.  \nFeatures: Intense static and a collapsing wasteland vibe."; // RAGED_SURVIVOR: Explosive urgency with a harsh Russian edge.
+
+    static const string WOUNDED_VETERAN = "IMPORTANT: STRONG BRITISH RP ACCENT\nVoice: Gravelly and measured, echoing battle scars.  \nTone: Somber and reflective.  \nDelivery: Slow with deliberate pauses.  \nPhrasing: Formal military jargon.  \nFeatures: Distant gunfire and wind."; // WOUNDED_VETERAN: Reflective and measured with refined British clarity.
+
+    static const string PARANOID_LONER = "IMPORTANT: STRONG NEW YORK ACCENT\nVoice: Hushed and jittery, clipped and alert.  \nTone: Suspicious and tense.  \nDelivery: Whispered with abrupt stops.  \nPhrasing: Short, clipped words.  \nFeatures: Subtle static and rustling sounds."; // PARANOID_LONER: Nervous and clipped with a strong New York bite.
+
+    static const string SAVVY_SCAVENGER = "IMPORTANT: STRONG AUSTRALIAN ACCENT\nVoice: Rough and fast, full of streetwise banter.  \nTone: Wry and pragmatic.  \nDelivery: Informal and brisk.  \nPhrasing: Punchy slang.  \nFeatures: Urban decay ambience."; // SAVVY_SCAVENGER: Streetwise and brisk with a bold Australian twang.
+
+    static const string DESPERATE_MEDIC = "IMPORTANT: STRONG MIDWESTERN AMERICAN ACCENT\nVoice: Gentle yet strained, focused on urgency.  \nTone: Empathetic and calm.  \nDelivery: Steady and clear.  \nPhrasing: Direct and instructional.  \nFeatures: Faint beeps and labored breathing."; // DESPERATE_MEDIC: Urgent and caring with a warm Midwestern drawl.
+
+    static const string GRIZZLED_HUNTER = "IMPORTANT: STRONG SCOTTISH BROGUE\nVoice: Deep and rugged, echoing the wild.  \nTone: Deliberate and cautious.  \nDelivery: Slow and rhythmic.  \nPhrasing: Measured and earthy.  \nFeatures: Rustling leaves and distant animal calls."; // GRIZZLED_HUNTER: Rugged and measured with a robust Scottish lilt.
+
+    static const string CYNICAL_OUTLAW = "IMPORTANT: STRONG TEXAS ACCENT\nVoice: Rough and clipped, with a dismissive sneer.  \nTone: Bitter and mocking.  \nDelivery: Casual and abrupt.  \nPhrasing: Snarky, terse remarks.  \nFeatures: Echoes of urban ruin."; // CYNICAL_OUTLAW: Hard-edged and biting with a strong Texan drawl.
+
+    static const string FORMER_WARLORD = "IMPORTANT: STRONG GERMAN ACCENT\nVoice: Commanding and formal, with measured authority.  \nTone: Stern and introspective.  \nDelivery: Deliberate with clear pauses.  \nPhrasing: Formal and precise.  \nFeatures: Subtle battlefield echoes."; // FORMER_WARLORD: Authoritative and formal with a strong German tone.
+
+    static const string JADED_OPPORTUNIST = "IMPORTANT: STRONG CALIFORNIAN ACCENT\nVoice: Cold and clipped, efficient and minimal.  \nTone: Detached and pragmatic.  \nDelivery: Rapid and businesslike.  \nPhrasing: Crisp, utilitarian statements.  \nFeatures: Urban decay ambience."; // JADED_OPPORTUNIST: Efficient and detached with a sleek Californian edge.
+
+    static const string QUIET_OBSERVER = "IMPORTANT: STRONG IRISH ACCENT\nVoice: Soft and introspective, quiet and measured.  \nTone: Melancholic and reflective.  \nDelivery: Slow and deliberate.  \nPhrasing: Minimal, contemplative phrases.  \nFeatures: Gentle wind and echoing silence."; // QUIET_OBSERVER: Soft and reflective with a lyrical Irish lilt.
+}
+
+

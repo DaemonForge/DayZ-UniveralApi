@@ -1,0 +1,43 @@
+FrameWidgetClass rootFrame {
+ visible 1
+ clipchildren 1
+ inheritalpha 1
+ ignorepointer 1
+ position 8 128
+ size 72 48
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ {
+  VideoWidgetClass videoPlayer {
+   inheritalpha 1
+   ignorepointer 1
+   size 48 48
+   halign right_ref
+   valign center_ref
+   hexactpos 0
+   vexactpos 0
+   hexactsize 1
+   vexactsize 1
+   mode additive
+   "src alpha" 0
+   "background color" 0 0 0 0
+  }
+  ImageWidgetClass icon {
+   visible 1
+   inheritalpha 1
+   ignorepointer 1
+   size 22 46
+   valign center_ref
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   image0 "_UFramework\images\radio.edds"
+   mode additive
+   "src alpha" 1
+   "stretch mode" fit_w_center
+  }
+ }
+}

@@ -705,4 +705,151 @@ class UUtil extends Managed {
 		}
 		return false;
 	}
+		
+	
+	/**
+	 * Saves a Base64-encoded string to a binary file.
+	 *
+	 * This function decodes the provided Base64 string into an array of bytes using DecodeBase64,
+	 * and then writes these bytes to a binary file using SaveBytesToFile.
+	 *
+	 * @param base64String The Base64-encoded string representing binary data.
+	 * @param filePath The file system path where the decoded binary data will be written.
+	 */
+	static void SaveBase64ToFile(string base64String, string filePath)
+	{
+		array<int> bytes;
+		DecodeBase64(base64String, bytes);
+		SaveBytesToFile(bytes, filePath);
+	}
+	
+	
+	 /**
+	 * Saves a Base64-encoded string to a binary file after a short delay.
+	 *
+	 * This variant of the save function decodes the Base64 string into bytes using DecodeBase64,
+	 * and schedules the saving process using a call queue (via GetGame().GetCallQueue), allowing the saving
+	 * operation to be deferred to reduce the impact on the client frame rate.
+	 *
+	 * @param base64String The Base64-encoded string representing binary data.
+	 * @param filePath The file system path where the decoded binary data will be written.
+	 */
+	static void SaveBase64ToFileSplit(string base64String, string filePath)
+	{
+		array<int> bytes;
+		DecodeBase64(base64String, bytes);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UUtil.SaveBytesToFile, 10, false, bytes, filePath); //call later to split client frame hit
+	}
+
+
+	/**
+	 * Decodes a Base64-encoded string into an array of integer byte values.
+	 *
+	 * This function processes the input string in 4-character blocks, converting each block into a 24-bit integer
+	 * from which the original bytes are extracted. It handles padding characters ("=") by counting them and adjusting
+	 * the number of output bytes accordingly.
+	 *
+	 * @param base64String The Base64-encoded string to decode.
+	 * @param decodedBytes [out] The output array of integers representing the decoded bytes.
+	 */
+	static void DecodeBase64(string base64String, out array<int> decodedBytes){
+		// ---- Decode Base64 string into a byte array ----
+	    const string base64Table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	    int len = base64String.Length();
+	    	    
+	    // Allocate an array to store decoded bytes.
+	    decodedBytes = new array<int>;
+	    
+	    int i = 0;
+	    while (i < len)
+	    {
+	        int indices[4];
+	        int padCount = 0;
+	        // Process 4 characters (one Base64 block).
+	        for (int k = 0; k < 4; k++)
+	        {
+	            string ch = base64String.Substring(i, 1);
+	            i++;
+	            if (ch == "=")
+	            {
+	                indices[k] = 0;
+	                padCount++;
+	            }
+	            else
+	            {
+	                int idx = base64Table.IndexOf(ch);
+	                if (idx == -1)
+	                {
+	                    Print("Warning: Invalid Base64 character encountered: \"" + ch + "\"");
+	                    idx = 0;
+	                }
+	                indices[k] = idx;
+	            }
+	        }
+	        // Combine the four 6-bit values into one 24-bit integer.
+	        int value = (indices[0] << 18) | (indices[1] << 12) | (indices[2] << 6) | indices[3];
+	        // Determine how many bytes are produced (normally 3, minus padding).
+	        int numBytes = 3 - padCount;
+	        for (int b = 0; b < numBytes; b++)
+	        {
+	            int shift = (2 - b) * 8;
+	            int byteValb = (value >> shift) & 0xFF;
+	            decodedBytes.Insert(byteValb);
+	        }
+	    }
+	}
+
+	
+	/**
+	 * Saves an array of bytes to a binary file.
+	 *
+	 * This function writes data to a binary file by grouping bytes into 32-bit integers.
+	 * It processes complete groups of 4 bytes, and if there is a remainder, it pads the remaining bytes with zeros.
+	 * The binary data is then written to the file via a FileSerializer in write mode.
+	 *
+	 * @param bytes An array of integers representing byte values to be saved.
+	 * @param filePath The file system path where the binary data will be written.
+	 */
+	static void SaveBytesToFile(array<int> bytes, string filePath){
+	    // Open a binary file stream using FileSerializer.
+	    FileSerializer serializer = new FileSerializer();
+	    if (!serializer.Open(filePath, FileMode.WRITE))
+	    {
+	        Error2("[UF] SaveBytesToFile", "Error: Unable to open file for binary writing: " + filePath);
+	        return;
+	    }
+	    
+	    // Group the bytes into blocks of 4 (each block will produce one 32-bit integer).
+	    int totalBytes = bytes.Count();
+	    int fullGroups = totalBytes / 4;
+	    int remainder = totalBytes % 4;
+	    
+	    // Write all complete groups.
+	    for (int group = 0; group < fullGroups; group++)
+	    {
+	        int combinedl = 0;
+	        for (int l = 0; l < 4; l++)
+	        {
+	            int byteVall = bytes.Get(group * 4 + l);
+	            combinedl |= byteVall << (l * 8);
+	        }
+	        // Write the 32-bit integer as raw binary.
+	        serializer.Write(combinedl);
+	    }
+	    
+	    // Write leftover bytes (if any), padded with zeros.
+	    if (remainder > 0)
+	    {
+	        int combinedm = 0;
+	        for (int m = 0; m < remainder; m++)
+	        {
+	            int byteValm = bytes.Get(fullGroups * 4 + m);
+	            combinedm |= byteValm << (m * 8);
+	        }
+	        serializer.Write(combinedm);
+	    }
+	    
+	    serializer.Close();
+	    //Print("Binary file saved successfully to: " + filePath);
+	}
 }

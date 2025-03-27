@@ -1,0 +1,16 @@
+MetaFileClass {
+ Name "{11666F905D0AABE4}_UFramework/images/radio.edds"
+ Author "laptop-a1dsa5nh"
+ ChangeDate -1741852041
+ Configurations {
+  TGAResourceClass PC {
+   SourceFile "radio.tga"
+  }
+  TGAResourceClass XBOX_ONE : PC {
+  }
+  TGAResourceClass PS4 : PC {
+  }
+  TGAResourceClass LINUX : PC {
+  }
+ }
+}

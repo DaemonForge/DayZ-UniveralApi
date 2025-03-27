@@ -281,6 +281,88 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
+	//Generates a TTS audio, taking the UTTSMessage Object and Voice ID 
+	//Constants in: UTTSVoice
+	//voiceID: alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, shimmer, and verse
+	int TTSGenerate(string voiceID, UTTSMessage msg, Class cbInstance, string cbFunction  ){
+		int cid = -1;
+		string endpoint = "TTS/Generate/" + voiceID;
+		
+		if (voiceID != "" && msg){
+			Post(endpoint, msg.ToJson(), U().RegisterCall(new UNestedCallBack(new UGenTTSCallback(cbInstance, cbFunction, voiceID)), cid));
+		} else {
+			Error2("[UF] [Api] TTSGenerate - Play Audio", " voiceID: " +  voiceID);
+			cid = -1;
+		}
+		return cid;
+	}
+	
+	int TTSStatus(string ttsId, Class cbInstance, string cbFunction ){
+		int cid = -1;
+		string endpoint = "TTS/Status/" + ttsId;
+		
+		if (ttsId != ""){
+			Post(endpoint, "{}", U().RegisterCall(new UNestedCallBack(new UTTSStatusCallback(cbInstance, cbFunction, ttsId)), cid));
+		} else {
+			Error2("[UF] [Api] TTSStatus", " ttsId: " +  ttsId);
+			cid = -1;
+		}
+		return cid;
+	}
+	
+	//Downloads an Audio file
+	int TTSDownload(string ttsId){
+		if (GetGame().IsDedicatedServer()) {
+			Error2("[UF] TTSDownload Called from Server", " TTSid: " + ttsId);
+			return -1;
+		}
+		int cid = -1;
+		string endpoint = "TTS/Download/" + ttsId;
+		
+		if (ttsId != ""){
+			Post(endpoint, "{}", U().RegisterCall(new UFDownloadTTS(ttsId), cid));
+		} else {
+			Error2("[UF] [Api] TTSDownload - Play Audio", " ttsId: " +  ttsId);
+			cid = -1;
+		}
+		return cid;
+	}
+	
+	//Downloads and Calls back when complete
+	int TTSDownload(string ttsId, Class cbInstance, string cbFunction){
+		if (GetGame().IsDedicatedServer()) {
+			Error2("[UF] TTSDownload Called from Server", " TTSid: " + ttsId);
+			return -1;
+		}
+		int cid = -1;
+		string endpoint = "TTS/Download/" + ttsId;
+		
+		if (ttsId != ""){
+			Post(endpoint, "{}", U().RegisterCall(new UDLTTSNestedCallback(new UDLTTSCallback(cbInstance, cbFunction, ttsId)), cid));
+		} else {
+			Error2("[UF] [Api] TTSDownload - Play Audio", " ttsId: " +  ttsId);
+			cid = -1;
+		}
+		return cid;
+	}
+	
+	int TTSPlay(string ttsId){
+		if (GetGame().IsDedicatedServer()) {
+			Error2("[UF] PlayTTS Called from Server", " TTSid: " + ttsId);
+			return -1;
+		}
+		if (!GetUFVideoPlayer()){
+			Error2("[UF] PlayTTS Called But GetUFVideoPlayer is null", " TTSid: " + ttsId);
+			return -1;
+		}
+		if (FileExist("$saves:" + ttsId + ".mp4")){
+			Print("[UF] PlayTTS ttsId already downloaded");
+			GetUFVideoPlayer().LoadAndPlay(ttsId, true);
+			return -1;
+		}
+		return TTSDownload(ttsId, GetUFVideoPlayer(), "UCBHandlePlay");
+	}
+	
 	//Request a status check from the api so you can get version number and such returns a `UFStatus` object
 	int Status(Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = -1;

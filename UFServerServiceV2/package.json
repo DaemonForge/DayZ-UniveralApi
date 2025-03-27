@@ -23,6 +23,8 @@
     "ejs-lint": "^2.0.1",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0",
     "gamedig": "^5.2.0",
     "greenlock-express": "^4.0.3",
     "https": "^1.0.0",
@@ -51,6 +53,15 @@
       "target": "nsis",
       "icon": "public/universalFrameworklogo.ico"
     },
+    "extraFiles": [
+      {
+        "from": "node_modules/ffmpeg-static/ffmpeg.exe ",
+        "to": "ffmpeg",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
     "nsis": {
       "oneClick": false,
       "perMachine": true,

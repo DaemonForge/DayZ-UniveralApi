@@ -56,6 +56,7 @@ const RouterCrypto = require('./controllers/crypto');
 const messagesRouter = require('./controllers/messages');
 const AIChatRouter = require('./controllers/aiChat');
 const AIAssistantRouter = require('./controllers/aiAssistant');
+const AudioRouter = require('./controllers/tts');
 
 
 /**
@@ -137,6 +138,7 @@ function createExpressApp() {
   app.use('/Messages', messagesRouter);
   app.use('/AI/Chat', AIChatRouter);
   app.use('/AI/Assistant', AIAssistantRouter);
+  app.use('/TTS', AudioRouter);
   
   // Handle invalid routes
   app.use('/', (req, res) => {
