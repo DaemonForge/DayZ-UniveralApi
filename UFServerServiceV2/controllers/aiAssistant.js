@@ -398,7 +398,7 @@ async function sendMessageInThread(req, res) {
     const thread = await aiAssistantModel.getThread(ThreadId);
     if (GUID !== undefined && GUID !== null && GUID !== "" && (thread.GUID !== GUID) && !isServer) {
       logger.warn(`Unauthorized message send attempt in thread ${ThreadId}`, { threadGUID: thread.GUID, providedGUID: GUID });
-      return res.status(403).json({ Status: "NoAuth", Error: "Unauthorized" });
+      return res.status(204).json({ Status: "NoAuth", Error: "Unauthorized" });
     }
     // Store the user message in our DB.
     await aiAssistantModel.addMessageToThread(ThreadId, "user", Message, "Success");

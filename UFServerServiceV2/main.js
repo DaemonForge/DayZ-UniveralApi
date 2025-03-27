@@ -173,7 +173,7 @@ function updateTrayMenu() {
     let apiStatusSubLabel = "";
     
     // Process API status.
-    if (err || (statusData.Error !== "noerror" && statusData.Error !== "noauth")) {
+    if (err || (statusData.Error !== "noerror" && statusData.Error !== "NoAuth")) {
       apiStatusLabel = "API: Error";
       apiStatusEmoji = "⚠️";
     } else {

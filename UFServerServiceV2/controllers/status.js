@@ -19,7 +19,7 @@ router.get('', (req, res)=>{
 async function runStatusCheck(req, res, auth) {
     const { noLog } = req.query;
     const client = new MongoClient(global.config.DBServer);
-    var returnError = "noauth"
+    var returnError = "NoAuth"
     if (CheckServerAuth(auth) || (await CheckAuth(auth, true))){
         returnError = "noerror"
     }

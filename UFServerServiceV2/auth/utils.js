@@ -28,7 +28,7 @@ const requireServerAuth = async (req, res, next) => {
         return next();
     }
     logger.warn(`Unauthorized player data access attempt requireServerAuth ${req.url}`, { mod: req.params.mod, auth });
-    return res.status(403).json({ Status: "NoAuth", Error: 'Unauthorized' });
+    return res.status(204).json({ Status: "NoAuth", Error: 'Unauthorized' });
 };
 
 
@@ -68,7 +68,7 @@ const requirePlayerOrServerAuth = async (req, res, next) => {
         if (!GUID) {
             req.params.GUID = GUID;
             logger.warn('No GUID available for authentication', { mod: req.params.mod });
-            return res.status(403).json({Status: "NoAuth", Error: 'Unauthorized' });
+            return res.status(204).json({Status: "NoAuth", Error: 'Unauthorized' });
         }
     } else {
         GUID = NormalizeToGUID(GUID);
@@ -81,10 +81,10 @@ const requirePlayerOrServerAuth = async (req, res, next) => {
             return next();
         }
         logger.warn(`Unauthorized player data access attempt requirePlayerOrServerAuth ${req.url}`, { GUID, mod: req.params.mod});
-        return res.status(403).json({Status: "NoAuth", Error: 'Unauthorized' });
+        return res.status(204).json({Status: "NoAuth", Error: 'Unauthorized' });
     } catch (err) {
         logger.error('Auth error', { error: err.message });
-        return res.status(500).json({ Status: "NoAuth", Error: 'Authentication error' });
+        return res.status(204).json({ Status: "NoAuth", Error: 'Authentication error' });
     }
 };
 

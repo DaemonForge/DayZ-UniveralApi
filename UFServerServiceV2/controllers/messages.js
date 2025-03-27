@@ -188,7 +188,7 @@ async function runWriteMessage(req, res) {
         const meta = await getQueueMeta(ModName, QueueName);
         if (!meta.allowPlayerWrites) {
             logger.warn(`Player writes are not allowed for Mod "${ModName}" Queue "${QueueName}"`);
-            return res.status(403).json({ Status: "NoAuth", Error: "Player writes are not allowed for this Queue" });
+            return res.status(204).json({ Status: "NoAuth", Error: "Player writes are not allowed for this Queue" });
         }
     }
     logger.info(`Message enQueued to Mod "${ModName}" Queue "${QueueName}" by "${actorId}"`);
@@ -196,7 +196,7 @@ async function runWriteMessage(req, res) {
     return res.status(201).json({ Status: "Success" });
   } catch (err) {
     logger.error(`Error writing to Mod "${req.params.Mod}" Queue "${req.params.Queue}": ${err.message}`, err);
-    return res.status(500).json({ Status: "Error", Error: "Internal Server Error" });
+    return res.status(204).json({ Status: "Error", Error: "Internal Server Error" });
   }
 }
 
