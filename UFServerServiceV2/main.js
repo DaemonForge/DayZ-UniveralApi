@@ -168,17 +168,17 @@ function fetchAPIStatus(callback) {
  */
 function updateTrayMenu() {
   fetchAPIStatus((err, statusData) => {
-    let apiStatusLabel = "API: Unknown";
+    let apiStatusLabel = "Status: Starting Up";
     let apiStatusEmoji = "❓";
     let apiStatusSubLabel = "";
     
     // Process API status.
     if (err || (statusData.Error !== "noerror" && statusData.Error !== "NoAuth")) {
-      apiStatusLabel = "API: Error";
+      apiStatusLabel = "Status: Error";
       apiStatusEmoji = "⚠️";
     } else {
       apiStatusEmoji = (statusData.Status === "Success") ? "🟢" : "🔴";
-      apiStatusLabel = `Status: ${statusData.Status} ${apiStatusEmoji}`;
+      apiStatusLabel = `Status: ${(statusData.Status === "Success") ? "Online" : statusData.Status} ${apiStatusEmoji}`;
       apiStatusSubLabel = `V${statusData.Version}`;
     }
     
