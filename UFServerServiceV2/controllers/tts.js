@@ -4,28 +4,78 @@ const router = express.Router();
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { spawn } = require('child_process');
 const OpenAI = require('openai').default;
 const AudioModel = require('../models/tts');
 const { createLogger, ensureDirExsist } = require('../utils');
 const logger = createLogger(global.logger, 'TTS');
 const { app } = require('electron');
-let ffmpegPath;
-if (app && app.isPackaged && !process.pkg) {
-  // For production, use the unpacked binary at a known location.
-  ffmpegPath = path.join(path.dirname(process.execPath), 'ffmpeg.exe');
-} else if (process.pkg) {
-  // pkg: asset is inside the snapshot; extract it to a temporary location.
-  const targetPath = path.join(os.tmpdir(), 'ffmpeg.exe');
-  if (!fs.existsSync(targetPath)) {
-    // __dirname is inside the snapshot; use process.execPath to locate the bundled asset.
-    const sourcePath = path.join(path.dirname(process.execPath), 'node_modules', 'ffmpeg-static', 'ffmpeg.exe');
-    fs.copyFileSync(sourcePath, targetPath);
+
+// ================================================================
+// Helper Function: getFfmpegPath
+//
+// Returns the appropriate FFmpeg binary path based on how the application is running.
+//   1. Packaged Electron app (but not using pkg): binary is expected to be unpacked 
+//      next to the Electron executable.
+//   2. pkg bundle: since files inside the pkg snapshot cannot be executed directly, 
+//      the binary is extracted to a temporary folder. For Linux, this assumes you have 
+//      manually supplied a static ffmpeg binary placed in the "bin" folder and for Windows 
+//      it uses the ffmpeg-static module bundled asset.
+//   3. In development, it simply returns the path from the ffmpeg-static module.
+function getFfmpegPath() {
+  // Determine the correct binary filename based on the platform.
+  // Windows requires the ".exe" extension.
+  const binaryName = process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg";
+
+  // 1. Running as a packaged Electron app (non-pkg).
+  if (app && app.isPackaged && !process.pkg) {
+    // The binary is expected to be unpacked next to the Electron executable.
+    return path.join(path.dirname(process.execPath), binaryName);
   }
-  ffmpegPath = targetPath;
-} else {
-  // For development, use the ffmpeg-static module.
-  ffmpegPath = require('ffmpeg-static');
+  // 2. Running in a pkg bundle.
+  else if (process.pkg) {
+    let sourcePath;
+    // For Linux, we assume you have manually supplied a static binary.
+    if (process.platform === "linux") {
+      // Ensure you have placed a precompiled ffmpeg binary in the "bin" folder
+      // and that you have updated your pkg configuration to include "bin/ffmpeg".
+      sourcePath = path.join(path.dirname(process.execPath), 'bin', binaryName);
+    } else {
+      // For Windows (and optionally macOS), use the binary from ffmpeg-static.
+      sourcePath = path.join(path.dirname(process.execPath), 'node_modules', 'ffmpeg-static', binaryName);
+    }
+    // Define a target path in the OS temporary directory. Optionally, appending process.pid 
+    // can help avoid conflicts.
+    const tempDir = os.tmpdir();
+    const targetPath = path.join(tempDir, binaryName);
+
+    // If the binary hasn't been extracted yet, copy it from the source path.
+    if (!fs.existsSync(targetPath)) {
+      fs.copyFileSync(sourcePath, targetPath);
+      // On UNIX-based systems (Linux/macOS), ensure the binary is executable.
+      try {
+        fs.chmodSync(targetPath, 0o755);
+      } catch (e) {
+        // On Windows, chmod might not be required.
+      }
+    }
+    return targetPath;
+  }
+  // 3. In development mode, use the binary provided by the ffmpeg-static module.
+  else {
+    return require('ffmpeg-static');
+  }
+}
+
+// Obtain the ffmpeg binary path using our helper.
+const ffmpegPath = getFfmpegPath();
+
+// ----------------------------------------------------------------
+// Log an error if the ffmpeg binary is not found at the expected location.
+// This check runs once at startup.
+if (!fs.existsSync(ffmpegPath)) {
+  logger.error(`FFmpeg binary not found at path: ${ffmpegPath}`);
 }
 
 // Ensure the audio cache directory exists.
