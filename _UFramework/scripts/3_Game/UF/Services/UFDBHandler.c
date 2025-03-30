@@ -186,10 +186,15 @@ class UDBHandlerBase extends Managed {
 	
 	string Mod = "";
 	int Database = PLAYER_DB;
+	protected int m_lastCall = -1;
 	
 	void UDBHandlerBase(string mod, int database = PLAYER_DB){
 		Mod = mod;
 		Database = database;
+	}
+	
+	void ~UDBHandlerBase(){
+		if (m_lastCall > 0) Cancel(m_lastCall);
 	}
 	
 	int Save(string oid, Class object) {
