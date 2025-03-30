@@ -37,7 +37,7 @@ app.on('ready', () => {
   checkAndInstallMongoDB();
 
   // Create the system tray icon
-  tray = new Tray(path.join(__dirname, 'public', 'universalFrameworklogo.png'));
+  tray = new Tray(path.join(__dirname, 'public', 'icon.png'));
   tray.setToolTip('Universal Framework');
 
   // Load your main service (if required)
@@ -109,7 +109,7 @@ function OpenConsoleWindow() {
     width: 980,
     height: 392,
     title: "Universal Framework Console", // sets the window title
-    icon: path.join(__dirname, 'public', 'universalFrameworklogo.ico'), // Use .ico for Windows, or .png if preferred
+    icon: path.join(__dirname, 'public', 'icon.ico'), // Use .ico for Windows, or .png if preferred
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -306,7 +306,7 @@ function openSettingsWindow() {
     width: 800,
     height: 600,
     title: "Unviersal Framework Settings",
-    icon: path.join(__dirname, 'public', 'universalFrameworklogo.ico'), // Use .ico for Windows, or .png if preferred
+    icon: path.join(__dirname, 'public', 'icon.ico'), // Use .ico for Windows, or .png if preferred
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

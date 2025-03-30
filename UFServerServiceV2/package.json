@@ -76,9 +76,10 @@
       "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
       "license": "public/license.txt",
-      "installerIcon": "public/universalFrameworklogo.ico",
-      "uninstallerIcon": "public/universalFrameworklogo.ico",
-      "installerHeaderIcon": "public/universalFrameworklogo.ico",
+      "installerIcon": "public/icon.ico",
+      "uninstallerIcon": "public/icon.ico",
+      "installerHeaderIcon": "public/icon.ico",
+      "removeDefaultUninstallWelcomePage": true,
       "include": "installer.nsi"
     }
   },

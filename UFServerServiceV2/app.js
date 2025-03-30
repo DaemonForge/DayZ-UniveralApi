@@ -121,9 +121,11 @@ function createExpressApp() {
     });
   });
 
-  // Serve favicon
-  app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-  
+  const faviconFile = path.join(global.SAVEPATH, 'templates', 'favicon.ico');
+  const defaultFavicon = path.join(__dirname, 'public', 'favicon.ico');
+  const faviconPath = existsSync(faviconFile) ? faviconFile : defaultFavicon;
+  app.use(favicon(faviconPath));
+
   // Register route handlers
   app.use('/Object', RouterItem);
   app.use('/Player', RouterPlayer);
@@ -139,6 +141,13 @@ function createExpressApp() {
   app.use('/AI/Chat', AIChatRouter);
   app.use('/AI/Assistant', AIAssistantRouter);
   app.use('/TTS', AudioRouter);
+  
+  const iconFile = path.join(global.SAVEPATH, 'templates', 'icon.png');
+  const defaultIcon = path.join(__dirname, 'public', 'icon.png');
+  const iconPath = existsSync(iconFile) ? iconFile : defaultIcon;
+  app.get('/icon.png', (req, res) => {
+    res.sendFile(iconPath);
+  });
   
   // Handle invalid routes
   app.use('/', (req, res) => {
