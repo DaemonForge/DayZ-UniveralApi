@@ -250,9 +250,9 @@ function GetSigningAuth(){
 
 /**
  * Creates an authentication token for a player based on their GUID.
- * The token expires in 2800 seconds (46.5 minutes), designed with a longer 
+ * The token expires in 1300 seconds (~22 minutes), designed with a longer 
  * expiration to ensure API downtime doesn't interrupt authentication.
- * Tokens are typically renewed every 21-23 minutes.
+ * Tokens are typically renewed every 10 minutes.
  *
  * @param {string} GUID - Unique identifier for the player
  * @returns {string} Signed JWT authentication token
@@ -261,8 +261,8 @@ function GetSigningAuth(){
 function makeAuthToken(GUID) {
     try {
         const player = { GUID: GUID }; 
-        //Token expires in 46.5 minutes, tokens renew every 21-23 Minutes ensuring that if the API is down at the time of the renewal token will last till next retry
-        return sign(player, GetSigningAuth(), { expiresIn: 2800 });
+        //Token expires in ~22 minutes, tokens renew every 10 Minutes ensuring that if the API is down at the time of the renewal token will last till next retry
+        return sign(player, GetSigningAuth(), { expiresIn: 1300 });
     } catch (error) {
         logger.error("Failed to create auth token", { guid: GUID, error: error.message });
         throw new Error("Authentication token generation failed");
