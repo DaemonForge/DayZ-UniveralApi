@@ -44,10 +44,16 @@ function initializeLogger() {
     }
   });
 
+  // Determine default log level:
+  // If packaged in Electron or pkg, use the global config's log level or default to 'info'
+  // Otherwise, set log level to 'debug'
+  const isPackaged = Boolean(process.pkg || (process.versions && process.versions.electron));
+  const logLevel = !isPackaged ? (global.config?.LogLevel || 'info') : 'debug';
+
+  console.log(`Log level set to: ${logLevel}`); // Log the determined log level
   // Create Winston logger with base configuration
   const logger = winston.createLogger({
-    // Use log level from global config or default to 'info'
-    level: global.config?.LogLevel || 'info',
+    level: logLevel,
     // Configure default log format with timestamp and JSON structure
     format: winston.format.combine(
       winston.format.timestamp({ format: () => new Date().toLocaleString() }),
