@@ -4,7 +4,7 @@ const pkg = require('./package.json');
 
 const version = pkg.version;
 const exePath = path.resolve(__dirname, '../Build/Service/ufserverservice-win.exe');
-const iconPath = path.resolve(__dirname, 'public/universalFrameworklogo.ico');
+const iconPath = path.resolve(__dirname, 'public/icon.ico');
 
 // Path to your rcedit executable (update if needed)
 const rceditExe = 'D:/Github/DayZ-UniveralApi/Build/rcedit.exe';

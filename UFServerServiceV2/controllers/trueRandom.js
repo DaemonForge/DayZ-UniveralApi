@@ -18,7 +18,7 @@ if (cluster.isMaster) {
             // Take only as many numbers as are available.
             const availableCount = Math.min(randomNumbers.length, count);
             const numbers = randomNumbers.splice(0, availableCount);
-            logger.info(`Master allocated ${availableCount} random numbers to worker ${worker.id}`, { requested: count, remaining: randomNumbers.length });
+            logger.debug(`Master allocated ${availableCount} random numbers to worker ${worker.id}`, { requested: count, remaining: randomNumbers.length });
             worker.send({ type: 'randomNumbersResponse', id: msg.id, numbers });
         }
     });
@@ -31,7 +31,7 @@ if (cluster.isMaster) {
         if (msg.type === 'randomNumbersResponse') {
             const resolve = pendingRequests.get(msg.id);
             if (resolve) {
-                logger.info(`Worker received ${msg.numbers.length} numbers for request id ${msg.id}`);
+                logger.debug(`Worker received ${msg.numbers.length} numbers for request id ${msg.id}`);
                 resolve(msg.numbers);
                 pendingRequests.delete(msg.id);
             }
@@ -76,7 +76,7 @@ if (cluster.isMaster) {
                     quantumProvided: qNumbers.length
                 });
             }
-            logger.info("Worker processed random number request", { requested: count });
+            logger.debug("Worker processed random number request", { requested: count });
             return res.status(200).json({ Status: "Success", Error: "", Numbers: numbers });
         } catch (e) {
             logger.error(`Error generating random numbers: ${e.message}`, { error: e, stack: e.stack });
@@ -124,7 +124,7 @@ async function getRandom(req, res) {
         if (randomNumbers.length > 0) {
             const availableCount = Math.min(randomNumbers.length, count);
             numbers = randomNumbers.splice(0, availableCount);
-            logger.info(`Master provided ${availableCount} quantum random numbers`, { requested: count, remaining: randomNumbers.length });
+            logger.debug(`Master provided ${availableCount} quantum random numbers`, { requested: count, remaining: randomNumbers.length });
         }
         
         // Use JS's Math.random if more numbers are needed.
@@ -139,7 +139,7 @@ async function getRandom(req, res) {
             logger.info(`Fallback: Generated ${remainingCount} numbers using Math.random`, { requested: count });
         }
         
-        logger.info("Request completed for random numbers", { requested: count });
+        logger.debug("Request completed for random numbers", { requested: count });
         return res.status(200).json({ Status: "Success", Error: "", Numbers: numbers });
     } catch (e) {
         logger.error(`Error in getRandom: ${e.message}`, { error: e, stack: e.stack });
@@ -172,7 +172,7 @@ async function FillRandomNumbers(bitsize) {
         const res = await fetch(`https://qrng.anu.edu.au/API/jsonI.php?length=1024&type=hex16&size=${bitsize}`);
         data = await res.json();
         data.success = true;
-        logger.info('Successfully fetched random numbers from quantum source', {
+        logger.debug('Successfully fetched random numbers from quantum source', {
             dataSize: data.data ? data.data.length : 0,
             responseStatus: res.status
         });
@@ -187,7 +187,7 @@ async function FillRandomNumbers(bitsize) {
         data.data.forEach(e => {
             randomNumbers = AddToInts(randomNumbers, e);
         });
-        logger.info('Added fetched random numbers to the pool', { newPoolSize: randomNumbers.length });
+        logger.debug('Added fetched random numbers to the pool', { newPoolSize: randomNumbers.length });
     }
 }
 

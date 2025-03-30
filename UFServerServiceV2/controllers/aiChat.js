@@ -26,6 +26,7 @@ async function testOpenAI() {
     } else {
         openai = new OpenAI({apiKey: global.config.OpenAIApi.ApiKey});
         try{
+            logger.debug("API Key exists, testing AI response");
             const questions = ['How do I find food?', 'How do I find water?', 'How do I fish?', 'How do I hunt?', 'How do I build a base?'];
             const qidx = Math.floor(Math.random()*questions.length);
             const testRes = await openai.chat.completions.create({
@@ -36,6 +37,7 @@ async function testOpenAI() {
                 ]
             });
             const test = testRes.choices[0].message.content.trim();
+            logger.debug("Received test response", { question: questions[qidx], response: test });
             if (global.OPENAISTATUS !== "Online"){
                 logger.info(`OpenAi is enabled and online: ${questions[qidx]} ${test}`);
                 global.OPENAISTATUS = "Online";
@@ -47,11 +49,13 @@ async function testOpenAI() {
         }
         if (global.config.OpenAIApi?.SkipCheck != undefined || global.config.OpenAIApi.SkipCheck === false){
             setInterval(testOpenAI, 600000);
+            logger.debug("Initialized periodic OpenAI status check");
         }
     }
 }
 testOpenAI();
 router.use((req, res, next) => {
+    logger.debug("router.use triggered", { OPENAISTATUS: global.OPENAISTATUS });
     if (global.OPENAISTATUS === "Disabled"){
         logger.warn("OpenAI is disabled, AI Chat will not work");
         return res.status(501).json({ Status: "Error", Error: "OpenAI is disabled" });
@@ -185,6 +189,7 @@ module.exports = router;
  * @returns {string} - The enforcement message.
  */
 function getJsonResponseFormatMessage(jsonSchema) {
+    logger.debug("Generating JSON response format message", { jsonSchema });
     return `!IMPORTANT: Respond ONLY with a valid JSON object matching this JSON schema: ${JSON.stringify(jsonSchema)}. DO NOT include extra text.`;
 }
 
@@ -225,6 +230,7 @@ async function runCreateChat(req, res){
                 return res.status(400).json({ Status: "Error", Error: "JsonSchema string is not valid JSON" });
             }
         }
+        logger.debug("Creating chat with parameters", { SystemMessage, ResponseFormat, Model, MaxHistory });
         const result = await createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory);
         logger.info("Chat created successfully", { ChatId: result.ChatId });
         return res.status(201).json({ Status: "Success", ChatId: result.ChatId });
@@ -271,6 +277,7 @@ async function sendMessage(req, res){
         }
 
         // Check if there's already a pending message in this chat
+        logger.debug("Chat found, checking for pending messages", { ChatId });
         const pendingMessage = (chat.Messages || []).find(msg => msg.status === "Pending");
         if (pendingMessage) {
             logger.debug("A pending message already exists", { ChatId, PendingMessageId: pendingMessage.MessageId });
@@ -298,6 +305,7 @@ async function sendMessage(req, res){
 
         // Process the AI response asynchronously.
         (async () => {
+            logger.debug("Starting asynchronous AI processing", { ChatId, AssistantMessageId: assistantMessageId });
             try {
                 logger.info("Starting asynchronous AI processing", { ChatId, AssistantMessageId: assistantMessageId });
                 const updatedChat = await getChat(ChatId);
@@ -338,7 +346,6 @@ async function sendMessage(req, res){
                             role: 'system',
                             content: `Use the following context to help inform your responses, but don't put to much focus on this, focus on the user message: \`\`\`\n\n${contextSections.join('\n\n')}\`\`\``
                         });
-                        logger.debug("Context added to messages", { ChatId });
                     }
                 }
                 let reasoningEffort;
@@ -430,7 +437,7 @@ async function getMessageStatus(req, res){
             // Attempt to parse the message content as JSON.
             try {
                 messageContent = JSON.parse(message.content);
-                logger.info("Successfully parsed message content as JSON", { MessageId });
+                logger.debug("Parsed message content as JSON", { MessageId });
             } catch (e) {
                 logger.warn("Failed to parse message content as JSON, returning raw content", { MessageId });
             }
@@ -467,6 +474,7 @@ async function runGetChatHistory(req, res){
                 Message: content
             }))
         };
+        logger.debug("Chat history retrieved", { ChatId, totalMessages: chat.Messages.length });
         return res.status(200).json({ Status: "Success", ...remappedChat });
     } catch (err) {
         logger.error("Error retrieving chat history: " + err.message, { stack: err.stack });
@@ -554,6 +562,7 @@ async function runSummarizeChat(req, res){
         if (chat.Summary !== undefined && chat.Summary !== "") { 
             let timeDif = chat.lastUpdated-chat.summaryUpdated;
             console.log(timeDif);
+            logger.debug("Summary exists, checking if it's up-to-date", { ChatId, timeDifference: timeDif });
             if (timeDif <= 1) {
                 logger.info("Chat summary exists and is up-to-date", { ChatId });
                 return res.status(200).json({ Status: "Success", SummaryId:"", Summary: chat.Summary, Error:"" });
@@ -568,13 +577,14 @@ async function runSummarizeChat(req, res){
 
         // Process the summary asynchronously.
         (async () => {
+            logger.debug("Starting asynchronous summary generation", { ChatId, SummaryId });
             try {
                 logger.info("Starting asynchronous summary generation", { ChatId, SummaryId });
                 let conversationText = chat.SystemMessage + "\n";
                 chat.Messages.forEach(msg => {
                     conversationText += `${msg.role}: ${msg.content}\n`;
                 });
-                logger.info("Built conversation text for summarization", { ChatId, SummaryId });
+                logger.debug("Built conversation text for summarization", { ChatId, SummaryId });
                 const summaryResponse = await openai.chat.completions.create({
                     model: 'o3-mini',
                     reasoning_effort: "medium",
@@ -588,7 +598,7 @@ async function runSummarizeChat(req, res){
                 // Update the summary record with the generated summary and status "Success"
                 // Expected model function: updateChatSummaryStatus(SummaryId, status, summaryText) -> returns true/false.
                 await updateChatSummaryStatus(SummaryId, "Success", summaryText);
-                logger.info("Updated summary record with success status", { ChatId, SummaryId });
+                logger.debug("Updated summary record with success status", { ChatId, SummaryId });
                 await saveChatSummary(ChatId, summaryText);
                 logger.info("Saved chat summary to storage", { ChatId, SummaryId });
             } catch (err) {
