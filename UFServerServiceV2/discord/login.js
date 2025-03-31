@@ -8,6 +8,7 @@ const logger = createLogger(global.logger, 'discord');
 const client = require("./bot.js");
 const {render} = require('ejs');
 const DefaultTemplates = require('../templates/defaultTemplates.json');
+const { log } = require("console");
 
 //Create Template Folder if it doesn't exist
 if (!existsSync(global.SAVEPATH + 'templates')) mkdirSync(global.SAVEPATH + 'templates');
@@ -147,6 +148,7 @@ async function HandleCallBack(req, res){
             }
         });
         let discordjson = await discordres.json();
+        logger.debug(`Discord User Info Optained for ${discordjson.id}.`, discordjson );
         discordjson.steamid = state;
         let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
         let msg = `Unknown Error, possible that call back isn't configured correctly should be "https://${req.headers.host}/discord/callback"`;
@@ -183,8 +185,8 @@ async function HandleCallBack(req, res){
                 GUID: guid,
                 Discord: {
                     id: discordjson.id,
+                    globalName: discordjson.global_name,
                     username: discordjson.username,
-                    discriminator: discordjson.discriminator,
                     avatar: discordjson.avatar
                 }
             }
@@ -205,7 +207,7 @@ async function HandleCallBack(req, res){
                         GUID: guid, 
                         discordId: discordjson.id 
                     });
-                    res.send(render(SuccessTemplate, {DiscordId: discordjson.id, DiscordUsername: discordjson.username, DiscordAvatar: discordjson.avatar, DiscordDiscriminator: discordjson.discriminator, SteamId: discordjson.steamid}))
+                    res.send(render(SuccessTemplate, {DiscordId: discordjson.id, DiscordUsername: discordjson.username, DiscordAvatar: discordjson.avatar, discordName: discordjson.global_name, SteamId: discordjson.steamid}))
                 } else {
                     logger.warn("Error when trying to link player to discord", { 
                         GUID: guid, 

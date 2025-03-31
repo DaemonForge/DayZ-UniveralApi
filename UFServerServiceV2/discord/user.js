@@ -1,7 +1,6 @@
 const client = require("./bot.js");
 const {User, GuildMember, Guild} = require("discord.js");
 
-const {requireServerAuth, requirePlayerOrServerAuth, CheckServerAuth} = require('../auth/utils');
 const {NormalizeToGUID, createLogger} = require('../utils');
 const logger = createLogger(global.logger, 'discord');
 const {GetDiscordObj, GetClientID} = require('./dsUtils');
@@ -9,7 +8,7 @@ const {playerExists} = require('../models/player');
 
 
 //API Call Functions
-async function AddRole(req, res){
+async function AddRole(req, res) {
     if (!client) {
         logger.error("Discord client not initialized");
         return res.status(500).send({ Status: "Error", Error: "Discord client not initialized" });
@@ -24,9 +23,9 @@ async function AddRole(req, res){
             let resObj;
             if (dsInfo === undefined || dsInfo.id === "0" ){
                 logger.info(`Error: Discord AddRole - User doesn't have discord set up`, { GUID });
-                resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "",id: "0", Username: "", Discriminator: "", Avatar: "" };
+                resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "",id: "0", Username: "", GlobalName: "", Avatar: "" };
             } else {
-                resObj = { Status: "Error", Error: "Couldn't connect to discord", Roles: [], VoiceChannel: "", id: dsInfo.id, Username: dsInfo.username, Discriminator: dsInfo.discriminator, Avatar: dsInfo.avatar };
+                resObj = { Status: "Error", Error: "Couldn't connect to discord", Roles: [], VoiceChannel: "", id: dsInfo.id, Username: dsInfo.username, GlobalName: dsInfo.globalName, Avatar: dsInfo.avatar };
                 try {
                     let player = await guild.members.fetch(dsInfo.id);
                     resObj.Status = "Success";
@@ -55,7 +54,7 @@ async function AddRole(req, res){
         }catch(err){
             console.log(err);
             res.status(203);
-            res.json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
+            res.json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
             logger.warn("Error in AddRole", { error: err });
         }
 }
@@ -66,17 +65,18 @@ async function RemoveRole(req, res){
             let resObj = {};
             if ((await playerExists(GUID)) === false){
                 logger.info(`Error: Discord RemoveRole - Player doesn't exist`, { GUID });
-                return res.status(203).json({Status: "NotFound", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
+                return res.status(203).json({Status: "NotFound", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
             } 
             let dsInfo = GetDiscordObj(GUID);
             let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
             dsInfo = await dsInfo;
             if (dsInfo === undefined || dsInfo.id === undefined || dsInfo.id === "0" ){
                 logger.info(`Discord RemoveRole - User doesn't have discord set up`, { GUID });
-                return res.status(203).json(resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
+                return res.status(203).json(resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
             } 
             let RawData = req.body;
             let Role = RawData.Role;
+            resObj = { Status: "Error", Error: "Couldn't connect to discord", Roles: [], VoiceChannel: "", id: dsInfo.id, Username: dsInfo.username, GlobalName: dsInfo.globalName, Avatar: dsInfo.avatar };
             try {
                 let player = await guild.members.fetch(dsInfo.id);
                 resObj.Status = "Success";
@@ -100,47 +100,53 @@ async function RemoveRole(req, res){
             return res.status(202).json(resObj);
         }catch(err){
             logger.warn("Error in RemoveRole", err);
-            return res.status(203).json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
+            return res.status(203).json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
         }
 }
 
 async function GetUserAndRoles(req, res){
     let GUID = NormalizeToGUID(req.params.GUID);
-        try{
-            let dsInfo = await GetDiscordObj(GUID);
-            if (dsInfo?.id  === undefined || dsInfo.id === "0" ){
-                logger.info("Can't find Player in database", { GUID });
-                res.status(201);
-                res.json({Status: "NotSetup", Error: `Player with ${GUID} Not Found`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
-            } else {
+    logger.debug("GetUserAndRoles called", { GUID });
+    try{
+        let dsInfo = await GetDiscordObj(GUID);
+        logger.debug("Fetched Discord object", { GUID, dsInfo });
+        if (dsInfo?.id  === undefined || dsInfo.id === "0" ){
+            logger.info("Can't find Player in database", { GUID });
+            res.status(201);
+            res.json({Status: "NotSetup", Error: `Player with ${GUID} Not Found`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
+        } else {
 
-                if (dsInfo === undefined || dsInfo.id === undefined || dsInfo.id === "" || dsInfo.id === "0" ){
-                    resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" };
-                } else {                        
-                    resObj = { Status: "Error", Error: "Couldn't connect to discord", Roles: [], VoiceChannel: "", id: dsInfo.id, Username: dsInfo.username, Discriminator: dsInfo.discriminator, Avatar: dsInfo.avatar };
-                    let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
-                    try {
-                        let player = await guild.members.fetch(dsInfo.id);
-                        resObj.VoiceChannel = player.voice.channel.id || "";
-                        resObj.Status = "Success"
-                        resObj.Error = "";
-                        resObj.Roles = player._roles || [];
-                    
-                        logger.info(`Successfully found discord ID and roles`, { GUID });
-                    } catch (e) {
-                        logger.info(`Found Discord ID but not roles`, { GUID, e });
-                        resObj.Error = "User not found in discord";
-                        resObj.Status = "NotFound";
-                    }
+            let resObj;
+            if (dsInfo === undefined || dsInfo.id === undefined || dsInfo.id === "" || dsInfo.id === "0" ){
+                resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" };
+                logger.debug("Discord object is invalid", { GUID, dsInfo });
+            } else {                        
+                resObj = { Status: "Error", Error: "Couldn't connect to discord", Roles: [], VoiceChannel: "", id: dsInfo.id, Username: dsInfo.username, GlobalName: dsInfo.globalName, Avatar: dsInfo.avatar };
+                let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
+                logger.debug("Fetched guild", { guildId: guild.id });
+                try {
+                    let player = await guild.members.fetch(dsInfo.id);
+                    resObj.VoiceChannel = player.voice.channel?.id || "";
+                    resObj.Status = "Success";
+                    resObj.Error = "";
+                    resObj.Roles = player._roles || [];
+                    logger.info("Successfully found discord ID and roles", { GUID });
+                    logger.debug("Player details", { GUID, roles: resObj.Roles, voiceChannel: resObj.VoiceChannel });
+                } catch (e) {
+                    logger.info("Found Discord ID but not roles", { GUID, error: e });
+                    logger.debug("Error fetching player roles", { GUID, error: e });
+                    resObj.Error = "User not found in discord";
+                    resObj.Status = "NotFound";
                 }
-                res.status(200);
-                res.json(resObj);
             }
-        }catch(err){
-            res.status(203);
-            res.json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", Discriminator: "", Avatar: "" });
-            logger.warn("Error in GetUserAndRoles", err );
+            res.status(200);
+            res.json(resObj);
         }
+    }catch(err){
+        logger.warn("Error in GetUserAndRoles", { GUID, error: err });
+        res.status(203);
+        res.json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
+    }
 }
 
 
@@ -255,7 +261,6 @@ async function PlayerVoiceKick(req, res){
 
 async function ChannelVoiceMove(req, res){
     let GUID = NormalizeToGUID(req.params.GUID);
-    let auth = req.headers['auth-key'];
     let ChannelId = req.params.id;
         let dsInfo = GetDiscordObj(GUID);
         let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
@@ -269,7 +274,7 @@ async function ChannelVoiceMove(req, res){
                     res.json({Status: `Error`, Error: `Channel doesn't exsit`});
                     return;
                 }
-                if (CheckServerAuth(auth) || (CheckPlayerAuth(GUID, auth) && channel.permissionsFor(player).has('VIEW_CHANNEL') && channel.permissionsFor(player).has('CONNECT') )) {
+                if (req.isServer || (channel.permissionsFor(player).has('VIEW_CHANNEL') && channel.permissionsFor(player).has('CONNECT') )) {
                     try {
                         let oldchannel = player.voice.channelID;
                         let result = await player.voice.setChannel(ChannelId);

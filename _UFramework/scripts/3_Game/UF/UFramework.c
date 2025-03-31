@@ -436,13 +436,13 @@ class UFramework extends Managed {
 	protected bool m_UFOnline = false;
 	protected int m_UFVersionOffset = 0;
 	protected bool m_UDiscordEnabled = false;
+	protected bool m_UOpenAIEnabled = false;
 	
 	protected bool UF_Init = false;
 	protected autoptr ApiAuthToken m_UFauthToken;
 	
 	protected autoptr UniversalRest m_UniversalRest;
 	
-	protected autoptr UniversalDiscordRest m_UniversalDiscordRest;
 	protected autoptr UniversalDSEndpoint m_UniversalDSEndpoint;
 	protected autoptr UDBGlobalEndpoint m_UDBGlobalEndpoint;
 	
@@ -491,13 +491,6 @@ class UFramework extends Managed {
 	 * the instance if it is not already available.
 	 *
 	 * @return UniversalRest instance for processing REST callbacks.
-	 */
-
-	/**
-	 * Returns the UniversalDiscordRest instance to handle Discord-related REST calls. Lazily initializes 
-	 * the instance if it is not already available.
-	 *
-	 * @return UniversalDiscordRest instance.
 	 */
 
 	/**
@@ -707,15 +700,7 @@ class UFramework extends Managed {
 			m_UniversalRest = new UniversalRest;
 		}
 		return m_UniversalRest;
-	}
-
-	UniversalDiscordRest Discord(){
-		if (!m_UniversalDiscordRest){
-			m_UniversalDiscordRest = new UniversalDiscordRest;
-		}
-		return m_UniversalDiscordRest;
-	}
-	
+	}	
 	
 	
 	void ~UFramework(){
@@ -961,6 +946,12 @@ class UFramework extends Managed {
 			}
 			if (data.Error == "noerror" && data.Discord == "Enabled"){
 				m_UDiscordEnabled = true;
+			}
+			if (data.Discord == "Online"){
+				m_UDiscordEnabled = true;
+			}
+			if (data.OpenAI == "Online"){
+				m_UOpenAIEnabled = true;
 			}
 			m_UFVersionOffset = data.CheckVersion(UF_VERSION);
 			if (m_UFVersionOffset > 2){

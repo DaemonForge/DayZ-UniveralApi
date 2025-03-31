@@ -20,7 +20,7 @@ class UDiscordUser extends StatusObject{
 	string id;
 	string Username;
 	
-	string Discriminator;
+	string GlobalName;
 	string Avatar;
 	
 	autoptr TStringArray Roles;

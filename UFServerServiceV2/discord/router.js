@@ -46,7 +46,7 @@ router.use(GenerateLimiter(global.config.RequestLimitQuery || 400, 10));
  *               VoiceChannel: "|CONNECTEDVOICECHANNEL|", 
  *               id: "|DISCORDID|", 
  *               Username: "|USERNAME|", 
- *               Discriminator: "|DISCRIMINATOR|", 
+ *               GlobalName: "|GlobalName|", 
  *               Avatar: "|LINKTOAVATAR|" 
  *             }`
  * 
@@ -69,7 +69,7 @@ router.post('/AddRole/:GUID', requireServerAuth, AddRole);
  *               VoiceChannel: "|CONNECTEDVOICECHANNEL|", 
  *               id: "|DISCORDID|", 
  *               Username: "|USERNAME|", 
- *               Discriminator: "|DISCRIMINATOR|", 
+ *               GlobalName: "|GlobalName|", 
  *               Avatar: "|LINKTOAVATAR|" 
  *             }`
  * 
@@ -89,7 +89,7 @@ router.post('/RemoveRole/:GUID', requireServerAuth, RemoveRole);
  *               VoiceChannel: "|CONNECTEDVOICECHANNEL|", 
  *               id: "|DISCORDID|", 
  *               Username: "|USERNAME|", 
- *               Discriminator: "|DISCRIMINATOR|", 
+ *               GlobalName: "|GlobalName|", 
  *               Avatar: "|LINKTOAVATAR|" 
  *             }`
  * 
