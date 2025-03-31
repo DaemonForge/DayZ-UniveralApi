@@ -12,15 +12,34 @@ modded class DayZGame extends CGame
 	
 	
 	protected void CBCacheDiscordInfo(int cid, int status, string oid, UDiscordUser data){
-		Print("[UF] Attempting to Cache Discord info cid"+cid + " status: " + status);
+		Print("[UF] Attempting to Cache Discord info cid" + cid + " status: " + status);
 		if (IsClient() && status == UF_SUCCESS){
 			if (Class.CastTo(m_discordUser, data)){
-				Print("[UF] Discord is set up and cached " + m_discordUser.Username + "#" +  m_discordUser.Discriminator);
+				Print("[UF] Discord is set up and cached " + m_discordUser.GlobalName);
+				U().ds().DownloadAvatar(GetDayZGame().GetSteamId()); //will use auth key to get the GUID
+				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.UpdateDiscordLoggedInWidget, 1500, false);
 			}
 		}
 		if (IsClient() && status == UF_NOTSETUP && UFConfig().PromptDiscordOnConnect >= 1){
 			Print("[UF] [Discord] Prompt on connect configured and no Discord info found");
-			OpenURL(U().ds().Link());
+			GetDiscordLoggedInWidget().ShowAvatar();
+		}
+	}
+	
+	protected bool m_UpdateDiscordWidgetShouldRetry = true;
+	protected void UpdateDiscordLoggedInWidget(){
+		if (m_discordUser && GetDiscordLoggedInWidget()){
+			if (FileExist("$saves:discordme.edds")){
+				GetDiscordLoggedInWidget().ShowAvatar();
+				GetDiscordLoggedInWidget().UpdateData(m_discordUser.GlobalName, "$saves:discordme.edds");
+			} else {
+				GetDiscordLoggedInWidget().ShowAvatar();
+				GetDiscordLoggedInWidget().UpdateData(m_discordUser.GlobalName, "_UFramework/images/discord.edds");
+				if (m_UpdateDiscordWidgetShouldRetry){
+					GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.UpdateDiscordLoggedInWidget, 3500, false);
+					m_UpdateDiscordWidgetShouldRetry = false;
+				}
+			}
 		}
 	}
 	

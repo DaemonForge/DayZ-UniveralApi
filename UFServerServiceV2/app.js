@@ -57,7 +57,7 @@ const messagesRouter = require('./controllers/messages');
 const AIChatRouter = require('./controllers/aiChat');
 const AIAssistantRouter = require('./controllers/aiAssistant');
 const AudioRouter = require('./controllers/tts');
-
+const ImageRouter = require('./controllers/images');
 
 /**
  * Configure rate limiting for API protection
@@ -141,6 +141,7 @@ function createExpressApp() {
   app.use('/AI/Chat', AIChatRouter);
   app.use('/AI/Assistant', AIAssistantRouter);
   app.use('/TTS', AudioRouter);
+  app.use('/Images', ImageRouter);
   
   const iconFile = path.join(global.SAVEPATH, 'templates', 'icon.png');
   const defaultIcon = path.join(__dirname, 'public', 'icon.png');

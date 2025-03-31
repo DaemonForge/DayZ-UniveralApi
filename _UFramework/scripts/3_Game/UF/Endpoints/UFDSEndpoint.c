@@ -528,5 +528,18 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		return cid;
 	}
+	
+	
+	int DownloadAvatar(string guid, string filename = "discordme"){
+		int cid = -1;		
+		string url = UFConfig().GetBaseURL() + "Images/Discord/" + guid;
+		if (guid == "" || filename == ""){
+			Error2("[UF] DownloadAvatar", "guid or filename is null guid: " + guid + " filename: " + filename);
+			return -1;
+		}
 		
+		U().Post(url,"{}",U().RegisterCall(new UFDLDiscordAvatarCallback(filename), cid));
+	
+		return cid;
+	}
 }

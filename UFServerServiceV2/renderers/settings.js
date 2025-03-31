@@ -6,7 +6,9 @@
  * - Dynamic addition/removal of list items for ServerAuth, RateLimitWhiteList, and Functions.
  * - Generation of complex auth tokens.
  * - Loading/saving configuration via IPC.
- * - Updated: Discord restriction fields are now located in the Advanced section.
+ * - Updated: Auth keys now include an inline text input to allow labeling each auth key. 
+ *            The labels are stored in a separate array (ServerAuthLabels) that maintains
+ *            a one-to-one correspondence with the ServerAuth array.
  */
 
 // Global flag to track unsaved changes.
@@ -60,21 +62,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /**
-   * createAuthEntry: Creates a new list item for a ServerAuth token.
-   * The token is displayed in a read-only input with copy and delete buttons.
+   * createAuthEntry: Creates a new list item for a ServerAuth token with an inline label.
+   * The token is displayed in a read-only input; next to it a text input field allows a label.
+   * Copy and delete buttons are included.
+   *
    * @param {string} value - The auth token value.
+   * @param {string} label - The label for the auth key (defaults to empty string).
    * @returns {HTMLElement} - The constructed list item element.
    */
-  function createAuthEntry(value = '') {
+  function createAuthEntry(value = '', label = '') {
     const wrapper = document.createElement('div');
     wrapper.className = 'list-item';
 
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.readOnly = true;
-    input.value = value;
-    input.title = "Auth token (read-only)";
-    input.style.flex = "1";
+    // Auth token input (read-only). Added a specific class for later selection.
+    const tokenInput = document.createElement('input');
+    tokenInput.type = 'text';
+    tokenInput.readOnly = true;
+    tokenInput.value = value;
+    tokenInput.title = "Auth token (read-only)";
+    tokenInput.style.flex = "1";
+    tokenInput.classList.add('auth-key-input');
+
+    // Label input for the auth token. Users can edit this field.
+    const labelInput = document.createElement('input');
+    labelInput.type = 'text';
+    labelInput.value = label;
+    labelInput.placeholder = 'Label for auth key';
+    labelInput.classList.add('auth-label-input');
+    // Set a fixed width for label input (adjust as needed)
+    labelInput.style.width = '150px';
+    labelInput.style.marginLeft = '8px';
+    // When label input is modified, mark unsaved changes.
+    labelInput.addEventListener('input', () => {
+      unsavedChanges = true;
+      document.getElementById('saveBtn').hidden = false;
+      document.getElementById('cancelBtn').hidden = false;
+      document.getElementById('floatingSaveBtn').hidden = false;
+    });
 
     // Copy button with provided SVG.
     const copyBtn = document.createElement('button');
@@ -86,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
     </svg>`;
     copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(input.value);
+      navigator.clipboard.writeText(tokenInput.value);
       copyBtn.title = 'Copied!';
       setTimeout(() => { copyBtn.title = 'Copy Auth Token'; }, 2000);
     });
@@ -108,7 +132,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('floatingSaveBtn').hidden = false;
     });
 
-    wrapper.appendChild(input);
+    // Append elements in order: auth token, label input, copy and delete buttons.
+    wrapper.appendChild(tokenInput);
+    wrapper.appendChild(labelInput);
     wrapper.appendChild(copyBtn);
     wrapper.appendChild(deleteBtn);
     return wrapper;
@@ -140,11 +166,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     </svg>`;
     deleteBtn.addEventListener('click', () => {
       wrapper.remove();
-        
-        unsavedChanges = true;
-        document.getElementById('saveBtn').hidden = false;
-        document.getElementById('cancelBtn').hidden = false;
-        document.getElementById('floatingSaveBtn').hidden = false;
+      unsavedChanges = true;
+      document.getElementById('saveBtn').hidden = false;
+      document.getElementById('cancelBtn').hidden = false;
+      document.getElementById('floatingSaveBtn').hidden = false;
     });
 
     wrapper.appendChild(input);
@@ -163,7 +188,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('generateServerAuth').addEventListener('click', () => {
     const newAuth = makeAuthToken();
     const container = document.getElementById('serverAuthList');
-    const item = createAuthEntry(newAuth);
+    // Pass an empty string for the label.
+    const item = createAuthEntry(newAuth, '');
     container.appendChild(item);
     unsavedChanges = true;
     document.getElementById('saveBtn').hidden = false;
@@ -210,11 +236,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       </button>
     `;
     div.querySelector('.delete-btn').addEventListener('click', () => { 
-        unsavedChanges = true;
-        document.getElementById('saveBtn').hidden = false;
-        document.getElementById('cancelBtn').hidden = false;
-        document.getElementById('floatingSaveBtn').hidden = false;
-        div.remove(); 
+      unsavedChanges = true;
+      document.getElementById('saveBtn').hidden = false;
+      document.getElementById('cancelBtn').hidden = false;
+      document.getElementById('floatingSaveBtn').hidden = false;
+      div.remove(); 
     });
     container.appendChild(div);
   });
@@ -248,13 +274,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       Port: 443,
       RateLimitWhiteList: ["127.0.0.1"],
       ServerAuth: [makeAuthToken()], // Generate a new token by default.
+      // New field for storing labels for the ServerAuth tokens.
+      ServerAuthLabels: [""],
       Discord: {
         Client_Id: "",
         Client_Secret: "",
         Bot_Token: "",
         Guild_Id: "",
         AllowToReRegister: false,
-        // These restrictions are now in advanced.
         Restrict_Sign_Up: false,
         Required_Role: "",
         BlackList_Role: "",
@@ -298,13 +325,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       rateList.appendChild(item);
     });
 
-    // Populate ServerAuth entries.
+    // Populate ServerAuth entries (with labels, if available).
     const authList = document.getElementById('serverAuthList');
     authList.innerHTML = "";
-    cfg.ServerAuth.forEach(auth => {
-      const item = createAuthEntry(auth);
+    (cfg.ServerAuth || []).forEach((auth, index) => {
+      // If the ServerAuthLabels array exists return the label at the same index, otherwise default to empty string.
+      const labelValue = (cfg.ServerAuthLabels && Array.isArray(cfg.ServerAuthLabels)) ? (cfg.ServerAuthLabels[index] || '') : '';
+      const item = createAuthEntry(auth, labelValue);
       authList.appendChild(item);
     });
+
     let certType = 'selfSigned';
     if (cfg.LetsEncypt.Enabled) {
       certType = 'letsEncrypt';
@@ -385,7 +415,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('cancelBtn').hidden = false;
         document.getElementById('floatingSaveBtn').hidden = false;
         div.remove(); 
-        });
+      });
       funcContainer.appendChild(div);
     }
   }
@@ -396,6 +426,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Save configuration on form submission.
   document.getElementById('configForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    
+    // Gather ServerAuth tokens along with their corresponding labels.
+    const authItems = document.querySelectorAll('#serverAuthList .list-item');
+    const serverAuth = [];
+    const serverAuthLabels = [];
+    authItems.forEach(item => {
+      const keyInput = item.querySelector('.auth-key-input');
+      const labelInput = item.querySelector('.auth-label-input');
+      serverAuth.push(keyInput ? keyInput.value : '');
+      serverAuthLabels.push(labelInput ? labelInput.value : '');
+    });
+
     const newConfig = {
       DBServer: document.getElementById('DBServer').value,
       DB: document.getElementById('DB').value,
@@ -403,7 +445,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       IP: document.getElementById('IP').value,
       Port: Number(document.getElementById('Port').value),
       RateLimitWhiteList: Array.from(document.querySelectorAll('#rateLimitList input')).map(input => input.value),
-      ServerAuth: Array.from(document.querySelectorAll('#serverAuthList .list-item')).map(item => item.querySelector('input').value),
+      // Updated to store both the auth tokens and their corresponding labels.
+      ServerAuth: serverAuth,
+      ServerAuthLabels: serverAuthLabels,
       Certificate: document.getElementById('certType').value === 'ownCert' ? document.getElementById('Certificate').value : '',
       CertificateKey: document.getElementById('certType').value === 'ownCert' ? document.getElementById('CertificateKey').value : '',
       Discord: {
@@ -480,8 +524,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert("Failed to save configuration");
     }
   });
-// Listen for an attempt to close (e.g., when the user clicks the X button)
-    window.api.onAttemptClose((event, ...args) => {
+
+  // Listen for an attempt to close (e.g., when the user clicks the X button)
+  window.api.onAttemptClose((event, ...args) => {
     if (unsavedChanges) {
       const confirmDialog = document.getElementById('confirmCloseDialog');
       confirmDialog.showModal();
@@ -490,6 +535,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.api.forceClose();
     }
   });
+  
   // Cancel/Close button event: if there are unsaved changes, prompt confirmation; otherwise, close.
   document.getElementById('cancelBtn').addEventListener('click', function() {
     if (unsavedChanges) {

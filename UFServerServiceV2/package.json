@@ -68,6 +68,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "bin/texconv.exe",
+        "to": "texconv.exe",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "nsis": {

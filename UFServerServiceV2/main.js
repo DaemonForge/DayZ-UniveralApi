@@ -9,7 +9,7 @@ const { readFileSync, writeFileSync, existsSync, mkdirSync } = require('fs');
 global.SAVEPATH = `${app.getPath('userData')}/`;
 global.isElectron = true;
 global.APIVERSION = process.env.npm_package_version || app.getVersion();
-
+global.rootPath = path.join(__dirname);
 let tray = null;
 let ConsoleWindow = null;
 let settingsWindow = null;
@@ -37,7 +37,7 @@ app.on('ready', () => {
   checkAndInstallMongoDB();
 
   // Create the system tray icon
-  tray = new Tray(path.join(__dirname, 'public', 'icon.png'));
+  tray = new Tray(path.join(__dirname, 'public', 'icon.ico'));
   tray.setToolTip('Universal Framework');
 
   // Load your main service (if required)
@@ -230,7 +230,8 @@ function updateTrayMenu() {
       {
         label: `UF API Service ${apiStatusSubLabel}`,
         sublabel: apiStatusLabel,
-        enabled: false
+        enabled: false,
+        icon: path.join(__dirname, 'public', 'icon32x32.png')
       },
       {
         label: discordStatusLabel,
