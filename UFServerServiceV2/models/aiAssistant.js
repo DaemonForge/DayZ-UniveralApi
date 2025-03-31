@@ -1,16 +1,13 @@
 // models/aiAssistant.js
 const { MongoClient, ObjectId } = require('mongodb');
-const config = require('../config'); // Expects: { DBServer, DB }
+const config = require('../config');  // Expects: { DBServer, DB }
 const { createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'db.aiAssistant');
 
-/**
- * Connects to the MongoDB database and returns the relevant collections.
- */
 async function getCollections() {
-  const client = new (require('mongodb')).MongoClient(require('../config').DBServer);
+  const client = new MongoClient(config.DBServer);
   await client.connect();
-  const db = client.db(require('../config').DB);
+  const db = client.db(config.DB);
   return {
     client,
     assistants: db.collection("Assistants"),
@@ -18,10 +15,7 @@ async function getCollections() {
   };
 }
 
-/**
- * Creates a new assistant profile.
- */
-async function createAssistant(AssistantId, AssistantApiId, Mod, Name, Description, ResponseFormat = null) {
+async function createAssistant(AssistantId, AssistantApiId, Mod, Name, Description, ResponseFormat = null, Functions = null) {
   const { client, assistants } = await getCollections();
   try {
     logger.info(`Creating assistant with AssistantId: ${AssistantId} for Mod: ${Mod}`);
@@ -37,6 +31,7 @@ async function createAssistant(AssistantId, AssistantApiId, Mod, Name, Descripti
       Name,
       Description,
       ResponseFormat: ResponseFormat || null,
+      Functions: Functions || [] // store function definitions dynamically
     };
     await assistants.insertOne(assistantData);
     logger.info(`Successfully created assistant with AssistantId: ${AssistantId}`);
@@ -49,10 +44,7 @@ async function createAssistant(AssistantId, AssistantApiId, Mod, Name, Descripti
   }
 }
 
-/**
- * Registers an existing assistant profile via upsert.
- */
-async function registerExistingAssistant(AssistantId, AssistantApiId, Mod, Name, Description, ResponseFormat = null) {
+async function registerExistingAssistant(AssistantId, AssistantApiId, Mod, Name, Description, ResponseFormat = null, Functions = null) {
   const { client, assistants } = await getCollections();
   try {
     logger.info(`Registering existing assistant with AssistantId: ${AssistantId} for Mod: ${Mod}`);
@@ -60,7 +52,8 @@ async function registerExistingAssistant(AssistantId, AssistantApiId, Mod, Name,
       AssistantApiId,
       Name,
       Description,
-      ResponseFormat: ResponseFormat || null
+      ResponseFormat: ResponseFormat || null,
+      Functions: Functions || []
     };
     await assistants.updateOne({ AssistantId, Mod }, { $set: updateFields }, { upsert: true });
     logger.info(`Successfully registered assistant with AssistantId: ${AssistantId}`);
@@ -73,9 +66,6 @@ async function registerExistingAssistant(AssistantId, AssistantApiId, Mod, Name,
   }
 }
 
-/**
- * Retrieves an assistant profile by AssistantId and Mod.
- */
 async function getAssistant(AssistantId, Mod) {
   const { client, assistants } = await getCollections();
   try {
@@ -91,9 +81,6 @@ async function getAssistant(AssistantId, Mod) {
   }
 }
 
-/**
- * Lists all assistants for a given Mod.
- */
 async function listAssistants(Mod) {
   const { client, assistants } = await getCollections();
   try {
@@ -109,9 +96,6 @@ async function listAssistants(Mod) {
   }
 }
 
-/**
- * Updates an assistant profile.
- */
 async function updateAssistant(AssistantId, Mod, updates) {
   const { client, assistants } = await getCollections();
   try {
@@ -121,6 +105,7 @@ async function updateAssistant(AssistantId, Mod, updates) {
     if (updates.Description) updateFields.Description = updates.Description;
     if (updates.ResponseFormat !== undefined) updateFields.ResponseFormat = updates.ResponseFormat;
     if (updates.AssistantApiId) updateFields.AssistantApiId = updates.AssistantApiId;
+    if (updates.Functions !== undefined) updateFields.Functions = updates.Functions;
     const result = await assistants.updateOne({ AssistantId, Mod }, { $set: updateFields });
     if (result.modifiedCount > 0) {
       logger.info(`Assistant with AssistantId: ${AssistantId} updated successfully`);
@@ -137,9 +122,6 @@ async function updateAssistant(AssistantId, Mod, updates) {
   }
 }
 
-/**
- * Deletes an assistant profile.
- */
 async function deleteAssistant(AssistantId, Mod) {
   const { client, assistants } = await getCollections();
   try {
@@ -160,9 +142,6 @@ async function deleteAssistant(AssistantId, Mod) {
   }
 }
 
-/**
- * Creates a new conversation thread for an assistant.
- */
 async function createThread(GUID, AssistantId, Mod, ThreadId) {
   const { client, assistants, threads } = await getCollections();
   try {
@@ -191,9 +170,6 @@ async function createThread(GUID, AssistantId, Mod, ThreadId) {
   }
 }
 
-/**
- * Retrieves a thread by its ThreadId.
- */
 async function getThread(ThreadId) {
   const { client, threads } = await getCollections();
   try {
@@ -209,9 +185,6 @@ async function getThread(ThreadId) {
   }
 }
 
-/**
- * Retrieves an assistant profile by ThreadId.
- */
 async function getAssistantByThread(ThreadId) {
   const { client, assistants, threads } = await getCollections();
   try {
@@ -232,9 +205,6 @@ async function getAssistantByThread(ThreadId) {
   }
 }
 
-/**
- * Adds a message to a thread and updates the lastUpdated timestamp.
- */
 async function addMessageToThread(ThreadId, role, content, status = "Success") {
   const { client, threads } = await getCollections();
   try {
@@ -266,9 +236,6 @@ async function addMessageToThread(ThreadId, role, content, status = "Success") {
   }
 }
 
-/**
- * Updates the status and content of a message in a thread.
- */
 async function updateMessageStatus(ThreadId, messageId, status, content = null) {
   const { client, threads } = await getCollections();
   try {
@@ -291,9 +258,6 @@ async function updateMessageStatus(ThreadId, messageId, status, content = null) 
   }
 }
 
-/**
- * Retrieves a message by its MessageId from any thread.
- */
 async function getMessageById(MessageId) {
   const { client, threads } = await getCollections();
   try {
@@ -316,9 +280,6 @@ async function getMessageById(MessageId) {
   }
 }
 
-/**
- * Saves a summary to an existing chat session.
- */
 async function saveChatSummary(ThreadId, Summary) {
   const { client, threads } = await getCollections();
   try {
@@ -345,7 +306,7 @@ async function saveChatSummary(ThreadId, Summary) {
 
 module.exports = {
   createAssistant,
-  registerExistingAssistant, // To be defined in controllers if needed.
+  registerExistingAssistant,
   getAssistantByThread,
   getAssistant,
   listAssistants,
