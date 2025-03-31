@@ -14,20 +14,24 @@ const ajv = new Ajv({ allErrors: true });
 
 // Initialize OpenAI API client.
 let openai;
-if (global.config.OpenAIApi?.ApiKey != undefined && global.config.OpenAIApi.ApiKey != "") {
+if (global.config.OpenAIApi?.ApiKey && global.config.OpenAIApi.ApiKey !== "") {
   openai = new OpenAI({ apiKey: global.config.OpenAIApi.ApiKey });
+  logger.debug(`OpenAI client initialized with provided API key.`);
+} else {
+  logger.debug(`No OpenAI API key found.`);
 }
 
 // Import authentication middlewares (adjust as needed)
 const { requirePlayerOrServerAuth, requireServerAuth } = require('../auth/utils');
 
 router.use((req, res, next) => {
+  logger.debug('Global middleware checking OpenAI status...', { OPENAISTATUS: global.OPENAISTATUS });
   if (global.OPENAISTATUS === "Disabled") {
-    logger.warn(`OpenAI is disabled, AI Chat will not work`, { status: global.OPENAISTATUS });
+    logger.warn('OpenAI is disabled, AI Chat will not work', { status: global.OPENAISTATUS });
     return res.status(501).json({ Status: "Error", Error: "OpenAI is disabled" });
   }
   if (global.OPENAISTATUS === "Error") {
-    logger.warn(`OpenAI is in an error state, AI Chat will not work`, { status: global.OPENAISTATUS });
+    logger.warn('OpenAI is in an error state, AI Chat will not work', { status: global.OPENAISTATUS });
     return res.status(501).json({ Status: "Error", Error: "OpenAI is in an error state" });
   }
   next();
@@ -35,14 +39,14 @@ router.use((req, res, next) => {
 
 /*
  * POST /AI/Assistant/Create
- * Body: { AssistantId, Name, Description, Tools (optional), Model (optional), ResponseFormat (optional) }
+ * Body: { AssistantId, Name, Description, Tools (optional), Model (optional), ResponseFormat (optional), Functions (optional) }
  * Returns: { Status, AssistantId }
  */
 router.post('/:Mod/Create', requireServerAuth, createAssistant);
 
 /*
  * POST /AI/Assistant/RegisterExisting
- * Body: { AssistantId, AssistantApiId, Mod, Name, Description, ResponseFormat (optional) }
+ * Body: { AssistantId, AssistantApiId, Mod, Name, Description, ResponseFormat (optional), Functions (optional) }
  * Returns: { Status, AssistantId }
  */
 router.post('/:Mod/RegisterExisting', requireServerAuth, registerExistingAssistant);
@@ -86,517 +90,595 @@ router.post('/GetThreadHistory/:ThreadId', requirePlayerOrServerAuth, getThreadH
 /*
  * POST /AI/Assistant/Send/:ThreadId
  * URL Param: ThreadId
- * Body: { Message, Context }  
- * (Context: Optional array of context objects as described)
- * Returns: { Status, MessageId } immediately, then asynchronously updates the message in DB.
+ * Body: { Message, Context }
+ * Flow:
+ *  1. Store the user message.
+ *  2. Insert an assistant placeholder message with status "Pending" and get its MessageId.
+ *  3. Immediately return { Status: "Pending", MessageId }.
+ *  4. Asynchronously, call OpenAI and update the placeholder.
+ * Returns: { Status, MessageId }
  */
 router.post('/Send/:ThreadId', requirePlayerOrServerAuth, sendMessageInThread);
 
 /*
  * POST /AI/Assistant/MsgStatus/:MessageId
  * URL Param: MessageId
- * Returns: { Status, Message (if available) }
+ * Returns:
+ * - If processed, a JSON object with { Message, FunctionCall, FunctionArguments, FunctionReturn }.
+ * - Otherwise, plain text message.
  */
 router.post('/MsgStatus/:MessageId', requirePlayerOrServerAuth, checkMessageStatus);
 
 /*
  * POST /AI/Assistant/Summarize/:ThreadId
-  * URL Param: ThreadId
-  * Returns: { Status, SummaryId, Error }
-  * Initiates summary generation for a thread.
-  * Expected: URL parameter ThreadId.
-*/
+ * URL Param: ThreadId
+ * Returns: { Status, SummaryId, Error }
+ * Initiates summary generation.
+ */
 router.post('/Summarize/:ThreadId', requireServerAuth, runSummarizeChat);
 
 /*
  * POST /AI/Assistant/SummaryStatus/:SummaryId
-  * URL Param: SummaryId
-  * Returns: { Status, Summary, Error }
-  * Checks the status of a summary generation.
-*/
+ * URL Param: SummaryId
+ * Returns: { Status, Summary, Error }
+ * Checks the status of summary generation.
+ */
 router.post('/SummaryStatus/:SummaryId', requireServerAuth, getSummaryStatus);
 
-module.exports = router;
-
-/**
- * Generates the JSON response format enforcement message.
- * @param {object} jsonSchema - The JSON schema to be enforced.
- * @returns {string} - The enforcement message.
+/*
+ * NEW: POST /AI/Assistant/FunctionReturn/:MessageId
+ * URL Param: MessageId
+ * Expected Body: { FunctionReturn: <string or JSON> }
+ * This endpoint is called by a remote server after processing a function call.
+ * It updates the original message with the returned value and creates a new assistant message.
  */
-function getJsonResponseFormatMessage(jsonSchema) {
-  return `!IMPORTANT: Respond ONLY with a valid JSON object matching this JSON schema: ${JSON.stringify(jsonSchema)}. DO NOT include extra text.`;
-}
+router.post('/FunctionReturn/:MessageId', requireServerAuth, handleFunctionReturn);
 
-/**
- * Validates an object against a provided JSON schema.
- * @param {object} data - The data to validate.
- * @param {object} schema - The JSON Schema.
- * @returns {boolean} - True if valid, false otherwise.
- */
-function validateJSON(data, schema) {
-  const validate = ajv.compile(schema);
-  return { Valid: validate(data), Errors: validate.errors };
-}
+/* ------------------- Endpoint Implementations --------------------- */
 
-/**
- * POST /AI/Assistant/:Mod/Create
- * 
- * Expected Request Body:
- * {
- *   "AssistantId": "easyId",
- *   "Name": "Assistant Name",
- *   "Description": "Custom instructions for the assistant",
- *   "Tools": [ { "type": "code_interpreter" } ], // Optional
- *   "Model": "gpt-4o",                          // Optional
- *   "ResponseFormat": { ... }           // Optional JSON Schema
- * }
- * 
- * Expected Response:
- * { "Status": "Success", "AssistantId": "easyId" }
- */
 async function createAssistant(req, res) {
   try {
     const { Mod } = req.params;
-    const { AssistantId, Name, Description, Tools, Model, ResponseFormat } = req.body;
-    console.log(req.body);
+    const { AssistantId, Name, Description, Tools, Model, ResponseFormat, Functions } = req.body;
+    logger.debug(`[createAssistant] Received data: AssistantId=${AssistantId}, Mod=${Mod}, Name=${Name}`);
     if (!AssistantId || !Mod || !Name || !Description) {
-      logger.warn(`Missing required fields for creating assistant`, { AssistantId, Mod, Name, Description });
+      logger.warn('[createAssistant] Missing required fields', { AssistantId, Mod, Name, Description });
       return res.status(400).json({ Status: "Error", Error: "AssistantId, Mod, Name, and Description are required" });
     }
     const assistantResp = await openai.beta.assistants.create({
       name: Name,
       instructions: Description,
       tools: Tools || [],
-      model: Model || "gpt-4o"
+      model: Model || "gpt-4o",
+      functions: Functions || []
     });
+    logger.debug('[createAssistant] OpenAI assistant created', { AssistantApiId: assistantResp.id });
     const AssistantApiId = assistantResp.id;
-    const result = await aiAssistantModel.createAssistant(AssistantId, AssistantApiId, Mod, Name, Description, ResponseFormat);
+    const result = await aiAssistantModel.createAssistant(AssistantId, AssistantApiId, Mod, Name, Description, ResponseFormat, Functions);
     if (!result.success) {
-      logger.warn(`Failed to create assistant in DB`, { AssistantId, error: result.Message });
+      logger.warn('[createAssistant] Failed to create assistant in DB', { AssistantId, error: result.Message });
       return res.status(400).json({ Status: "Error", Error: result.Message });
     }
-    logger.info(`Assistant created with ID ${AssistantId}`, { AssistantId, AssistantApiId, Mod });
+    logger.info(`[createAssistant] Assistant created with ID ${AssistantId}`, { AssistantApiId, Mod });
     return res.status(201).json({ Status: "Success", AssistantId: result.AssistantId });
   } catch (err) {
-    logger.error(`Error creating assistant: ${err.message}`, { error: err });
+    logger.error(`[createAssistant] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to create assistant" });
   }
 }
 
-/**
- * POST /AI/Assistant/:Mod/RegisterExisting
- * 
- * Expected Request Body:
- * {
- *   "AssistantId": "easyId",
- *   "AssistantApiId": "openai_assistant_id",
- *   "Name": "Assistant Name",
- *   "Description": "Assistant description",
- *   "ResponseFormat": { ... } // Optional
- * }
- * 
- * Expected Response:
- * { "Status": "Success", "AssistantId": "easyId" }
- */
 async function registerExistingAssistant(req, res) {
   try {
     const { Mod } = req.params;
-    const { AssistantId, AssistantApiId, Name, Description, ResponseFormat } = req.body;
+    const { AssistantId, AssistantApiId, Name, Description, ResponseFormat, Functions } = req.body;
+    logger.debug(`[registerExistingAssistant] Received data for AssistantId=${AssistantId}`);
     if (!AssistantId || !AssistantApiId || !Mod || !Name || !Description) {
-      logger.warn(`Missing required fields for registering existing assistant`, { AssistantId, AssistantApiId, Mod, Name });
+      logger.warn('[registerExistingAssistant] Missing required fields', { AssistantId, AssistantApiId, Mod, Name });
       return res.status(400).json({ Status: "Error", Error: "AssistantId, AssistantApiId, Mod, Name, and Description are required" });
     }
-    const result = await aiAssistantModel.registerExistingAssistant(AssistantId, AssistantApiId, Mod, Name, Description, ResponseFormat);
-    logger.info(`Existing assistant registered with ID ${AssistantId}`, { AssistantId, AssistantApiId, Mod });
+    const result = await aiAssistantModel.registerExistingAssistant(AssistantId, AssistantApiId, Mod, Name, Description, ResponseFormat, Functions);
+    logger.info(`[registerExistingAssistant] Existing assistant registered with ID ${AssistantId}`, { AssistantApiId, Mod });
     return res.status(200).json({ Status: "Success", AssistantId: result.AssistantId });
   } catch (err) {
-    logger.error(`Error registering assistant: ${err.message}`, { error: err });
+    logger.error(`[registerExistingAssistant] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to register assistant" });
   }
 }
 
-/**
- * GET /AI/Assistant/:Mod/Get
- * 
- * Expected URL Parameter: Mod
- * 
- * Expected Response:
- * { "Status": "Success", "Assistants": [ { AssistantId, Name, Description }, ... ] }
- */
 async function getAssistants(req, res) {
   try {
     const { Mod } = req.params;
+    logger.debug(`[getAssistants] Listing assistants for Mod=${Mod}`);
     if (!Mod) {
-      logger.warn(`Mod parameter is missing for listing assistants`);
+      logger.warn('[getAssistants] Missing Mod parameter');
       return res.status(400).json({ Status: "Error", Error: "Mod is required" });
     }
     const assistants = await aiAssistantModel.listAssistants(Mod);
+    logger.debug(`[getAssistants] Retrieved ${assistants.length} assistants`);
     if (!assistants || assistants.length === 0) {
-      logger.info(`No assistants found for Mod ${Mod}`, { Mod });
+      logger.info(`[getAssistants] No assistants found for Mod ${Mod}`);
       return res.status(200).json({ Status: "Empty", Assistants: [] });
     }
-    logger.info(`Retrieved ${assistants.length} assistants for Mod ${Mod}`, { Mod, count: assistants.length });
     return res.status(200).json({ Status: "Success", Assistants: assistants });
   } catch (err) {
-    logger.error(`Error listing assistants: ${err.message}`, { error: err });
+    logger.error(`[getAssistants] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to list assistants" });
   }
 }
 
-/**
- * PUT /AI/Assistant/:Mod/Update/:AssistantId
- * 
- * Expected Request Body:
- * {
- *   "Name": "Updated Name", "Description": "Updated description", ... 
- * }
- * 
- * Expected Response:
- * { "Status": "Success", "Message": "Assistant updated successfully" }
- */
 async function updateAssistant(req, res) {
   try {
     const { AssistantId, Mod } = req.params;
     const Updates = req.body;
+    logger.debug(`[updateAssistant] Updating AssistantId=${AssistantId}, Mod=${Mod}`, { Updates });
     if (!AssistantId || !Mod || !Updates) {
-      logger.warn(`Missing required fields for updating assistant`, { AssistantId, Mod, Updates });
+      logger.warn('[updateAssistant] Missing required fields', { AssistantId, Mod, Updates });
       return res.status(400).json({ Status: "Error", Error: "AssistantId, Mod, and Updates are required" });
     }
     const success = await aiAssistantModel.updateAssistant(AssistantId, Mod, Updates);
     if (!success) {
-      logger.warn(`Failed to update assistant ${AssistantId}`, { AssistantId, Mod });
+      logger.warn(`[updateAssistant] Failed to update assistant ${AssistantId}`);
       return res.status(400).json({ Status: "Error", Error: "Failed to update assistant" });
     }
-    logger.info(`Assistant updated successfully: ${AssistantId}`, { AssistantId, Mod, updates: Updates });
+    logger.info(`[updateAssistant] Assistant ${AssistantId} updated successfully`);
     return res.status(200).json({ Status: "Success", Message: "Assistant updated successfully" });
   } catch (err) {
-    logger.error(`Error updating assistant: ${err.message}`, { error: err });
+    logger.error(`[updateAssistant] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to update assistant" });
   }
 }
 
-/**
- * DELETE /AI/Assistant/:Mod/Delete/:AssistantId
- * 
- * Expected Request Body:
- * { }
- * 
- * Expected Response:
- * { "Status": "Success" }
- */
 async function deleteAssistant(req, res) {
   try {
     const { AssistantId, Mod } = req.params;
+    logger.debug(`[deleteAssistant] Deleting AssistantId=${AssistantId}, Mod=${Mod}`);
     if (!AssistantId || !Mod) {
-      logger.warn(`Missing AssistantId or Mod for deletion`, { AssistantId, Mod });
+      logger.warn('[deleteAssistant] Missing AssistantId or Mod', { AssistantId, Mod });
       return res.status(400).json({ Status: "Error", Error: "AssistantId and Mod are required" });
     }
     const success = await aiAssistantModel.deleteAssistant(AssistantId, Mod);
     if (!success) {
-      logger.warn(`Assistant not found or already deleted: ${AssistantId}`, { AssistantId, Mod });
+      logger.warn(`[deleteAssistant] Assistant ${AssistantId} not found or already deleted`);
       return res.status(404).json({ Status: "Error", Error: "Assistant not found or already deleted" });
     }
-    logger.info(`Assistant deleted successfully: ${AssistantId}`, { AssistantId, Mod });
+    logger.info(`[deleteAssistant] Assistant ${AssistantId} deleted successfully`);
     return res.status(200).json({ Status: "Success", Error: "" });
   } catch (err) {
-    logger.error(`Error deleting assistant: ${err.message}`, { error: err });
+    logger.error(`[deleteAssistant] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to delete assistant" });
   }
 }
 
-/**
- * POST /AI/Assistant/:Mod/CreateThread/:AssistantId
- * 
- * Expected URL Parameter: AssistantId
- * Expected Request Body:
- * { "GUID": "user-guid" }
- * 
- * Expected Response:
- * { "Status": "Success", "ThreadId": "thread_id" }
- */
 async function createThread(req, res) {
   try {
     const { Mod, AssistantId } = req.params;
     const { GUID } = req.body;
+    logger.debug(`[createThread] Creating thread for AssistantId=${AssistantId}, Mod=${Mod}, GUID=${GUID}`);
     if (!AssistantId || !Mod) {
-      logger.warn(`Missing AssistantId or Mod for thread creation`, { AssistantId, Mod });
+      logger.warn('[createThread] Missing AssistantId or Mod', { AssistantId, Mod });
       return res.status(400).json({ Status: "Error", Error: "AssistantId and Mod are required" });
     }
     const openaiThread = await openai.beta.threads.create();
+    logger.debug('[createThread] OpenAI thread created', { openaiThreadId: openaiThread.id });
     const result = await aiAssistantModel.createThread(GUID, AssistantId, Mod, openaiThread.id);
-    logger.info(`New thread created: ${openaiThread.id}`, { threadId: openaiThread.id, AssistantId, Mod, GUID });
+    logger.info(`[createThread] Thread created with ThreadId: ${openaiThread.id}`);
     return res.status(201).json({ Status: "Success", ThreadId: openaiThread.id });
   } catch (err) {
-    logger.error(`Error creating thread: ${err.message}`, { error: err });
+    logger.error(`[createThread] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to create thread" });
   }
 }
 
-/**
- * GET /AI/Assistant/GetThreadHistory/:ThreadId
- * 
- * Expected URL Parameter: ThreadId
- * 
- * Expected Response:
- * { "Status": "Success", "Thread": { ThreadId, AssistantId, Mod, messages: [ ... ] } }
- */
 async function getThreadHistory(req, res) {
   try {
     const { ThreadId } = req.params;
+    logger.debug(`[getThreadHistory] Retrieving history for ThreadId=${ThreadId}`);
     if (!ThreadId) {
-      logger.warn(`ThreadId missing when retrieving thread history`);
+      logger.warn('[getThreadHistory] Missing ThreadId');
       return res.status(400).json({ Status: "Error", Error: "ThreadId is required" });
     }
     const thread = await aiAssistantModel.getThread(ThreadId);
     if (!thread) {
-      logger.warn(`Thread not found: ${ThreadId}`);
+      logger.warn(`[getThreadHistory] Thread ${ThreadId} not found`);
       return res.status(404).json({ Status: "Empty", Error: "Thread not found" });
     }
+    logger.info(`[getThreadHistory] Retrieved thread history for ThreadId=${ThreadId}`);
     const { GUID, AssistantId, Mod, messages } = thread;
-    logger.info(`Thread history retrieved for ${ThreadId}`, { threadId: ThreadId, AssistantId, Mod });
     return res.status(200).json({ Status: "Success", Thread: { GUID, AssistantId, Mod, Messages: messages } });
   } catch (err) {
-    logger.error(`Error retrieving thread history: ${err.message}`, { error: err });
+    logger.error(`[getThreadHistory] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to retrieve thread history" });
   }
 }
 
-/**
- * POST /AI/Assistant/Send/:ThreadId
- * 
- * Expected URL Parameter: ThreadId
- * Expected Request Body:
- * {
- *   "Message": "User message text",
- *   "Context": [                    // Optional array of context objects
- *     {
- *       "Description": "Context description",
- *       "Context": ["string1", "string2", ...]
- *     },
- *     ...
- *   ]
- * }
- * 
- * Flow:
- * 1. Store the user message in the thread DB.
- * 2. Insert an assistant placeholder message with status "Pending" and get its MessageId.
- * 3. Immediately return { "Status": "Pending", "MessageId": "..." }.
- * 4. Asynchronously, call OpenAI's beta.threads.runs.createAndPoll() with the new message (and transformed Context) and update the placeholder.
- * 
- * Expected Response:
- * { "Status": "Pending", "MessageId": "generated_message_id" }
- */
+/* ======================================================================
+   sendMessageInThread
+   POST /AI/Assistant/Send/:ThreadId
+   Body: { "Message": "user query", "Context": [...] }
+   Response Example: { "Status": "Pending", "MessageId": "<id>" }
+===================================================================== */
 async function sendMessageInThread(req, res) {
   try {
-    const { ThreadId, GUID, isServer } = req.params;
+    const { ThreadId } = req.params;
     const { Message, Context } = req.body;
+    logger.debug('[sendMessageInThread] Received request', { ThreadId, Message });
     if (!ThreadId || !Message) {
-      logger.warn(`Missing ThreadId or Message in sendMessageInThread`, { ThreadId, Message });
+      logger.warn('[sendMessageInThread] Missing required fields', { ThreadId, Message });
       return res.status(400).json({ Status: "Error", Error: "ThreadId and Message are required" });
     }
-    const assistant = await aiAssistantModel.getAssistantByThread(ThreadId);
-    const thread = await aiAssistantModel.getThread(ThreadId);
-    if (GUID !== undefined && GUID !== null && GUID !== "" && (thread.GUID !== GUID) && !isServer) {
-      logger.warn(`Unauthorized message send attempt in thread ${ThreadId}`, { threadGUID: thread.GUID, providedGUID: GUID });
-      return res.status(204).json({ Status: "NoAuth", Error: "Unauthorized" });
-    }
-    // Store the user message in our DB.
+    
+    // 1. Save the user message.
     await aiAssistantModel.addMessageToThread(ThreadId, "user", Message, "Success");
-    // Insert an assistant placeholder with status "Pending" and obtain its MessageId.
-    const MessageId = await aiAssistantModel.addMessageToThread(ThreadId, "assistant", "", "Pending");
-    logger.info(`User message received in thread ${ThreadId}`, { threadId: ThreadId, Message });
-    // Return the MessageId so the client can poll for status.
-    res.status(202).json({ Status: "Pending", MessageId });
+    logger.debug('[sendMessageInThread] User message stored.');
 
-    // Process the assistant's response asynchronously.
+    // 2. Create an assistant placeholder message with status "Pending".
+    const MessageId = await aiAssistantModel.addMessageToThread(ThreadId, "assistant", "", "Pending");
+    logger.debug('[sendMessageInThread] Assistant placeholder inserted', { MessageId });
+
+    // 3. Return the placeholder MessageId immediately.
+    res.status(202).json({ Status: "Pending", MessageId });
+    logger.debug('[sendMessageInThread] Returned placeholder MessageId to client', { MessageId });
+    
+    // Build additional instructions (if context is provided).
     let instructions = "";
     if (Context && Array.isArray(Context) && Context.length > 0) {
       instructions = Context.map(ctx => {
         let str = "";
-        if (ctx.Description) {
-          str += `${ctx.Description}: `;
-        }
-        if (Array.isArray(ctx.Context)) {
-          str += ctx.Context.join(", ");
-        }
+        if (ctx.Description) { str += `${ctx.Description}: `; }
+        if (Array.isArray(ctx.Context)) { str += ctx.Context.join(", "); }
         return str;
       }).join("\n");
     }
+    logger.debug('[sendMessageInThread] Built additional instructions', { instructions });
+    
+    // 4. Asynchronously call OpenAI.
     try {
-      await openai.beta.threads.messages.create(ThreadId, {
-        role: "user",
-        content: Message
+      logger.debug('[sendMessageInThread] Sending user message to OpenAI...');
+      await openai.beta.threads.messages.create(ThreadId, { role: "user", content: Message });
+      
+      const assistantInfo = await aiAssistantModel.getAssistantByThread(ThreadId);
+      logger.debug('[sendMessageInThread] Retrieved assistant info', { assistantInfo });
+      
+      const runResult = await openai.beta.threads.runs.createAndPoll(ThreadId, {
+        assistant_id: (assistantInfo && assistantInfo.AssistantApiId) || "",
+        additional_instructions: instructions
       });
-      const run = await openai.beta.threads.runs.createAndPoll(
-        ThreadId,
-        {
-          assistant_id: assistant.AssistantApiId || "",
-          additional_instructions: instructions
+      logger.debug('[sendMessageInThread] OpenAI run result received', { run: runResult });
+      
+      let assistantResponse = "";
+      let newStatus = "Success"; // default
+      
+      if (runResult.status === "completed") {
+        // Plain text final answer.
+        const messagesRes = await openai.beta.threads.messages.list(ThreadId);
+        logger.debug('[sendMessageInThread] Retrieved messages from OpenAI (completed)', { messages: messagesRes.data });
+        const latestMessage = messagesRes.data[0];
+        assistantResponse = (latestMessage.content && latestMessage.content[0] && latestMessage.content[0].text.value) || "";
+        logger.debug('[sendMessageInThread] Final text response obtained', { assistantResponse });
+      } else if (runResult.status === "requires_action") {
+        // Extract function call details from run.required_action.
+        logger.debug('[sendMessageInThread] Run status "requires_action" detected.');
+        if (
+          runResult.required_action &&
+          runResult.required_action.submit_tool_outputs &&
+          Array.isArray(runResult.required_action.submit_tool_outputs.tool_calls) &&
+          runResult.required_action.submit_tool_outputs.tool_calls.length > 0
+        ) {
+          const toolCall = runResult.required_action.submit_tool_outputs.tool_calls[0];
+          const functionCall = toolCall.function?.name || "";
+          const functionArguments = toolCall.function?.arguments || "";
+          const activeRunId = runResult.id; // Save active run id.
+          const toolCallId = toolCall.id;  // Save this tool call id.
+          const responseObj = {
+            Message: "",
+            FunctionCall: functionCall,
+            FunctionArguments: functionArguments,
+            FunctionReturn: "",
+            ActiveRunId: activeRunId,
+            ToolCallId: toolCallId
+          };
+          assistantResponse = JSON.stringify(responseObj);
+          newStatus = "AwaitingFunctionReturn";
+          logger.debug('[sendMessageInThread] Extracted function call details from required_action.', { responseObj });
+        } else {
+          logger.warn('[sendMessageInThread] requires_action but no tool_calls found.');
+          assistantResponse = JSON.stringify({
+            Message: "",
+            FunctionCall: "unknown_function",
+            FunctionArguments: "{}",
+            FunctionReturn: "",
+            ActiveRunId: runResult.id,
+            ToolCallId: ""
+          });
+          newStatus = "AwaitingFunctionReturn";
         }
-      );
-      if (run.status === 'completed') {
-        const messages = await openai.beta.threads.messages.list(ThreadId);
-        const assistantResponse = messages.data[0].content[0].text.value || "";
-        await aiAssistantModel.updateMessageStatus(ThreadId, MessageId, "Success", assistantResponse);
-        logger.info(`Assistant response successfully updated for message ${MessageId}`, { threadId: ThreadId, MessageId });
       } else {
-        logger.error(`Error sending message in thread, run status: ${run.status}`, { threadId: ThreadId, runStatus: run.status });
-        await aiAssistantModel.updateMessageStatus(ThreadId, MessageId, "Error", run.status || "");
+        logger.error('[sendMessageInThread] Unexpected run status', { runStatus: runResult.status });
+        assistantResponse = runResult.status || "unknown error";
+        newStatus = "Error";
       }
+      
+      // 5. Update the placeholder message with the new status and content.
+      await aiAssistantModel.updateMessageStatus(ThreadId, MessageId, newStatus, assistantResponse);
+      logger.info('[sendMessageInThread] Updated placeholder message with new status', { MessageId, newStatus });
+      
     } catch (err) {
-      logger.error(`Error during assistant processing: ${err.message}`, { error: err, threadId: ThreadId, MessageId });
-      await aiAssistantModel.updateMessageStatus(ThreadId, MessageId, "Error", err.message || "");
+      logger.error('[sendMessageInThread] Error during OpenAI processing', { error: err, ThreadId, MessageId });
+      await aiAssistantModel.updateMessageStatus(ThreadId, MessageId, "Error", err.message || "unknown error");
     }
   } catch (err) {
-    logger.error(`Error sending message in thread: ${err.message}`, { error: err });
+    logger.error('[sendMessageInThread] General error', { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to send message in thread" });
   }
 }
 
-/**
- * GET /AI/Assistant/MsgStatus/:MessageId
- * 
- * Expected URL Parameter: MessageId
- * 
- * Expected Response:
- * If the message with the given MessageId has status "Success":
- *   { "Status": "Success", "Message": "assistant message" }
- * Otherwise:
- *   { "Status": "Pending" or "Error" }
- */
+/* ======================================================================
+   checkMessageStatus
+   POST /AI/Assistant/MsgStatus/:MessageId
+   Returns: Structured JSON if message content is JSON, otherwise plain text.
+===================================================================== */
 async function checkMessageStatus(req, res) {
   try {
     const { MessageId } = req.params;
+    logger.debug('[checkMessageStatus] Received request', { MessageId });
     if (!MessageId) {
-      logger.warn(`Missing MessageId when checking message status`);
+      logger.warn('[checkMessageStatus] Missing MessageId.');
       return res.status(400).json({ Status: "Error", Error: "MessageId is required" });
     }
-    const { message } = await aiAssistantModel.getMessageById(MessageId);
-    if (!message) {
-      logger.info(`Message not found for MessageId ${MessageId}`, { MessageId });
+    const result = await aiAssistantModel.getMessageById(MessageId);
+    logger.debug('[checkMessageStatus] Retrieved message from DB', { result });
+    if (!result || !result.message) {
+      logger.info('[checkMessageStatus] Message not found', { MessageId });
       return res.status(200).json({ Status: "Empty", Message: "" });
     }
-    if (message.status === "Success") {
-      logger.info(`Message ${MessageId} has been successfully processed`, { MessageId });
-      return res.status(200).json({ Status: "Success", Message: message.content });
-    } else {
-      logger.info(`Message ${MessageId} in status ${message.status}`, { MessageId, status: message.status });
-      return res.status(200).json({ Status: message.status || "", Message: "" });
+    const { message } = result;
+    let responsePayload = {
+      Status: message.status,
+      Message: "",
+      FunctionCall: "",
+      FunctionArguments: ""
+    };
+    try {
+      logger.debug('[checkMessageStatus] Attempting to parse message.content as JSON', { content: message.content });
+      const parsedContent = JSON.parse(message.content);
+      if (parsedContent && typeof parsedContent === "object" && parsedContent.FunctionCall !== undefined) {
+        responsePayload = {
+          Status: message.status,
+          Message: parsedContent.Message || "",
+          FunctionCall: parsedContent.FunctionCall || "",
+          FunctionArguments: parsedContent.FunctionArguments || ""
+        };
+        logger.debug('[checkMessageStatus] Parsed structured content successfully', { responsePayload });
+      } else {
+        responsePayload.Message = message.content;
+        logger.debug('[checkMessageStatus] No structured content found; using plain text.');
+      }
+    } catch (e) {
+      logger.debug('[checkMessageStatus] Failed to parse JSON; returning plain text', { content: message.content });
+      responsePayload.Message = message.content;
     }
+    
+    // Optionally, you can add logic here to monitor the ActiveRunId if needed.
+    return res.status(200).json(responsePayload);
   } catch (err) {
-    logger.error(`Error checking message status: ${err.message}`, { error: err });
+    logger.error('[checkMessageStatus] Error occurred', { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to check message status" });
+  }
+}
+
+/* ======================================================================
+   handleFunctionReturn
+   POST /AI/Assistant/FunctionReturn/:MessageId
+   Body: { "FunctionReturn": "<string or JSON>" }
+   Workflow:
+    1. Retrieve the pending placeholder message (status "AwaitingFunctionReturn").
+    2. Parse its JSON and update the FunctionReturn field.
+    3. Use submitToolOutputsAndPoll to feed the function output back into the active run.
+    4. Wait for the run to complete and then retrieve the final assistant message.
+    5. Return the final assistant message's MessageId.
+===================================================================== */
+async function handleFunctionReturn(req, res) {
+  try {
+    const { MessageId } = req.params;
+    const { FunctionReturn } = req.body;
+    logger.debug('[handleFunctionReturn] Received function return', { MessageId, FunctionReturn });
+    if (!MessageId) {
+      logger.warn('[handleFunctionReturn] Missing MessageId.');
+      return res.status(400).json({ Status: "Error", Error: "MessageId is required" });
+    }
+    if (FunctionReturn === undefined || FunctionReturn === null) {
+      logger.warn('[handleFunctionReturn] Missing FunctionReturn.');
+      return res.status(400).json({ Status: "Error", Error: "FunctionReturn is required" });
+    }
+    
+    // 1. Retrieve the original placeholder message.
+    const result = await aiAssistantModel.getMessageById(MessageId);
+    logger.debug('[handleFunctionReturn] Retrieved original message from DB', { result });
+    if (!result || !result.message) {
+      logger.warn(`[handleFunctionReturn] Message ${MessageId} not found.`);
+      return res.status(404).json({ Status: "Error", Error: "Message not found" });
+    }
+    const { ThreadId, message } = result;
+    
+    // 2. Parse the stored JSON.
+    let contentObj = {};
+    try {
+      logger.debug('[handleFunctionReturn] Parsing stored content', { content: message.content });
+      contentObj = JSON.parse(message.content);
+    } catch (e) {
+      logger.debug('[handleFunctionReturn] Failed to parse stored content; using default structure', { error: e.message });
+      contentObj = { Message: "", FunctionCall: "", FunctionArguments: "", FunctionReturn: "", ActiveRunId: "", ToolCallId: "" };
+    }
+    
+    // 3. Update the FunctionReturn field.
+    contentObj.FunctionReturn = FunctionReturn;
+    const updatedContent = JSON.stringify(contentObj);
+    logger.debug('[handleFunctionReturn] Updated content prepared', { updatedContent });
+    
+    // 4. Update the original placeholder message status to "FunctionComplete".
+    const updateSuccess = await aiAssistantModel.updateMessageStatus(ThreadId, MessageId, "FunctionComplete", updatedContent);
+    if (!updateSuccess) {
+      logger.warn(`[handleFunctionReturn] Failed to update message ${MessageId}`);
+      return res.status(500).json({ Status: "Error", Error: "Failed to update message with function return" });
+    }
+    logger.info(`[handleFunctionReturn] Message ${MessageId} updated with function return.`);
+    
+    // 5. Create a new assistant placeholder message for the final answer.
+    const newMessageId = await aiAssistantModel.addMessageToThread(ThreadId, "assistant", "", "Pending");
+    logger.debug('[handleFunctionReturn] New placeholder for final answer created', { newMessageId });
+    
+    // 6. Asynchronously, submit the tool outputs into the active run using submitToolOutputsAndPoll.
+    // We'll use the stored ActiveRunId and ToolCallId from contentObj.
+    if (!contentObj.ActiveRunId || !contentObj.ToolCallId) {
+      logger.error('[handleFunctionReturn] ActiveRunId or ToolCallId missing in stored content.');
+    } else {
+      const toolOutputs = [{
+        tool_call_id: contentObj.ToolCallId,
+        output: FunctionReturn
+      }];
+      logger.debug('[handleFunctionReturn] Submitting tool outputs', { toolOutputs });
+      // Submit function outputs to resume the run.
+      openai.beta.threads.runs.submitToolOutputsAndPoll(ThreadId, contentObj.ActiveRunId, { tool_outputs: toolOutputs })
+        .then((runAfter) => {
+          logger.debug('[handleFunctionReturn] Run resumed after tool output submission', { runAfter });
+          if (runAfter.status === "completed") {
+            openai.beta.threads.messages.list(ThreadId)
+              .then((messagesRes) => {
+                logger.debug('[handleFunctionReturn] Retrieved messages after run completion', { messages: messagesRes.data });
+                const finalAssistantMsg = messagesRes.data.find(msg => msg.role === "assistant" && msg.messageId !== message.messageId);
+                if (finalAssistantMsg && finalAssistantMsg.content && finalAssistantMsg.content[0] && finalAssistantMsg.content[0].text) {
+                  const finalText = finalAssistantMsg.content[0].text.value;
+                  aiAssistantModel.updateMessageStatus(ThreadId, newMessageId, "Success", finalText)
+                    .then(() => {
+                      logger.info('[handleFunctionReturn] Updated new placeholder with final assistant output.');
+                    })
+                    .catch((updateErr) => {
+                      logger.error('[handleFunctionReturn] Error updating new placeholder message.', { updateErr });
+                    });
+                } else {
+                  logger.error('[handleFunctionReturn] Final assistant message not found.');
+                }
+              })
+              .catch((listErr) => {
+                logger.error('[handleFunctionReturn] Error retrieving messages after re-run.', { listErr });
+              });
+          } else {
+            logger.error('[handleFunctionReturn] Run did not complete after submitting tool outputs.', { runStatus: runAfter.status });
+          }
+        })
+        .catch((submitErr) => {
+          logger.error('[handleFunctionReturn] Error submitting tool outputs.', { submitErr });
+        });
+    }
+    
+    // 7. Immediately return the new placeholder MessageId so that the client can poll.
+    return res.status(200).json({ Status: "Pending", MessageId: newMessageId });
+  } catch (err) {
+    logger.error('[handleFunctionReturn] Error occurred', { error: err });
+    return res.status(500).json({ Status: "Error", Error: err.message });
   }
 }
 
 /**
  * POST /AI/Assistant/Summarize/:ThreadId
  * Initiates summary generation for a thread.
- * Expected: URL parameter ThreadId.
- * Returns immediately: { Status: "Success", Summary: "..." } if a valid summary exists,
- * or { Status: "Pending", SummaryId: "..." } if summarization is in progress,
- * or { Status: "Pending", SummaryId: "..." } when starting summarization.
- *
- * Note: You need to implement a model function createChatSummary(ThreadId)
- * which should create a new summary record with initial status "Pending"
- * and return an object, e.g., { SummaryId: "newSummaryUniqueIdentifier" }.
  */
 async function runSummarizeChat(req, res) {
   try {
     const { ThreadId } = req.params;
-    logger.info(`Received request to summarize thread ${ThreadId}`, { threadId: ThreadId });
+    logger.debug(`[runSummarizeChat] Received request for ThreadId=${ThreadId}`);
     if (!ThreadId) {
-      logger.warn(`Missing ThreadId for summarization`);
+      logger.warn('[runSummarizeChat] Missing ThreadId');
       return res.status(400).json({ Status: "Error", SummaryId: "", Summary: "", Error: "ThreadId is required" });
     }
     const thread = await aiAssistantModel.getThread(ThreadId);
     if (!thread) {
-      logger.warn(`Thread not found for summarization`, { threadId: ThreadId });
+      logger.warn(`[runSummarizeChat] Thread ${ThreadId} not found`);
       return res.status(200).json({ Status: "NotFound", SummaryId: "", Summary: "", Error: "Thread not found" });
     }
     if (thread.Summary !== undefined && thread.Summary !== "") {
       let timeDif = thread.lastUpdated - thread.summaryUpdated;
       if (timeDif <= 1) {
-        logger.info(`Existing summary is up-to-date for thread ${ThreadId}`, { threadId: ThreadId });
+        logger.info(`[runSummarizeChat] Existing summary is up-to-date for ThreadId=${ThreadId}`);
         return res.status(200).json({ Status: "Success", SummaryId: "", Summary: thread.Summary, Error: "" });
       }
     }
     
     const summaryRecord = await createChatSummary(ThreadId);
     const { SummaryId } = summaryRecord;
-    logger.info(`Created summary record ${SummaryId} for thread ${ThreadId}`, { threadId: ThreadId, SummaryId });
+    logger.info(`[runSummarizeChat] Created summary record ${SummaryId} for ThreadId=${ThreadId}`);
     res.status(202).json({ Status: "Pending", SummaryId, Summary: "", Error: "" });
-
+    
     // Asynchronous summary processing.
     (async () => {
       try {
-        logger.info(`Starting asynchronous summary generation for SummaryId ${SummaryId}`, { threadId: ThreadId, SummaryId });
+        logger.debug(`[runSummarizeChat] Starting summary generation for SummaryId=${SummaryId}`);
         let conversationText = thread.SystemMessage ? thread.SystemMessage + "\n" : "";
         thread.messages.forEach(msg => {
           conversationText += `${msg.role}: ${msg.content}\n`;
         });
-        logger.info(`Built conversation text for summarization for thread ${ThreadId}`, { threadId: ThreadId, SummaryId });
+        logger.debug(`[runSummarizeChat] Built conversation text: ${conversationText.substring(0,100)}...`);
         const summaryResponse = await openai.chat.completions.create({
           model: 'o3-mini',
           messages: [
             {
               role: 'system',
-              content: 'You are tasked with summarizing a conversation between an NPC (an AI in DayZ Standalone) and a player to create a concise, historically accurate record for internal memory management. This summary will replace storing the full conversation, so it must capture essential details while preserving the unique tone and immersion of the interaction. Follow these guidelines:\n\n- Focus on Interaction History:\n  Capture key decisions, significant moments, and notable dialogue from both the AI and the player.\n\n- Player-Centric Detailing:\n  Emphasize the player\'s contributions, including specific statements and nuances of their demeanor, while also noting any relevant information provided by the AI. If previous key details (such as mentions of specific items like an M4A1) are available, include a note for continuity.\n\n- Concise and Fact-Based:\n  Deliver a succinct summary that is factual and strictly based on the conversation transcript. Avoid extraneous details or interpretations beyond what is explicitly stated.\n\n- Immersion and Tone Preservation:\n  Retain elements that enhance immersion, such as game-specific terms, jargon, and categories (for example, gear suggestions, safety warnings). Also, briefly describe the overall mood of the conversation (for example, friendly, formal, tense) as evident from the transcript.\n\n- Structured Format:\n  Organize the summary into bullet points or short paragraphs to clearly separate topics. Do not include any headers, titles, or introductory labels.\n\n- Use Safe Characters:\n  Ensure the summary uses only safe characters; avoid emojis and any special characters that DayZ cannot handle.\n\n- Memory Consistency and Updates:\n  If this conversation references or updates previous interactions, integrate these details to maintain a consistent historical record. Record any changes in the player\'s state (such as inventory or gear updates) and flag new information that modifies or adds to previous memory entries.\nIMPORTANT use basic ASCII Chaters, for example don\'t use • use -'
+              content: 'You are tasked with summarizing a conversation between an NPC (an AI in DayZ Standalone) and a player to create a concise, historically accurate record for internal memory management. This summary will replace storing the full conversation, so it must capture essential details while preserving the unique tone and immersion of the interaction. Follow these guidelines: ...'
             },
             { role: 'user', content: `Summarize the following conversation:\n\n"${conversationText}"` }
           ]
         });
         const summaryText = summaryResponse.choices[0].message.content.trim();
-        logger.info(`AI generated summary for SummaryId ${SummaryId}`, { threadId: ThreadId, SummaryId, summaryText });
+        logger.info(`[runSummarizeChat] Summary generated: ${summaryText.substring(0,50)}...`, { SummaryId });
         await updateChatSummaryStatus(SummaryId, "Success", summaryText);
-        logger.info(`Updated summary record ${SummaryId} with Success status`, { threadId: ThreadId, SummaryId });
+        logger.info(`[runSummarizeChat] Updated summary record ${SummaryId} with Success status`);
         await aiAssistantModel.saveChatSummary(ThreadId, summaryText);
-        logger.info(`Saved thread summary for thread ${ThreadId}`, { threadId: ThreadId, SummaryId });
+        logger.info(`[runSummarizeChat] Saved summary for ThreadId=${ThreadId}`);
       } catch (err) {
-        logger.error(`Error during asynchronous summary generation: ${err.message}`, { error: err, threadId: ThreadId, SummaryId });
+        logger.error(`[runSummarizeChat] Error during summary generation: ${err.message}`, { error: err, ThreadId, SummaryId });
         await updateChatSummaryStatus(SummaryId, "Error", err.message);
       }
     })();
   } catch (err) {
-    logger.error(`Error initiating summary generation: ${err.message}`, { error: err });
+    logger.error(`[runSummarizeChat] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to initiate summary generation", Summary: "" });
   }
 }
 
-/**
- * Checks the status of a summary generation.
- * Expected: URL parameter SummaryId.
- * Returns:
- *   If status is "Success": { Status: "Success", Summary: "<summary text>" }
- *   If still pending: { Status: "Pending" }
- *   If error: { Status: "Error", Error: "<error message>" }
- *
- * Note: Expected model function: getSummaryById(SummaryId) -> returns an object:
- * { SummaryId, ThreadId, Status, summary } or null if not found.
- */
 async function getSummaryStatus(req, res) {
   try {
     const { SummaryId } = req.params;
-    logger.info(`Received request to check summary status for SummaryId ${SummaryId}`, { SummaryId });
+    logger.debug(`[getSummaryStatus] Received request for SummaryId=${SummaryId}`);
     if (!SummaryId) {
-      logger.warn(`Missing SummaryId when checking summary status`);
+      logger.warn('[getSummaryStatus] Missing SummaryId');
       return res.status(400).json({ Status: "Error", Error: "SummaryId is required", Summary: "" });
     }
     const summaryRecord = await getSummaryById(SummaryId);
     if (!summaryRecord || !summaryRecord.Status) {
-      logger.warn(`Summary record not found for SummaryId ${SummaryId}`, { SummaryId });
+      logger.warn(`[getSummaryStatus] Summary record not found for SummaryId=${SummaryId}`);
       return res.status(404).json({ Status: "NotFound", Error: "Summary not found", Summary: "" });
     }
     const { Status, Summary } = summaryRecord;
-    logger.info(`Returning summary status for SummaryId ${SummaryId}: ${Status}`, { SummaryId, Status });
-    if (Status === "Success") {
-      return res.status(200).json({ Status, Summary, Error: "" });
-    } else if (Status === "Error") {
+    logger.info(`[getSummaryStatus] Returning summary status for SummaryId=${SummaryId}: ${Status}`);
+    if (Status === "Success" || Status === "Error") {
       return res.status(200).json({ Status, Summary, Error: "" });
     }
     return res.status(200).json({ Status });
   } catch (err) {
-    logger.error(`Error retrieving summary status: ${err.message}`, { error: err });
+    logger.error(`[getSummaryStatus] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to retrieve summary status", Summary: "" });
   }
 }
+
+
+/**
+ * Simple sleep helper.
+ * @param {number} ms - Milliseconds to wait.
+ */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/* ------------------- End of Updated Endpoints --------------------- */
+
+module.exports = router;

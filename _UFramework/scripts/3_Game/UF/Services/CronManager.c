@@ -48,10 +48,11 @@
 class UCronManager extends Managed {
 	
 	// The last recorded Unix time when a cron function was executed.
-	private int m_LastRunTime = 0;
+	protected int m_LastRunTime = 0;
+	protected bool m_isInit = false;
 	
 	// Array storing all scheduled cron functions.
-	private autoptr array<autoptr UCronFunction> m_CronFunctions;
+	protected autoptr array<autoptr UCronFunction> m_CronFunctions;
 	
 	/**
 	 * Init
@@ -62,6 +63,8 @@ class UCronManager extends Managed {
 	 * - Registering the RemoveNull method to be called endlessly every 15 minutes.
 	 */
 	void Init(){
+		if (m_isInit) return;
+		m_isInit = true;
 		m_LastRunTime = UUtil.GetUnixInt();
 		m_CronFunctions = new array<autoptr UCronFunction>;
 		// Schedule RemoveNull to be called every (15 * 60) seconds.
@@ -227,7 +230,7 @@ class UCronManager extends Managed {
 		if (m_CronFunctions.Count() < 1) return;
 		// Iterate through the cron functions and remove invalid ones.
 		foreach(UCronFunction cronFunc : m_CronFunctions){
-			if (cronFunc.isValid()) {
+			if (!cronFunc.isValid()) {
 				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.RemoveByFunc, cronFunc);
 			}
 		}
@@ -321,6 +324,7 @@ class UCronFunction extends Managed {
 		m_funcName = funcName;
 		m_params = params;
 		m_freq = freq;
+		m_nextCall = UUtil.GetUnixInt() + freq;
 	}
 	
 	/**

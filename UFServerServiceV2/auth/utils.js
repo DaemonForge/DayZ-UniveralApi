@@ -22,8 +22,11 @@ const logger = createLogger(global.logger, 'auth');
  */
 const requireServerAuth = async (req, res, next) => {
     const auth = req.headers['auth-key'];
+    req.isServer = false;
+    req.serverId = "undefined";
     if (CheckServerAuth(auth)) {
         req.isServer = true;
+        req.serverId = findLabelByAuthKey(auth);
         logger.debug('Server auth successful', { mod: req.params.mod });
         return next();
     }
@@ -54,10 +57,12 @@ const requirePlayerOrServerAuth = async (req, res, next) => {
     const auth = req.headers['auth-key'];
     
     req.isServer = false;
+    req.serverId = "undefined";
     // Check for server auth first
     if (CheckServerAuth(auth)) {
         logger.debug('Server auth successful', { mod: req.params.mod });
         req.isServer = true;
+        req.serverId = findLabelByAuthKey(auth);
         return next();
     }
 
@@ -66,13 +71,14 @@ const requirePlayerOrServerAuth = async (req, res, next) => {
     if (!GUID) {
         GUID = AuthPlayerGuid(auth);
         if (!GUID) {
-            req.params.GUID = GUID;
             logger.warn('No GUID available for authentication', { mod: req.params.mod });
             return res.status(204).json({Status: "NoAuth", Error: 'Unauthorized' });
         }
     } else {
         GUID = NormalizeToGUID(GUID);
     }
+    req.params.GUID = GUID;
+    req.GUID = GUID;
 
     // Check for player auth
     try {
@@ -269,4 +275,52 @@ function makeAuthToken(GUID) {
     }
 }
 
-module.exports = { CheckAuth, CheckAuthAgainstGUID, AuthPlayerGuid, CheckPlayerAuth, CheckServerAuth, GetSigningAuth, makeAuthToken,requireServerAuth,requirePlayerOrServerAuth };
+
+/**
+ * findLabelByAuthKey
+ * -------------------
+ * Finds the label corresponding to a given authentication key in the configuration.
+ *
+ * In our configuration, the authentication keys are stored in the array "ServerAuth"
+ * and their corresponding labels are stored in a parallel array "ServerAuthLabels". 
+ * The function finds the index of the provided auth key and returns the label stored at
+ * the same index. If the key is not found or if the labels array is not present, it returns undefined.
+ *
+ * Note:
+ *   - It is assumed that both arrays always maintain a one-to-one relationship:
+ *     i.e. if there is an entry in ServerAuth, then ServerAuthLabels (even if empty) 
+ *     exists at the same index.
+ *
+ * @param {string} authKey - The authentication key to search for.
+ * @param {object} config - The configuration object that must include a ServerAuth array 
+ *                          and, optionally, a ServerAuthLabels array.
+ * @returns {string|"undefined"} - The corresponding label (which may be an empty string)
+ *                               if found; otherwise, undefined.
+ */
+function findLabelByAuthKey(authKey) {
+    // First, check if a valid configuration object is provided and contains the ServerAuth array.
+    if (!config || !Array.isArray(global.ServerAuth)) {
+      console.error("Invalid config: ServerAuth array is missing.");
+      return "undefined";
+    }
+  
+    // Find the index of the provided authKey in the ServerAuth array.
+    const index = global.config.ServerAuth.indexOf(authKey);
+  
+    // If the authKey is not found, return undefined.
+    if (index === -1) {
+      return "undefined";
+    }
+  
+    // Check if the ServerAuthLabels array exists in the config.
+    if (!Array.isArray(global.config.ServerAuthLabels)) {
+      // If the labels array does not exist, we could consider it as no label data present.
+      return "undefined";
+    }
+  
+    // Return the label at the corresponding index.
+    // Note: The label may be an empty string, which is acceptable.
+    return global.config.ServerAuthLabels[index];
+  }
+
+module.exports = { CheckAuth, CheckAuthAgainstGUID, findLabelByAuthKey, AuthPlayerGuid, CheckPlayerAuth, CheckServerAuth, GetSigningAuth, makeAuthToken,requireServerAuth,requirePlayerOrServerAuth };

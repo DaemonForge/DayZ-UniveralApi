@@ -32,6 +32,7 @@ class UFRestCallBackBase : RestCallback
 class UFCallback<Class T> extends UFCallbackBase{
 	
 	override void OnError(int errorCode, int cid) {
+		Print("[UF] UFCallback<" + T.ToString() + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != "") {
 			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, errorCode, OID, NULL));
 		}
@@ -86,6 +87,7 @@ class UFCallbackLoader<Class T> extends UFCallbackBase {
 	}
 	
 	override void OnError(int errorCode, int cid) {
+		Print("[UF] UFCallbackLoader<" + T.ToString() + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != "") {
 			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, errorCode, OID, NULL));
 		}
@@ -131,6 +133,7 @@ class UFCallbackLoader<Class T> extends UFCallbackBase {
 class UJSONCallback extends UFCallbackBase {
 	
 	override void OnError(int errorCode, int cid) {
+		Print("[UF] UJSONCallback OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != ""){
 			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "{}"));
 		}

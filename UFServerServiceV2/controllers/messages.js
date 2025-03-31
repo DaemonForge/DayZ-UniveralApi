@@ -67,7 +67,7 @@ const {
   readMessages
 } = require("../models/messages");
 const { AuthPlayerGuid, CheckServerAuth, requireServerAuth, requirePlayerOrServerAuth} = require('../auth/utils')
-const { GenerateLimiter, createLogger} = require('../utils');
+const { GenerateLimiter, createLogger, tryConvertToObject} = require('../utils');
 const logger = createLogger(global.logger, 'DB.global');
 
 // Apply rate limiting: 400 requests per 10 seconds.

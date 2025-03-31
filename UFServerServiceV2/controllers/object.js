@@ -44,41 +44,39 @@ router.post('/Transaction/:ObjectId/:mod', requireServerAuth, runTransaction);
 
 /**
  * Loads an object with the specified ID and mod, creating a new one if requested
- * 
- * @async
- * @param {Object} req - Express request object
- * @param {Object} req.params - Request parameters
- * @param {string} req.params.ObjectId - ID of the target object or "NewObject" to generate new ID
- * @param {string} req.params.mod - Mod identifier
- * @param {Object} req.body - Request body containing initial data for new objects
- * @param {Object} res - Express response object
- * @returns {Promise<void>} - Resolves when load operation is complete
  */
 async function loadObject(req, res) {
     let { ObjectId, mod } = req.params;
     const data = req.body;
-    logger.info(`Received load request. from: ${ req.isServer ? "Server": "Client"} mod: ${mod}, ObjectId: ${ObjectId}, data: ${JSON.stringify(data)}`);
+    logger.debug(`loadObject called with ObjectId: ${ObjectId}, mod: ${mod}, data: ${JSON.stringify(data)}`);
+    logger.debug(`Received load request. from: ${ req.isServer ? "Server": "Client"} mod: ${mod}, ObjectId: ${ObjectId}, data: ${JSON.stringify(data)}`);
     try {
         const results = await getObject(ObjectId, mod);
-        logger.info(`getObject returned: ${JSON.stringify(results)}`);
+        logger.debug(`getObject returned: ${JSON.stringify(results)}`);
+        logger.debug(`getObject returned: ${JSON.stringify(results)}`);
         if (results === null || typeof results === 'undefined') {
             if (req.isServer && !isEmpty(data)) {
                 if (ObjectId === "NewObject") {
                     ObjectId = makeObjectId();
                     data.ObjectId = ObjectId;
-                    logger.info(`Creating new object with generated id. mod: ${mod}, ObjectId: ${ObjectId}`);
+                    logger.debug(`Generated new ObjectId: ${ObjectId}`);
+                    logger.debug(`Creating new object with generated id. mod: ${mod}, ObjectId: ${ObjectId}`);
                 } else {
-                    logger.info(`Creating new object with provided id. mod: ${mod}, ObjectId: ${ObjectId}`);
+                    logger.debug(`Using provided ObjectId: ${ObjectId}`);
+                    logger.debug(`Creating new object with provided id. mod: ${mod}, ObjectId: ${ObjectId}`);
                 }
                 await newObject(ObjectId, mod, data);
-                logger.info(`New object created successfully. mod: ${mod}, ObjectId: ${ObjectId}`);
+                logger.debug(`New object created, data: ${JSON.stringify(data)}`);
+                logger.debug(`New object created successfully. mod: ${mod}, ObjectId: ${ObjectId}`);
                 return res.status(201).json(data);
             } else {
-                logger.info(`No object found and creation criteria not met. mod: ${mod}, ObjectId: ${ObjectId}`, {isServer: req.isServer, data});
+                logger.debug(`No object found and creation criteria not met, isServer: ${req.isServer}, data: ${JSON.stringify(data)}`);
+                logger.debug(`No object found and creation criteria not met. mod: ${mod}, ObjectId: ${ObjectId}`, {isServer: req.isServer, data});
                 return res.status(204).json(data);
             }
         } else {
-            logger.info(`Existing object loaded. mod: ${mod}, ObjectId: ${ObjectId}`);
+            logger.debug(`Object found, returning existing object.`);
+            logger.debug(`Existing object loaded. mod: ${mod}, ObjectId: ${ObjectId}`);
             return res.status(200).json(results);
         }
     } catch (err) {
@@ -89,29 +87,24 @@ async function loadObject(req, res) {
 
 /**
  * Saves an object with the provided data, creating a new one if needed
- * 
- * @async
- * @param {Object} req - Express request object
- * @param {Object} req.params - Request parameters
- * @param {string} req.params.ObjectId - ID of the target object or "NewObject" to generate new ID
- * @param {string} req.params.mod - Mod identifier
- * @param {Object} req.body - Request body containing the object data to save
- * @param {Object} res - Express response object
- * @returns {Promise<void>} - Resolves when save operation is complete
  */
 async function saveObject(req, res) {
     let { ObjectId, mod } = req.params;
     const data = req.body;
+    logger.debug(`saveObject called with ObjectId: ${ObjectId}, mod: ${mod}, data: ${JSON.stringify(data)}`);
     try {
         if (ObjectId === "NewObject") {
             ObjectId = makeObjectId();
             data.ObjectId = ObjectId;
+            logger.debug(`Generated new ObjectId: ${ObjectId} for new object`);
         }
         const options = { upsert: true };
         const updateDoc = { $set: { data: data, ObjectId, Mod: mod } };
+        logger.debug(`Update document prepared: ${JSON.stringify(updateDoc)}`);
         const result = await updateObject(ObjectId, mod, updateDoc, options);
+        logger.debug(`updateObject result: ${JSON.stringify(result)}`);
         if (result.matchedCount === 1 || result.upsertedCount === 1) {
-            logger.info(`Updated object data. mod: ${mod}, ObjectId: ${ObjectId}`);
+            logger.debug(`Updated object data. mod: ${mod}, ObjectId: ${ObjectId}`);
             res.status(201).json(data);
         } else {
             logger.warn(`Error updating object data for mod: ${mod}, ObjectId: ${ObjectId}`);
@@ -125,29 +118,20 @@ async function saveObject(req, res) {
 
 /**
  * Executes a field update operation on a game object
- * 
- * @async
- * @param {Object} req - Express request object
- * @param {Object} req.params - Request parameters
- * @param {string} req.params.ObjectId - ID of the target object
- * @param {string} req.params.mod - Mod identifier
- * @param {Object} req.body - Request body containing update data
- * @param {string} req.body.Element - Field to update
- * @param {string} [req.body.Operation="set"] - Update operation type
- * @param {any} req.body.Value - New value for the field
- * @param {Object} res - Express response object
- * @returns {Promise<void>} - Resolves when update is complete
  */
 async function runUpdate(req, res) {
     let { ObjectId, mod } = req.params;
     const data = req.body;
+    logger.debug(`runUpdate called with ObjectId: ${ObjectId}, mod: ${mod}, data: ${JSON.stringify(data)}`);
     try {
         const element = data.Element;
         const operation = data.Operation || "set";
         const value = tryConvertToObject(data.Value);
+        logger.debug(`Updating element: ${element} using operation: ${operation} with value: ${JSON.stringify(value)}`);
         const result = await updateObjectField(ObjectId, mod, element, operation, value);
+        logger.debug(`updateObjectField result: ${JSON.stringify(result)}`);
         if (result.matchedCount >= 1 || result.upsertedCount >= 1) {
-            logger.info(`Updated ${element} for mod: ${mod}, ObjectId: ${ObjectId}`);
+            logger.debug(`Updated ${element} for mod: ${mod}, ObjectId: ${ObjectId}`);
             res.status(200).json({ Status: "Success", Element: element, Mod: mod, ID: ObjectId });
         } else {
             logger.warn(`Error updating ${element} for mod: ${mod}, ObjectId: ${ObjectId}`);
@@ -161,31 +145,21 @@ async function runUpdate(req, res) {
 
 /**
  * Executes a transaction on a game object based on request data
- * 
- * @async
- * @param {Object} req - Express request object
- * @param {Object} req.params - Request parameters
- * @param {string} req.params.ObjectId - ID of the target object
- * @param {string} req.params.mod - Mod identifier
- * @param {Object} req.body - Request body containing transaction data
- * @param {number} [req.body.Min] - (Optional) Minimum value for range-based transactions
- * @param {number} [req.body.Max] - (Optional) Maximum value for range-based transactions
- * @param {string} [req.body.Element] - Element identifier
- * @param {Object} res - Express response object
- * @returns {Promise<void>} - Resolves when transaction is complete
- * @throws {Error} - If transaction processing fails
  */
 async function runTransaction(req, res) {
     let { ObjectId, mod } = req.params;
     const data = req.body;
-
+    logger.debug(`runTransaction called with ObjectId: ${ObjectId}, mod: ${mod}, data: ${JSON.stringify(data)}`);
     try {
         let response;
         if (data.Min !== undefined && data.Max !== undefined && data.Min !== data.Max) {
+            logger.debug(`Running validated transaction with Min: ${data.Min} and Max: ${data.Max}`);
             response = await runValidatedObjectTransaction(data, ObjectId, mod);
         } else {
+            logger.debug(`Running standard transaction`);
             response = await runObjectTransaction(data, ObjectId, mod);
         }
+        logger.debug(`Transaction response: ${JSON.stringify(response)}`);
         res.json(response);
     } catch (err) {
         logger.error(`Transaction error: ${err.message}`, { error: err, mod, id: ObjectId });

@@ -27,9 +27,11 @@ router.post('/Transaction/:GUID/:mod', requireServerAuth, runTransaction);
 async function runGet(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Player data load request for GUID ${GUID} from: ${ req.isServer ? "Server": "Client"} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.debug(`Received player load request for GUID ${GUID}, mod ${mod}`, { GUID, mod, clientIP: req.ip });
     try {
+        logger.debug('About to call getPlayerModData', { GUID, mod });
         const data = await getPlayerModData(GUID, mod);
+        logger.debug('getPlayerModData returned', { data });
         if (!data) {
             logger.info(`Player or mod data not found for GUID ${GUID} and mod ${mod}`, { GUID, mod });
             return res.status(404).json({ error: 'Player or mod data not found' });
@@ -49,12 +51,14 @@ async function runGet(req, res) {
 async function runSave(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Player data save request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.debug(`Received player save request for GUID ${GUID}, mod ${mod}`, { GUID, mod, clientIP: req.ip });
     
     try {
         const modData = req.body;
+        logger.debug('Request body received for save', { modData });
         let result;
         const playerExistsFlag = await playerExists(GUID);
+        logger.debug(`playerExists returned ${playerExistsFlag} for GUID ${GUID}`, { GUID });
         
         if (playerExistsFlag) {
             logger.debug(`Updating existing player mod data for GUID ${GUID} and mod ${mod}`, { GUID, mod });
@@ -66,6 +70,7 @@ async function runSave(req, res) {
         }
         
         logger.info(`Player data saved successfully for GUID ${GUID} and mod ${mod} (isNewPlayer: ${!playerExistsFlag})`, { GUID, mod, isNewPlayer: !playerExistsFlag });
+        logger.debug('runSave result', { result });
         return res.json(result);
     } catch (err) {
         logger.error(`Error saving player data for GUID ${GUID} and mod ${mod}: ${err.message}`, { error: err });
@@ -79,19 +84,21 @@ async function runSave(req, res) {
 async function runUpdate(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Player field update request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.debug(`Received update request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
     
     try {
         const { Element, Operation, Value } = req.body;
+        logger.debug('Request body for update', { Element, Operation, Value });
         if (!Element || !Operation || Value === undefined) {
             logger.warn(`Invalid update payload for GUID ${GUID} and mod ${mod}`, { GUID, mod, body: req.body });
             return res.status(400).json({ error: 'Invalid update payload. Must include Element, Operation, and Value.' });
         }
         
-        logger.debug(`Updating player field ${Element} with operation ${Operation} for GUID ${GUID} and mod ${mod}`, { GUID, mod, element: Element, operation: Operation });
+        logger.debug(`Updating player field ${Element} with operation ${Operation} for GUID ${GUID} and mod ${mod}`, { GUID, mod, Element, Operation });
         const result = await updatePlayerField(GUID, mod, Element, Operation, tryConvertToObject(Value));
+        logger.debug('updatePlayerField returned', { result });
         
-        logger.info(`Player field ${Element} updated successfully for GUID ${GUID} and mod ${mod}`, { GUID, mod, element: Element });
+        logger.info(`Player field ${Element} updated successfully for GUID ${GUID} and mod ${mod}`, { GUID, mod, Element });
         return res.json(result);
     } catch (err) {
         logger.error(`Error updating player field ${req.body.Element} for GUID ${GUID} and mod ${mod}: ${err.message}`, { error: err });
@@ -106,11 +113,13 @@ async function runUpdate(req, res) {
 async function runGetPublic(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Public player data load request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.debug(`Received public load request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
     
     try {
         const publicMod = `Public.${mod}`;
+        logger.debug(`Using public mod key: ${publicMod}`, { GUID, mod });
         const data = await getPlayerModData(GUID, mod, publicMod);
+        logger.debug('getPlayerModData for public load returned', { data });
         if (!data) {
             logger.info(`Public player data not found for GUID ${GUID} and mod ${mod}`, { GUID, mod });
             return res.status(404).json({ error: 'Player or public mod data not found' });
@@ -131,13 +140,16 @@ async function runGetPublic(req, res) {
 async function runSavePublic(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Public player data save request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.debug(`Received public save request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
     
     try {
         const publicMod = `Public.${mod}`;
+        logger.debug(`Using public mod key for save: ${publicMod}`, { GUID, mod });
         const modData = req.body;
+        logger.debug('Request body for public save', { modData });
         let result;
         const playerExistsFlag = await playerExists(GUID);
+        logger.debug(`playerExists returned ${playerExistsFlag} for GUID ${GUID}`, { GUID });
         
         if (playerExistsFlag) {
             logger.debug(`Updating existing public player data for GUID ${GUID} and mod ${mod}`, { GUID, mod });
@@ -149,6 +161,7 @@ async function runSavePublic(req, res) {
         }
         
         logger.info(`Public player data saved successfully for GUID ${GUID} and mod ${mod} (isNewPlayer: ${!playerExistsFlag})`, { GUID, mod, isNewPlayer: !playerExistsFlag });
+        logger.debug('runSavePublic result', { result });
         return res.json(result);
     } catch (err) {
         logger.error(`Error saving public player data for GUID ${GUID} and mod ${mod}: ${err.message}`, { error: err });
@@ -162,15 +175,19 @@ async function runSavePublic(req, res) {
 async function runTransaction(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
+    logger.debug(`Received transaction request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    
     try {
         const transactionData = req.body;
+        logger.debug('Transaction payload received', { transactionData });
         if (!transactionData.Element || transactionData.Value === undefined) {
             logger.warn(`Invalid transaction payload for GUID ${GUID} and mod ${mod}`, { GUID, mod, body: req.body });
             return res.status(400).json({ Status: "Error", ID: GUID, Mod: mod, Error: 'Invalid transaction payload. Must include Element and Value.' });
         }
         
-        logger.debug(`Running player transaction on element ${transactionData.Element} with value ${transactionData.Value} for GUID ${GUID} and mod ${mod}`, { GUID, mod, element: transactionData.Element });
+        logger.debug(`Processing transaction on Element ${transactionData.Element} with value ${transactionData.Value}`, { GUID, mod });
         const result = await runPlayerTransaction(transactionData, mod, GUID);
+        logger.debug('runPlayerTransaction returned', { result });
         
         logger.info(`Player transaction completed for GUID ${GUID} and mod ${mod} on element ${transactionData.Element}`, { GUID, mod, result });
         return res.json(result);
@@ -186,9 +203,11 @@ async function runTransaction(req, res) {
 async function runValidatedTx(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
+    logger.debug(`Received validated transaction request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
 
     try {
         const transactionData = req.body;
+        logger.debug('Validated transaction payload received', { transactionData });
         if (!transactionData.Element || transactionData.Value === undefined ||
             transactionData.Min === undefined || transactionData.Max === undefined) {
             logger.warn(`Invalid validated transaction payload for GUID ${GUID} and mod ${mod}`, { GUID, mod, body: req.body });
@@ -197,9 +216,9 @@ async function runValidatedTx(req, res) {
             });
         }
         
-        logger.debug(`Running validated player transaction for GUID ${GUID} and mod ${mod} on element ${transactionData.Element} with value ${transactionData.Value} (min ${transactionData.Min}, max ${transactionData.Max})`, { GUID, mod });
-        
+        logger.debug(`Processing validated transaction on Element ${transactionData.Element} with value ${transactionData.Value} (Min: ${transactionData.Min}, Max: ${transactionData.Max})`, { GUID, mod });
         const result = await runValidatedPlayerTransaction(transactionData, mod, GUID);
+        logger.debug('runValidatedPlayerTransaction returned', { result });
         
         logger.info(`Validated player transaction completed for GUID ${GUID}, mod ${mod} on element ${transactionData.Element}`, { GUID, mod, result });
         return res.json(result);
@@ -212,11 +231,15 @@ async function runValidatedTx(req, res) {
 async function Transaction(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
+    logger.debug(`Received Transaction call for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
     let RawData = req.body;
+    logger.debug('Raw transaction payload', { RawData });
     if (RawData.Min !== undefined && RawData.Max !== undefined && RawData.Min !== RawData.Max) {
-        RunValidatedTransaction(req, res);
+        logger.debug('Routing to validated transaction');
+        runValidatedTx(req, res);
     } else {
-        RunTransaction(req, res);
+        logger.debug('Routing to normal transaction');
+        runTransaction(req, res);
     }
 }
 

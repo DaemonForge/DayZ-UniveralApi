@@ -36,7 +36,7 @@ async function runStatusCheck(req, res, auth) {
         const result = await collection.updateOne(query, updateDoc, options);
         if (result.modifiedCount >= 1 || result.upsertedCount >= 1 ){
             res.json({Status: "Success", Error: returnError, Version: global.APIVERSION, Discord: global.DISCORDSTATUS, OpenAI: global.OPENAISTATUS });
-            if(!noLog) logger.info("Status Check Called");
+            if(!noLog) logger.debug("Status Check Called");
         } else {
             res.status(500);
             res.json({Status: "Error", Error: "Database Write Error", Version: global.APIVERSION, Discord: global.DISCORDSTATUS, OpenAI: global.OPENAISTATUS });
