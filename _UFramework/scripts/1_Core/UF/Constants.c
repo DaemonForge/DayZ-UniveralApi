@@ -27,6 +27,8 @@ static const int UF_DBTOOEARLY = 425;
 static const int PLAYER_DB = 100;
 static const int OBJECT_DB = 101;
 
+static const string UF_QUEUE_FIFO = "FIFO";
+static const string UF_QUEUE_LIFO = "LIFO";
 
 class UpdateOpts {
 	static string SET = "set"; // `set` to set the value of an element

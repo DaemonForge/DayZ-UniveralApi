@@ -142,6 +142,12 @@ class UFramework extends Managed {
 		return m_UCronManager;
 	}
 
+	UFMsgEndpoint Msg(){
+		if (m_UFMsgEndpoint){
+			m_UFMsgEndpoint = new UFMsgEndpoint;
+		}
+		return m_UFMsgEndpoint;
+	}
 	
 	/**
 	 * RequestCallCancel
@@ -447,6 +453,8 @@ class UFramework extends Managed {
 	protected autoptr UDBGlobalEndpoint m_UDBGlobalEndpoint;
 	
 	protected autoptr UCronManager m_UCronManager;
+	
+	protected autoptr UFMsgEndpoint m_UFMsgEndpoint;
 	
 	protected autoptr UDiscordUser dsUser;
 		
