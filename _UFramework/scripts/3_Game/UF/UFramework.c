@@ -690,6 +690,7 @@ class UFramework extends Managed {
 	
 	string GetAuthToken(){
 		if (m_UFauthToken && !GetGame().IsServer()){
+			if (m_UFauthToken.IsExpired()) RequestAuthToken(false); //Shouldn't ever be expired but just encase
 			return m_UFauthToken.GetAuthToken();
 		} else if (GetGame().IsServer() && UFConfig().ServerAuth != ""){
 			return UFConfig().ServerAuth;
@@ -698,7 +699,7 @@ class UFramework extends Managed {
 	}
 	
 	bool HasValidAuth(){
-		return (GetAuthToken() != "null" && GetAuthToken() != "error" && GetAuthToken() != "ERROR" && GetAuthToken() != "" );
+		return (!m_UFauthToken.IsExpired() && GetAuthToken() != "null" && GetAuthToken() != "error" && GetAuthToken() != "ERROR" && GetAuthToken() != "" );
 	}
 	
 	
@@ -765,9 +766,14 @@ class UFramework extends Managed {
 		}
 	}
 	
+	protected int m_LastRequestAuthRetry = 0;
+	
 	void RequestAuthToken(bool first = false){
 		if (!m_IsServer){
-			GetRPCManager().SendRPC("UF", "RPCRequestAuthToken", new Param1<bool>(first), true);
+			if (m_LastRequestAuthRetry < (UUtil.GetUTCUnixInt() - 60)){ //Ratelimit to 1 per 60 Seconds if api is down for extended periods of time this could cause infient loops etc.
+				m_LastRequestAuthRetry = UUtil.GetUTCUnixInt();
+				GetRPCManager().SendRPC("UF", "RPCRequestAuthToken", new Param1<bool>(first), true);
+			}
 		}
 	}
 	
@@ -830,10 +836,7 @@ class UFramework extends Managed {
 			cClientConfig.ServerAuth = "null";
 			cClientConfig.EnableBuiltinLogging = UFConfig().EnableBuiltinLogging;
 			cClientConfig.PromptDiscordOnConnect = UFConfig().PromptDiscordOnConnect;
-			autoptr ApiAuthToken cUFauthToken = new ApiAuthToken;
-			cUFauthToken.GUID = idenitity.GetId();
-			cUFauthToken.AUTH = auth;
-			GetRPCManager().SendRPC("UF", "RPCUFrameworkConfig", new Param2<ApiAuthToken, UFrameworkConfig>(cUFauthToken, cClientConfig), true, idenitity);
+			GetRPCManager().SendRPC("UF", "RPCUFrameworkConfig", new Param2<ApiAuthToken, UFrameworkConfig>(new ApiAuthToken(idenitity.GetId(), auth), cClientConfig), true, idenitity);
 		} else {
 			Print("[UF] [UAuthCallBack] ERROR ");
 			if (idenitity){

@@ -12,7 +12,8 @@ modded class MissionGameplay extends MissionBase
 		m_UF_Initialized = false;
     	//Token expires in 22 minutes, tokens renew every 10 Minutes ensuring that if the API is down at the time of the renewal token will work till next retry
 		int TokenRefreshRate = 600; 
-		U().RequestAuthToken(true);
+		U().RequestAuthToken(m_UFFirstRequest);
+		m_UFFirstRequest = false;
 		U().Cron().runEndless(TokenRefreshRate, this, "RequestNewAuthToken", NULL);
 		#ifndef NO_GUI
 		m_UFVideoPlayer = new UFVideoPlayer(); //extra save to ensure that you can't play audio on server, this is due to the way that video works as if you try it will crash server

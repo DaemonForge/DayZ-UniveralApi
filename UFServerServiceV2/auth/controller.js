@@ -28,7 +28,7 @@ async function runGetAuth(req, res) {
     let GUID = req.params.GUID;
     logger.debug("Received request for auth token generation", { GUID });
     try {
-        let AUTH = makeAuthToken(GUID);
+        let AUTH = makeAuthToken(GUID, req.serverId);
         logger.debug("Auth token generated", { GUID, AUTH });
         if ((await saveAuthToken(GUID, AUTH))) {
             res.json({ GUID, AUTH });

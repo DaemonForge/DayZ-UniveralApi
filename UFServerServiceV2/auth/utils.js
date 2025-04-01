@@ -197,24 +197,10 @@ function AuthPlayerGuid(auth, ignoreError = false){
  */
 async function CheckPlayerAuth(guid, auth){
     let isAuth = false;
-    const client = new MongoClient(global.config.DBServer);
-    if ((await CheckAuthAgainstGUID(auth, guid, true))){
-        try{
-            await client.connect();
-            // Connect the client to the server        
-            const db = client.db(global.config.DB);
-            let collection = db.collection("Players");
-            let SavedAuth = createHash('sha256').update(auth).digest('base64');
-            let query = { GUID: guid, AUTH: SavedAuth };
-                if ((await collection.countDocuments(query)) != 0){
-                    isAuth = true;
-                }
-        } catch(err){
-            logger.warn("Player authentication error", { guid: guid, error: err });
-        } finally{
-            await client.close();
-            return isAuth;
-        }
+    try {
+        return (await CheckAuthAgainstGUID(auth, guid, true));
+    } catch (err) {
+        logger.error(`CheckPlayerAuth Error ${err.message}`, err);
     }
     return isAuth;
 }
@@ -256,19 +242,20 @@ function GetSigningAuth(){
 
 /**
  * Creates an authentication token for a player based on their GUID.
- * The token expires in 1300 seconds (~22 minutes), designed with a longer 
+ * The token expires in 900 seconds (~15 minutes), designed with a longer 
  * expiration to ensure API downtime doesn't interrupt authentication.
  * Tokens are typically renewed every 10 minutes.
  *
  * @param {string} GUID - Unique identifier for the player
+ * @param {string} serverId - The server ID that requested the authentication token
  * @returns {string} Signed JWT authentication token
  * @throws {Error} When token generation fails
  */
-function makeAuthToken(GUID) {
+function makeAuthToken(GUID, serverId) {
     try {
-        const player = { GUID: GUID }; 
-        //Token expires in ~22 minutes, tokens renew every 10 Minutes ensuring that if the API is down at the time of the renewal token will last till next retry
-        return sign(player, GetSigningAuth(), { expiresIn: 1300 });
+        const player = { GUID: GUID, ServerId: serverId || "undefined" }; 
+        //Token expires in ~15 minutes, tokens renew every 10 Minutes
+        return sign(player, GetSigningAuth(), { expiresIn: 900 });
     } catch (error) {
         logger.error("Failed to create auth token", { guid: GUID, error: error.message });
         throw new Error("Authentication token generation failed");

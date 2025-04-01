@@ -86,7 +86,8 @@ function getTexconvPath() {
 */
 async function convertPngToDdsBase64(imageUrl) {
      logger.info(`convertPngToDdsBase64: Converting image from ${imageUrl}`);
-     const urlHash = crypto.createHash('sha256').update(imageUrl).digest('hex');
+     const randomNum = Math.floor(Math.random() * 90000) + 10000;
+     const urlHash = crypto.createHash('sha256').update(`${imageUrl}+${randomNum}`).digest('hex');
      // Create a unique temporary directory.
      const tmpDir =  ensureDirExsist('temp');
     
@@ -114,10 +115,10 @@ async function convertPngToDdsBase64(imageUrl) {
      logger.info(`convertPngToDdsBase64: Conversion successful`);
 
      // OPTIONAL: Cleanup temporary directory if desired.
-     try{
+     try {
           fs.unlinkSync(inputFilePath);
           fs.unlinkSync(ddsOutputFile);
-     }catch(err){
+     } catch(err) {
           logger.error(`convertPngToDdsBase64: Error cleaning up temporary files: ${err.message}`);
      }
      return base64DDS;
