@@ -147,7 +147,15 @@ function createExpressApp() {
   const defaultIcon = path.join(__dirname, 'public', 'icon.png');
   const iconPath = existsSync(iconFile) ? iconFile : defaultIcon;
   app.get('/icon.png', (req, res) => {
+    logger.debug(`[WebServer] Icon requested sending ${iconPath}`, { url: req.url, ip: req.ip });
     res.sendFile(iconPath);
+  });
+  const iconsvgFile = path.join(global.SAVEPATH, 'templates', 'icon.svg');
+  const defaultsvgIcon = path.join(__dirname, 'public', 'icon.svg');
+  const iconsvgPath = existsSync(iconsvgFile) ? iconsvgFile : defaultsvgIcon;
+  app.get('/icon.svg', (req, res) => {
+    logger.debug(`[WebServer] Icon requested sending ${iconsvgPath}`, { url: req.url, ip: req.ip });
+    res.sendFile(iconsvgPath);
   });
   
   // Handle invalid routes

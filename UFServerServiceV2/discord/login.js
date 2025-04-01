@@ -114,19 +114,22 @@ async function RenderLogin(req, res){
 
 
 async function HandleCallBack(req, res){
+    logger.debug("HandleCallBack invoked", { query: req.query });
     if (ErrorTemplate === undefined) LoadErrorTemplate();
     if (SuccessTemplate === undefined) LoadSuccessTemplate();
     const code = req.query.code;
     const state = req.query.state;
+    logger.debug("Parsed parameters", { code, state });
 
     if (code === undefined || code === null || state === undefined || state === null){
-        logger.warn(`HandleCallBack - Invalid Response from Discord`);
+        logger.warn("HandleCallBack - Invalid Response from Discord");
         res.send(render(ErrorTemplate, {TheError: "Invalid Response from Discord", Type: "Discord"}));
         return;
     }
     const mongo = new MongoClient(global.config.DBServer);
     try {
         let connect = mongo.connect();
+        logger.debug("Requesting token from Discord");
         const response = await fetch(`https://discord.com/api/oauth2/token`,{
             method: 'POST',
             headers: {
@@ -141,6 +144,7 @@ async function HandleCallBack(req, res){
             }),
         });
         const json = await response.json();
+        logger.debug("Received token response", { tokenResponse: json });
         const discordres = await fetch(`https://discord.com/api/users/@me`, {
             method: 'GET',
             headers: {
@@ -148,16 +152,18 @@ async function HandleCallBack(req, res){
             }
         });
         let discordjson = await discordres.json();
-        logger.debug(`Discord User Info Optained for ${discordjson.id}.`, discordjson );
+        logger.debug("Received Discord user details", discordjson);
         discordjson.steamid = state;
         let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
+        logger.debug("Fetched discord guild", { guildId: global.config.Discord.Guild_Id });
         let msg = `Unknown Error, possible that call back isn't configured correctly should be "https://${req.headers.host}/discord/callback"`;
         let errType = "System";
         let player;
         try {
             player = await guild.members.fetch(discordjson.id);
+            logger.debug("Fetched discord member", { memberId: discordjson.id });
         } catch (e) {
-            logger.warn(`Error fetching discord member`, { error: e, details: JSON.stringify(e) });
+            logger.warn("Error fetching discord member", { error: e, details: JSON.stringify(e) });
             msg = "User not found in discord";
             errType = "UserNotFound";
         }
@@ -171,15 +177,16 @@ async function HandleCallBack(req, res){
             } else if (!global.config.Discord.Required_Role || roles.some(r => r.id === global.config.Discord.Required_Role)){
                 msg = "Success";
             }
+            logger.debug("Role check result", { msg, errType, roles: roles.map(r => r.id) });
         }
 
         if (msg === "Success"){
-            discordjson.avatar = `https://cdn.discordapp.com/avatars/${discordjson.id}/${discordjson.avatar}`
-           
+            discordjson.avatar = `https://cdn.discordapp.com/avatars/${discordjson.id}/${discordjson.avatar}`;
             let guid = createHash('sha256').update(discordjson.steamid).digest('base64');
             guid = guid.replace(/\+/g, '-'); 
             guid = guid.replace(/\//g, '_');
             await connect;
+            logger.debug("Connected to MongoDB", { guid });
 
             let data = {
                 GUID: guid,
@@ -196,60 +203,48 @@ async function HandleCallBack(req, res){
             
             let query = { "Discord.id": discordjson.id };
             let results = collection.find(query);
-            if ((await collection.countDocuments(query)) == 0){
+            const count = await collection.countDocuments(query);
+            logger.debug("Checking existing discord record", { discordId: discordjson.id, count });
+            if (count == 0){
                 query = { GUID: guid };
                 const options = { upsert: true };
                 const updateDoc = { $set: data, };
                 const result = await collection.updateOne(query, updateDoc, options);
-
+                logger.debug("MongoDB updateOne result", { result });
                 if ( result.matchedCount === 1 || result.upsertedCount === 1 ){
-                    logger.info("Player connected to Discord", { 
-                        GUID: guid, 
-                        discordId: discordjson.id 
-                    });
-                    res.send(render(SuccessTemplate, {DiscordId: discordjson.id, DiscordUsername: discordjson.username, DiscordAvatar: discordjson.avatar, discordName: discordjson.global_name, SteamId: discordjson.steamid}))
+                    logger.info("Player connected to Discord", { GUID: guid, discordId: discordjson.id });
+                    res.send(render(SuccessTemplate, {DiscordId: discordjson.id, DiscordUsername: discordjson.username, DiscordAvatar: discordjson.avatar, DiscordName: discordjson.global_name, SteamId: discordjson.steamid}));
                 } else {
-                    logger.warn("Error when trying to link player to discord", { 
-                        GUID: guid, 
-                        discordId: discordjson.id 
-                    });
+                    logger.warn("Error when trying to link player to discord", { GUID: guid, discordId: discordjson.id });
                     res.send(render(ErrorTemplate, {TheError: "There was an error linking your discord account", Type: "Database"}));
                 }
             } else {
                 let dataarr = await results.toArray(); 
                 let querydata = dataarr[0]; 
+                logger.debug("Existing discord record found", { existingGUID: querydata.GUID, newGUID: guid });
                 if ( guid === querydata.GUID){
-                    logger.warn(`Player tried to link to discord ID already in use`, { 
-                        GUID: guid, 
-                        discordId: discordjson.id, 
-                        existingGUID: querydata.GUID 
-                    });
-                    res.send( render(ErrorTemplate, {TheError: "It seems you already have your discord account Linked", Type: "AlreadyLinked"} ) );
+                    logger.warn("Player tried to link discord already in use", { GUID: guid, discordId: discordjson.id, existingGUID: querydata.GUID });
+                    res.send(render(ErrorTemplate, {TheError: "It seems you already have your discord account Linked", Type: "AlreadyLinked"}));
                 } else {
-                    logger.warn(`Player tried to link to discord ID already in use with another account`, { 
-                        GUID: guid, 
-                        discordId: discordjson.id, 
-                        existingGUID: querydata.GUID 
-                    });
-                    res.send( render(ErrorTemplate, { TheError: "You already have your discord linked to another account", Type: "Conflict"} ) );
+                    logger.warn("Player tried to link discord already in use with another account", { GUID: guid, discordId: discordjson.id, existingGUID: querydata.GUID });
+                    res.send(render(ErrorTemplate, { TheError: "You already have your discord linked to another account", Type: "Conflict"}));
                 }
             }
         } else {
+            logger.debug("Discord user does not meet role requirements", { msg, errType });
             res.send(render(ErrorTemplate, {TheError: msg, Type: errType}));
         }
     } catch (error){
-        logger.warn(`Error in HandleCallback`, { 
-            error, 
-            details: JSON.stringify(error) 
-        });
+        logger.warn("Error in HandleCallback", { error, details: JSON.stringify(error) });
         try {
-            res.send(render(ErrorTemplate, {TheError: e, Type: "System"}));
+            res.send(render(ErrorTemplate, {TheError: error, Type: "System"}));
         } catch(err){
-            logger.warn(`Error rendering error template`, { error: err });
+            console.log(err);
+            logger.warn("Error rendering error template", err);
             res.send(`<html><head><title>Invalid Link</title></head><body><h1>Error: Invalid Error Templates</h1></body></html>`);
         }
     } finally {
-        // Ensures that the client will close when you finish/error
+        logger.debug("Closing MongoDB connection");
         mongo.close();
     }
 }
