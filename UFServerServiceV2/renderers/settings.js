@@ -11,12 +11,22 @@
  *            a one-to-one correspondence with the ServerAuth array.
  */
 
-// Global flag to track unsaved changes.
 let unsavedChanges = false;
 document.getElementById('floatingSaveBtn').hidden = true;
 const configForm = document.getElementById('configForm');
 
-// Listen for any change in inputs, selects, or textareas within the form.
+// Helper function to show notifications in our custom dialog instead of native alerts.
+function showNotification(message) {
+  const notificationDialog = document.getElementById('notificationDialog');
+  const notificationMessage = document.getElementById('notificationMessage');
+  notificationMessage.innerText = message;
+  notificationDialog.showModal();
+}
+
+document.getElementById('notificationOK').addEventListener('click', () => {
+  document.getElementById('notificationDialog').close();
+});
+
 configForm.addEventListener('input', () => {
   unsavedChanges = true;
   // Show Save and Cancel/Close buttons if hidden.
@@ -27,8 +37,9 @@ configForm.addEventListener('input', () => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const certTypeSelect = document.getElementById('certType');
+  const proxyConfigContainer = document.getElementById('proxyConfigContainer');
 
-  // Toggle certificate fields based on selected certificate type.
+  // Toggle certificate fields and show proxy configuration container when "proxy" is selected.
   certTypeSelect.addEventListener('change', () => {
     const type = certTypeSelect.value;
     const ownCertFields = document.getElementById('ownCertFields');
@@ -50,14 +61,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Toggle Let's Encrypt fields.
     if (type === 'letsEncrypt') {
       letsEncryptFields.style.display = 'block';
-      letsEncryptFields.querySelectorAll('input, textarea').forEach(input => {
-        input.disabled = false;
-      });
+      letsEncryptFields.querySelectorAll('input, textarea').forEach(input => input.disabled = false);
     } else {
       letsEncryptFields.style.display = 'none';
-      letsEncryptFields.querySelectorAll('input, textarea').forEach(input => {
-        input.disabled = true;
-      });
+      letsEncryptFields.querySelectorAll('input, textarea').forEach(input => input.disabled = true);
+    }
+    if (type === 'proxy') {
+      proxyConfigContainer.style.display = 'block';
+    } else {
+      proxyConfigContainer.style.display = 'none';
     }
   });
 
@@ -110,9 +122,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
     </svg>`;
     copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(tokenInput.value);
-      copyBtn.title = 'Copied!';
-      setTimeout(() => { copyBtn.title = 'Copy Auth Token'; }, 2000);
+      navigator.clipboard.writeText(tokenInput.value)
+        .then(() => {
+          copyBtn.classList.add('animate-copy');
+          copyBtn.title = 'Copied!';
+          setTimeout(() => {
+            copyBtn.classList.remove('animate-copy');
+            copyBtn.title = 'Copy Auth Token';
+          }, 2000);
+        })
+        .catch(err => {
+          console.error("Error copying auth token: ", err);
+        });
     });
 
     // Delete button with provided SVG.
@@ -177,7 +198,103 @@ document.addEventListener('DOMContentLoaded', async () => {
     return wrapper;
   }
 
-  // Event listener for adding a new IP address entry.
+  // ----------------- Proxy Configuration Section -----------------
+  async function loadProxyDomains() {
+    try {
+      const domains = await window.api.getProxyDomains();
+      const dropdown = document.getElementById('proxyDomain');
+      dropdown.innerHTML = "";
+      domains.forEach(domain => {
+        const option = document.createElement('option');
+        option.value = domain;
+        option.text = domain;
+        dropdown.appendChild(option);
+      });
+    } catch (err) {
+      showNotification("Error loading proxy domains: " + err.message);
+    }
+  }
+  await loadProxyDomains();
+
+  document.getElementById('proxyDomain').addEventListener('change', () => {
+    const selectedDomain = document.getElementById('proxyDomain').value;
+    const registered = document.getElementById('proxySubdomain').value;
+    const warningDiv = document.getElementById('proxyWarning');
+    if (registered) {
+      const currentDomain = registered.split('.').slice(1).join('.');
+      if (currentDomain !== selectedDomain) {
+        warningDiv.style.display = 'block';
+        warningDiv.innerText = "Warning: Changing the primary domain will stop auto-renewal for the current proxy token.";
+      } else {
+        warningDiv.style.display = 'none';
+        warningDiv.innerText = "";
+      }
+    }
+  });
+
+  async function registerProxy() {
+    const selectedDomain = document.getElementById('proxyDomain').value;
+    try {
+      const data = await window.api.registerProxy(selectedDomain);
+      // Update UI: hide the not-registered controls and show the registered container.
+      document.getElementById('proxyNotRegistered').style.display = 'none';
+      document.getElementById('proxyRegistered').style.display = 'flex';
+      document.getElementById('proxySubdomain').value = data.subdomain;
+      document.getElementById('proxyToken').value = data.token;
+      // Auto save the config immediately upon successful proxy registration.
+      let currentConfig = await window.api.getConfig();
+      if (!currentConfig) currentConfig = {};
+      currentConfig.Proxy = {
+        primaryDomain: selectedDomain,
+        subdomain: data.subdomain,
+        token: data.token,
+        lastRenew: new Date().toISOString()
+      };
+      const saveRes = await window.api.saveConfig(currentConfig);
+      unsavedChanges = true;
+      if (!saveRes.success) {
+        showNotification("Proxy registered, but failed to auto-save configuration.");
+        unsavedChanges = true;
+      }
+    } catch (err) {
+      showNotification("Error registering proxy: " + err.message);
+    }
+  }
+  document.getElementById('registerProxyBtn').addEventListener('click', registerProxy);
+
+  document.getElementById('copyProxySubdomain').addEventListener('click', () => {
+    const proxySub = document.getElementById('proxySubdomain').value;
+    if (proxySub) {
+      navigator.clipboard.writeText(proxySub)
+        .then(() => {
+          const btn = document.getElementById('copyProxySubdomain');
+          btn.classList.add('animate-copy');
+          btn.title = 'Copied!';
+          setTimeout(() => {
+            btn.classList.remove('animate-copy');
+            btn.title = 'Copy Subdomain';
+          }, 2000);
+        })
+        .catch(err => {
+          console.error("Error copying proxy subdomain: ", err);
+        });
+    }
+  });
+
+  document.getElementById('deleteProxySubdomain').addEventListener('click', () => {
+    const confirmDelete = confirm("Are you sure you want to delete the registered proxy subdomain? You will then need to register a new one.");
+    if (confirmDelete) {
+      document.getElementById('proxySubdomain').value = "";
+      document.getElementById('proxyToken').value = "";
+      document.getElementById('proxyRegistered').style.display = 'none';
+      document.getElementById('proxyNotRegistered').style.display = 'flex';
+      unsavedChanges = true;
+      document.getElementById('saveBtn').hidden = false;
+      document.getElementById('cancelBtn').hidden = false;
+      document.getElementById('floatingSaveBtn').hidden = false;
+    }
+  });
+
   document.getElementById('addRateLimit').addEventListener('click', () => {
     const container = document.getElementById('rateLimitList');
     const item = createListItem('', 'IP Address');
@@ -220,7 +337,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </label>
         <span>Discord</span>
       </div>
-
       <div class="toggle-container" title="Allow Message Queue">
         <label class="toggle-switch">
           <input type="checkbox" class="allowMsgQueue">
@@ -245,27 +361,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.appendChild(div);
   });
 
-  /**
-   * Generates a random 48-character authentication token.
-   * @returns {string} A complex 48-character token.
-   */
   function makeAuthToken() {
     let result = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.!~';
-    const charactersLength = characters.length;
     for (let i = 0; i < 48; i++) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
     }
     return result;
   }
 
-  /**
-   * loadConfig: Loads the current configuration via IPC and populates the form fields.
-   * Uses fallback defaults if no config is available.
-   */
+  // ----------------- Load and Populate Config -----------------
   async function loadConfig() {
     const config = await window.api.getConfig();
-    // Use fallback defaults if no config exists.
     const cfg = config || {
       DBServer: "mongodb://localhost:27017",
       DB: "DayZ",
@@ -273,8 +380,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       IP: "0.0.0.0",
       Port: 443,
       RateLimitWhiteList: ["127.0.0.1"],
-      ServerAuth: [makeAuthToken()], // Generate a new token by default.
-      // New field for storing labels for the ServerAuth tokens.
+      ServerAuth: [makeAuthToken()],
       ServerAuthLabels: [""],
       Discord: {
         Client_Id: "",
@@ -307,17 +413,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         Domain: "localhost.localhost",
         Email: "myemail@email.com",
         AltNames: []
+      },
+      Proxy: {
+        primaryDomain: "",
+        subdomain: "",
+        token: "",
+        lastRenew: ""
       }
     };
 
-    // Populate Database section.
     document.getElementById('DBServer').value = cfg.DBServer;
     document.getElementById('DB').value = cfg.DB;
     document.getElementById('CreateIndexes').checked = cfg.CreateIndexes;
     document.getElementById('IP').value = cfg.IP;
     document.getElementById('Port').value = cfg.Port;
 
-    // Populate RateLimitWhiteList.
     const rateList = document.getElementById('rateLimitList');
     rateList.innerHTML = "";
     cfg.RateLimitWhiteList.forEach(ip => {
@@ -325,11 +435,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       rateList.appendChild(item);
     });
 
-    // Populate ServerAuth entries (with labels, if available).
     const authList = document.getElementById('serverAuthList');
     authList.innerHTML = "";
     (cfg.ServerAuth || []).forEach((auth, index) => {
-      // If the ServerAuthLabels array exists return the label at the same index, otherwise default to empty string.
       const labelValue = (cfg.ServerAuthLabels && Array.isArray(cfg.ServerAuthLabels)) ? (cfg.ServerAuthLabels[index] || '') : '';
       const item = createAuthEntry(auth, labelValue);
       authList.appendChild(item);
@@ -340,8 +448,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       certType = 'letsEncrypt';
     } else if (cfg.Certificate !== "" || cfg.CertificateKey !== "") {
       certType = 'ownCert';
+    } else if (cfg.Proxy && cfg.Proxy.subdomain) {
+      certType = 'proxy';
     }
-    // Populate Certificate type & fields.
     document.getElementById('certType').value = certType;
     certTypeSelect.dispatchEvent(new Event('change'));
     document.getElementById('Certificate').value = cfg.Certificate;
@@ -350,27 +459,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('LE_Email').value = cfg.LetsEncypt.Email;
     document.getElementById('LE_AltNames').value = cfg.LetsEncypt.AltNames.join(', ');
 
-    // Populate basic Discord fields.
     document.getElementById('Discord_Client_Id').value = cfg.Discord.Client_Id;
     document.getElementById('Discord_Client_Secret').value = cfg.Discord.Client_Secret;
     document.getElementById('Discord_Bot_Token').value = cfg.Discord.Bot_Token;
     document.getElementById('Discord_Guild_Id').value = cfg.Discord.Guild_Id;
     document.getElementById('Discord_AllowToReRegister').checked = cfg.Discord.AllowToReRegister;
-
-    // Populate Discord Restrictions (Advanced section).
     document.getElementById('Discord_Restrict_Sign_Up').checked = cfg.Discord.Restrict_Sign_Up;
     document.getElementById('Discord_Required_Role').value = cfg.Discord.Required_Role;
     document.getElementById('Discord_BlackList_Role').value = cfg.Discord.BlackList_Role;
-    // Convert array to comma-separated string.
     document.getElementById('Restrict_Sign_Up_Countries').value = Array.isArray(cfg.Discord.Restrict_Sign_Up_Countries)
       ? cfg.Discord.Restrict_Sign_Up_Countries.join(', ')
       : cfg.Discord.Restrict_Sign_Up_Countries;
 
-    // Populate OpenAI fields.
     document.getElementById('OpenAIApi_ApiKey').value = cfg.OpenAIApi.ApiKey;
     document.getElementById('OpenAIApi_enablePromptProtection').checked = cfg.OpenAIApi.enablePromptProtection;
 
-    // Populate Functions section.
     const funcContainer = document.getElementById('functionsContainer');
     funcContainer.innerHTML = "";
     for (const mod in cfg.Functions) {
@@ -386,7 +489,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           </label>
           <span>DB</span>
         </div>
-
         <div class="toggle-container" title="Allow Discord Bot functions">
           <label class="toggle-switch">
             <input type="checkbox" ${fun.AllowDiscordBot ? 'checked' : ''} class="allowDiscordBot">
@@ -394,7 +496,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           </label>
           <span>Discord</span>
         </div>
-
         <div class="toggle-container" title="Allow Message Queue">
           <label class="toggle-switch">
             <input type="checkbox" ${fun.AllowMsgQueue ? 'checked' : ''} class="allowMsgQueue">
@@ -418,16 +519,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       funcContainer.appendChild(div);
     }
-  }
 
-  // Load config on page load.
+    // Populate Proxy configuration fields.
+    if (cfg.Proxy) {
+      document.getElementById('proxySubdomain').value = cfg.Proxy.subdomain || "";
+      if (cfg.Proxy.primaryDomain) {
+        const dropdown = document.getElementById('proxyDomain');
+        dropdown.innerHTML = "";
+        const option = document.createElement('option');
+        option.value = cfg.Proxy.primaryDomain;
+        option.text = cfg.Proxy.primaryDomain;
+        dropdown.appendChild(option);
+        dropdown.value = cfg.Proxy.primaryDomain;
+      }
+      if (cfg.Proxy.subdomain) {
+        document.getElementById('proxyNotRegistered').style.display = 'none';
+        document.getElementById('proxyRegistered').style.display = 'flex';
+      } else {
+        document.getElementById('proxyNotRegistered').style.display = 'flex';
+        document.getElementById('proxyRegistered').style.display = 'none';
+      }
+    }
+  }
   await loadConfig();
 
-  // Save configuration on form submission.
-  document.getElementById('configForm').addEventListener('submit', async function(e) {
+  configForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    // Gather ServerAuth tokens along with their corresponding labels.
     const authItems = document.querySelectorAll('#serverAuthList .list-item');
     const serverAuth = [];
     const serverAuthLabels = [];
@@ -438,6 +556,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       serverAuthLabels.push(labelInput ? labelInput.value : '');
     });
 
+    // If certificate type is "proxy", treat it like selfSigned (no certificates)
+    const certType = document.getElementById('certType').value;
+    let certificate = "";
+    let certificateKey = "";
+    if (certType === 'ownCert') {
+      certificate = document.getElementById('Certificate').value;
+      certificateKey = document.getElementById('CertificateKey').value;
+    }
     const newConfig = {
       DBServer: document.getElementById('DBServer').value,
       DB: document.getElementById('DB').value,
@@ -445,11 +571,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       IP: document.getElementById('IP').value,
       Port: Number(document.getElementById('Port').value),
       RateLimitWhiteList: Array.from(document.querySelectorAll('#rateLimitList input')).map(input => input.value),
-      // Updated to store both the auth tokens and their corresponding labels.
       ServerAuth: serverAuth,
       ServerAuthLabels: serverAuthLabels,
-      Certificate: document.getElementById('certType').value === 'ownCert' ? document.getElementById('Certificate').value : '',
-      CertificateKey: document.getElementById('certType').value === 'ownCert' ? document.getElementById('CertificateKey').value : '',
+      Certificate: certificate,
+      CertificateKey: certificateKey,
       Discord: {
         Client_Id: document.getElementById('Discord_Client_Id').value,
         Client_Secret: document.getElementById('Discord_Client_Secret').value,
@@ -479,6 +604,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           .split(',')
           .map(s => s.trim())
           .filter(s => s !== '')
+      },
+      Proxy: {
+        primaryDomain: document.getElementById('certType').value === 'Proxy' ? document.getElementById('proxyDomain').value : "",
+        subdomain: document.getElementById('certType').value === 'Proxy' ?  document.getElementById('proxySubdomain').value : "",
+        token: document.getElementById('certType').value === 'Proxy' ?  document.getElementById('proxyToken').value : "",
+        lastRenew: document.getElementById('certType').value === 'Proxy' ?  new Date().toISOString() : ""
       }
     };
 
@@ -499,44 +630,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const result = await window.api.saveConfig(newConfig);
     if (result.success) {
-      // Reset unsaved changes flag on successful save.
       unsavedChanges = false;
-      // Optionally hide the Save/Cancel buttons.
       document.getElementById('saveBtn').hidden = true;
       document.getElementById('cancelBtn').hidden = true;
       document.getElementById('floatingSaveBtn').hidden = true;
-      // Show the save confirmation dialog.
       const dialog = document.getElementById('saveDialog');
       dialog.showModal();
-      // When the user chooses to close the window (and restart Electron):
       document.getElementById('dialogClose').addEventListener('click', () => {
         dialog.close();
-        // Use the exposed API to force close the window.
         window.api.forceClose();
-        // Then restart the app.
         window.api.restartApp();
       }, { once: true });
-      // When the user chooses to keep editing:
       document.getElementById('dialogContinue').addEventListener('click', () => {
         dialog.close();
       }, { once: true });
     } else {
-      alert("Failed to save configuration");
+      showNotification("Failed to save configuration");
     }
   });
 
-  // Listen for an attempt to close (e.g., when the user clicks the X button)
   window.api.onAttemptClose((event, ...args) => {
     if (unsavedChanges) {
       const confirmDialog = document.getElementById('confirmCloseDialog');
       confirmDialog.showModal();
     } else {
-      // If there are no unsaved changes, force the close immediately.
       window.api.forceClose();
     }
   });
-  
-  // Cancel/Close button event: if there are unsaved changes, prompt confirmation; otherwise, close.
+
   document.getElementById('cancelBtn').addEventListener('click', function() {
     if (unsavedChanges) {
       const confirmDialog = document.getElementById('confirmCloseDialog');
@@ -546,22 +667,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // At the very end, add an event listener for the floating save button.
   document.getElementById('floatingSaveBtn').addEventListener('click', () => {
-    // Simulate a click on the regular "Save" button:
     document.getElementById('saveBtn').click();
   });
 });
 
-// Handle confirmation dialog actions for unsaved changes.
 document.getElementById('confirmCloseYes').addEventListener('click', () => {
-  // User confirms closing without saving.
   unsavedChanges = false;
   document.getElementById('confirmCloseDialog').close();
   window.api.forceClose();
 });
 
 document.getElementById('confirmCloseNo').addEventListener('click', () => {
-  // User chooses to continue editing.
   document.getElementById('confirmCloseDialog').close();
 });

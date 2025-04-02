@@ -49,6 +49,9 @@ app.on('ready', () => {
   setTimeout(updateTrayMenu, 6000);
   setTimeout(updateTrayMenu, 10000);
   setInterval(updateTrayMenu, 15000);
+
+  // Start auto-renewal for proxy token, if configured.
+  startProxyAutoRenew();
 });
 
 function createLoggerStream(){
@@ -373,3 +376,87 @@ ipcMain.on('restart-app', () => {
 app.on('window-all-closed', (e) => {
   e.preventDefault();
 });
+/**
+ * Register an IPC handler for "get-proxy-domains" and return the available domains
+ * from the hard-coded Cloudflare Worker endpoint.
+ */
+let lastProxyRegistrationTime = 0;
+
+ipcMain.handle('get-proxy-domains', async (event) => {
+  try {
+    const response = await fetch("https://ufapi.daemonforge.dev/available");
+    if (!response.ok) {
+      throw new Error("HTTP error " + response.status);
+    }
+    const data = await response.json();
+    return data; // Expected to be an array of domain strings.
+  } catch (error) {
+    console.error("Error fetching proxy domains:", error);
+    return [];
+  }
+});
+
+ipcMain.handle('register-proxy', async (event, selectedDomain) => {
+  try {
+    const now = Date.now();
+    if (now - lastProxyRegistrationTime < 60000) {
+      throw new Error("Rate limited: Please wait at least 60 seconds between registrations.");
+    }
+    lastProxyRegistrationTime = now;
+    const response = await fetch("https://ufapi.daemonforge.dev/register", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain: selectedDomain })
+    });
+    if (!response.ok) {
+      throw new Error("Failed to register proxy subdomain. HTTP " + response.status);
+    }
+    const data = await response.json();
+    return data; // Expected to return { subdomain, token }
+  } catch (error) {
+    console.error("Error in 'register-proxy' handler:", error);
+    throw error;
+  }
+});
+
+// ----------------------- Proxy Auto-Renew Functions -----------------------
+function loadConfigSync() {
+  const configPath = path.join(global.SAVEPATH, 'config.json');
+  try {
+    return JSON.parse(readFileSync(configPath, 'utf-8'));
+  } catch (err) {
+    console.error("Error reading config:", err);
+    return {};
+  }
+}
+
+async function renewProxyToken() {
+  const config = loadConfigSync();
+  if (!config.Proxy || !config.Proxy.subdomain || !config.Proxy.token || !config.Proxy.autoRenew) {
+    return;
+  }
+  // Use the hard-coded keepalive endpoint of the proxy.
+  const keepaliveUrl = "https://ufapi.daemonforge.dev/keepalive";
+  try {
+    const res = await fetch(keepaliveUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subdomain: config.Proxy.subdomain, token: config.Proxy.token })
+    });
+    if (res.ok) {
+      global.logger.info("Proxy token renewed successfully.");
+      config.Proxy.lastRenew = new Date().toISOString();
+      writeFileSync(path.join(global.SAVEPATH, 'config.json'), JSON.stringify(config, null, 2));
+    } else {
+      const text = await res.text();
+      global.logger.error("Failed to renew proxy token: " + text);
+    }
+  } catch (e) {
+    global.logger.error("Error renewing proxy token: " + e.message);
+  }
+}
+
+function startProxyAutoRenew() {
+  renewProxyToken();
+  setInterval(renewProxyToken, 24 * 60 * 60 * 1000);
+}
