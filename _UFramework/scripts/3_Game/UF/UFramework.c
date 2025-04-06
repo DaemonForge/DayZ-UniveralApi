@@ -149,6 +149,12 @@ class UFramework extends Managed {
 		return m_UFMsgEndpoint;
 	}
 	
+	UFAIChatEndpoint AI(){
+		if (m_UFAIChatEndpoint){
+			m_UFAIChatEndpoint = new UFAIChatEndpoint;
+		}
+		return m_UFAIChatEndpoint;
+	}
 	/**
 	 * RequestCallCancel
 	 * -----------------
@@ -455,6 +461,8 @@ class UFramework extends Managed {
 	protected autoptr UCronManager m_UCronManager;
 	
 	protected autoptr UFMsgEndpoint m_UFMsgEndpoint;
+	
+	protected autoptr UFAIChatEndpoint m_UFAIChatEndpoint;
 	
 	protected autoptr UDiscordUser dsUser;
 		

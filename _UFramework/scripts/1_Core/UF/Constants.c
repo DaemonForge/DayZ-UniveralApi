@@ -12,6 +12,13 @@ static const int UF_NOTFOUND = 404;
 static const int UF_TOOEARLY = 425;
 static const int UF_UNAUTHORIZED = 401;
 
+// AI Chat Handler Constants
+static const int UF_AI_CHAT_MAX_POLL_TIME = 300; // Maximum polling duration in seconds (5 minutes)
+static const int UF_AI_CHAT_MAX_RETRIES = 3;     // Maximum number of failed status check retries
+
+// AI Chat Status Codes
+static const int UF_AI_PENDING = 202;    // AI processing is in progress
+static const int UF_AI_PROCESSING = 102;  // AI request is still being processed
 
 static const int UF_DBSUCCESS = 200;
 static const int UF_DBEMPTY = 204;
