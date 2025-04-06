@@ -363,12 +363,25 @@ ipcMain.handle('save-config', (event, newConfig) => {
 });
 ipcMain.on('force-close', () => {
   // Remove the close event handler to avoid an infinite loop
-  settingsWindow.removeAllListeners('close');
-  settingsWindow.close();
+  if (settingsWindow) {
+    settingsWindow.removeAllListeners('close');
+    settingsWindow.close();
+  }
+  if (ConsoleWindow) {
+    ConsoleWindow.removeAllListeners('close');
+    ConsoleWindow.close();
+  }
+}
 });
 ipcMain.on('restart-app', () => {
-  settingsWindow.removeAllListeners('close');
-  settingsWindow.close();
+  if (settingsWindow) {
+    settingsWindow.removeAllListeners('close');
+    settingsWindow.close();
+  }
+  if (ConsoleWindow) {
+    ConsoleWindow.removeAllListeners('close');
+    ConsoleWindow.close();
+  }
   app.relaunch();
   app.exit();
 });
