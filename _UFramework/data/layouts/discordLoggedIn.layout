@@ -19,7 +19,7 @@ FrameWidgetClass rootFrame {
    vexactpos 0
    hexactsize 1
    vexactsize 1
-   imageTexture "{4521A210490C6BA5}_UFramework/images/discord.edds"
+   imageTexture "{06FC4F224D4143FB}_UFramework/images/discordDayZ.edds"
    mode blend
    "src alpha" 1
    "stretch mode" fit_h_center
