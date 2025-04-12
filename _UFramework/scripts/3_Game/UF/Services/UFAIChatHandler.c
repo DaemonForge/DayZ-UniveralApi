@@ -48,8 +48,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 		m_funcName = funcName;
 		
 		// Create the chat with JSON response format
-		m_LastCallId = U().AI().Create(systemMessage, "JSON", jsonSchema, model, maxHistory, 
-			new UFCallback<StatusObject>(this, "OnChatCreated"));
+		m_LastCallId = U().AI().Create(systemMessage, "JSON", jsonSchema, model, maxHistory, new UFCallback<UAIChatCreateResponse>(this, "OnChatCreated"));
 	}
 	
 	/**
@@ -58,7 +57,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 	 * @param context Optional context information
 	 * @return Call ID or -1 on error
 	 */
-	override int SendMessage(string message, autoptr array<autoptr UAIChatContext> context = NULL)
+	override int SendMessage(string message, array<autoptr UAIChatContext> context = NULL)
 	{
 		if (m_ChatId == "") {
 			if (m_IsCreating) {
@@ -78,7 +77,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 		}
 		
 		// Send the message immediately
-		m_LastCallId = U().AI().Send(m_ChatId, message, context, new UFAIMessageCallback<T>(this, "OnMessageResponse"));
+		m_LastCallId = U().AI().Send(m_ChatId, message, new UFAIMessageCallback<T>(this, "OnMessageResponse"), context);
 		
 		// Start polling timer for this message
 		if (m_PollingEnabled) {
@@ -228,7 +227,7 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 	 * @param context Optional context information
 	 * @return Call ID or -1 on error
 	 */
-	override int SendMessage(string message, autoptr array<autoptr UAIChatContext> context = NULL)
+	override int SendMessage(string message, array<autoptr UAIChatContext> context = NULL)
 	{
 		if (m_ChatId == "") {
 			if (m_IsCreating) {
@@ -248,7 +247,7 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 		}
 		
 		// Send the message immediately
-		m_LastCallId = U().AI().Send(m_ChatId, message, context, new UFAIMessageCallback<string>(this, "OnMessageResponse"));
+		m_LastCallId = U().AI().Send(m_ChatId, message, new UFAIMessageCallback<string>(this, "OnMessageResponse"), context);
 		
 		// Start polling timer for this message
 		if (m_PollingEnabled) {
@@ -314,10 +313,10 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 		m_PendingMessageId = "";
 		m_PendingMessageRetries = 0;
 		
+		if (response && response.Status == "Success"){
 		// Pass the status and message string to the callback
-		GetGame().GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-			new Param4<int, int, string, string>(callId, ufStatus, m_ChatId, response ? response.GetMessage() : ""));
-			
+			GetGame().GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, string>(callId, ufStatus, m_ChatId, response.GetMessage() ));
+		}
 		// Process next message in queue
 		ProcessMessageQueue();
 	}
@@ -345,7 +344,7 @@ class UAIChatHandlerBase extends Managed
 	protected int m_PendingSummaryRetries = 0;
 	
 	// Message queue system
-	protected autoptr array<ref UAIChatQueuedMessage> m_MessageQueue;
+	protected autoptr array<autoptr UAIChatQueuedMessage> m_MessageQueue;
 	protected bool m_IsProcessingQueue = false;
 	
 	/**
@@ -368,7 +367,7 @@ class UAIChatHandlerBase extends Managed
 	/**
 	 * Directly queue a message (used for messages before chat is created)
 	 */
-	protected void QueueMessage(string message, autoptr array<autoptr UAIChatContext> context = NULL)
+	protected void QueueMessage(string message, array<autoptr UAIChatContext> context = NULL)
 	{
 		// Initialize queue if needed
 		if (!m_MessageQueue) {
@@ -386,7 +385,7 @@ class UAIChatHandlerBase extends Managed
 	 * @param context Optional context for the message
 	 * @return true if message was queued, false if sent immediately
 	 */
-	protected bool QueueMessageIfNeeded(string message, autoptr array<autoptr UAIChatContext> context = NULL)
+	protected bool QueueMessageIfNeeded(string message, array<autoptr UAIChatContext> context = NULL)
 	{
 		// Initialize queue if needed
 		if (!m_MessageQueue) {
@@ -526,8 +525,7 @@ class UAIChatHandlerBase extends Managed
 		}
 		
 		// Stop polling if nothing left to check
-		if (m_PendingMessageId == "" && m_PendingSummaryId == "" && 
-		   (!m_MessageQueue || m_MessageQueue.Count() == 0)) {
+		if (m_PendingMessageId == "" && m_PendingSummaryId == "" && (!m_MessageQueue || m_MessageQueue.Count() == 0)) {
 			StopPolling();
 		}
 	}
@@ -663,8 +661,7 @@ class UAIChatHandlerBase extends Managed
 			}
 			
 			// Call back with the summary
-			GetGame().GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-				new Param4<int, int, string, string>(m_LastCallId, ufStatus, m_ChatId, response.GetSummary()));
+			GetGame().GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, string>(m_LastCallId, ufStatus, m_ChatId, response.GetSummary()));
 		}
 	}
 	
@@ -697,8 +694,7 @@ class UAIChatHandlerBase extends Managed
 			return -1;
 		}
 		
-		m_LastCallId = U().AI().SummaryStatus(summaryId, 
-			new UFCallback<UAIChatSummaryResponse>(this, "OnSummaryStatusUpdate"));
+		m_LastCallId = U().AI().SummaryStatus(summaryId, new UFCallback<UAIChatSummaryResponse>(this, "OnSummaryStatusUpdate"));
 		return m_LastCallId;
 	}
 	
@@ -707,7 +703,7 @@ class UAIChatHandlerBase extends Managed
 	 * @param status Response status code
 	 * @param response The response object
 	 */
-	void OnChatCreated(int status, StatusObject response)
+	void OnChatCreated(int status, UAIChatCreateResponse response)
 	{
 		m_IsCreating = false;
 		
@@ -721,20 +717,18 @@ class UAIChatHandlerBase extends Managed
 			
 			// Notify client about creation failure if callback is set
 			if (m_CreateCallbackFunc != "") {
-				GetGame().GameScript.CallFunctionParams(m_obj, m_CreateCallbackFunc, NULL, 
-					new Param4<int, int, string, bool>(m_LastCallId, status, "", false));
+				GetGame().GameScript.CallFunctionParams(m_obj, m_CreateCallbackFunc, NULL, new Param4<int, int, string, bool>(m_LastCallId, status, "", false));
 			}
 			return;
 		}
 		
 		// Store the chat ID for future operations
-		m_ChatId = response.GetValue("ChatId");
+		m_ChatId = response.ChatId;
 		Print("[UF] [UAIChatHandlerBase] Chat created with ID: " + m_ChatId);
 		
 		// Notify client about creation success if callback is set
 		if (m_CreateCallbackFunc != "") {
-			GetGame().GameScript.CallFunctionParams(m_obj, m_CreateCallbackFunc, NULL, 
-				new Param4<int, int, string, bool>(m_LastCallId, UF_SUCCESS, m_ChatId, true));
+			GetGame().GameScript.CallFunctionParams(m_obj, m_CreateCallbackFunc, NULL, new Param4<int, int, string, bool>(m_LastCallId, UF_SUCCESS, m_ChatId, true));
 		}
 		
 		// Process any messages that were queued before the chat was created
@@ -750,7 +744,7 @@ class UAIChatHandlerBase extends Managed
 	 * @param context Optional context information
 	 * @return Call ID or -1 on error
 	 */
-	int SendMessage(string message, autoptr array<autoptr UAIChatContext> context = NULL)
+	int SendMessage(string message, array<autoptr UAIChatContext> context = NULL)
 	{
 		Error("[UF] [UAIChatHandlerBase] SendMessage not implemented in base class");
 		return -1;
@@ -870,10 +864,9 @@ class UAIChatHandlerBase extends Managed
 			m_PendingSummaryStartTime = GetGame().GetTime() / 1000;
 			m_PendingSummaryRetries = 0;
 			EnsurePollingStarted();
-		} else {
+		} else if (response && response.Status == "Success") {
 			// Success or error, just pass it through
-			GetGame().GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-				new Param4<int, int, string, string>(m_LastCallId, ufStatus, m_ChatId, response ? response.GetSummary() : ""));
+			GetGame().GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, string>(m_LastCallId, ufStatus, m_ChatId, response.GetSummary()));
 		}
 	}
 	
@@ -943,8 +936,7 @@ class UAIChatHandlerBase extends Managed
 	 */
 	bool IsBusy()
 	{
-		return m_IsCreating || m_PendingMessageId != "" || m_PendingSummaryId != "" || m_IsProcessingQueue || 
-			(m_MessageQueue && m_MessageQueue.Count() > 0);
+		return m_IsCreating || m_PendingMessageId != "" || m_PendingSummaryId != "" || m_IsProcessingQueue || (m_MessageQueue && m_MessageQueue.Count() > 0);
 	}
 	
 	/**
@@ -990,35 +982,55 @@ class UAIChatHandlerBase extends Managed
  */
 class UFAIMessageCallback<Class T> extends UFCallbackBase
 {
-	void UFAIMessageCallback(Class instance, string funcName)
-	{
-		m_callbackFunc = funcName;
-		Class.CastTo(m_instance, instance);
-	}
 	
-	override void OnSuccess(int status, string data)
+	
+	override void OnSuccess(string jsonData, int cid)
 	{
-		UAIChatMessageResponse response;
+		autoptr UAIChatMessageResponse response;
 		string error;
 		
 		JsonSerializer js = new JsonSerializer();
-		bool success = js.ReadFromString(response, data, error);
-		
+		bool success = js.ReadFromString(response, jsonData, error);
+		int rstatus = UF_JSONERROR;
 		if (!success || error != "") {
 			Error2("[UF] [UFAIMessageCallback] Failed to parse response", error);
-			GetGame().GameScript.CallFunctionParams(m_instance, m_callbackFunc, NULL, 
-				new Param2<int, UAIChatMessageResponse>(UF_JSONERROR, null));
+			GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, UAIChatMessageResponse>(cid, UF_JSONERROR, OID, null));
 			return;
 		}
+			rstatus = UF_SUCCESS;
+			StatusObject sobj;
+			if (Class.CastTo(sobj, response)){
+				switch (sobj.Status) {
+					case "NotFound":
+						rstatus = UF_NOTFOUND;
+						break;
+					case "Empty":
+						rstatus = UF_EMPTY;
+						break;
+					case "Error":
+						rstatus = UF_ERROR;
+						break;
+					case "NoPerms":
+						rstatus = UF_UNAUTHORIZED;
+						break;
+					case "NoAuth":
+						rstatus = UF_UNAUTHORIZED;
+						break;
+					case "InvalidAuth":
+						rstatus = UF_UNAUTHORIZED;
+						break;
+					case "NotSetup":
+						rstatus = UF_NOTSETUP;
+						break;
+				}
+			}
 		
-		GetGame().GameScript.CallFunctionParams(m_instance, m_callbackFunc, NULL, 
-			new Param2<int, UAIChatMessageResponse>(status, response));
+		GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, UAIChatMessageResponse>(cid, rstatus, response.GetMessageId(), response));
 	}
 	
-	override void OnError(int errorCode)
+	override void OnError(int errorCode, int cid)
 	{
 		Error2("[UF] [UFAIMessageCallback] Error", "Code: " + errorCode);
-		GetGame().GameScript.CallFunctionParams(m_instance, m_callbackFunc, NULL, 
-			new Param2<int, UAIChatMessageResponse>(errorCode, null));
+		GetGame().GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, UAIChatMessageResponse>(cid, errorCode, OID, null));
 	}
 } 

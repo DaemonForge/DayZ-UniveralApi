@@ -47,7 +47,7 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @param cb - Callback for response handling (required)
 	 * @return Call ID or -1 on error
 	 */
-	int Send(string chatId, string message, autoptr array<autoptr UAIChatContext> context = NULL, UFCallbackBase cb) {
+	int Send(string chatId, string message, UFCallbackBase cb, array<autoptr UAIChatContext> context = NULL) {
 		if (chatId == "" || message == "") {
 			Error2("[UF] AI Chat Send", "chatId and message must be valid strings");
 			return -1;
@@ -223,69 +223,5 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			Error2("[UF] AI Chat SummaryStatus", "Error Registering Callback");
 		}
 		return cid;
-	}
-}
-
-/**
- * Request object for creating a new AI chat
- */
-class UAIChatCreateRequest extends UFObject_Base {
-	string SystemMessage;
-	string ResponseFormat;
-	string JsonSchema;
-	string Model;
-	int MaxHistory;
-	
-	void UAIChatCreateRequest(string systemMessage, string responseFormat, string jsonSchema = "", string model = "", int maxHistory = -1) {
-		SystemMessage = systemMessage;
-		ResponseFormat = responseFormat;
-		JsonSchema = jsonSchema;
-		Model = model;
-		MaxHistory = maxHistory;
-	}
-	
-	override string ToJson() {
-		string jsonString = JsonFileLoader<UAIChatCreateRequest>.JsonMakeData(this);
-		return jsonString;
-	}
-}
-
-/**
- * Context information for AI chat
- */
-class UAIChatContext extends Managed {
-	string Description;
-	ref array<string> Context;
-	
-	void UAIChatContext(string description) {
-		Description = description;
-		Context = new array<string>;
-	}
-	
-	void AddContext(string contextItem) {
-		if (!Context) {
-			Context = new array<string>;
-		}
-		Context.Insert(contextItem);
-	}
-}
-
-/**
- * Message to send to AI chat
- */
-class UAIChatMessage extends UFObject_Base {
-	string Message;
-	ref array<ref UAIChatContext> Context;
-	
-	void UAIChatMessage(string message, ref array<ref UAIChatContext> context = NULL) {
-		Message = message;
-		if (context) {
-			Context = context;
-		}
-	}
-	
-	override string ToJson() {
-		string jsonString = JsonFileLoader<UAIChatMessage>.JsonMakeData(this);
-		return jsonString;
 	}
 }

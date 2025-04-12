@@ -11,7 +11,7 @@ class UAIChatQueuedMessage extends Managed
 	string message;
 	autoptr array<autoptr UAIChatContext> context;
 	
-	void UAIChatQueuedMessage(string msg, autoptr array<autoptr UAIChatContext> ctx = NULL)
+	void UAIChatQueuedMessage(string msg, array<autoptr UAIChatContext> ctx = NULL)
 	{
 		message = msg;
 		
@@ -86,7 +86,7 @@ class UAIChatMessage extends UFObject_Base {
 	string Message;
 	autoptr array<autoptr UAIChatContext> Context;
 	
-	void UAIChatMessage(string message, autoptr array<autoptr UAIChatContext> context = NULL) {
+	void UAIChatMessage(string message, array<autoptr UAIChatContext> context = NULL) {
 		Message = message;
 		if (context) {
 			Context = context;
@@ -104,14 +104,14 @@ class UAIChatMessage extends UFObject_Base {
  */
 class UAIChatMessageResponse extends StatusObject {
 	string Message;
-	string ChatId;
+	string MessageId;
 	
 	string GetMessage() {
 		return Message;
 	}
 	
-	string GetChatId() {
-		return ChatId;
+	string GetMessageId() {
+		return MessageId;
 	}
 }
 
@@ -149,6 +149,15 @@ class UAIChatHistoryResponse extends StatusObject {
 	array<autoptr UAIChatHistoryMessage> GetMessages() {
 		return Messages;
 	}
+}
+
+
+/**
+ * Response object for chat history
+ */
+class UAIChatCreateResponse extends StatusObject {
+	string ChatId;
+	
 }
 
 /**
