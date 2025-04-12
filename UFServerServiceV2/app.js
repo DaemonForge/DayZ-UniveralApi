@@ -161,7 +161,7 @@ function createExpressApp() {
   // Handle invalid routes
   app.use('/', (req, res) => {
     if (req.url !== '/') {
-      logger.warn('[WebServer] Invalid URL requested', { url: req.url, ip: req.ip });
+      logger.debug(`[WebServer] Invalid URL requested ${req.url}`, { url: req.url, ip: req.ip });
     }
     res.status(501).json({ Status: "Error", Error: "Requested bad URL" });
   });

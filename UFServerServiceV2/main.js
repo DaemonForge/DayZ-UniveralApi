@@ -371,7 +371,6 @@ ipcMain.on('force-close', () => {
     ConsoleWindow.removeAllListeners('close');
     ConsoleWindow.close();
   }
-}
 });
 ipcMain.on('restart-app', () => {
   if (settingsWindow) {
