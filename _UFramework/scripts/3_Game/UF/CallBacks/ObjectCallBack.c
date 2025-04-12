@@ -153,14 +153,13 @@ class UFCallbackBase extends Managed{
 	protected Class Instance;
 	protected string Function;
 	protected string OID;
-
 	
 	protected Class GetInstance(){
 		return Instance;
 	}
 	
 	void UFCallbackBase(Class instance, string function, string oid = ""){
-		Instance = instance;
+		Class.CastTo(Instance, instance);
 		Function = function;
 		OID = oid;
 	}
