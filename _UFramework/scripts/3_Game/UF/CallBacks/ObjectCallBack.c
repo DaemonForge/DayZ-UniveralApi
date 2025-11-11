@@ -8,19 +8,19 @@ class UFRestCallBackBase : RestCallback
 		//Always call super to prevent memory leaks
 		string debugtrace;
 		DumpStackString(debugtrace);
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
 	};
 	override void OnTimeout() {
 		//Always call super to prevent memory leaks
 		string debugtrace;
 		DumpStackString(debugtrace);
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
 	};
 	override void OnSuccess(string data, int dataSize) {
 		//Always call super to prevent memory leaks
 		string debugtrace;
 		DumpStackString(debugtrace);
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
 	};
 	
 	void SetId(int cid){
@@ -29,17 +29,22 @@ class UFRestCallBackBase : RestCallback
 };
 
 
-class UFCallback<Class T> extends UFCallbackBase{
+class UFCallback<Class T> extends UFCallbackBase {
 	
 	override void OnError(int errorCode, int cid) {
-		Print("[UF] UFCallback<" + T.ToString() + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
+		Print("[UF] UFCallback<" + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != "") {
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, errorCode, OID, NULL));
+			Param4<int, int, string, T> p = new Param4<int, int, string, T>(cid, errorCode, OID, null);
+			Print(T);
+			Print(GetInstance());
+			Print(this);
+			Print(p);
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, null, p);
 		}
 	}
 	
 	override void OnSuccess(string jsonData, int cid) {
-		if (GetInstance() && Function != ""){
+		if (GetInstance() && Function != "") {
 			autoptr T obj;
 			if (UJSONHandler<T>.FromString(jsonData, obj)){
 				int rstatus = UF_SUCCESS;
@@ -69,9 +74,9 @@ class UFCallback<Class T> extends UFCallbackBase{
 							break;
 					}
 				}
-				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, rstatus, OID, obj));
+				g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, rstatus, OID, obj));
 			} else {
-				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, UF_JSONERROR, OID, NULL));
+				g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, UF_JSONERROR, OID, NULL));
 			}
 		}
 	}
@@ -87,9 +92,9 @@ class UFCallbackLoader<Class T> extends UFCallbackBase {
 	}
 	
 	override void OnError(int errorCode, int cid) {
-		Print("[UF] UFCallbackLoader<" + T.ToString() + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
+		Print("[UF] UFCallbackLoader<" + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != "") {
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, errorCode, OID, NULL));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, errorCode, OID, NULL));
 		}
 	}
 	
@@ -125,7 +130,7 @@ class UFCallbackLoader<Class T> extends UFCallbackBase {
 			}
 		}
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, rstatus, OID, obj));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, rstatus, OID, obj));
 		}
 	}
 }
@@ -135,13 +140,13 @@ class UJSONCallback extends UFCallbackBase {
 	override void OnError(int errorCode, int cid) {
 		Print("[UF] UJSONCallback OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "{}"));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "{}"));
 		}
 	}
 		
 	override void OnSuccess(string jsonData, int cid) {
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, UF_SUCCESS, OID, jsonData));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, UF_SUCCESS, OID, jsonData));
 		}
 	}
 }
