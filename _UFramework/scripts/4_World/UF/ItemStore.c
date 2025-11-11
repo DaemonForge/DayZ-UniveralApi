@@ -32,7 +32,7 @@ modded class UEntityStore extends UFObject_Base {
 		}
 		PlayerBase HoldingPlayer;
 		if (Class.CastTo(HoldingPlayer, item.GetHierarchyRootPlayer())){
-			m_IsInHands = (HoldingPlayer.GetHumanInventory().GetEntityInHands() == item);
+			m_IsInHands = (HoldingPlayer.GetEntityInHands() == item);
 			m_QuickBarSlot = HoldingPlayer.GetQuickBarEntityIndex(item);
 		}
 		m_IsMagazine = item.IsMagazine() && !item.IsAmmoPile();
@@ -117,7 +117,7 @@ modded class UEntityStore extends UFObject_Base {
 	override EntityAI Create(EntityAI parent = NULL, bool RestoreOrginalLocation = true){
 		EntityAI item;
 		if (parent == NULL){
-			item = EntityAI.Cast(GetGame().CreateObject(m_Type, "0 0 0"));
+			item = EntityAI.Cast(g_Game.CreateObject(m_Type, "0 0 0"));
 		} 
 		if (m_Slot == -1) {
 			item = EntityAI.Cast(parent.GetInventory().CreateEntityInCargoEx(m_Type, m_Idx, m_Row, m_Col, m_Flip));
@@ -131,7 +131,7 @@ modded class UEntityStore extends UFObject_Base {
 			item = EntityAI.Cast(parent.GetInventory().CreateAttachmentEx(m_Type, m_Slot));
 		}
 		if (!item && parent){
-			item = EntityAI.Cast(GetGame().CreateObject(m_Type, parent.GetPosition()));
+			item = EntityAI.Cast(g_Game.CreateObject(m_Type, parent.GetPosition()));
 		} 
 		if (!item){
 			Print("[UF] [ERROR] Couldn't create item " + m_Type);
@@ -143,7 +143,7 @@ modded class UEntityStore extends UFObject_Base {
 	
 	override EntityAI CreateAtPos(vector Pos, vector Ori = "0 0 0"){
 		EntityAI item;
-		item = EntityAI.Cast(GetGame().CreateObject(m_Type, Pos));
+		item = EntityAI.Cast(g_Game.CreateObject(m_Type, Pos));
 		if (!item){
 			Print("[UF] [UF] [ERROR] Couldn't create item " + m_Type);
 			return NULL;
@@ -213,7 +213,11 @@ modded class UEntityStore extends UFObject_Base {
 			for (i = 0; i < mag.GetAmmoCount(); i++){
 				if (i > m_MagAmmo.Count()){break;}
 				if (m_MagAmmo.Get(i) && m_MagAmmo.Get(i).dmg() >= 0 && m_MagAmmo.Get(i).cartTypeName() != "" && m_MagAmmo.Get(i).cartIndex() == i){
-					mag.SetCartridgeAtIndex(m_MagAmmo.Get(i).cartIndex(), m_MagAmmo.Get(i).dmg(), m_MagAmmo.Get(i).cartTypeName());
+					dmg = m_MagAmmo.Get(i).dmg();
+					cartType = m_MagAmmo.Get(i).cartTypeName();
+					mag.SetCartridgeAtIndex(m_MagAmmo.Get(i).cartIndex(), dmg, cartType);
+					m_MagAmmo.Get(i).setDmg(dmg);
+					m_MagAmmo.Get(i).setCartTypeName(cartType);
 				}
 			}
 		} else if (item.IsAmmoPile() && Class.CastTo(mag, item)){
@@ -224,7 +228,7 @@ modded class UEntityStore extends UFObject_Base {
 		CarScript vehicle;
 		if (m_IsVehicle && Class.CastTo(vehicle,item)){
 			vehicle.OnUFLoad(this);
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(vehicle.Synchronize);
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(vehicle.Synchronize);
 		}
 		
 		// Damage System
@@ -239,6 +243,6 @@ modded class UEntityStore extends UFObject_Base {
 		}
 		
 		item.SetSynchDirty();
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(item.AfterStoreLoad);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(item.AfterStoreLoad);
 	}
 }

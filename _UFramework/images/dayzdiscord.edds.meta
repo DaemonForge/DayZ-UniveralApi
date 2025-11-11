@@ -1,0 +1,16 @@
+MetaFileClass {
+ Name "{BEA5E56044456C5D}_UFramework/images/dayzdiscord.edds"
+ Author "laptop-a1dsa5nh"
+ ChangeDate -1623969147
+ Configurations {
+  TGAResourceClass PC {
+   SourceFile "dayzdiscord.tga"
+  }
+  TGAResourceClass XBOX_ONE : PC {
+  }
+  TGAResourceClass PS4 : PC {
+  }
+  TGAResourceClass LINUX : PC {
+  }
+ }
+}

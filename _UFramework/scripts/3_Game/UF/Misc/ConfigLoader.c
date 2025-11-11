@@ -10,7 +10,7 @@ class UFrameworkConfig extends Managed {
 	int PromptDiscordOnConnect = 0;
 	
 	void Load(){
-		if (GetGame().IsServer()){
+		if (g_Game.IsServer()){
 			if (FileExist(ConfigPATH)){ //If config exist load File
 			    JsonFileLoader<UFrameworkConfig>.JsonLoadFile(ConfigPATH, this);
 				if (ServerURL != ""){
@@ -37,7 +37,7 @@ class UFrameworkConfig extends Managed {
 	}
 	
 	string GetAuth(){
-		if (GetGame().IsServer()){
+		if (g_Game.IsServer()){
 			return ServerAuth;
 		}
 		return "ERROR";
@@ -55,7 +55,7 @@ ref UFrameworkConfig m_UFrameworkConfig;
 //Helper function to return Config
 static UFrameworkConfig UFConfig()
 {
-	if ( GetGame().IsServer()){
+	if ( g_Game.IsServer()){
 		if (!m_UFrameworkConfig)
 		{
 			m_UFrameworkConfig = new UFrameworkConfig;

@@ -239,7 +239,7 @@ class UDBHandlerBase extends Managed {
 		}
 	*/
 	int LoadJson(string oid, Class cbInstance, string cbFunction, string defaultJson = "{}") {
-		return U().db(Database).Load(Mod, oid, cbInstance, cbFunction, defaultJson));
+		return U().db(Database).Load(Mod, oid, cbInstance, cbFunction, defaultJson);
 	}
 	
 	int Increment(string oid, string element, float value = 1){

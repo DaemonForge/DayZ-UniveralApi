@@ -139,13 +139,13 @@ class UDLTTSCallback : UFCallbackBase {
 	
 	override void OnError(int errorCode, int cid) {
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "Error"));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "Error"));
 		}
 	}
 		
 	override void OnSuccess(string jsonData, int cid) {
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, UF_SUCCESS, OID, "Success"));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, UF_SUCCESS, OID, "Success"));
 		}
 	}
 }
@@ -154,7 +154,7 @@ class UTTSStatusCallback : UFCallbackBase {
 	
 	override void OnError(int errorCode, int cid) {
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "Error"));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "Error"));
 		}
 	}
 		
@@ -181,7 +181,7 @@ class UTTSStatusCallback : UFCallbackBase {
 							rstatus = UF_NOTSETUP;
 							break;
 					}
-					GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, rstatus, OID, obj.Status));
+					g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, rstatus, OID, obj.Status));
 					return;
 				}
 			}
@@ -194,13 +194,13 @@ class UGenTTSCallback : UFCallbackBase {
 	
 	override void OnError(int errorCode, int cid) {
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "Error"));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "Error"));
 		}
 	}
 		
 	override void OnSuccess(string jsonData, int cid) {
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, UF_SUCCESS, OID, "Success"));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, UF_SUCCESS, OID, "Success"));
 		}
 	}
 }

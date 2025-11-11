@@ -114,7 +114,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	
 	//Returns a link for the player based on the players steam id so they can connect there discord to there steam account
 	string Link(string PlainId = ""){
-		if (PlainId == "" && GetGame().IsClient()){
+		if (PlainId == "" && g_Game.IsClient()){
 			return EndpointBaseUrl() + GetDayZGame().GetSteamId();
 		}
 		return EndpointBaseUrl() + PlainId;

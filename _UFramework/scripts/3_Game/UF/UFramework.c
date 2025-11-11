@@ -402,9 +402,9 @@ class UFramework extends Managed {
 	
 	//Simple function for finding a player based on their GUID
 	static DayZPlayer FindPlayer(string GUID){
-		if (GetGame().IsServer()){
+		if (g_Game.IsServer()){
 			autoptr array<Man> players = new array<Man>;
-			GetGame().GetPlayers( players );
+			g_Game.GetPlayers( players );
 			for (int i = 0; i < players.Count(); i++){
 				DayZPlayer player = DayZPlayer.Cast(players.Get(i));
 				if (player.GetIdentity() && player.GetIdentity().GetId() == GUID ){
@@ -422,8 +422,8 @@ class UFramework extends Managed {
 
 		int highBits;
 		int lowBits;
-		GetGame().GetPlayerNetworkIDByIdentityID(identity.GetPlayerId(), lowBits, highBits);
-		return DayZPlayer.Cast(GetGame().GetObjectByNetworkId(lowBits, highBits));
+		g_Game.GetPlayerNetworkIDByIdentityID(identity.GetPlayerId(), lowBits, highBits);
+		return DayZPlayer.Cast(g_Game.GetObjectByNetworkId(lowBits, highBits));
 	}
 	
 	
@@ -697,10 +697,10 @@ class UFramework extends Managed {
 	}
 	
 	string GetAuthToken(){
-		if (m_UFauthToken && !GetGame().IsServer()){
+		if (m_UFauthToken && !g_Game.IsServer()){
 			if (m_UFauthToken.IsExpired()) RequestAuthToken(false); //Shouldn't ever be expired but just encase
 			return m_UFauthToken.GetAuthToken();
-		} else if (GetGame().IsServer() && UFConfig().ServerAuth != ""){
+		} else if (g_Game.IsServer() && UFConfig().ServerAuth != ""){
 			return UFConfig().ServerAuth;
 		}
 		return "null";
@@ -721,8 +721,8 @@ class UFramework extends Managed {
 	
 	
 	void ~UFramework(){
-		if (m_IsServer && UF_Init && GetGame()){
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.CheckAndRenewQRandom);
+		if (m_IsServer && UF_Init && g_Game){
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.CheckAndRenewQRandom);
 		}
 		delete m_UFauthToken;
 	}
@@ -742,7 +742,7 @@ class UFramework extends Managed {
 			if (m_IsServer){
 				U().api().Status(this, "CBStatusCheck");
 				CheckAndRenewQRandom();
-				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.CheckAndRenewQRandom, 10 * 60 * 1000, true);
+				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.CheckAndRenewQRandom, 10 * 60 * 1000, true);
 			}
 		}
 	}
@@ -755,22 +755,22 @@ class UFramework extends Managed {
 		m_AuthRetries = 0;
 		m_UFauthToken = data.param1;
 		m_UFrameworkConfig = data.param2;
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnTokenReceived);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnTokenReceived);
 	}
 	
 	protected void OnTokenReceived(){
 		Print("[UF] [UAPI] Token received from server, initialize services");
 		U().api().Status(this, "CBStatusCheck");
 		U().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
-		GetGame().GameScript.CallFunction(GetGame().GetMission(), "UFrameworkReadyTokenReceived", NULL, NULL);
+		g_Game.GameScript.CallFunction(g_Game.GetMission(), "UFrameworkReadyTokenReceived", NULL, NULL);
 		CheckAndRenewQRandom();
 		Print("[UF] OnTokenReceived Proccessed");
 	}
 	
 	
 	void RPCRequestRetry( CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target ) {
-		if (GetGame().IsClient() && ++m_AuthRetries <= 20){
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestAuthToken, m_AuthRetries * 2200, false, true);
+		if (g_Game.IsClient() && ++m_AuthRetries <= 20){
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestAuthToken, m_AuthRetries * 2200, false, true);
 		}
 	}
 	
@@ -857,11 +857,11 @@ class UFramework extends Managed {
 		Print("[UF] Auth Error for " + guid);
 		//If Auth Token Failed just try again in 3 minutes 
 		if (guid != "" && IsOnline()){
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuth, 180 * 1000, false, guid);
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuth, 180 * 1000, false, guid);
 		} 
 		if (!m_IsServer && !IsOnline()){
 			U().api().Status(this, "CBStatusCheck");
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.AuthError, 300 * 1000, false, guid);
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.AuthError, 300 * 1000, false, guid);
 		}
 	}
 	

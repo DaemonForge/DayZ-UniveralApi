@@ -37,7 +37,7 @@ class UFConfigBase : UFRestCallBackBase {
 	
 	void Save(){
 		/* 
-		if (GetGame().IsServer()){	//By Default the API is configure to only allow save operations from the server AUTH
+		if (g_Game.IsServer()){	//By Default the API is configure to only allow save operations from the server AUTH
 		
 			Global Configs
 			U().Rest().GlobalsSave("MODNAME", this.ToJson());

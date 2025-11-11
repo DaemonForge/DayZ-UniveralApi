@@ -106,7 +106,7 @@ modded class PlayerBase extends ManBase {
 		}
 		for (int i = 0; i <= StacksRequired; i++){
 			if (AmountToSpawn > 0){
-				ItemBase newItem = ItemBase.Cast(GetGame().CreateObjectEx(Type, GetPosition(), ECE_PLACE_ON_SURFACE));
+				ItemBase newItem = ItemBase.Cast(g_Game.CreateObjectEx(Type, GetPosition(), ECE_PLACE_ON_SURFACE));
 				if (newItem && HasQuantity){
 					AmountToSpawn = newItem.USetQuantity(AmountToSpawn);
 				}
@@ -133,11 +133,11 @@ modded class PlayerBase extends ManBase {
 
 	int UMaxQuantity(string Type)
 	{
-		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + Type + " count" ) ){
-			return GetGame().ConfigGetInt(  CFG_MAGAZINESPATH  + " " + Type + " count" );
+		if ( g_Game.ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + Type + " count" ) ){
+			return g_Game.ConfigGetInt(  CFG_MAGAZINESPATH  + " " + Type + " count" );
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + Type + " varQuantityMax" ) ){
-			return GetGame().ConfigGetInt( CFG_VEHICLESPATH + " " + Type + " varQuantityMax" ) );
+		if ( g_Game.ConfigIsExisting(  CFG_VEHICLESPATH + " " + Type + " varQuantityMax" ) ){
+			return g_Game.ConfigGetInt( CFG_VEHICLESPATH + " " + Type + " varQuantityMax" );
 		}
 		return 0;
 	}
@@ -165,14 +165,14 @@ modded class PlayerBase extends ManBase {
 	bool UHasQuantity(string type)
 	{   
 		string path = CFG_MAGAZINESPATH  + " " + type + " count";
-	    if (GetGame().ConfigIsExisting(path)){
-	     	if (GetGame().ConfigGetInt(path) > 0){
+	    if (g_Game.ConfigIsExisting(path)){
+	     	if (g_Game.ConfigGetInt(path) > 0){
 				return true;
 			}
 		}
 	    path = CFG_VEHICLESPATH  + " " + type + " quantityBar";
-	    if (GetGame().ConfigIsExisting(path))   {
-	        return GetGame().ConfigGetInt(path) == 1;
+	    if (g_Game.ConfigIsExisting(path))   {
+	        return g_Game.ConfigGetInt(path) == 1;
 		}
 	
 	    return false;

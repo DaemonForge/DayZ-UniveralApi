@@ -2,7 +2,7 @@ class UFMsgStringCallback extends UFCallbackBase{
 	
 	override void OnError(int errorCode, int cid) {
 		if (GetInstance() && Function != "") {
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, TStringArray>(cid, errorCode, OID, NULL));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, TStringArray>(cid, errorCode, OID, NULL));
 		}
 	}
 	
@@ -37,9 +37,9 @@ class UFMsgStringCallback extends UFCallbackBase{
 							break;
 					}
 				}
-				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, TStringArray>(cid, rstatus, OID, obj.GetMessages()));
+				g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, TStringArray>(cid, rstatus, OID, obj.GetMessages()));
 			} else {
-				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, TStringArray>(cid, UF_JSONERROR, OID, NULL));
+				g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, TStringArray>(cid, UF_JSONERROR, OID, NULL));
 			}
 		}
 	}
@@ -50,7 +50,7 @@ class UFMsgCallback<Class T> extends UFCallbackBase{
 	
 	override void OnError(int errorCode, int cid) {
 		if (GetInstance() && Function != "") {
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, array<T>>(cid, errorCode, OID, NULL));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, array<T>>(cid, errorCode, OID, NULL));
 		}
 	}
 	
@@ -85,9 +85,9 @@ class UFMsgCallback<Class T> extends UFCallbackBase{
 							break;
 					}
 				}
-				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, array<T>>(cid, rstatus, OID, obj.GetMessages()));
+				g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, array<T>>(cid, rstatus, OID, obj.GetMessages()));
 			} else {
-				GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, array<T>>(cid, UF_JSONERROR, OID, NULL));
+				g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, array<T>>(cid, UF_JSONERROR, OID, NULL));
 			}
 		}
 	}

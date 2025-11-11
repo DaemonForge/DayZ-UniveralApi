@@ -257,7 +257,7 @@ modded class PluginAdminLog extends PluginBase
 	
 	void DoUFPlayerListLog(){
 		array<Man> theManList = new array<Man>;
-		GetGame().GetPlayers( theManList );
+		g_Game.GetPlayers( theManList );
 		array<autoptr ULogPlayerPos> thePlayerList = new array<autoptr ULogPlayerPos>;
 		if ( m_PlayerArray.Count() != 0 ) {	
 			for (int i = 0; i < theManList.Count(); i++ ) {

@@ -20,7 +20,7 @@ modded class Weapon_Base extends Weapon {
 			ScriptReadWriteContext ctxdata = new ScriptReadWriteContext;
 			OnStoreSave(ctxdata.GetWriteContext());
 			OnStoreLoad(ctxdata.GetReadContext(), dummy_version);
-			/*GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(weap.ValidateAndRepair,100,false);*/
+			/*g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(weap.ValidateAndRepair,100,false);*/
 			for (int mi = 0; mi < GetMuzzleCount(); ++mi)
 			{
 				if (data.m_ChamberedRound){
@@ -47,13 +47,13 @@ modded class Weapon_Base extends Weapon {
 					SetCurrentMode(i, data.m_FireModes.Get(i));
 				}
 			}
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.SendUFWeaponAfterLoadClient, data.m_QuickBarSlot);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.SendUFWeaponAfterLoadClient, data.m_QuickBarSlot);
 	}
 	
 	void SendUFWeaponAfterLoadClient(int quickBarSlot){
-		GetGame().RemoteObjectTreeDelete(this);
-		GetGame().RemoteObjectTreeCreate(this);
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UFFixRemote, quickBarSlot);
+		g_Game.RemoteObjectTreeDelete(this);
+		g_Game.RemoteObjectTreeCreate(this);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UFFixRemote, quickBarSlot);
 	}
 	
 	void UFFixRemote(int quickBarSlot){
@@ -63,7 +63,7 @@ modded class Weapon_Base extends Weapon {
 				for (int i = 0; i < items.Count(); i++){
 					EntityAI child_item = EntityAI.Cast(items.Get(i));
 					if (child_item ){
-						GetGame().RemoteObjectCreate(child_item);
+						g_Game.RemoteObjectCreate(child_item);
 					}
 				}
 			}*/
@@ -79,11 +79,11 @@ modded class Weapon_Base extends Weapon {
 	override void OnRPC(PlayerIdentity sender, int rpc_type, ParamsReadContext ctx)
 	{
 		super.OnRPC(sender, rpc_type, ctx);
-		if (rpc_type == 155494166 && GetGame().IsClient()) {
+		if (rpc_type == 155494166 && g_Game.IsClient()) {
 			Param1<bool> data;
 			if (ctx.Read(data))	{
 				Print("[UF] OnRPC" + GetType());
-				if (data.param1 && GetGame().IsClient()){
+				if (data.param1 && g_Game.IsClient()){
 					UFWeaponAfterLoadClient();
 				}
 			}
@@ -93,7 +93,7 @@ modded class Weapon_Base extends Weapon {
 	void UFWeaponAfterLoadClient(){
 		int i;
 		//if (!data){return;}
-		if (!GetGame().IsMultiplayer() || GetGame().IsServer()){return;}
+		if (!g_Game.IsMultiplayer() || g_Game.IsServer()){return;}
 		Print("===========================================================================================================");
 		Print("===========================================================================================================");
 		Print("[UF] [INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
@@ -117,7 +117,7 @@ modded class Weapon_Base extends Weapon {
 					PushCartridgeToInternalMagazine( mi,  data.m_MagAmmo.Get(i).dmg(),  data.m_MagAmmo.Get(i).cartTypeName());
 				}
 			}
-		//GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.AfterStoreLoad);
+		//g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.AfterStoreLoad);
 		SetStepZeroing(GetCurrentMuzzle(), data.GetInt("Vanilla", "m_Zeroing"));
 		SetZoom(data.GetFloat("Vanilla", "m_Zoom"));*/
 		Print("===========================================================================================================");

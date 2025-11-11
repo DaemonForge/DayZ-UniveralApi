@@ -19,7 +19,7 @@ class DiscordLoggedInWidget extends ScriptedWidgetEventHandler
     void DiscordLoggedInWidget()
     {
         // Create the widget using the provided layout file.
-        m_Root = GetGame().GetWorkspace().CreateWidgets("_UFramework/data/layouts/discordLoggedIn.Layout");
+        m_Root = g_Game.GetWorkspace().CreateWidgets("_UFramework/data/layouts/discordLoggedIn.Layout");
         
         // Find the ImageWidget named "avatar" and the TextWidget named "username".
         m_Avatar = ImageWidget.Cast(m_Root.FindAnyWidget("avatar"));

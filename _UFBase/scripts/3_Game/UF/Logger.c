@@ -67,7 +67,7 @@ class ULoggerBaseInstance extends Managed {
 	void ULoggerBaseInstance(string logType, int level = 4) {	
 		m_LogLevel = level;	
 		m_LogType = logType;
-		if ( !GetGame().IsServer() || GetGame().IsClient() ){
+		if ( !g_Game.IsServer() || g_Game.IsClient() ){
 			return;	
 		}
 		m_FileHandle = CreateFile(LogDir + m_LogType + "_" + GetDateStampFile() + ".log");
@@ -91,7 +91,7 @@ class ULoggerBaseInstance extends Managed {
 	}
 	
 	protected FileHandle CreateFile(string path) {
-		if ( !GetGame().IsServer() || GetGame().IsClient() ){
+		if ( !g_Game.IsServer() || g_Game.IsClient() ){
 			return null;	
 		}
 		
@@ -164,7 +164,7 @@ class ULoggerBaseInstance extends Managed {
 	void DoLog(string text, int level = 1)
 	{	
 		if (level == 2 && m_LogLevel >= level) {
-			GetGame().AdminLog("[" + m_LogType + "]" + GetTag(level) + text);
+			g_Game.AdminLog("[" + m_LogType + "]" + GetTag(level) + text);
 		}
 		if (m_isInit && m_LogLevel >= level){
 			//Print("[MapLink] " + GetTag(level) + GetTimeStamp() + " | " + text);

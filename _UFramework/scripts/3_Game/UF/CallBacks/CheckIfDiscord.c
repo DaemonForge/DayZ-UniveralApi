@@ -9,8 +9,8 @@ class CheckIfHasDiscord extends UDiscordCallBack {
 	override void OnDiscordUserNotFound(UDiscordUser user){
 		//Do Stuff Here
 		Print("[UF] [CheckIfHasDiscord] User not found");
-		if (GetGame().IsClient()){
-			GetGame().OpenURL(U().ds().Link());
+		if (g_Game.IsClient()){
+			g_Game.OpenURL(U().ds().Link());
 		}
 	}
 

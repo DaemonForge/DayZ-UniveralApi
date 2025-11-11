@@ -37,7 +37,7 @@ modded class MissionGameplay extends MissionBase
 	
 	
 	void RequestNewAuthToken(){
-		if (!GetGame().IsServer()){
+		if (!g_Game.IsServer()){
 			U().RequestAuthToken(false);
 		}
 	}
@@ -82,7 +82,7 @@ modded class MissionGameplay extends MissionBase
             if (m_DiscordKeyDownTime < m_DiscordHoldThreshold && !GetDiscordLoggedInWidget().IsSet())
             {
                 // Open the URL. This will not execute if the hotkey was held.
-                GetGame().OpenURL(U().ds().Link());
+                g_Game.OpenURL(U().ds().Link());
 				U().Cron().runEndCount(30, 20, this, "ReCheckDiscord", NULL);
             }
             // Reset the key state tracking.

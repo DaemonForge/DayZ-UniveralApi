@@ -137,7 +137,7 @@
  *       - Returns true if the configuration exists and has been successfully loaded, false otherwise.
  *
  * Notes:
- *   - Many functions rely on global game objects (like GetGame()) and assume a proper game context.
+ *   - Many functions rely on global game objects (like g_Game) and assume a proper game context.
  *   - The configuration retrieval functions expect specific naming conventions for paths and variables.
  *   - Error handling is minimal; functions typically return empty strings or NULL when they fail.
  */
@@ -171,9 +171,9 @@ class UUtil extends Managed {
 	//Client side function to get the steam id
 	static string GetSteamId(){
 		DayZPlayer player;
-		if (GetGame() && GetGame().GetUserManager() && GetGame().GetUserManager().GetTitleInitiator()){
-			return GetGame().GetUserManager().GetTitleInitiator().GetUid();
-		} else if (GetGame() && GetGame().IsClient() && Class.CastTo(player, GetGame().GetPlayer()) && player.GetIdentity() && player.GetIdentity().GetPlainId() != "" ){
+		if (g_Game && g_Game.GetUserManager() && g_Game.GetUserManager().GetTitleInitiator()){
+			return g_Game.GetUserManager().GetTitleInitiator().GetUid();
+		} else if (g_Game && g_Game.IsClient() && Class.CastTo(player, g_Game.GetPlayer()) && player.GetIdentity() && player.GetIdentity().GetPlainId() != "" ){
 			return player.GetIdentity().GetPlainId();
 		} 
 		return "";
@@ -245,9 +245,9 @@ class UUtil extends Managed {
 	 */
 	//Simple function for finding a player based on their GUID
 	static DayZPlayer FindPlayer(string GUID){
-		if (GetGame().IsServer()){
+		if (g_Game.IsServer()){
 			autoptr array<Man> players = new array<Man>;
-			GetGame().GetPlayers( players );
+			g_Game.GetPlayers( players );
 			for (int i = 0; i < players.Count(); i++){
 				DayZPlayer player = DayZPlayer.Cast(players.Get(i));
 				if (player.GetIdentity() && player.GetIdentity().GetId() == GUID ){
@@ -274,8 +274,8 @@ class UUtil extends Managed {
 
 		int highBits;
 		int lowBits;
-		GetGame().GetPlayerNetworkIDByIdentityID(identity.GetPlayerId(), lowBits, highBits);
-		return DayZPlayer.Cast(GetGame().GetObjectByNetworkId(lowBits, highBits));
+		g_Game.GetPlayerNetworkIDByIdentityID(identity.GetPlayerId(), lowBits, highBits);
+		return DayZPlayer.Cast(g_Game.GetObjectByNetworkId(lowBits, highBits));
 	}
 	
 	 
@@ -292,9 +292,9 @@ class UUtil extends Managed {
 	 * @param Icon (Optional) The path to an icon to display with the notification. Defaults to "_UFramework\images\info.edds".
 	 */
 	static void SendNotificationEx(string Header, string Text, PlayerIdentity player, string Icon = "_UFramework\\images\\info.edds") {
-		if (GetGame().IsDedicatedServer()){
+		if (g_Game.IsDedicatedServer()){
 			NotificationSystem.SendNotificationToPlayerIdentityExtended(player, 5, Header, Text, Icon );
-		} else if (GetGame().IsClient()){
+		} else if (g_Game.IsClient()){
 			NotificationSystem.AddNotificationExtended(5, Header, Text, Icon);
 		}
 	}
@@ -558,16 +558,16 @@ class UUtil extends Managed {
 	 */
 	static bool GetConfigInt(string type, string varible, out int value){
 		
-		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
-			value = GetGame().ConfigGetInt(  CFG_MAGAZINESPATH  + " " + type + " " + varible);
+		if ( g_Game.ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			value = g_Game.ConfigGetInt(  CFG_MAGAZINESPATH  + " " + type + " " + varible);
 			return true;
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
-			value = GetGame().ConfigGetInt(  CFG_WEAPONSPATH  + " " + type + " " + varible);
+		if ( g_Game.ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
+			value = g_Game.ConfigGetInt(  CFG_WEAPONSPATH  + " " + type + " " + varible);
 			return true;
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
-			value = GetGame().ConfigGetInt( CFG_VEHICLESPATH + " " + type + " " + varible );
+		if ( g_Game.ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			value = g_Game.ConfigGetInt( CFG_VEHICLESPATH + " " + type + " " + varible );
 			return true;
 		}
 		return false;
@@ -586,16 +586,16 @@ class UUtil extends Managed {
 	 */
 	static bool GetConfigFloat(string type, string varible, out float value){
 		
-		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
-			value = GetGame().ConfigGetFloat(  CFG_MAGAZINESPATH  + " " + type + " " + varible);
+		if ( g_Game.ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			value = g_Game.ConfigGetFloat(  CFG_MAGAZINESPATH  + " " + type + " " + varible);
 			return true;
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH + " " + type + " " + varible ) ){
-			value = GetGame().ConfigGetFloat( CFG_WEAPONSPATH + " " + type + " " + varible );
+		if ( g_Game.ConfigIsExisting(  CFG_WEAPONSPATH + " " + type + " " + varible ) ){
+			value = g_Game.ConfigGetFloat( CFG_WEAPONSPATH + " " + type + " " + varible );
 			return true;
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
-			value = GetGame().ConfigGetFloat( CFG_VEHICLESPATH + " " + type + " " + varible );
+		if ( g_Game.ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			value = g_Game.ConfigGetFloat( CFG_VEHICLESPATH + " " + type + " " + varible );
 			return true;
 		}
 		return false;
@@ -613,14 +613,14 @@ class UUtil extends Managed {
 	 */
 	static bool GetConfigString(string type, string varible, out string value){
 		
-		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
-			return GetGame().ConfigGetText(  CFG_MAGAZINESPATH  + " " + type + " " + varible,value);
+		if ( g_Game.ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			return g_Game.ConfigGetText(  CFG_MAGAZINESPATH  + " " + type + " " + varible,value);
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
-			return GetGame().ConfigGetText(  CFG_WEAPONSPATH  + " " + type + " " + varible,value);
+		if ( g_Game.ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
+			return g_Game.ConfigGetText(  CFG_WEAPONSPATH  + " " + type + " " + varible,value);
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
-			return GetGame().ConfigGetText( CFG_VEHICLESPATH + " " + type + " " + varible,value);
+		if ( g_Game.ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			return g_Game.ConfigGetText( CFG_VEHICLESPATH + " " + type + " " + varible,value);
 		}
 		return false;
 	}
@@ -637,16 +637,16 @@ class UUtil extends Managed {
 	 * @return bool True if the configuration value was found, false otherwise.
 	 */
 	static bool GetConfigTStringArray(string type, string varible, out TStringArray value){
-		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
-			GetGame().ConfigGetTextArray(  CFG_MAGAZINESPATH  + " " + type + " " + varible, value);
+		if ( g_Game.ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			g_Game.ConfigGetTextArray(  CFG_MAGAZINESPATH  + " " + type + " " + varible, value);
 			return true;
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
-			GetGame().ConfigGetTextArray(  CFG_WEAPONSPATH  + " " + type + " " + varible, value);
+		if ( g_Game.ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
+			g_Game.ConfigGetTextArray(  CFG_WEAPONSPATH  + " " + type + " " + varible, value);
 			return true;
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
-			GetGame().ConfigGetTextArray( CFG_VEHICLESPATH + " " + type + " " + varible, value);
+		if ( g_Game.ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			g_Game.ConfigGetTextArray( CFG_VEHICLESPATH + " " + type + " " + varible, value);
 			return true;
 		}
 		return false;
@@ -664,16 +664,16 @@ class UUtil extends Managed {
 	 * @return bool True if the value was successfully retrieved, false otherwise.
 	 */
 	static bool GetConfigTFloatArray(string type, string varible, out TFloatArray value){
-		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
-			GetGame().ConfigGetFloatArray(  CFG_MAGAZINESPATH  + " " + type + " " + varible, value);
+		if ( g_Game.ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			g_Game.ConfigGetFloatArray(  CFG_MAGAZINESPATH  + " " + type + " " + varible, value);
 			return true;
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
-			GetGame().ConfigGetFloatArray(  CFG_WEAPONSPATH  + " " + type + " " + varible, value);
+		if ( g_Game.ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
+			g_Game.ConfigGetFloatArray(  CFG_WEAPONSPATH  + " " + type + " " + varible, value);
 			return true;
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
-			GetGame().ConfigGetFloatArray( CFG_VEHICLESPATH + " " + type + " " + varible, value);
+		if ( g_Game.ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			g_Game.ConfigGetFloatArray( CFG_VEHICLESPATH + " " + type + " " + varible, value);
 			return true;
 		}
 		return false;
@@ -691,16 +691,16 @@ class UUtil extends Managed {
 	 * @return bool True if the configuration value was found, false otherwise.
 	 */
 	static bool GetConfigTIntArray(string type, string varible, out TIntArray value){
-		if ( GetGame().ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
-			GetGame().ConfigGetIntArray(  CFG_MAGAZINESPATH  + " " + type + " " + varible, value);
+		if ( g_Game.ConfigIsExisting(  CFG_MAGAZINESPATH  + " " + type + " " + varible ) ){
+			g_Game.ConfigGetIntArray(  CFG_MAGAZINESPATH  + " " + type + " " + varible, value);
 			return true;
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
-			GetGame().ConfigGetIntArray(  CFG_WEAPONSPATH  + " " + type + " " + varible, value);
+		if ( g_Game.ConfigIsExisting(  CFG_WEAPONSPATH  + " " + type + " " + varible ) ){
+			g_Game.ConfigGetIntArray(  CFG_WEAPONSPATH  + " " + type + " " + varible, value);
 			return true;
 		}
-		if ( GetGame().ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
-			GetGame().ConfigGetIntArray( CFG_VEHICLESPATH + " " + type + " " + varible, value);
+		if ( g_Game.ConfigIsExisting(  CFG_VEHICLESPATH + " " + type + " " + varible ) ){
+			g_Game.ConfigGetIntArray( CFG_VEHICLESPATH + " " + type + " " + varible, value);
 			return true;
 		}
 		return false;
@@ -728,7 +728,7 @@ class UUtil extends Managed {
 	 * Saves a Base64-encoded string to a binary file after a short delay.
 	 *
 	 * This variant of the save function decodes the Base64 string into bytes using DecodeBase64,
-	 * and schedules the saving process using a call queue (via GetGame().GetCallQueue), allowing the saving
+	 * and schedules the saving process using a call queue (via g_Game.GetCallQueue), allowing the saving
 	 * operation to be deferred to reduce the impact on the client frame rate.
 	 *
 	 * @param base64String The Base64-encoded string representing binary data.
@@ -738,7 +738,7 @@ class UUtil extends Managed {
 	{
 		array<int> bytes;
 		DecodeBase64(base64String, bytes);
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UUtil.SaveBytesToFile, 10, false, bytes, filePath); //call later to split client frame hit
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UUtil.SaveBytesToFile, 10, false, bytes, filePath); //call later to split client frame hit
 	}
 
 

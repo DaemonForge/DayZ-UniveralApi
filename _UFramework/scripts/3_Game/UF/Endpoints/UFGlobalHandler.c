@@ -221,7 +221,7 @@ class UDBGlobalHandlerBase extends Managed {
 		}
 	*/
 	int LoadJson(Class cbInstance, string cbFunction, string defaultJson = "{}") {
-		return U().globals().Load(Mod, cbInstance, cbFunction, defaultJson));
+		return U().globals().Load(Mod, cbInstance, cbFunction, defaultJson);
 	}
 	
 	int Increment(string element, float value = 1){

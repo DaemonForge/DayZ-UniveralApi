@@ -312,7 +312,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	
 	//Downloads an Audio file
 	int TTSDownload(string ttsId){
-		if (GetGame().IsDedicatedServer()) {
+		if (g_Game.IsDedicatedServer()) {
 			Error2("[UF] TTSDownload Called from Server", " TTSid: " + ttsId);
 			return -1;
 		}
@@ -330,7 +330,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	
 	//Downloads and Calls back when complete
 	int TTSDownload(string ttsId, Class cbInstance, string cbFunction){
-		if (GetGame().IsDedicatedServer()) {
+		if (g_Game.IsDedicatedServer()) {
 			Error2("[UF] TTSDownload Called from Server", " TTSid: " + ttsId);
 			return -1;
 		}
@@ -347,7 +347,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	}
 	
 	int TTSPlay(string ttsId){
-		if (GetGame().IsDedicatedServer()) {
+		if (g_Game.IsDedicatedServer()) {
 			Error2("[UF] PlayTTS Called from Server", " TTSid: " + ttsId);
 			return -1;
 		}

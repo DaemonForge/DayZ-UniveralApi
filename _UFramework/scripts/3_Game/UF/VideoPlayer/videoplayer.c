@@ -45,8 +45,8 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 	}
 
 	void Init(){
-        if (GetGame().IsDedicatedServer()) return;
-		m_LayoutRoot = GetGame().GetWorkspace().CreateWidgets(m_LayoutPath, NULL, true);
+        if (g_Game.IsDedicatedServer()) return;
+		m_LayoutRoot = g_Game.GetWorkspace().CreateWidgets(m_LayoutPath, NULL, true);
         m_icon = ImageWidget.Cast(m_LayoutRoot.FindAnyWidget("icon"));
 		m_VideoQueue = new TStringArray();
 		m_icon.Show(false);
@@ -60,7 +60,7 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 			Print("Trying to play but audio is already playing");
 			 return;
 		}
-        if (GetGame().IsDedicatedServer()) return;
+        if (g_Game.IsDedicatedServer()) return;
         if (!m_Video) return;
 		string videoPath =  "$saves:" + oid + ".mp4";
 		m_isAudioPlaying = true;
@@ -70,15 +70,15 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 			int playTime = m_Video.GetTotalTime();
          	m_Video.Play();
 			//m_Video.Stop();
-           	GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(m_Video.Stop, 1, false);
+           	g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(m_Video.Stop, 1, false);
             Print("[UF] Loading Video: " + videoPath + " Time:" + playTime);
-            GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(this.Play, 650, false, showIcon);
-			GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(this.Stop, playTime + 990, false);
+            g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(this.Play, 650, false, showIcon);
+			g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(this.Stop, playTime + 990, false);
         #endif
 
     }
     void LoadPath(string videoPath){
-        if (GetGame().IsDedicatedServer()) return;
+        if (g_Game.IsDedicatedServer()) return;
         if (!m_Video) return;
 		#ifndef NO_GUI
             m_Video.Load(videoPath, false);
@@ -88,7 +88,7 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
     }
 	
     void Load(string oid){
-        if (GetGame().IsDedicatedServer()) return;
+        if (g_Game.IsDedicatedServer()) return;
         if (!m_Video) return;
 		string videoPath =  "$saves:" + oid + ".mp4";
 		#ifndef NO_GUI
@@ -99,7 +99,7 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
     }
 	
 	void Play(bool showIcon = true){
-        if (GetGame().IsDedicatedServer()) return;
+        if (g_Game.IsDedicatedServer()) return;
         if (!m_Video) return;
 		#ifndef NO_GUI
 			m_icon.Show(showIcon);
@@ -109,7 +109,7 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 	}
 	
     void Stop(){
-        if (GetGame().IsDedicatedServer()) return;
+        if (g_Game.IsDedicatedServer()) return;
         if (!m_Video) return;
 		m_isAudioPlaying = false;
 		#ifndef NO_GUI

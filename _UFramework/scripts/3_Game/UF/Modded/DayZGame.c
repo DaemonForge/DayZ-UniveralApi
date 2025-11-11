@@ -17,7 +17,7 @@ modded class DayZGame extends CGame
 			if (Class.CastTo(m_discordUser, data)){
 				Print("[UF] Discord is set up and cached " + m_discordUser.GlobalName);
 				U().ds().DownloadAvatar(GetDayZGame().GetSteamId()); //will use auth key to get the GUID
-				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.UpdateDiscordLoggedInWidget, 1500, false);
+				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.UpdateDiscordLoggedInWidget, 1500, false);
 			}
 		}
 		if (IsClient() && status == UF_NOTSETUP && UFConfig().PromptDiscordOnConnect >= 1){
@@ -36,7 +36,7 @@ modded class DayZGame extends CGame
 				GetDiscordLoggedInWidget().ShowAvatar();
 				GetDiscordLoggedInWidget().UpdateData(m_discordUser.GlobalName, "_UFramework/images/discord.edds");
 				if (m_UpdateDiscordWidgetShouldRetry){
-					GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.UpdateDiscordLoggedInWidget, 3500, false);
+					g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.UpdateDiscordLoggedInWidget, 3500, false);
 					m_UpdateDiscordWidgetShouldRetry = false;
 				}
 			}

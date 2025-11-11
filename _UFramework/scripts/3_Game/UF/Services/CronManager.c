@@ -112,11 +112,11 @@ class UCronManager extends Managed {
 			if (cronFunc.shouldAttemptCall(curTime, obj, funcName, params, shouldDelete)){
 				Print("[UF] [Cron] Running Function " + funcName + " @ " + curTime);
 				// Enqueue the function call via the system call queue.
-				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallByName(obj, funcName, params);
+				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallByName(obj, funcName, params);
 			}
 			// If flagged for removal, schedule the removal call.
 			if (shouldDelete){
-				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.RemoveByFunc, cronFunc);
+				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.RemoveByFunc, cronFunc);
 			}
 		}
 	}
@@ -231,7 +231,7 @@ class UCronManager extends Managed {
 		// Iterate through the cron functions and remove invalid ones.
 		foreach(UCronFunction cronFunc : m_CronFunctions){
 			if (!cronFunc.isValid()) {
-				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.RemoveByFunc, cronFunc);
+				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.RemoveByFunc, cronFunc);
 			}
 		}
 	}

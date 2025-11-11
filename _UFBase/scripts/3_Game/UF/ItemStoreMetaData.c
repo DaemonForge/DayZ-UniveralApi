@@ -12,6 +12,12 @@ class UAmmoData extends Managed{
 	int cartIndex(){return m_cartIndex;}	
 	float dmg(){return m_dmg;}
 	string cartTypeName(){return m_cartTypeName;}
+	void setDmg(float dmg){ 
+		m_dmg = dmg;
+	}
+	void setCartTypeName(string cartTypeName){
+		 m_cartTypeName = cartTypeName;
+	}
 }
 
 class UMetaData extends Managed{

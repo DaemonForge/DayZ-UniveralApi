@@ -24,7 +24,7 @@ class UScriptExec
         }
 
         // execute at highest module vanilla script module
-        ScriptModule module = ScriptModule.LoadScript(GetGame().GetMission().MissionScript, script_path, true);
+        ScriptModule module = ScriptModule.LoadScript(g_Game.GetMission().MissionScript, script_path, true);
 
         if (!module)
         {
@@ -45,7 +45,7 @@ class UScriptExec
             return null;
         }
         // execute at highest script module
-        ScriptModule module = ScriptModule.LoadScript(GetGame().GetMission().MissionScript, path, true);
+        ScriptModule module = ScriptModule.LoadScript(g_Game.GetMission().MissionScript, path, true);
 
         if (!module) {
             Error2("[UF][EXEC]","Invalid syntax! Review your script. " + path);
@@ -63,7 +63,7 @@ class UScriptExec
             Error2("[UF][EXEC]","Unable to find file at path " + path);
             return null;
         }
-        ScriptModule module = ScriptModule.LoadScript(GetGame().GetMission().MissionScript, path, true);
+        ScriptModule module = ScriptModule.LoadScript(g_Game.GetMission().MissionScript, path, true);
         if (!module) {
             Error2("[UF][EXEC]","Invalid syntax! Review your script. " + path);
             return null;
@@ -80,7 +80,7 @@ class UScriptExec
             return null;
         }
         // execute at highest script module
-        ScriptModule module = ScriptModule.LoadScript(GetGame().GetMission().MissionScript, path, true);
+        ScriptModule module = ScriptModule.LoadScript(g_Game.GetMission().MissionScript, path, true);
         if (!module) {
             Error2("[UF][EXEC]","Invalid syntax! Review your script. " + path);
             return null;
@@ -95,7 +95,7 @@ class UScriptExec
             Error2("[UF][EXEC]","Unable to find file at path " + path);
             return null;
         }
-        ScriptModule module = ScriptModule.LoadScript(GetGame().GetMission().MissionScript, path, true);
+        ScriptModule module = ScriptModule.LoadScript(g_Game.GetMission().MissionScript, path, true);
         if (!module) {
             Error2("[UF][EXEC]","Invalid syntax! Review your script. " + path);
             return null;
@@ -112,7 +112,7 @@ class UScriptExec
             Error2("[UF][EXEC]","Unable to find file at path " + path);
             return null;
         }
-        ScriptModule module = ScriptModule.LoadScript(GetGame().GetMission().MissionScript, path, true);
+        ScriptModule module = ScriptModule.LoadScript(g_Game.GetMission().MissionScript, path, true);
         if (!module) {
             Error2("[UF][EXEC]","Invalid syntax! Review your script. " + path);
             return null;
@@ -131,7 +131,7 @@ class UScriptExec
             Error2("[UF][EXEC]","Unable to find file at path " + path);
             return null;
         }
-        ScriptModule module = ScriptModule.LoadScript(GetGame().GameScript, path, true);
+        ScriptModule module = ScriptModule.LoadScript(g_Game.GameScript, path, true);
 
         if (!module) {
             Error2("[UF][EXEC]","Invalid syntax! Review your script. " + path);
@@ -145,7 +145,7 @@ class UScriptExec
             Error2("[UF][EXEC]","Unable to find file at path " + path);
             return null;
         }
-        ScriptModule module = ScriptModule.LoadScript(GetGame().GetMission().MissionScript, path, true);
+        ScriptModule module = ScriptModule.LoadScript(g_Game.GetMission().MissionScript, path, true);
         if (!module) {
             Error2("[UF][EXEC]","Invalid syntax! Review your script. " + path);
             return null;
@@ -192,7 +192,7 @@ class UScriptExec
             Error2("[UF][EXEC]","Unable to find file at path " + path);
             return null;
         }
-        ScriptModule module = ScriptModule.LoadScript(GetGame().GetMission().MissionScript, path, true);
+        ScriptModule module = ScriptModule.LoadScript(g_Game.GetMission().MissionScript, path, true);
         if (!module) {
             Error2("[UF][EXEC]","Invalid syntax! Review your script. " + path);
             return null;
@@ -210,7 +210,7 @@ class UScriptExec
             Error2("[UF][EXEC]","Unable to find file at path " + path);
             return null;
         }
-        ScriptModule module = ScriptModule.LoadScript(GetGame().GameScript, path, true);
+        ScriptModule module = ScriptModule.LoadScript(g_Game.GameScript, path, true);
         if (!module) {
             Error2("[UF][EXEC]","Invalid syntax! Review your script. " + path);
             return null;

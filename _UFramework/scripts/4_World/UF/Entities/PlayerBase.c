@@ -124,13 +124,13 @@ modded class PlayerBase extends ManBase{
 							return Amount - AmountRemoved;
 						} else if (AmountToRemove == CurQuantity){
 							AmountRemoved = AmountToRemove;
-							GetGame().ObjectDelete(item);
+							g_Game.ObjectDelete(item);
 							this.UpdateInventoryMenu(); // RPC-Call needed?
 							return Amount - AmountRemoved;
 						} else {
 							AmountRemoved = CurQuantity;
 							AmountToRemove = AmountToRemove - CurQuantity;
-							GetGame().ObjectDelete(item);
+							g_Game.ObjectDelete(item);
 							Amount = Amount - AmountRemoved;
 						}
 						if (AmountToRemove <= 0){
@@ -187,13 +187,13 @@ modded class PlayerBase extends ManBase{
 							return Amount - AmountRemoved;
 						} else if (AmountToRemove == CurQuantity){
 							AmountRemoved = MoneyValue.Value() * AmountToRemove;
-							GetGame().ObjectDelete(item);
+							g_Game.ObjectDelete(item);
 							this.UpdateInventoryMenu(); // RPC-Call needed?
 							return Amount - AmountRemoved;
 						} else {
 							AmountRemoved = MoneyValue.Value() * CurQuantity;
 							AmountToRemove = AmountToRemove - CurQuantity;
-							GetGame().ObjectDelete(item);
+							g_Game.ObjectDelete(item);
 							Amount = Amount - AmountRemoved;
 						}
 						if (AmountToRemove <= 0){

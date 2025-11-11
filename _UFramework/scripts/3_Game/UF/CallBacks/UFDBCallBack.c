@@ -27,7 +27,7 @@ class UDBCallBack : UFRestCallBackBase
 			rstatus = UF_CLIENTERROR;
 		}
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, rstatus, OID, "{}"));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, rstatus, OID, "{}"));
 		}
 	};
 	
@@ -37,7 +37,7 @@ class UDBCallBack : UFRestCallBackBase
 			return;
 		}
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, UF_TIMEOUT, OID, "{}"));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, UF_TIMEOUT, OID, "{}"));
 		}
 	};
 	
@@ -51,7 +51,7 @@ class UDBCallBack : UFRestCallBackBase
 			rstatus = UF_EMPTY;
 		}
 		if (GetInstance() && Function != ""){
-			GetGame().GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, rstatus, OID, data));
+			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, rstatus, OID, data));
 		}
 	};
 };

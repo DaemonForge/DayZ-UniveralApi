@@ -19,7 +19,7 @@ class UQueueHandler<Class T> extends UQueueHandlerBase
 	void readCB(int cid, int status, string oid, array<T> messages){
 		if (status == UF_SUCCESS){
 			foreach(T message : messages){
-				GetGame().GameScript.CallFunctionParams(GetInstance(), GetFuncName(), NULL, new Param4<int, int, string, T>(cid, status, oid, message));
+				g_Game.GameScript.CallFunctionParams(GetInstance(), GetFuncName(), NULL, new Param4<int, int, string, T>(cid, status, oid, message));
 			}
 		}
 	} 
@@ -48,7 +48,7 @@ class UStringQueueHandler extends UQueueHandlerBase
 	void readCB(int cid, int status, string oid, TStringArray messages){
 		if (status == UF_SUCCESS){
 			foreach(string message : messages){
-				GetGame().GameScript.CallFunctionParams(GetInstance(), GetFuncName(), NULL, new Param4<int, int, string, string>(cid, status, oid, message));
+				g_Game.GameScript.CallFunctionParams(GetInstance(), GetFuncName(), NULL, new Param4<int, int, string, string>(cid, status, oid, message));
 			}
 		}
 	}
@@ -93,7 +93,7 @@ class UQueueHandlerBase extends Managed
 	protected void Init(UQueueMeta meta)
 	{
 		if (m_PolingFrequency > 0) U().Cron().runEndless(m_PolingFrequency, this, "CheckQueue", NULL);
-		if (meta && GetGame().IsDedicatedServer()){
+		if (meta && g_Game.IsDedicatedServer()){
 			m_LastWriteCall = U().Msg().SetMeta(m_mod,m_queue,meta);
 		}
 	}
