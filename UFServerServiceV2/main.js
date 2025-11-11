@@ -309,7 +309,7 @@ function openSettingsWindow() {
   settingsWindow = new BrowserWindow({
     width: 800,
     height: 600,
-    title: "Unviersal Framework Settings",
+    title: "Universal Framework Settings",
     icon: path.join(__dirname, 'public', 'icon.ico'), // Use .ico for Windows, or .png if preferred
     webPreferences: {
       nodeIntegration: false,
