@@ -7,6 +7,16 @@ const { isArray, isObject, isEmpty, processValue, buildUpdateDoc, createLogger }
 
 const logger = createLogger(global.logger, 'db.global');
 
+function normalizeId(id) {
+  if (id && typeof id === 'object' && typeof id.toHexString === 'function') {
+    return id.toHexString();
+  }
+  if (id === undefined || id === null) {
+    return '';
+  }
+  return String(id);
+}
+
 /**
  * Connects to MongoDB and returns { client, collection } for the "Globals" collection.
  */
@@ -230,6 +240,127 @@ async function getGlobalField(mod, field) {
   }
 }
 
+/**
+ * Retrieves a lightweight list of all global documents, including the module name and id.
+ * Used by the desktop editor to populate the module list.
+ *
+ * @returns {Promise<Array<{id: string, mod: string}>>}
+ */
+async function listGlobals() {
+  const { client, collection } = await getClientAndCollection();
+  try {
+    const docs = await collection
+      .find({}, { projection: { Mod: 1, mod: 1, ID: 1, id: 1, Module: 1, module: 1 } })
+      .sort({ Mod: 1, mod: 1, ID: 1 })
+      .toArray();
+    return docs.map((doc) => {
+      const modName = doc.Mod
+        || doc.mod
+        || doc.Module
+        || doc.module
+        || doc.ID
+        || doc.Id
+        || doc.id
+        || '';
+      return {
+        id: normalizeId(doc._id),
+        mod: String(modName)
+      };
+    });
+  } catch (err) {
+    logger.error(`Error in listGlobals: ${err.message}`, { error: err });
+    return [];
+  } finally {
+    await client.close();
+  }
+}
+
+/**
+ * Retrieves the full global document for a given module.
+ *
+ * @param {string} mod
+ * @returns {Promise<{id: string, mod: string, data: Object}|null>}
+ */
+async function getGlobalDocument(mod) {
+  const { client, collection } = await getClientAndCollection();
+  try {
+    const doc = await collection.findOne({ Mod: mod });
+    if (!doc) {
+      logger.warn(`getGlobalDocument: Global for module "${mod}" not found.`, { mod });
+      return null;
+    }
+    return {
+  id: normalizeId(doc._id),
+      mod: doc.Mod,
+      data: doc.Data ?? {}
+    };
+  } catch (err) {
+    logger.error(`Error in getGlobalDocument for module "${mod}": ${err.message}`, { mod, error: err });
+    return null;
+  } finally {
+    await client.close();
+  }
+}
+
+/**
+ * Replaces the Data payload for a specific module with the provided document.
+ * Upserts the record if it does not exist.
+ *
+ * @param {string} mod
+ * @param {Object} data
+ * @returns {Promise<boolean>} true when the document was stored successfully.
+ */
+async function saveGlobalDocument(mod, data) {
+  if (!mod || typeof mod !== 'string') {
+    throw new Error('Module name is required to save global data.');
+  }
+  if ((typeof data !== 'object' || !Array.isArray(data) )|| data === null) {
+    throw new Error('Global data must be a JSON object or array.');
+  }
+
+  const { client, collection } = await getClientAndCollection();
+  try {
+    const update = { $set: { Mod: mod, Data: data } };
+    const result = await collection.updateOne({ Mod: mod }, update, { upsert: true });
+    const success = (result.matchedCount === 1 || result.upsertedCount === 1);
+    if (success) {
+      logger.info(`Saved Global document for module "${mod}".`, { mod, upserted: result.upsertedCount === 1 });
+    } else {
+      logger.warn(`saveGlobalDocument: No document updated for module "${mod}".`, { mod });
+    }
+    return success;
+  } catch (err) {
+    logger.error(`Error in saveGlobalDocument for module "${mod}": ${err.message}`, { mod, error: err });
+    throw err;
+  } finally {
+    await client.close();
+  }
+}
+
+/**
+ * Deletes the Global document associated with the provided module name.
+ *
+ * @param {string} mod
+ * @returns {Promise<boolean>} true when a document was removed.
+ */
+async function deleteGlobal(mod) {
+  const { client, collection } = await getClientAndCollection();
+  try {
+    const result = await collection.deleteOne({ Mod: mod });
+    if (result.deletedCount === 1) {
+      logger.info(`Deleted Global document for module "${mod}".`, { mod });
+      return true;
+    }
+    logger.warn(`deleteGlobal: No document deleted for module "${mod}".`, { mod });
+    return false;
+  } catch (err) {
+    logger.error(`Error in deleteGlobal for module "${mod}": ${err.message}`, { mod, error: err });
+    throw err;
+  } finally {
+    await client.close();
+  }
+}
+
 module.exports = {
   getGlobal,
   newGlobal,
@@ -237,4 +368,8 @@ module.exports = {
   transactionGlobal,
   globalExist,
   getGlobalField,
+  listGlobals,
+  getGlobalDocument,
+  saveGlobalDocument,
+  deleteGlobal,
 };

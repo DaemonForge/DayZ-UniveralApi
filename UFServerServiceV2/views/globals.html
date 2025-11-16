@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #1e1e1e;">
+<head>
+  <meta charset="UTF-8">
+  <title>Globals Editor</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data:;">
+  <link rel="stylesheet" href="styles/globals.css">
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>Globals</h1>
+      </div>
+      <input type="search" id="searchInput" class="search" placeholder="Search modules..." autocomplete="off">
+      <div id="modList" class="mod-list"></div>
+    </aside>
+    <main class="editor-pane">
+      <div class="editor-header">
+        <div class="title-block">
+          <h2 id="currentModLabel">No module selected</h2>
+          <div id="statusMessage" class="status" data-type="info">Select a module</div>
+        </div>
+        <div class="actions">
+          <button id="reloadBtn" class="btn" disabled>Reload</button>
+          <button id="deleteBtn" class="btn danger" disabled>Delete</button>
+          <button id="saveBtn" class="btn primary" disabled>Save</button>
+        </div>
+      </div>
+      <div id="editor" class="editor" aria-label="Globals JSON editor"></div>
+    </main>
+  </div>
+
+  <script src="../node_modules/ace-builds/src-min-noconflict/ace.js" defer></script>
+  <script src="../node_modules/ace-builds/src-min-noconflict/ext-language_tools.js" defer></script>
+  <script src="../node_modules/ace-builds/src-min-noconflict/mode-json.js" defer></script>
+  <script src="../node_modules/ace-builds/src-min-noconflict/theme-twilight.js" defer></script>
+  <script src="../renderers/globals.js" defer></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
-const { app, Tray, Menu, shell, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, Tray, Menu, shell, BrowserWindow, dialog, ipcMain, nativeImage } = require('electron');
 const winston = require('winston');
 const path = require('path');
+const { pathToFileURL } = require('url');
 const { exec } = require('child_process');
 const { Writable } = require('stream');
 const { readFileSync, writeFileSync, existsSync, mkdirSync } = require('fs');
@@ -13,7 +14,58 @@ global.rootPath = path.join(__dirname);
 let tray = null;
 let ConsoleWindow = null;
 let settingsWindow = null;
+let globalsWindow = null;
+let cachedGlobalModel = null;
 
+function getGlobalModel() {
+  if (!cachedGlobalModel) {
+    cachedGlobalModel = require('./models/global');
+  }
+  return cachedGlobalModel;
+}
+
+
+const fetch = (() => {
+  if (typeof globalThis.fetch === 'function') {
+    return globalThis.fetch.bind(globalThis);
+  }
+  try {
+    const nodeFetch = require('node-fetch');
+    return nodeFetch.default || nodeFetch;
+  } catch (error) {
+    console.error('Failed to load fetch implementation:', error);
+    return undefined;
+  }
+})();
+
+function resolveAssetPath(...segments) {
+  const fallback = path.join(__dirname, ...segments);
+  if (!app.isPackaged) {
+    return fallback;
+  }
+
+  const resourceCandidate = path.join(process.resourcesPath, ...segments);
+  if (existsSync(resourceCandidate)) {
+    return resourceCandidate;
+  }
+
+  const asarCandidate = path.join(process.resourcesPath, 'app.asar', ...segments);
+  if (existsSync(asarCandidate)) {
+    return asarCandidate;
+  }
+
+  return fallback;
+}
+
+function loadIconImage(fileName) {
+  const iconPath = resolveAssetPath('public', fileName);
+  const image = nativeImage.createFromPath(iconPath);
+  return image && !image.isEmpty() ? image : null;
+}
+
+const windowIconImage = loadIconImage('icon.ico');
+const trayMenuIcon = loadIconImage('icon32x32.png');
+const trayIconImage = windowIconImage || loadIconImage('universalFrameworklogo.ico');
 
 const https = require('https');
 const httpsAgent = new https.Agent({
@@ -37,7 +89,8 @@ app.on('ready', () => {
   checkAndInstallMongoDB();
 
   // Create the system tray icon
-  tray = new Tray(path.join(__dirname, 'public', 'icon.ico'));
+  const traySource = trayIconImage || resolveAssetPath('public', 'icon.ico');
+  tray = new Tray(traySource);
   tray.setToolTip('Universal Framework');
 
   // Load your main service (if required)
@@ -112,7 +165,7 @@ function OpenConsoleWindow() {
     width: 980,
     height: 392,
     title: "Universal Framework Console", // sets the window title
-    icon: path.join(__dirname, 'public', 'icon.ico'), // Use .ico for Windows, or .png if preferred
+    icon: windowIconImage || resolveAssetPath('public', 'icon.ico'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -234,7 +287,7 @@ function updateTrayMenu() {
         label: `UF API Service ${apiStatusSubLabel}`,
         sublabel: apiStatusLabel,
         enabled: false,
-        icon: path.join(__dirname, 'public', 'icon32x32.png')
+        icon: trayMenuIcon || undefined
       },
       {
         label: discordStatusLabel,
@@ -271,6 +324,12 @@ function updateTrayMenu() {
             }
           },
           {
+            label: '📝Globals Editor',
+            click: () => {
+              openGlobalsWindow();
+            }
+          },
+          {
             label: '📁 Logs',
             click: () => {
               shell.openPath(path.join(global.SAVEPATH,'logs'));
@@ -296,6 +355,36 @@ function updateTrayMenu() {
       }
     ]);
     tray.setContextMenu(contextMenu);
+  });
+}
+
+function openGlobalsWindow() {
+  if (globalsWindow) {
+    globalsWindow.restore();
+    globalsWindow.focus();
+    return;
+  }
+
+  globalsWindow = new BrowserWindow({
+    width: 1100,
+    height: 720,
+    title: 'Globals Editor',
+    icon: windowIconImage || resolveAssetPath('public', 'icon.ico'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+      preload: path.join(__dirname, 'preload', 'globals.js')
+    }
+  });
+
+  globalsWindow.setMenu(null);
+  const globalsPath = path.join(__dirname, 'views', 'globals.html');
+  const globalsUrl = pathToFileURL(globalsPath);
+  globalsUrl.searchParams.set('ts', Date.now().toString());
+  globalsWindow.loadURL(globalsUrl.toString());
+  globalsWindow.on('closed', () => {
+    globalsWindow = null;
   });
 }
 
@@ -371,6 +460,10 @@ ipcMain.on('force-close', () => {
     ConsoleWindow.removeAllListeners('close');
     ConsoleWindow.close();
   }
+  if (globalsWindow) {
+    globalsWindow.removeAllListeners('close');
+    globalsWindow.close();
+  }
 });
 ipcMain.on('restart-app', () => {
   if (settingsWindow) {
@@ -381,8 +474,77 @@ ipcMain.on('restart-app', () => {
     ConsoleWindow.removeAllListeners('close');
     ConsoleWindow.close();
   }
+  if (globalsWindow) {
+    globalsWindow.removeAllListeners('close');
+    globalsWindow.close();
+  }
   app.relaunch();
   app.exit();
+});
+
+ipcMain.handle('globals:list', async () => {
+  try {
+    const { listGlobals } = getGlobalModel();
+    const data = await listGlobals();
+    (global.logger || console).info('[GlobalsEditor] List request processed', { count: Array.isArray(data) ? data.length : 'n/a' });
+    return { success: true, data };
+  } catch (err) {
+    (global.logger || console).error('[GlobalsEditor] Failed to list globals', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('globals:load', async (event, mod) => {
+  try {
+    if (!mod || typeof mod !== 'string') {
+      throw new Error('Module name is required.');
+    }
+    const { getGlobalDocument } = getGlobalModel();
+    const document = await getGlobalDocument(mod);
+    if (!document) {
+      return { success: false, error: 'Module not found.' };
+    }
+    return { success: true, data: document };
+  } catch (err) {
+    (global.logger || console).error('[GlobalsEditor] Failed to load module', { mod, error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('globals:save', async (event, payload) => {
+  try {
+    const mod = payload?.mod;
+    const data = payload?.data;
+    if (!mod || typeof mod !== 'string') {
+      throw new Error('Module name is required.');
+    }
+    if (typeof data !== 'object' || data === null) {
+      throw new Error('Data must be a JSON object or array.');
+    }
+    const { saveGlobalDocument } = getGlobalModel();
+    await saveGlobalDocument(mod, data);
+    return { success: true };
+  } catch (err) {
+    (global.logger || console).error('[GlobalsEditor] Failed to save module', { mod: payload?.mod, error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('globals:delete', async (event, mod) => {
+  try {
+    if (!mod || typeof mod !== 'string') {
+      throw new Error('Module name is required.');
+    }
+    const { deleteGlobal } = getGlobalModel();
+    const removed = await deleteGlobal(mod);
+    if (!removed) {
+      return { success: false, error: 'Module not found.' };
+    }
+    return { success: true };
+  } catch (err) {
+    (global.logger || console).error('[GlobalsEditor] Failed to delete module', { mod, error: err.message });
+    return { success: false, error: err.message };
+  }
 });
 
 app.on('window-all-closed', (e) => {
