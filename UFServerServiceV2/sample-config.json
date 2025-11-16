@@ -1,42 +1,48 @@
 {
-    "DBServer": "mongodb://localhost:27017",
-    "DB": "DayZ",
-    "ServerAuth": ["Hk@1k77Fxrut.ltqpT5mY)-rYIrNOHQdZM~8@b@~UeZy"],
-    "IP": "0.0.0.0",
-    "Port": 443,
-    "LogToFile": true,
-    "Certificate": "",
-    "CertificateKey": "",
-    "CheckForNewVersion": true,
-    "CreateIndexes": true,
-    "RateLimitWhiteList": ["127.0.0.1"],
-    "Discord" :{
-        "Client_Id": "",
-        "Client_Secret": "",
-        "Bot_Token": "",
-        "Guild_Id": "",
-        "Required_Role": "",
-        "BlackList_Role": "",
-        "Restrict_Sign_Up": true,
-        "Restrict_Sign_Up_Countries": ["blacklist", "CN"],
-        "AllowToReRegister": false
-    },
-    "OpenAIApi": {
-        "ApiKey": "",
-        "enablePromptProtection": true
-    },
-	"Functions":{
-		"ModName": {
-			"AllowDB": false,
-			"AllowDiscordBot": false,
-			"AllowMsgQueue": false
-		}
-	},
-    "LetsEncypt": {
-        "Enabled": false,
-        "Domain": "localhost.localhost",
-        "Email": "myemail@email.com",
-        "AltNames": []
-    }
-
+  "DBServer": "mongodb://localhost:27017",
+  "DB": "DayZ",
+  "CreateIndexes": false,
+  "IP": "0.0.0.0",
+  "Port": 443,
+  "RateLimitWhiteList": [
+    "127.0.0.1"
+  ],
+  "ServerAuth": [
+  ],
+  "ServerAuthLabels": [
+  ],
+  "Certificate": "",
+  "CertificateKey": "",
+  "Discord": {
+    "Client_Id": "",
+    "Client_Secret": "",
+    "Bot_Token": "",
+    "Guild_Id": "",
+    "AllowToReRegister": false,
+    "Restrict_Sign_Up": false,
+    "Required_Role": "",
+    "BlackList_Role": "",
+    "Restrict_Sign_Up_Countries": [
+      "CN"
+    ]
+  },
+  "OpenAIApi": {
+    "ApiKey": "",
+    "enablePromptProtection": true
+  },
+  "Functions": {},
+  "LogToFile": false,
+  "CheckForNewVersion": false,
+  "LetsEncypt": {
+    "Enabled": false,
+    "Domain": "yourdomain.com",
+    "Email": "jon@example.com",
+    "AltNames": []
+  },
+  "Proxy": {
+    "primaryDomain": "",
+    "subdomain": "",
+    "token": "",
+    "lastRenew": ""
+  }
 }

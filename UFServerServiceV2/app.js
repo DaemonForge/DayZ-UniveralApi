@@ -29,15 +29,21 @@ const DefaultCert = require('./defaultkeys.json');
 const cluster = require('cluster');
 const path = require('path');
 const os = require('os');
-const nodeFetch = require('node-fetch');
+const nodeFetchModule = require('node-fetch');
 const RateLimit = require('express-rate-limit');
 
 
 // Import utility functions
 const { isArray, CheckRecentVersion, CheckIndexes, ExtractAuthKey } = require('./utils');
 
-// Set global fetch for use throughout the application
-global.fetch = nodeFetch;
+// Resolve node-fetch CommonJS/ESM default and set global fetch if needed
+const resolvedFetch = (nodeFetchModule && typeof nodeFetchModule === 'object' && 'default' in nodeFetchModule)
+  ? nodeFetchModule.default
+  : nodeFetchModule;
+
+if (typeof global.fetch !== 'function') {
+  global.fetch = resolvedFetch;
+}
 
 // Determine CPU count for clustering
 const totalCPUs = Math.max(1, global.config.cpuCount || os.cpus().length);

@@ -399,7 +399,7 @@ function openSettingsWindow() {
     width: 800,
     height: 600,
     title: "Universal Framework Settings",
-    icon: path.join(__dirname, 'public', 'icon.ico'), // Use .ico for Windows, or .png if preferred
+    icon: windowIconImage || resolveAssetPath('public', 'icon.ico'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -431,10 +431,17 @@ function openSettingsWindow() {
 ipcMain.handle('get-config', (event) => {
   const configPath = path.join(global.SAVEPATH, 'config.json');
   try {
+    const configDir = path.dirname(configPath);
+    if (!existsSync(configDir)) {
+      mkdirSync(configDir, { recursive: true });
+    }
     const configData = readFileSync(configPath, 'utf-8');
     return JSON.parse(configData);
   } catch (err) {
     console.error("Error reading config:", err);
+    if (global.config) {
+      return global.config;
+    }
     return null;
   }
 });
@@ -443,7 +450,12 @@ ipcMain.handle('get-config', (event) => {
 ipcMain.handle('save-config', (event, newConfig) => {
   const configPath = path.join(global.SAVEPATH, 'config.json');
   try {
+    const configDir = path.dirname(configPath);
+    if (!existsSync(configDir)) {
+      mkdirSync(configDir, { recursive: true });
+    }
     writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
+    global.config = newConfig;
     return { success: true };
   } catch (err) {
     console.error("Error saving config:", err);
@@ -557,6 +569,10 @@ app.on('window-all-closed', (e) => {
 let lastProxyRegistrationTime = 0;
 
 ipcMain.handle('get-proxy-domains', async (event) => {
+  if (!fetch) {
+    console.error("Fetch implementation unavailable; cannot load proxy domains.");
+    return [];
+  }
   try {
     const response = await fetch("https://ufapi.daemonforge.dev/available");
     if (!response.ok) {
@@ -571,6 +587,9 @@ ipcMain.handle('get-proxy-domains', async (event) => {
 });
 
 ipcMain.handle('register-proxy', async (event, selectedDomain) => {
+  if (!fetch) {
+    throw new Error("Fetch implementation unavailable; cannot register proxy.");
+  }
   try {
     const now = Date.now();
     if (now - lastProxyRegistrationTime < 60000) {
@@ -597,6 +616,10 @@ ipcMain.handle('register-proxy', async (event, selectedDomain) => {
 function loadConfigSync() {
   const configPath = path.join(global.SAVEPATH, 'config.json');
   try {
+    const configDir = path.dirname(configPath);
+    if (!existsSync(configDir)) {
+      mkdirSync(configDir, { recursive: true });
+    }
     return JSON.parse(readFileSync(configPath, 'utf-8'));
   } catch (err) {
     console.error("Error reading config:", err);
@@ -605,6 +628,10 @@ function loadConfigSync() {
 }
 
 async function renewProxyToken() {
+  if (!fetch) {
+    console.error("Fetch implementation unavailable; skipping proxy token renewal.");
+    return;
+  }
   const config = loadConfigSync();
   if (!config.Proxy || !config.Proxy.subdomain || !config.Proxy.token || !config.Proxy.autoRenew) {
     return;
