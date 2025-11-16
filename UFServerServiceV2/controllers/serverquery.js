@@ -1,4 +1,4 @@
-const gamedig = require('gamedig');
+const { GameDig } = require('gamedig');
 const { Router } = require('express');
 const { requirePlayerOrServerAuth } = require("../auth/utils");
 const { GenerateLimiter, createLogger } = require('../utils');
@@ -37,7 +37,7 @@ router.post('/Status/:ip/:port', requirePlayerOrServerAuth, GetServerStatus);
 
 async function QueryServer(ip, port) {
     try {
-        let data = gamedig.query({
+        let data = GameDig.query({
             type: 'dayz',
             host: ip,
             port: port,
