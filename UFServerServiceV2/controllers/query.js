@@ -61,7 +61,7 @@ async function runQuery(req, res, mod, auth, COLL) {
                 return;
             }
             let fixQuery = RawData.FixQuery || 0;
-            let ReturnCol = "Data";
+            let ReturnCol = "data";
             if (COLL == "Players") {
                 ReturnCol = mod;
             }

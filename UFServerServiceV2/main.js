@@ -530,7 +530,7 @@ ipcMain.handle('globals:save', async (event, payload) => {
     if (!mod || typeof mod !== 'string') {
       throw new Error('Module name is required.');
     }
-    if (typeof data !== 'object' || data === null) {
+    if ( data === null) {
       throw new Error('Data must be a JSON object or array.');
     }
     const { saveGlobalDocument } = getGlobalModel();
@@ -568,21 +568,51 @@ app.on('window-all-closed', (e) => {
  */
 let lastProxyRegistrationTime = 0;
 
-ipcMain.handle('get-proxy-domains', async (event) => {
+function formatProxyDomainError(error) {
+  if (!error) {
+    return 'Unknown error while loading proxy domains.';
+  }
+  const pieces = [];
+  if (error.message) {
+    pieces.push(error.message);
+  }
+  if (error.code) {
+    pieces.push(`code: ${error.code}`);
+  }
+  if (!pieces.length) {
+    pieces.push(String(error));
+  }
+  return pieces.join(' | ');
+}
+
+ipcMain.handle('get-proxy-domains', async () => {
   if (!fetch) {
-    console.error("Fetch implementation unavailable; cannot load proxy domains.");
-    return [];
+    const message = "Fetch implementation unavailable; cannot load proxy domains.";
+    console.error(message);
+    return { success: false, domains: [], error: message };
   }
   try {
     const response = await fetch("https://ufapi.daemonforge.dev/available");
     if (!response.ok) {
-      throw new Error("HTTP error " + response.status);
+      let bodyText = '';
+      try {
+        bodyText = await response.text();
+      } catch (bodyErr) {
+        bodyText = bodyErr?.message ? `Response body unavailable: ${bodyErr.message}` : '';
+      }
+      const statusText = response.statusText ? ` ${response.statusText}` : '';
+      const detail = bodyText ? ` - ${bodyText}` : '';
+      throw new Error(`HTTP ${response.status}${statusText}${detail}`);
     }
     const data = await response.json();
-    return data; // Expected to be an array of domain strings.
+    if (!Array.isArray(data)) {
+      throw new Error("Received malformed proxy domain list from server.");
+    }
+    return { success: true, domains: data, error: null };
   } catch (error) {
+    const formatted = formatProxyDomainError(error);
     console.error("Error fetching proxy domains:", error);
-    return [];
+    return { success: false, domains: [], error: formatted };
   }
 });
 

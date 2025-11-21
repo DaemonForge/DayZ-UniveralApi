@@ -12,6 +12,7 @@
  */
 
 let unsavedChanges = false;
+let cachedConfig = null;
 document.getElementById('floatingSaveBtn').hidden = true;
 const configForm = document.getElementById('configForm');
 
@@ -200,17 +201,49 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ----------------- Proxy Configuration Section -----------------
   async function loadProxyDomains() {
+    const dropdown = document.getElementById('proxyDomain');
+    if (!dropdown) {
+      return;
+    }
     try {
-      const domains = await window.api.getProxyDomains();
-      const dropdown = document.getElementById('proxyDomain');
+      const result = await window.api.getProxyDomains();
+      const domains = Array.isArray(result) ? result : (result?.domains || []);
+      const errorMessage = Array.isArray(result) ? null : (result?.error || null);
       dropdown.innerHTML = "";
-      domains.forEach(domain => {
+      if (domains.length) {
+        domains.forEach(domain => {
+          const option = document.createElement('option');
+          option.value = domain;
+          option.text = domain;
+          dropdown.appendChild(option);
+        });
+      } else {
         const option = document.createElement('option');
-        option.value = domain;
-        option.text = domain;
+        option.value = "";
+        option.text = errorMessage ? 'No proxy domains available' : 'No domains returned';
+        option.disabled = true;
+        option.selected = true;
         dropdown.appendChild(option);
-      });
+      }
+
+      if (errorMessage) {
+        dropdown.title = `Unable to load proxy domains: ${errorMessage}`;
+        dropdown.classList.add('proxy-dropdown-error');
+        showNotification("Error loading proxy domains: " + errorMessage);
+      } else {
+        dropdown.title = 'Select the primary domain for your proxy.';
+        dropdown.classList.remove('proxy-dropdown-error');
+      }
     } catch (err) {
+      dropdown.innerHTML = "";
+      const option = document.createElement('option');
+      option.value = "";
+      option.text = 'Failed to fetch proxy domains';
+      option.disabled = true;
+      option.selected = true;
+      dropdown.appendChild(option);
+      dropdown.title = 'Unable to load proxy domains: ' + err.message;
+      dropdown.classList.add('proxy-dropdown-error');
       showNotification("Error loading proxy domains: " + err.message);
     }
   }
@@ -252,7 +285,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
       const saveRes = await window.api.saveConfig(currentConfig);
       unsavedChanges = true;
-      if (!saveRes.success) {
+      if (saveRes.success) {
+        cachedConfig = JSON.parse(JSON.stringify(currentConfig));
+      } else {
         showNotification("Proxy registered, but failed to auto-save configuration.");
         unsavedChanges = true;
       }
@@ -373,6 +408,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ----------------- Load and Populate Config -----------------
   async function loadConfig() {
     const config = await window.api.getConfig();
+    cachedConfig = config ? JSON.parse(JSON.stringify(config)) : null;
     const cfg = config || {
       DBServer: "mongodb://localhost:27017",
       DB: "DayZ",
@@ -450,6 +486,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       certType = 'ownCert';
     } else if (cfg.Proxy && cfg.Proxy.subdomain) {
       certType = 'proxy';
+    }
+
+    if (!cachedConfig) {
+      cachedConfig = JSON.parse(JSON.stringify(cfg));
     }
     document.getElementById('certType').value = certType;
     certTypeSelect.dispatchEvent(new Event('change'));
@@ -546,7 +586,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   configForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const authItems = document.querySelectorAll('#serverAuthList .list-item');
+  const authItems = document.querySelectorAll('#serverAuthList .list-item');
     const serverAuth = [];
     const serverAuthLabels = [];
     authItems.forEach(item => {
@@ -557,7 +597,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // If certificate type is "proxy", treat it like selfSigned (no certificates)
-    const certType = document.getElementById('certType').value;
+  const certType = document.getElementById('certType').value;
+  const isProxyCert = certType === 'proxy';
     let certificate = "";
     let certificateKey = "";
     if (certType === 'ownCert') {
@@ -605,12 +646,25 @@ document.addEventListener('DOMContentLoaded', async () => {
           .map(s => s.trim())
           .filter(s => s !== '')
       },
-      Proxy: {
-        primaryDomain: document.getElementById('certType').value === 'Proxy' ? document.getElementById('proxyDomain').value : "",
-        subdomain: document.getElementById('certType').value === 'Proxy' ?  document.getElementById('proxySubdomain').value : "",
-        token: document.getElementById('certType').value === 'Proxy' ?  document.getElementById('proxyToken').value : "",
-        lastRenew: document.getElementById('certType').value === 'Proxy' ?  new Date().toISOString() : ""
-      }
+      Proxy: (() => {
+        const previousProxy = (cachedConfig && cachedConfig.Proxy) ? cachedConfig.Proxy : {};
+        if (!isProxyCert) {
+          return {
+            primaryDomain: "",
+            subdomain: "",
+            token: "",
+            lastRenew: "",
+            autoRenew: false
+          };
+        }
+        return {
+          primaryDomain: document.getElementById('proxyDomain').value,
+          subdomain: document.getElementById('proxySubdomain').value,
+          token: document.getElementById('proxyToken').value,
+          lastRenew: previousProxy.lastRenew || new Date().toISOString(),
+          autoRenew: Boolean(previousProxy.autoRenew)
+        };
+      })()
     };
 
     const functionEntries = document.querySelectorAll('.functionEntry');
@@ -630,6 +684,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const result = await window.api.saveConfig(newConfig);
     if (result.success) {
+      cachedConfig = JSON.parse(JSON.stringify(newConfig));
       unsavedChanges = false;
       document.getElementById('saveBtn').hidden = true;
       document.getElementById('cancelBtn').hidden = true;

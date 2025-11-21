@@ -314,7 +314,7 @@ async function saveGlobalDocument(mod, data) {
   if (!mod || typeof mod !== 'string') {
     throw new Error('Module name is required to save global data.');
   }
-  if ((typeof data !== 'object' || !Array.isArray(data) )|| data === null) {
+  if ( data === null || (!isObject(data) && !isArray(data)) ) {
     throw new Error('Global data must be a JSON object or array.');
   }
 

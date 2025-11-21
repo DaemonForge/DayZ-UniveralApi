@@ -3,9 +3,22 @@
  * This service provides a RESTful API for DayZ server management and data exchange
  */
 
+// Resolve package metadata so we can reference it even when packaged (where cwd lacks package.json)
+const packageMetadata = (() => {
+  try {
+    return require('./package.json');
+  } catch (error) {
+    console.warn('[App] Unable to read package.json for metadata; falling back to defaults.', error?.message || error);
+    return {
+      name: 'Universal Framework Service',
+      version: process.env.npm_package_version || '0.0.0'
+    };
+  }
+})();
+
 // Set global constants
 if (global.APIVERSION === undefined) {
-  global.APIVERSION = process.env.npm_package_version || require('./package.json').version;
+  global.APIVERSION = process.env.npm_package_version || packageMetadata.version || '0.0.0';
 }
 global.STABLEVERSION = '0.0.0';
 global.NEWVERSIONDOWNLOAD = 'https://github.com/daemonforge/DayZ-UniveralApi/releases';
@@ -199,13 +212,15 @@ function startWebServer() {
   const webapp = createExpressApp();
   const port = process.env.PORT || global.config.Port || 8443;
   const ip = global.config.IP || "0.0.0.0";
+  const packageAgent = `${packageMetadata.name || 'UniversalFrameworkService'}/${global.APIVERSION || packageMetadata.version || '0.0.0'}`;
 
   // Check if Let's Encrypt is enabled
   const letsEncrypt = global.config.LetsEncypt;
   if (letsEncrypt?.Enabled === true && letsEncrypt?.Email) {
     // Let's Encrypt SSL setup
     require("greenlock-express").init({
-      packageRoot: path.resolve('./'),
+      packageRoot: __dirname,
+      packageAgent,
       configDir: `${global.SAVEPATH}/greenlock.d`,
       notify: function(type, object) {
         if (type === 'error') {
