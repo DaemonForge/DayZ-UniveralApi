@@ -390,7 +390,7 @@ class UFramework extends Managed {
 	
 	//Checks to see if the Random Numbers are below half and add's more
 	void CheckAndRenewQRandom(){
-		if (Math.QRandomRemaining()<= 2000){
+		if (Math.QRandomRemaining() <= 2000){
 			GetQRandomNumbers();
 		}
 	}
@@ -480,6 +480,8 @@ class UFramework extends Managed {
 	protected int LastRandomNumberRequestCall = -1;
 	
 	autoptr map<int,UFRestCallBackBase> m_UCallBacks = new map<int,UFRestCallBackBase>;
+	
+	string m_BaseURL = "";
 		
 	/**
 	 * Returns the static RestApi instance. If it does not exist, the method creates a new one and sets its
@@ -742,7 +744,6 @@ class UFramework extends Managed {
 			if (m_IsServer){
 				U().api().Status(this, "CBStatusCheck");
 				CheckAndRenewQRandom();
-				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.CheckAndRenewQRandom, 10 * 60 * 1000, true);
 			}
 		}
 	}
@@ -753,8 +754,13 @@ class UFramework extends Managed {
 		Param2<ApiAuthToken, UFrameworkConfig> data; 
 		if ( !ctx.Read( data ) ) return;
 		m_AuthRetries = 0;
-		m_UFauthToken = data.param1;
-		m_UFrameworkConfig = data.param2;
+		Class.CastTo(m_UFauthToken, data.param1);
+		Class.CastTo(m_UFrameworkConfig, data.param2);
+		if (m_UFrameworkConfig && m_UFrameworkConfig.ServerURL != ""){
+			m_BaseURL = m_UFrameworkConfig.ServerURL;
+		} else {
+			Print("[UF] Received Config and Auth Token but Config or Server URL are Null");
+		}
 		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnTokenReceived);
 	}
 	
@@ -807,6 +813,13 @@ class UFramework extends Managed {
 		}
 		Print("[UF] Failed to find Player Auth for " + guid);
 		return false;
+	}
+	
+	void ClearPlayerAuth(string guid){
+		if (PlayerAuths && PlayerAuths.Contains(guid)){
+			Print("[UF] Clearing cached auth token for " + guid);
+			PlayerAuths.Remove(guid);
+		}
 	}		
 		
 	protected void RPCRequestAuthToken( CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target )
@@ -818,14 +831,20 @@ class UFramework extends Managed {
 			UFConfig();
 			string authtoken = "";
 			if (UFConfig().ServerAuth != "" && UFConfig().ServerAuth != "null" ){
-				if (data.param1 && GetPlayerAuth(identity.GetId(), authtoken)){
-					Print("[UF] RPCRequestAuthToken Sending Cached Token ");
+				// For initial connection (data.param1 == true), always prepare fresh token
+				// This ensures MapLink transfers get new tokens
+				if (data.param1){
+					Print("[UF] RPCRequestAuthToken Initial connection, preparing fresh auth token for " + identity.GetId());
+					PreparePlayerAuth(identity.GetId());
+				} else if (GetPlayerAuth(identity.GetId(), authtoken)){
+					// For subsequent requests, use cached token if available
+					Print("[UF] RPCRequestAuthToken Sending Cached Token for " + identity.GetId());
 					SendAuthToken(identity, authtoken);
 				} else if (FindPlayer(identity.GetId())){
-					Print("[UF] RPCRequestAuthToken  Renewing Auth Token" );
+					Print("[UF] RPCRequestAuthToken Renewing Auth Token for " + identity.GetId());
 					PreparePlayerAuth(identity.GetId());
-				}  else {
-					Print("[UF] RPCRequestAuthToken Requesting client retry." );
+				} else {
+					Print("[UF] RPCRequestAuthToken Requesting client retry for " + identity.GetId());
 					GetRPCManager().SendRPC("UF", "RPCRequestRetry", new Param1<bool>(true), true, identity);
 				}
 			} else if (UFConfig().ServerAuth && UFConfig().ServerAuth != "" && UFConfig().ServerAuth != "null") {
@@ -834,7 +853,7 @@ class UFramework extends Managed {
 		}
 	}
 	
-	protected void SendAuthToken(PlayerIdentity idenitity, string auth){
+	void SendAuthToken(PlayerIdentity idenitity, string auth){
 		if (idenitity && auth != ""){
 			Print("[UF] Sending PlayerAuth Token to " + idenitity.GetId());
 			autoptr UFrameworkConfig cClientConfig = new UFrameworkConfig;
@@ -962,6 +981,9 @@ class UFramework extends Managed {
 			if (data.Error == "noauth"){
 				m_UFOnline = false;
 				Print("[UF] Auth Key is not vaild");
+				if (!m_IsServer){
+					this.RequestAuthToken(false);
+				}
 			}
 			if (data.Error == "noerror" && data.Discord == "Enabled"){
 				m_UDiscordEnabled = true;

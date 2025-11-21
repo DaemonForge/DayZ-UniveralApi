@@ -7,7 +7,7 @@ modded class MissionBaseWorld
 	}
 	
 	void UFrameworkReadyTokenReceived(){
-		//Print("[UF] MissionBaseWorld - UFrameworkReadyTokenReceived");
+		Print("[UF] MissionBaseWorld - UFrameworkReadyTokenReceived");
 		if (!UFIsInitialized()){
 			m_UF_Initialized = true;
 			this.UFrameworkReady();
@@ -15,7 +15,7 @@ modded class MissionBaseWorld
 	}
 	
 	void UFrameworkReady(){
-		//Print("[UF] MissionBaseWorld - UFrameworkReady");
+		Print("[UF] MissionBaseWorld - UFrameworkReady");
 	
 	}
 

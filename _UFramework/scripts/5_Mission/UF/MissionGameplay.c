@@ -8,6 +8,7 @@ modded class MissionGameplay extends MissionBase
     private bool m_HoldActionTriggered = false;
 	
 	override void OnMissionStart(){
+		Print("[UF] MissionGameplay OnMissionStart");
 		super.OnMissionStart();
 		m_UF_Initialized = false;
     	//Token expires in 22 minutes, tokens renew every 10 Minutes ensuring that if the API is down at the time of the renewal token will work till next retry
@@ -22,6 +23,7 @@ modded class MissionGameplay extends MissionBase
 	}
 	
 	override void OnMissionFinish(){
+		Print("[UF] MissionGameplay OnMissionFinish");
 		super.OnMissionFinish();
 		U().Cron().Remove(this,"RequestNewAuthToken");
 		if (m_UFVideoPlayer){
@@ -33,11 +35,13 @@ modded class MissionGameplay extends MissionBase
 	override void UFrameworkReady(){
 		//You requests for after the AuthToken Is received
 		super.UFrameworkReady();
+		Print("[UF] MissionGameplay UFrameworkReady");
 	}
 	
 	
 	void RequestNewAuthToken(){
 		if (!g_Game.IsServer()){
+			Print("[UF] MissionGameplay RequestAuthToken");
 			U().RequestAuthToken(false);
 		}
 	}

@@ -64,6 +64,7 @@ class UCronManager extends Managed {
 	 */
 	void Init(){
 		if (m_isInit) return;
+		
 		m_isInit = true;
 		m_LastRunTime = UUtil.GetUnixInt();
 		m_CronFunctions = new array<autoptr UCronFunction>;
@@ -226,6 +227,7 @@ class UCronManager extends Managed {
 	 * This is typically used as a clean-up mechanism.
 	 */
 	void RemoveNull(){
+		Print("[UF] [Cron] Running RemoveNull");
 		// Check if there are any functions to process.
 		if (m_CronFunctions.Count() < 1) return;
 		// Iterate through the cron functions and remove invalid ones.
