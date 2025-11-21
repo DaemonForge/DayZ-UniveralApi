@@ -32,7 +32,7 @@ class ActionChangePaintAction: ActionSingleUseBase
 		 ItemBase ntarget = ItemBase.Cast( action_data.m_Target.GetObject() );
 		
 		
-        SpraySkinCan_Base Spray = SpraySkinCan_Base.Cast(action_data.m_MainItem);
+        UF_SpraySkinCan_Base Spray = UF_SpraySkinCan_Base.Cast(action_data.m_MainItem);
         if (Spray && ntarget)
 		{
       		int currentT = Spray.GetPaintTendancy();

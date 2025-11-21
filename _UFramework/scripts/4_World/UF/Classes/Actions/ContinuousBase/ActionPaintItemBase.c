@@ -28,7 +28,7 @@ class ActionPaintItemBase: ActionContinuousBase
 
 	override bool ActionCondition( PlayerBase player, ActionTarget target, ItemBase item )
 	{
-		SpraySkinCan_Base Spray = SpraySkinCan_Base.Cast( item  );
+		UF_SpraySkinCan_Base Spray = UF_SpraySkinCan_Base.Cast( item  );
 		ItemBase ntarget = ItemBase.Cast( target.GetObject() );
 		if (ntarget && Spray && ntarget.CanPaint() )
 		{
@@ -48,7 +48,7 @@ class ActionPaintItemBase: ActionContinuousBase
 	{
 		ItemBase ntarget = ItemBase.Cast( action_data.m_Target.GetObject() );
 		PlayerBase player = PlayerBase.Cast(action_data.m_Player);
-		SpraySkinCan_Base Spray = SpraySkinCan_Base.Cast(action_data.m_MainItem);
+		UF_SpraySkinCan_Base Spray = UF_SpraySkinCan_Base.Cast(action_data.m_MainItem);
 		
 		
 		
