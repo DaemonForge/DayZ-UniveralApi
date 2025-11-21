@@ -20,4 +20,8 @@ class UDBQueryResult<Class T> : StatusObject {
 	array<autoptr T> GetResults(){
 		return Results;
 	}
+	
+	int Count(){
+		return Results.Count();
+	}
 }
