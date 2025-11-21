@@ -24,7 +24,7 @@ class UAuthCallBack : UFRestCallBackBase
 	
 	override void OnSuccess(string data, int dataSize) {
 		
-		Print("[UF] [UAuthCallBack] Auth of a Player Success data: " + data);
+		//Print("[UF] [UAuthCallBack] Auth of a Player Success data: " + data);
 		autoptr ApiAuthToken authToken;
 		
 		JsonSerializer js = new JsonSerializer();

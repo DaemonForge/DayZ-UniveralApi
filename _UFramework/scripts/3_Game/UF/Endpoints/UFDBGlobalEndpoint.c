@@ -64,7 +64,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	
 	int Save(string mod, string jsonString) {	
 		int cid = -1;	
-		string endpoint = "/Save/" + mod;
+		string endpoint = "Save/" + mod;
 		if (mod && jsonString){
 			Post(endpoint,jsonString, U().RegisterCall(new USilentCallBack(), cid));
 		} else {
@@ -76,7 +76,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	
 	int Save(string mod, string jsonString, Class cbInstance, string cbFunction) {	
 		int cid = U().CallId();	
-		string endpoint = "/Save/" + mod;		
+		string endpoint = "Save/" + mod;		
 		if (mod && jsonString){
 			Post(endpoint,jsonString, new UDBCallBack(cbInstance, cbFunction, cid, mod));
 		} else {
@@ -87,7 +87,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	}
 	int Save(string mod, string jsonString, UFCallbackBase cb) {	
 		int cid = -1;	
-		string endpoint = "/Save/" + mod;
+		string endpoint = "Save/" + mod;
 
 		if (mod && jsonString && cb){
 			cb.SetOID(mod); //Only sets if not set
@@ -101,7 +101,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	
 	int Load(string mod, Class cbInstance, string cbFunction, string jsonString = "{}") {		
 		int cid = -1;
-		string endpoint = "/Load/" + mod;
+		string endpoint = "Load/" + mod;
 
 		if (mod && jsonString){
 			Post(endpoint,jsonString,U().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, mod), cid));
@@ -114,7 +114,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	
 	int Load(string mod, UFCallbackBase cb, string jsonString = "{}") {		
 		int cid = -1;
-		string endpoint = "/Load/" + mod;
+		string endpoint = "Load/" + mod;
 		if (mod && cb && jsonString){
 			cb.SetOID(mod); //Only sets if not set
 			Post(endpoint,jsonString, U().RegisterCall(new UNestedCallBack(cb), cid));
@@ -131,7 +131,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	
 	int Transaction(string mod, string element, float value) {
 		int cid = -1;
-		string endpoint = "/Transaction/" + mod;
+		string endpoint = "Transaction/" + mod;
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		
@@ -146,7 +146,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	
 	int Transaction(string mod, string element, float value, Class cbInstance, string cbFunction) {
 		int cid = U().CallId();
-		string endpoint = "/Transaction/" + mod;
+		string endpoint = "Transaction/" + mod;
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		
@@ -161,7 +161,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	
 	int Transaction(string mod, string element, float value, UFCallbackBase cb) {
 		int cid = -1;
-		string endpoint = "/Transaction/" + mod;
+		string endpoint = "Transaction/" + mod;
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		
@@ -185,7 +185,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 			DBCBX = new USilentCallBack();
 		}
 		
-		string endpoint = "/Update/" + mod;
+		string endpoint = "Update/" + mod;
 		
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		

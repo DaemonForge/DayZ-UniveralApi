@@ -61,6 +61,8 @@ static UFrameworkConfig UFConfig()
 			m_UFrameworkConfig = new UFrameworkConfig;
 			m_UFrameworkConfig.Load();
 		}
+	} else if (!m_UFrameworkConfig){
+		Print("[UF] [WARN] UFramework Config is null on client");
 	}
 	return m_UFrameworkConfig;
 };

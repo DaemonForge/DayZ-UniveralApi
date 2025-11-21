@@ -2,6 +2,7 @@ FrameWidgetClass rootFrame {
  visible 1
  clipchildren 0
  ignorepointer 1
+ color 1 1 1 0.7059
  position 8 8
  size 286 36
  halign right_ref
@@ -11,6 +12,7 @@ FrameWidgetClass rootFrame {
  vexactsize 1
  {
   ImageWidgetClass avatar {
+   inheritalpha 1
    ignorepointer 1
    size 32 32
    halign right_ref
@@ -36,7 +38,7 @@ FrameWidgetClass rootFrame {
    hexactsize 1
    vexactsize 0
    text "CTRL + L to Link Discord"
-   font "gui/fonts/metron-bolditalic"
+   font "gui/fonts/metron-bolditalic22"
    "exact text" 1
    "size to text h" 1
    "size to text v" 0

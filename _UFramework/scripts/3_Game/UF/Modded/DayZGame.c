@@ -28,10 +28,12 @@ modded class DayZGame extends CGame
 	
 	protected bool m_UpdateDiscordWidgetShouldRetry = true;
 	protected void UpdateDiscordLoggedInWidget(){
+		Print("[UF] [Discord] UpdateDiscordLoggedInWidget");
 		if (m_discordUser && GetDiscordLoggedInWidget()){
 			if (FileExist("$saves:discordme.edds")){
 				GetDiscordLoggedInWidget().ShowAvatar();
 				GetDiscordLoggedInWidget().UpdateData(m_discordUser.GlobalName, "$saves:discordme.edds");
+				m_UpdateDiscordWidgetShouldRetry = false;
 			} else {
 				GetDiscordLoggedInWidget().ShowAvatar();
 				GetDiscordLoggedInWidget().UpdateData(m_discordUser.GlobalName, "_UFramework/images/discord.edds");
