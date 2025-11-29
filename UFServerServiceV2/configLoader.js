@@ -5,6 +5,7 @@ const { makeAuthToken } = require('./utils');
 const Defaultconfig = require('./sample-config.json');
 const ConfigPath = "config.json";
 const ConfigFilePath = path.join(global.SAVEPATH, ConfigPath);
+const HOSTNAME_REGEX = /^(?=.{1,253}$)(?!-)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.(?!-)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
 
 // Get the logger from global
 const logger = global.logger;
@@ -48,8 +49,8 @@ const BASE_DEFAULT_CONFIG = {
   Functions: {},
   LetsEncypt: {
     Enabled: false,
-    Domain: "localhost.localhost",
-    Email: "myemail@email.com",
+    Domain: "",
+    Email: "",
     AltNames: []
   },
   Proxy: {
@@ -74,6 +75,38 @@ function ensureArray(value, fallback = []) {
 
 function ensureObject(value, fallback = {}) {
   return value && typeof value === 'object' && !Array.isArray(value) ? { ...value } : { ...fallback };
+}
+
+function collectValidHostnames(primary, extras = []) {
+  const values = [];
+  const seen = new Set();
+  const pushCandidate = (candidate) => {
+    if (typeof candidate !== 'string') {
+      if (candidate !== undefined && candidate !== null) {
+        logger.warn('Ignoring non-string LetsEncrypt hostname', { value: candidate });
+      }
+      return;
+    }
+    const normalized = candidate.trim().toLowerCase();
+    if (!normalized) {
+      return;
+    }
+    if (!HOSTNAME_REGEX.test(normalized)) {
+      logger.warn('Ignoring invalid LetsEncrypt hostname (fails RFC-1123 check)', { value: candidate });
+      return;
+    }
+    if (!seen.has(normalized)) {
+      seen.add(normalized);
+      values.push(normalized);
+    }
+  };
+
+  pushCandidate(primary);
+  if (Array.isArray(extras)) {
+    extras.forEach(pushCandidate);
+  }
+
+  return values;
 }
 
 function writeConfigFile(data) {
@@ -192,50 +225,55 @@ try {
 
 // Handle LetsEncrypt configuration
 if (config.LetsEncypt.Enabled === true) {
-  const domain = config.LetsEncypt.Domain;
-  
-  // Ensure domain is in AltNames
-  if (!config.LetsEncypt.AltNames.includes(domain)) {
-    config.LetsEncypt.AltNames.push(domain);
-  }
-  
-  const LEconfigjson = {
-    sites: [{
-      subject: domain,
-      altnames: config.LetsEncypt.AltNames
-    }]
-  };
-  
-  try {
-    const path = global.SAVEPATH + "greenlock.d";
-    const configPath = `${path}/config.json`;
-    
-    // Create directory if it doesn't exist
-    if (!existsSync(path)) {
-      mkdirSync(path);
-    }
-    
-    let shouldWrite = true;
-    if (existsSync(configPath)) {
-      const file = JSON.parse(readFileSync(configPath));
-      const currentSite = file.sites[0];
-      const newSite = LEconfigjson.sites[0];
-      
-      // Only write if configuration changed
-      shouldWrite = currentSite.subject !== newSite.subject || 
-                    JSON.stringify(currentSite.altnames) !== JSON.stringify(newSite.altnames);
-    }
-    
-    if (shouldWrite) {
-      writeFileSync(configPath, JSON.stringify(LEconfigjson, undefined, 4));
-    }
-  } catch (e) {
-    logger.error('LetsEncrypt configuration failed', { 
-      error: e.message, 
-      domain: domain
-    });
+  const validHosts = collectValidHostnames(config.LetsEncypt.Domain, config.LetsEncypt.AltNames);
+
+  if (validHosts.length === 0) {
+    logger.error('LetsEncrypt disabled: no valid hostnames provided. Update config.json -> LetsEncypt.Domain/AltNames with publicly reachable domains.');
     config.LetsEncypt.Enabled = false;
-    updateConfig({});
+    updateConfig({ LetsEncypt: config.LetsEncypt });
+  } else {
+    const primaryHost = validHosts[0];
+    const additionalHosts = validHosts.slice(1);
+    config.LetsEncypt.Domain = primaryHost;
+    config.LetsEncypt.AltNames = additionalHosts;
+    logger.info('LetsEncrypt hostnames sanitized', { primary: primaryHost, altNames: additionalHosts });
+
+    try {
+      const greenlockRoot = path.join(global.SAVEPATH, 'greenlock');
+      const configDir = path.join(greenlockRoot, 'greenlock.d');
+      if (!existsSync(greenlockRoot)) {
+        mkdirSync(greenlockRoot, { recursive: true });
+      }
+      if (!existsSync(configDir)) {
+        mkdirSync(configDir, { recursive: true });
+      }
+      const leConfig = {
+        defaults: {
+          store: {
+            module: 'greenlock-store-fs'
+          },
+          challenges: {
+            "http-01": {
+              module: "acme-http-01-standalone"
+            }
+          },
+          renewOffset: "-45d",
+          renewStagger: "3d",
+          accountKeyType: "EC-P256",
+          serverKeyType: "RSA-2048",
+          subscriberEmail: config.LetsEncypt.Email
+        },
+        sites: [{
+          subject: primaryHost,
+          altnames: [primaryHost, ...additionalHosts]
+        }]
+      };
+      writeFileSync(path.join(configDir, 'config.json'), JSON.stringify(leConfig, undefined, 4));
+    } catch (err) {
+      logger.error('Unable to write LetsEncrypt config', { error: err.message });
+    }
+
+    updateConfig({ LetsEncypt: config.LetsEncypt });
   }
 }
 

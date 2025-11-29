@@ -35,7 +35,7 @@ global.config = require('./configLoader');
 // Import dependencies
 const express = require('express');
 const favicon = require('serve-favicon');
-const { existsSync, readFileSync } = require('fs');
+const { existsSync, readFileSync, mkdirSync, writeFileSync } = require('fs');
 const https = require('https');
 const { json } = require('body-parser');
 const DefaultCert = require('./defaultkeys.json');
@@ -77,6 +77,46 @@ const AIChatRouter = require('./controllers/aiChat');
 const AIAssistantRouter = require('./controllers/aiAssistant');
 const AudioRouter = require('./controllers/tts');
 const ImageRouter = require('./controllers/images');
+
+const HOSTNAME_REGEX = /^(?=.{1,253}$)(?!-)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.(?!-)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
+
+function ensureDirectory(dirPath) {
+  if (!existsSync(dirPath)) {
+    mkdirSync(dirPath, { recursive: true });
+  }
+  return dirPath;
+}
+
+function collectValidHostnames(primary, extras = []) {
+  const normalized = [];
+  const seen = new Set();
+  const push = (candidate) => {
+    if (typeof candidate !== 'string') {
+      return;
+    }
+    const value = candidate.trim().toLowerCase();
+    if (!value) {
+      return;
+    }
+    if (!HOSTNAME_REGEX.test(value)) {
+      logger.warn('[WebServer] Ignoring invalid LetsEncrypt hostname', { host: candidate, reason: 'Fails RFC-1123 validation' });
+      return;
+    }
+    if (!seen.has(value)) {
+      seen.add(value);
+      normalized.push(value);
+    } else {
+      logger.debug('[WebServer] Ignoring duplicate LetsEncrypt hostname', { host: candidate });
+    }
+  };
+
+  push(primary);
+  if (Array.isArray(extras)) {
+    extras.forEach(push);
+  }
+
+  return normalized;
+}
 
 /**
  * Configure rate limiting for API protection
@@ -216,15 +256,62 @@ function startWebServer() {
 
   // Check if Let's Encrypt is enabled
   const letsEncrypt = global.config.LetsEncypt;
-  if (letsEncrypt?.Enabled === true && letsEncrypt?.Email) {
+  const letsEncryptHosts = collectValidHostnames(letsEncrypt?.Domain, letsEncrypt?.AltNames);
+  const resolvedDataRoot = ensureDirectory(path.resolve(global.SAVEPATH || process.cwd()));
+  const greenlockRootDir = ensureDirectory(path.join(resolvedDataRoot, 'greenlock'));
+  const greenlockDir = ensureDirectory(path.join(greenlockRootDir, 'greenlock.d'));
+  const greenlockPackageJsonPath = path.join(greenlockRootDir, 'package.json');
+  if (!existsSync(greenlockPackageJsonPath)) {
+    try {
+      const minimalPackageJson = {
+        name: packageMetadata.name || 'universal-framework-service',
+        version: packageMetadata.version || '0.0.0'
+      };
+      writeFileSync(greenlockPackageJsonPath, JSON.stringify(minimalPackageJson, null, 2));
+      logger.info('[WebServer] Created Greenlock package metadata', { path: greenlockPackageJsonPath });
+    } catch (err) {
+      logger.warn('[WebServer] Failed to write Greenlock package metadata', { error: err.message });
+    }
+  } else {
+    logger.debug('[WebServer] Greenlock package metadata exists', { path: greenlockPackageJsonPath });
+  }
+  if (letsEncrypt?.Enabled === true && letsEncrypt?.Email && letsEncryptHosts.length > 0) {
     // Let's Encrypt SSL setup
+    logger.info('[WebServer] Initializing LetsEncrypt', {
+      packageRoot: greenlockRootDir,
+      configDir: greenlockDir,
+      email: letsEncrypt.Email,
+      domains: letsEncryptHosts
+    });
+
+    // Check for existing accounts to warn about rate limits if missing
+    const accountsDir = path.join(greenlockRootDir, 'accounts');
+    if (!existsSync(accountsDir)) {
+      logger.warn('[WebServer] Greenlock accounts directory missing. A new Let\'s Encrypt account will be registered. Warning: Frequent deletions may hit rate limits.');
+    }
+
     require("greenlock-express").init({
-      packageRoot: __dirname,
+      packageRoot: greenlockRootDir,
       packageAgent,
-      configDir: `${global.SAVEPATH}/greenlock.d`,
+      configDir: greenlockDir,
       notify: function(type, object) {
+        const details = typeof object === 'object' && object !== null ? object : { message: object };
+        
+        // Suppress expected errors caused by local health checks (Electron Tray) polling 'localhost'
+        if (type === 'error' && details.code === 'INVALID_HOSTNAME' && (details.message || '').includes("'localhost'")) {
+          logger.debug("[WebServer] Suppressed Greenlock error for localhost (local health check)", { code: details.code });
+          return;
+        }
+
         if (type === 'error') {
-          logger.warn("[WebServer] Let's Encrypt error", { error: JSON.stringify(object) });
+          logger.warn("[WebServer] Let's Encrypt error", {
+            code: details.code,
+            context: details.context,
+            message: details.message || details.detail || details.reason,
+            raw: details
+          });
+        } else {
+          logger.info(`[WebServer] Let's Encrypt event: ${type}`, { details });
         }
       },
       maintainerEmail: letsEncrypt.Email,
@@ -267,13 +354,13 @@ function startWebServer() {
       });
     }
   } else {
-    // Standard SSL setup
     const certificates = loadCertificates();
+    logger.info('[WebServer] Starting HTTPS server with bundled certificates', { port, address: ip });
     const server = https.createServer(certificates, webapp)
       .listen(port, function() {
         logger.info("[App] API Webservice started", { port, address: ip });
       });
-      
+    
     server.on('error', function(e) {
       logger.error("[WebServer] Server error", { error: e.message, stack: e.stack });
     });
@@ -285,6 +372,13 @@ function startWebServer() {
  * @param {boolean} isElectron - Whether the app is running in Electron environment
  */
 function Start(isElectron = false) {
+  logger.info(`[App] Starting Universal Framework Service v${global.APIVERSION}`, { 
+    savePath: global.SAVEPATH, 
+    isElectron,
+    nodeVersion: process.version,
+    platform: process.platform
+  });
+
   // Setup clustering if enabled and not in Electron
   if (cluster.isMaster && totalCPUs > 1 && !isElectron) {
     logger.info("[App] Starting server in cluster mode", { workers: totalCPUs });
