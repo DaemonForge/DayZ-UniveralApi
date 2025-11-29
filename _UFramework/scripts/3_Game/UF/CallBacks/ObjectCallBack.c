@@ -35,10 +35,8 @@ class UFCallback<Class T> extends UFCallbackBase {
 		Print("[UF] UFCallback<" + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != "") {
 			Param4<int, int, string, T> p = new Param4<int, int, string, T>(cid, errorCode, OID, null);
-			Print(T);
 			Print(GetInstance());
 			Print(this);
-			Print(p);
 			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, null, p);
 		}
 	}
