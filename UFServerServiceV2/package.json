@@ -6,7 +6,9 @@
     "start": "electron .",
     "dev": "nodemon app.js",
     "build": "electron-builder",
-    "pkg": "pkg . --compress GZip && node build.js",
+    "pkg": "pkg . --compress GZip --target node18-win-x64 --output ../Build/Service/ufserverservice-win.exe && node build.js",
+    "pkg:linux": "pkg . --compress GZip --target node18-linux-x64 --output ../Build/Service/ufserverservice-linux && node -e \"require('fs').copyFileSync('install-linux.sh', '../Build/Service/install.sh')\"",
+    "pkg:all": "npm run pkg && npm run pkg:linux",
     "tunnel": "cloudflared tunnel --config .cloudflared/config.yaml run ufdev"
   },
   "author": "",
@@ -45,9 +47,26 @@
     "electron-builder": "^25.1.8",
     "nodemon": "^3.1.9"
   },
+  "bin": "bin.js",
   "pkg": {
+    "scripts": [
+      "controllers/**/*.js",
+      "models/**/*.js",
+      "auth/**/*.js",
+      "discord/**/*.js"
+    ],
     "assets": [
-      "node_modules/ffmpeg-static/ffmpeg.exe"
+      "package.json",
+      "node_modules/ffmpeg-static/ffmpeg.exe",
+      "node_modules/ffmpeg-static/ffmpeg",
+      "public/**/*",
+      "templates/**/*",
+      "sample-config.json",
+      "defaultkeys.json"
+    ],
+    "targets": [
+      "node18-win-x64",
+      "node18-linux-x64"
     ]
   },
   "build": {
