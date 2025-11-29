@@ -32,7 +32,7 @@ modded class UEntityStore extends UFObject_Base {
 		}
 		PlayerBase HoldingPlayer;
 		if (Class.CastTo(HoldingPlayer, item.GetHierarchyRootPlayer())){
-			m_IsInHands = (HoldingPlayer.GetEntityInHands() == item);
+			m_IsInHands = (HoldingPlayer.GetHumanInventory().GetEntityInHands() == item);
 			m_QuickBarSlot = HoldingPlayer.GetQuickBarEntityIndex(item);
 		}
 		m_IsMagazine = item.IsMagazine() && !item.IsAmmoPile();
