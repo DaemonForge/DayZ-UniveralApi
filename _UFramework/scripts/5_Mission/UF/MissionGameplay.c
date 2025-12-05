@@ -1,6 +1,7 @@
 modded class MissionGameplay extends MissionBase
 {
-	protected bool m_UFFirstRequest = true;	
+	protected bool m_UFFirstRequest = true;
+	
 	// Variables used to track the state and hold time of the hotkey.
     private bool m_DiscordKeyDown = false;
     private float m_DiscordKeyDownTime = 0;
@@ -11,13 +12,21 @@ modded class MissionGameplay extends MissionBase
 		Print("[UF] MissionGameplay OnMissionStart");
 		super.OnMissionStart();
 		m_UF_Initialized = false;
-    	//Token expires in 22 minutes, tokens renew every 10 Minutes ensuring that if the API is down at the time of the renewal token will work till next retry
-		int TokenRefreshRate = 600; 
+		
+		// Request initial token
 		U().RequestAuthToken(m_UFFirstRequest);
 		m_UFFirstRequest = false;
-		U().Cron().runEndless(TokenRefreshRate, this, "RequestNewAuthToken", NULL);
+		
+		// Token expires in 22 minutes, renew every 10 minutes
+		// Simple cron job - the bug was in CronManager not initializing m_endCall properly
+		U().Cron().runEndless(600, this, "RequestNewAuthToken", NULL);
+		
+		// Simple startup failsafe: Check in 45 seconds if we have auth. 
+		// If the initial request failed (packet loss/server busy), this catches it early instead of waiting 10 mins.
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.StartupAuthCheck, 45000, false);
+		
 		#ifndef NO_GUI
-		m_UFVideoPlayer = new UFVideoPlayer(); //extra save to ensure that you can't play audio on server, this is due to the way that video works as if you try it will crash server
+		m_UFVideoPlayer = new UFVideoPlayer();
         m_DiscordLoggedInWidget = new DiscordLoggedInWidget();
 		#endif
 	}
@@ -25,7 +34,7 @@ modded class MissionGameplay extends MissionBase
 	override void OnMissionFinish(){
 		Print("[UF] MissionGameplay OnMissionFinish");
 		super.OnMissionFinish();
-		U().Cron().Remove(this,"RequestNewAuthToken");
+		U().Cron().Remove(this, "RequestNewAuthToken");
 		if (m_UFVideoPlayer){
 			delete m_UFVideoPlayer;
 		}
@@ -33,16 +42,21 @@ modded class MissionGameplay extends MissionBase
 
 	
 	override void UFrameworkReady(){
-		//You requests for after the AuthToken Is received
 		super.UFrameworkReady();
 		Print("[UF] MissionGameplay UFrameworkReady");
 	}
 	
-	
 	void RequestNewAuthToken(){
 		if (!g_Game.IsServer()){
-			Print("[UF] MissionGameplay RequestAuthToken");
+			Print("[UF] MissionGameplay RequestNewAuthToken");
 			U().RequestAuthToken(false);
+		}
+	}
+	
+	void StartupAuthCheck(){
+		if (!g_Game.IsServer() && !U().HasValidAuth()){
+			Print("[UF] StartupAuthCheck - No auth received after 45s, retrying...");
+			U().RequestAuthToken(true);
 		}
 	}
     

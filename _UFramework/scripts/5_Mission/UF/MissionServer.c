@@ -1,5 +1,10 @@
 modded class MissionServer extends MissionBase
 {
+	// Track players waiting for auth delivery (for delayed retry)
+	protected autoptr map<string, int> m_AuthRetryCount = new map<string, int>;
+	protected const int MAX_AUTH_RETRIES = 3;
+	protected const int AUTH_RETRY_DELAY_MS = 2000;
+	
 	void MissionServer()
 	{
 		U();
@@ -9,9 +14,12 @@ modded class MissionServer extends MissionBase
 	override void OnClientPrepareEvent(PlayerIdentity identity, out bool useDB, out vector pos, out float yaw, out int preloadTimeout)
 	{
 		if (identity){
-			//Print("[UF] On Prepare - GUID: " + identity.GetId() );
-			// Force fresh token generation on every connection attempt
-			U().PreparePlayerAuth(identity.GetId());
+			string guid = identity.GetId();
+			Print("[UF] OnClientPrepareEvent - Preparing auth for: " + guid);
+			// Reset retry counter for new connection
+			m_AuthRetryCount.Set(guid, 0);
+			// Request fresh token - PreparePlayerAuth now tracks pending requests internally
+			U().PreparePlayerAuth(guid);
 		}
 		super.OnClientPrepareEvent(identity, useDB, pos, yaw, preloadTimeout);
 	}
@@ -20,18 +28,47 @@ modded class MissionServer extends MissionBase
 	{
 		super.InvokeOnConnect(player, identity);
 		
-		// Backup: Ensure player has auth token after full connection
-		// This catches cases where OnClientPrepareEvent timing wasn't sufficient
+		// Schedule a delayed check to ensure auth was delivered
+		// This acts as a failsafe if the initial send during REST callback failed
 		if (identity){
-			string authtoken = "";
-			if (U().GetPlayerAuth(identity.GetId(), authtoken)){
-				// Player auth exists in cache, send it again to ensure delivery
-				U().SendAuthToken(identity, authtoken);
-			} else {
-				// No auth in cache, prepare new one (shouldn't happen but safety check)
-				Print("[UF] Warning: No auth token found for " + identity.GetId() + " in InvokeOnConnect, preparing new one");
-				U().PreparePlayerAuth(identity.GetId());
-			}
+			string guid = identity.GetId();
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.EnsureAuthDelivered, AUTH_RETRY_DELAY_MS, false, guid);
+		}
+	}
+	
+	// Failsafe: Check if auth was delivered, retry if needed
+	protected void EnsureAuthDelivered(string guid){
+		// Get current retry count
+		int retryCount = 0;
+		if (m_AuthRetryCount.Contains(guid)){
+			retryCount = m_AuthRetryCount.Get(guid);
+		}
+		
+		// Find the player by GUID
+		DayZPlayer player = U().FindPlayer(guid);
+		if (!player || !player.GetIdentity()){
+			Print("[UF] EnsureAuthDelivered - Player " + guid + " no longer connected, skipping");
+			m_AuthRetryCount.Remove(guid);
+			return;
+		}
+		
+		string authtoken = "";
+		if (U().GetPlayerAuth(guid, authtoken)){
+			// Auth is cached, send it to player
+			Print("[UF] EnsureAuthDelivered - Sending auth token to " + guid + " (retry #" + retryCount + ")");
+			U().SendAuthToken(player.GetIdentity(), authtoken);
+			m_AuthRetryCount.Remove(guid);
+		} else if (retryCount < MAX_AUTH_RETRIES){
+			// Auth not ready yet, schedule another check
+			retryCount++;
+			m_AuthRetryCount.Set(guid, retryCount);
+			Print("[UF] EnsureAuthDelivered - Auth not ready for " + guid + ", scheduling retry #" + retryCount);
+			// Also try to request auth again in case the first request failed
+			U().PreparePlayerAuth(guid);
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.EnsureAuthDelivered, AUTH_RETRY_DELAY_MS * retryCount, false, guid);
+		} else {
+			Print("[UF] EnsureAuthDelivered - Max retries reached for " + guid + ", giving up");
+			m_AuthRetryCount.Remove(guid);
 		}
 	}
 	
@@ -45,11 +82,12 @@ modded class MissionServer extends MissionBase
 			string guid = player.GetIdentity().GetId();
 			Print("[UF] Player disconnected: " + guid + ", clearing cached auth token");
 			U().ClearPlayerAuth(guid);
+			m_AuthRetryCount.Remove(guid);
 		}
 	}
 	
 	override void UFrameworkReady(){
-		//You requests for after the AuthToken Is received for server side code
+		//Your requests for after the AuthToken Is received for server side code
 		super.UFrameworkReady();
 	}
 }

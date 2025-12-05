@@ -22,6 +22,16 @@ class ApiAuthToken extends Managed{
 		return Expiry < UUtil.GetUTCUnixInt();
 	}
 	
+	// Check if token will expire within the given buffer seconds
+	bool IsExpiringSoon(int bufferSeconds = 120){
+		return (Expiry - bufferSeconds) < UUtil.GetUTCUnixInt();
+	}
+	
+	// Get seconds until expiry (negative if expired)
+	int GetSecondsUntilExpiry(){
+		return Expiry - UUtil.GetUTCUnixInt();
+	}
+	
 	void DoDebug(){
 		Print("ApiAuthToken Debug GUID: " + GUID + " Expiry: " + Expiry + " Current UTC Time:" + UUtil.GetUTCUnixInt() + " IsExpired: " + IsExpired());
 	}

@@ -305,7 +305,7 @@ class UCronFunction extends Managed {
 	protected Param m_params;
 	protected int m_freq;
 	protected int m_nextCall;
-	protected int m_endCall;
+	protected int m_endCall = -1;  // -1 means no end time (run forever)
 	protected int m_maxCount = -1;
 	protected int m_curCount = 0;
 	
@@ -384,8 +384,8 @@ class UCronFunction extends Managed {
 		if (m_freq <= 0) return true;
 		// If a maximum count is defined and reached, mark for deletion.
 		if (m_maxCount > 0 && m_curCount >= m_maxCount) return true;
-		// If the current time exceeds the specified end time, mark for deletion.
-		if (curTime >= m_endCall) return true;
+		// If an end time is set (> 0) and current time exceeds it, mark for deletion.
+		if (m_endCall > 0 && curTime >= m_endCall) return true;
 		// Schedule the next call based on the frequency.
 		m_nextCall = curTime + m_freq;
 		return false;

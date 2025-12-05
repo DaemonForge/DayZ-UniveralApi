@@ -143,14 +143,14 @@ class UFramework extends Managed {
 	}
 
 	UFMsgEndpoint Msg(){
-		if (m_UFMsgEndpoint){
+		if (!m_UFMsgEndpoint){
 			m_UFMsgEndpoint = new UFMsgEndpoint;
 		}
 		return m_UFMsgEndpoint;
 	}
 	
 	UFAIChatEndpoint AI(){
-		if (m_UFAIChatEndpoint){
+		if (!m_UFAIChatEndpoint){
 			m_UFAIChatEndpoint = new UFAIChatEndpoint;
 		}
 		return m_UFAIChatEndpoint;
@@ -374,6 +374,11 @@ class UFramework extends Managed {
 	bool IsDiscordEnabled(){
 		return m_UDiscordEnabled;
 	}
+
+	//Returns true if the OpenAI service is reported online
+	bool IsOpenAIEnabled(){
+		return m_UOpenAIEnabled;
+	}
 	
 	//Returns True if the status check has come back and everything is okay
 	bool IsOnline(){
@@ -476,6 +481,9 @@ class UFramework extends Managed {
 	protected autoptr UApiEndpoint m_UApiEndpoint;
 	
 	protected autoptr TIntSet m_CanceledCalls = new TIntSet;
+	
+	// Track pending auth requests to prevent duplicate requests
+	protected autoptr set<string> m_PendingAuthRequests = new set<string>;
 	
 	protected int LastRandomNumberRequestCall = -1;
 	
@@ -709,7 +717,14 @@ class UFramework extends Managed {
 	}
 	
 	bool HasValidAuth(){
+		if (!m_UFauthToken) return false;
 		return (!m_UFauthToken.IsExpired() && GetAuthToken() != "null" && GetAuthToken() != "error" && GetAuthToken() != "ERROR" && GetAuthToken() != "" );
+	}
+	
+	// Check if token will expire within the given buffer seconds
+	bool IsTokenExpiringSoon(int bufferSeconds = 120){
+		if (!m_UFauthToken || g_Game.IsServer()) return false;
+		return m_UFauthToken.IsExpiringSoon(bufferSeconds);
 	}
 	
 	
@@ -748,6 +763,8 @@ class UFramework extends Managed {
 		}
 	}
 	
+	protected bool m_InitialTokenReceived = false;
+	
 	protected void RPCUFrameworkConfig( CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target )
 	{
 		Print("[UF] Received UF Config");
@@ -765,12 +782,19 @@ class UFramework extends Managed {
 	}
 	
 	protected void OnTokenReceived(){
-		Print("[UF] [UAPI] Token received from server, initialize services");
-		U().api().Status(this, "CBStatusCheck");
-		U().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
-		g_Game.GameScript.CallFunction(g_Game.GetMission(), "UFrameworkReadyTokenReceived", NULL, NULL);
+		// Always check and renew random numbers to prevent starvation during long sessions
 		CheckAndRenewQRandom();
-		Print("[UF] OnTokenReceived Proccessed");
+		
+		// Only run full initialization on first token
+		if (!m_InitialTokenReceived){
+			m_InitialTokenReceived = true;
+			Print("[UF] [UAPI] Initial token received, initializing services");
+			U().api().Status(this, "CBStatusCheck");
+			U().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
+			g_Game.GameScript.CallFunction(g_Game.GetMission(), "UFrameworkReadyTokenReceived", NULL, NULL);
+		} else {
+			Print("[UF] [UAPI] Token renewed successfully");
+		}
 	}
 	
 	
@@ -784,24 +808,50 @@ class UFramework extends Managed {
 	
 	void RequestAuthToken(bool first = false){
 		if (!m_IsServer){
-			if (m_LastRequestAuthRetry < (UUtil.GetUTCUnixInt() - 60)){ //Ratelimit to 1 per 60 Seconds if api is down for extended periods of time this could cause infient loops etc.
-				m_LastRequestAuthRetry = UUtil.GetUTCUnixInt();
-				GetRPCManager().SendRPC("UF", "RPCRequestAuthToken", new Param1<bool>(first), true);
+			int currentTime = UUtil.GetUTCUnixInt();
+			// If this is a forced/initial request, bypass the rate limit to avoid blocking retries
+			if (first){
+				m_LastRequestAuthRetry = currentTime;
+				GetRPCManager().SendRPC("UF", "RPCRequestAuthToken", new Param1<bool>(true), true);
+				return;
+			}
+			// Rate limit to 1 per 30 seconds to prevent spam
+			if ((currentTime - m_LastRequestAuthRetry) >= 30){
+				m_LastRequestAuthRetry = currentTime;
+				GetRPCManager().SendRPC("UF", "RPCRequestAuthToken", new Param1<bool>(false), true);
 			}
 		}
 	}
 	
 	void PreparePlayerAuth(string guid){
+		// Check if request is already pending to avoid duplicates
+		if (m_PendingAuthRequests && m_PendingAuthRequests.Find(guid) != -1){
+			Print("[UF] Auth request already pending for " + guid + ", skipping duplicate request");
+			return;
+		}
+		// Mark as pending
+		if (!m_PendingAuthRequests){
+			m_PendingAuthRequests = new set<string>;
+		}
+		m_PendingAuthRequests.Insert(guid);
+		Print("[UF] Preparing auth token for " + guid);
 		this.Rest().GetAuth(guid);
 	}
 	
 	void AddPlayerAuth(string guid, string auth){
 		if (!PlayerAuths){PlayerAuths = new map<string, string>;}
-		//Print("[UF] Adding PlayerAuth for " + guid + " to cache");
-		PlayerAuths.Set(guid,auth); //Set Auth incase a request comes in.
 		
-		DayZPlayer player; //If renewing or if player is availbe send to player
-		if (Class.CastTo(player, FindPlayer(guid)) && player.GetIdentity() ){
+		// Clear pending status
+		if (m_PendingAuthRequests){
+			m_PendingAuthRequests.RemoveItem(guid);
+		}
+		
+		Print("[UF] Adding PlayerAuth for " + guid + " to cache");
+		PlayerAuths.Set(guid, auth); //Set Auth in case a request comes in.
+		
+		// Send token to player if they are connected
+		DayZPlayer player;
+		if (Class.CastTo(player, FindPlayer(guid)) && player.GetIdentity()){
 			SendAuthToken(player.GetIdentity(), auth);
 		}
 	}
@@ -819,6 +869,10 @@ class UFramework extends Managed {
 		if (PlayerAuths && PlayerAuths.Contains(guid)){
 			Print("[UF] Clearing cached auth token for " + guid);
 			PlayerAuths.Remove(guid);
+		}
+		// Also clear any pending request status
+		if (m_PendingAuthRequests){
+			m_PendingAuthRequests.RemoveItem(guid);
 		}
 	}		
 		
