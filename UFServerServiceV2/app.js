@@ -318,9 +318,38 @@ function startWebServer() {
       cluster: false
     }).ready(setupGreenlockServer);
 
+    // Load fallback certificates for localhost/non-configured hostnames
+    const fallbackCerts = loadCertificates();
+    const letsEncryptHostsSet = new Set(letsEncryptHosts.map(h => h.toLowerCase()));
+
     function setupGreenlockServer(glx) {
-      // Setup HTTPS server with Let's Encrypt
-      const httpsServer = glx.httpsServer(null, webapp);
+      // Create SNI callback that uses Let's Encrypt certs for configured domains
+      // and falls back to self-signed cert for localhost/other hostnames
+      const greenlockSNI = glx.httpsServer().listeners('secureConnection')[0];
+      
+      // Setup HTTPS server with SNI callback for fallback support
+      const tlsOptions = {
+        SNICallback: (servername, cb) => {
+          const hostname = (servername || '').toLowerCase();
+          // For localhost or non-configured hostnames, use fallback cert
+          if (hostname === 'localhost' || hostname === '127.0.0.1' || !letsEncryptHostsSet.has(hostname)) {
+            //logger.debug('[WebServer] Using fallback certificate', { hostname });
+            const tls = require('tls');
+            const ctx = tls.createSecureContext({
+              key: fallbackCerts.key,
+              cert: fallbackCerts.cert
+            });
+            cb(null, ctx);
+          } else {
+            // Use greenlock's SNI for configured Let's Encrypt domains
+            glx.tlsOptions.SNICallback(servername, cb);
+          }
+        },
+        key: fallbackCerts.key,
+        cert: fallbackCerts.cert
+      };
+
+      const httpsServer = https.createServer(tlsOptions, webapp);
       
       httpsServer.listen(port, ip, function() {
         logger.info("[WebServer] Server started", { 
@@ -337,7 +366,7 @@ function startWebServer() {
       // Also listen on port 80 for ACME challenges
       const httpServer = glx.httpServer(function(req, res) {
         res.statusCode = 301;
-        res.setHeader("Location", "https://" + req.headers.host + req.path);
+        res.setHeader("Location", "https://" + req.headers.host + req.url);
         res.end("Insecure connections are not allowed. Redirecting...");
       });
 
