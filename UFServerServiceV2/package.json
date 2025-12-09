@@ -1,11 +1,13 @@
 {
   "name": "ufserverservice",
   "version": "2.0.0",
+  "description": "Universal Framework Service - Backend service for DayZ modding with Discord, AI, and database integration",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "nodemon app.js",
-    "build": "electron-builder",
+    "build": "dotenv -e .env.trustedsigning -- electron-builder",
+    "build:unsigned": "electron-builder -c.win.azureSignOptions=null",
     "pkg": "pkg . --compress GZip --target node18-win-x64 --output ../Build/Service/ufserverservice-win.exe && node build.js",
     "pkg:linux": "pkg . --compress GZip --target node18-linux-x64 --output ../Build/Service/ufserverservice-linux && node -e \"require('fs').copyFileSync('install-linux.sh', '../Build/Service/install.sh')\"",
     "pkg:all": "npm run pkg && npm run pkg:linux",
@@ -43,8 +45,9 @@
   },
   "devDependencies": {
     "@yao-pkg/pkg": "^6.3.2",
+    "dotenv-cli": "^11.0.0",
     "electron": "^35.0.0",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.0.12",
     "nodemon": "^3.1.9"
   },
   "bin": "bin.js",
@@ -71,7 +74,8 @@
   },
   "build": {
     "appId": "com.daemonforge.ufserverservice",
-    "productName": "Universal Framework Service",
+    "productName": "UniversalFrameworkService",
+    "icon": "public/icon256X256.png",
     "directories": {
       "output": "../Build/UFService"
     },
@@ -80,7 +84,13 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "public/universalFrameworklogo.ico"
+      "icon": "public/icon.ico",
+      "azureSignOptions": {
+        "publisherName": "Kevin Hoddinott",
+        "endpoint": "https://eus.codesigning.azure.net/",
+        "certificateProfileName": "DaemonForge",
+        "codeSigningAccountName": "DaemonForge"
+      }
     },
     "extraFiles": [
       {
@@ -107,13 +117,15 @@
       "installerIcon": "public/icon.ico",
       "uninstallerIcon": "public/icon.ico",
       "installerHeaderIcon": "public/icon.ico",
+      "installerSidebar": "public/installerSidebar.bmp",
+      "uninstallerSidebar": "public/installerSidebar.bmp",
       "removeDefaultUninstallWelcomePage": true,
-      "include": "installer.nsi"
+      "include": "installer.nsi",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     }
   },
   "bugs": {
     "url": "https://github.com/daemonforge/DayZ-UniveralApi/issues"
   },
-  "homepage": "https://github.com/daemonforge/DayZ-UniveralApi#readme",
-  "description": ""
+  "homepage": "https://github.com/daemonforge/DayZ-UniveralApi#readme"
 }

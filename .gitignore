@@ -17,3 +17,4 @@ DesktopManager/.greenlockrc
 **/.greenlockrc
 **/greenlock.d/
 **/greenlock/
+.env.trustedsigning
