@@ -231,12 +231,25 @@ async function InstallIndexes() {
     const oresult = await ocollection.createIndex({ ObjectId: 1, Mod: 1 });
     let gcollection = db.collection("Globals");
     const gresult = await gcollection.createIndex({ Mod: 1 });
+    
+    // Messages indexes - compound index for efficient queue queries
     let mcollection = db.collection("Messages");
     const mresult = await mcollection.createIndex({ Mod: 1, Queue: 1, createdAt: 1 });
+    
+    // PlayerMessagesStatus - unique compound index to prevent duplicates
     let pmscollection = db.collection("PlayerMessagesStatus");
-    const pmsresult = await pmscollection.createIndex({ Mod: 1, Queue: 1, playerGuid: 1 });
+    const pmsresult = await pmscollection.createIndex(
+      { Mod: 1, Queue: 1, playerGuid: 1 }, 
+      { unique: true }
+    );
+    
+    // MessagesMeta - unique compound index for queue metadata
     let mmcollection = db.collection("MessagesMeta");
-    const mmsresult = await mmcollection.createIndex({ Mod: 1, Queue: 1 });
+    const mmsresult = await mmcollection.createIndex(
+      { Mod: 1, Queue: 1 }, 
+      { unique: true }
+    );
+    
     global.logger.info("Successfully Created Indexes");
     returnvalue = true;
   } catch (e) {

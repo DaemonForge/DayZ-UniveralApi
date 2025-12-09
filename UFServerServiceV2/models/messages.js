@@ -12,7 +12,7 @@
  *           - allowPlayerWrites: Boolean indicating if players may submit Messages.
  *   - "PlayerMessagesStatus": Stores each player's last-read pointer per Mod/Queue.
  *
- * Uses the application's MongoDB connection style.
+ * Uses the application's MongoDB connection style with connection pooling.
  */
 
 const { MongoClient } = require("mongodb");
@@ -20,23 +20,93 @@ const config = require("../config");
 const { createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'db.messages');
 
+// Connection pool - reuse connections across requests
+let _client = null;
+let _db = null;
+let _connectionPromise = null;
+
 /**
- * Connects to MongoDB and returns the necessary collections.
+ * Gets a shared MongoDB connection with automatic reconnection.
+ * Uses connection pooling to avoid creating new connections for each request.
+ * 
+ * @async
+ * @function getConnection
+ * @returns {Promise<Object>} MongoDB database instance
+ */
+async function getConnection() {
+  if (_db) {
+    // Verify connection is still alive
+    try {
+      await _client.db("admin").command({ ping: 1 });
+      return _db;
+    } catch (e) {
+      logger.warn("MongoDB connection lost, reconnecting...");
+      _client = null;
+      _db = null;
+      _connectionPromise = null;
+    }
+  }
+
+  // Prevent multiple simultaneous connection attempts
+  if (_connectionPromise) {
+    await _connectionPromise;
+    return _db;
+  }
+
+  _connectionPromise = (async () => {
+    try {
+      _client = new MongoClient(config.DBServer, {
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        maxIdleTimeMS: 60000,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000
+      });
+      await _client.connect();
+      _db = _client.db(config.DB);
+      logger.info("MongoDB connection pool established for Messages");
+      
+      // Handle connection errors
+      _client.on('error', (err) => {
+        logger.error("MongoDB connection error", { error: err.message });
+        _client = null;
+        _db = null;
+        _connectionPromise = null;
+      });
+      
+      _client.on('close', () => {
+        logger.warn("MongoDB connection closed");
+        _client = null;
+        _db = null;
+        _connectionPromise = null;
+      });
+      
+      return _db;
+    } catch (err) {
+      _connectionPromise = null;
+      throw err;
+    }
+  })();
+
+  await _connectionPromise;
+  _connectionPromise = null;
+  return _db;
+}
+
+/**
+ * Gets the collections for message operations.
+ * Uses pooled connection instead of creating new connections.
  * 
  * @async
  * @function getCollections
  * @returns {Promise<Object>} An object containing:
- *    - client: The MongoClient instance.
  *    - messages: The "Messages" collection.
  *    - messagesMeta: The "MessagesMeta" collection.
  *    - playerStatus: The "PlayerMessagesStatus" collection.
  */
 async function getCollections() {
-  const client = new MongoClient(config.DBServer);
-  await client.connect();
-  const db = client.db(config.DB);
+  const db = await getConnection();
   return {
-    client,
     messages: db.collection("Messages"),
     messagesMeta: db.collection("MessagesMeta"),
     playerStatus: db.collection("PlayerMessagesStatus")
@@ -60,21 +130,19 @@ const defaultMeta = {
  * @returns {Promise<Object>} The meta document with properties such as resetAt, order, and allowPlayerWrites.
  */
 async function getQueueMeta(Mod, Queue) {
-  const { client, messagesMeta } = await getCollections();
+  const { messagesMeta } = await getCollections();
   try {
     const meta = await messagesMeta.findOne({ Mod, Queue });
     if (meta) {
       meta.resetAt = meta.resetAt ? new Date(meta.resetAt) : new Date(0);
-      logger.info(`getQueueMeta: Retrieved meta for Mod: ${Mod} Queue: ${Queue}`);
+      logger.debug(`getQueueMeta: Retrieved meta for Mod: ${Mod} Queue: ${Queue}`);
       return meta;
     }
-    logger.info(`getQueueMeta: No meta found for Mod: ${Mod} Queue: ${Queue}, returning defaults`);
+    logger.debug(`getQueueMeta: No meta found for Mod: ${Mod} Queue: ${Queue}, returning defaults`);
     return { Mod, Queue, ...defaultMeta };
   } catch (error) {
     logger.error(`getQueueMeta: Error retrieving meta for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
     throw error;
-  } finally {
-    client.close();
   }
 }
 
@@ -89,20 +157,18 @@ async function getQueueMeta(Mod, Queue) {
  * @returns {Promise<Object>} The updated meta document.
  */
 async function updateQueueMeta(Mod, Queue, metaData) {
-  const { client, messagesMeta } = await getCollections();
+  const { messagesMeta } = await getCollections();
   try {
     await messagesMeta.updateOne(
       { Mod, Queue },
       { $set: metaData },
       { upsert: true }
     );
-    logger.info(`updateQueueMeta: Updated meta for Mod: ${Mod} Queue: ${Queue}`, metaData);
+    logger.debug(`updateQueueMeta: Updated meta for Mod: ${Mod} Queue: ${Queue}`, metaData);
     return await getQueueMeta(Mod, Queue);
   } catch (error) {
     logger.error(`updateQueueMeta: Error updating meta for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
     throw error;
-  } finally {
-    client.close();
   }
 }
 
@@ -117,16 +183,14 @@ async function updateQueueMeta(Mod, Queue, metaData) {
  * @returns {Promise<Date>} The last-read timestamp or epoch (new Date(0)) if not found.
  */
 async function getPlayerStatus(Mod, Queue, playerGuid) {
-  const { client, playerStatus } = await getCollections();
+  const { playerStatus } = await getCollections();
   try {
     const status = await playerStatus.findOne({ Mod, Queue, playerGuid });
-    logger.info(`getPlayerStatus: Retrieved status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue}`);
+    logger.debug(`getPlayerStatus: Retrieved status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue}`);
     return status && status.lastRead ? new Date(status.lastRead) : new Date(0);
   } catch (error) {
     logger.error(`getPlayerStatus: Error retrieving status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
     throw error;
-  } finally {
-    client.close();
   }
 }
 
@@ -142,19 +206,17 @@ async function getPlayerStatus(Mod, Queue, playerGuid) {
  * @returns {Promise<void>}
  */
 async function updatePlayerStatus(Mod, Queue, playerGuid, lastRead) {
-  const { client, playerStatus } = await getCollections();
+  const { playerStatus } = await getCollections();
   try {
     await playerStatus.updateOne(
       { Mod, Queue, playerGuid },
       { $set: { lastRead } },
       { upsert: true }
     );
-    logger.info(`updatePlayerStatus: Updated status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue} to ${lastRead}`);
+    logger.debug(`updatePlayerStatus: Updated status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue} to ${lastRead}`);
   } catch (error) {
     logger.error(`updatePlayerStatus: Error updating status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
     throw error;
-  } finally {
-    client.close();
   }
 }
 
@@ -170,7 +232,7 @@ async function updatePlayerStatus(Mod, Queue, playerGuid, lastRead) {
  * @returns {Promise<ObjectId>} The inserted Message's ID.
  */
 async function insertMessage(Mod, Queue, Actor, Message) {
-  const { client, messages } = await getCollections();
+  const { messages } = await getCollections();
   try {
     const doc = {
       Mod,
@@ -180,13 +242,11 @@ async function insertMessage(Mod, Queue, Actor, Message) {
       createdAt: new Date()
     };
     const result = await messages.insertOne(doc);
-    logger.info(`insertMessage: Inserted message for Mod: ${Mod} Queue: ${Queue} by Actor: ${Actor}`, { insertedId: result.insertedId });
+    logger.debug(`insertMessage: Inserted message for Mod: ${Mod} Queue: ${Queue} by Actor: ${Actor}`, { insertedId: result.insertedId });
     return result.insertedId;
   } catch (error) {
     logger.error(`insertMessage: Error inserting message for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
     throw error;
-  } finally {
-    client.close();
   }
 }
 
@@ -203,7 +263,7 @@ async function insertMessage(Mod, Queue, Actor, Message) {
  * @returns {Promise<Array>} An array of Message objects.
  */
 async function readMessages(Mod, Queue, effectiveTime, sortOrder, limit) {
-  const { client, messages } = await getCollections();
+  const { messages } = await getCollections();
   try {
     const query = {
       Mod,
@@ -211,17 +271,84 @@ async function readMessages(Mod, Queue, effectiveTime, sortOrder, limit) {
       createdAt: { $gt: effectiveTime }
     };
     let cursor = messages.find(query).sort({ createdAt: sortOrder });
-    if (limit !== -1) {
-      cursor = cursor.limit(limit);
-    }
+    // Apply a reasonable maximum limit to prevent memory issues
+    const effectiveLimit = limit === -1 ? 1000 : Math.min(limit, 1000);
+    cursor = cursor.limit(effectiveLimit);
     const msgs = await cursor.toArray();
-    logger.info(`readMessages: Retrieved ${msgs.length} messages for Mod: ${Mod} Queue: ${Queue}`);
+    logger.debug(`readMessages: Retrieved ${msgs.length} messages for Mod: ${Mod} Queue: ${Queue}`);
     return msgs;
   } catch (error) {
     logger.error(`readMessages: Error reading messages for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
     throw error;
-  } finally {
-    client.close();
+  }
+}
+
+/**
+ * Reads messages and atomically updates the player's pointer in a single operation.
+ * This prevents race conditions where multiple reads could return the same messages.
+ * 
+ * @async
+ * @function readMessagesAndUpdatePointer
+ * @param {string} Mod - The Mod identifier.
+ * @param {string} Queue - The Queue identifier.
+ * @param {string} playerGuid - The player's GUID (or "Server" for server reads).
+ * @param {Date} resetAt - The queue's reset timestamp.
+ * @param {number} sortOrder - 1 for ascending (FIFO) or -1 for descending (LIFO).
+ * @param {number} limit - Maximum number of Messages to return (-1 for no limit).
+ * @returns {Promise<Object>} An object containing { messages: Array, newPointer: Date }
+ */
+async function readMessagesAndUpdatePointer(Mod, Queue, playerGuid, resetAt, sortOrder, limit) {
+  const { messages, playerStatus } = await getCollections();
+  
+  try {
+    // Get the current player status
+    const status = await playerStatus.findOne({ Mod, Queue, playerGuid });
+    const lastRead = status && status.lastRead ? new Date(status.lastRead) : new Date(0);
+    
+    // Use the later of resetAt or lastRead as the effective time
+    const effectiveTime = resetAt > lastRead ? resetAt : lastRead;
+    
+    // Query for messages
+    const query = {
+      Mod,
+      Queue,
+      createdAt: { $gt: effectiveTime }
+    };
+    
+    let cursor = messages.find(query).sort({ createdAt: sortOrder });
+    const effectiveLimit = limit === -1 ? 1000 : Math.min(limit, 1000);
+    cursor = cursor.limit(effectiveLimit);
+    const msgs = await cursor.toArray();
+    
+    if (msgs.length === 0) {
+      return { messages: [], newPointer: null };
+    }
+    
+    // Determine the new pointer based on the NEWEST message timestamp
+    // For FIFO (sortOrder=1), messages are oldest-first, so newest is at the end
+    // For LIFO (sortOrder=-1), messages are newest-first, so newest is at the beginning
+    let newestMessageTime;
+    if (sortOrder === 1) {
+      // FIFO: last message in array is the newest
+      newestMessageTime = msgs[msgs.length - 1].createdAt;
+    } else {
+      // LIFO: first message in array is the newest
+      newestMessageTime = msgs[0].createdAt;
+    }
+    
+    // Update the player's pointer to the newest message time
+    await playerStatus.updateOne(
+      { Mod, Queue, playerGuid },
+      { $set: { lastRead: newestMessageTime } },
+      { upsert: true }
+    );
+    
+    logger.debug(`readMessagesAndUpdatePointer: Read ${msgs.length} messages and updated pointer to ${newestMessageTime} for ${playerGuid}`);
+    
+    return { messages: msgs, newPointer: newestMessageTime };
+  } catch (error) {
+    logger.error(`readMessagesAndUpdatePointer: Error for Mod: ${Mod} Queue: ${Queue} player: ${playerGuid}: ${error.message}`, { error });
+    throw error;
   }
 }
 
@@ -238,10 +365,62 @@ async function resetQueue(Mod, Queue) {
   const now = new Date();
   try {
     await updateQueueMeta(Mod, Queue, { resetAt: now });
-    logger.info(`resetQueue: Reset queue for Mod: ${Mod} Queue: ${Queue} at ${now}`);
+    logger.debug(`resetQueue: Reset queue for Mod: ${Mod} Queue: ${Queue} at ${now}`);
     return now;
   } catch (error) {
     logger.error(`resetQueue: Error resetting queue for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
+    throw error;
+  }
+}
+
+/**
+ * Deletes old messages from a queue to prevent unbounded growth.
+ * 
+ * @async
+ * @function purgeOldMessages
+ * @param {string} Mod - The Mod identifier.
+ * @param {string} Queue - The Queue identifier.
+ * @param {Date} olderThan - Delete messages older than this date.
+ * @returns {Promise<number>} The number of messages deleted.
+ */
+async function purgeOldMessages(Mod, Queue, olderThan) {
+  const { messages } = await getCollections();
+  try {
+    const result = await messages.deleteMany({
+      Mod,
+      Queue,
+      createdAt: { $lt: olderThan }
+    });
+    logger.info(`purgeOldMessages: Deleted ${result.deletedCount} messages for Mod: ${Mod} Queue: ${Queue}`);
+    return result.deletedCount;
+  } catch (error) {
+    logger.error(`purgeOldMessages: Error purging messages for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
+    throw error;
+  }
+}
+
+/**
+ * Gets message count for a queue (useful for monitoring).
+ * 
+ * @async
+ * @function getQueueStats
+ * @param {string} Mod - The Mod identifier.
+ * @param {string} Queue - The Queue identifier.
+ * @returns {Promise<Object>} Queue statistics.
+ */
+async function getQueueStats(Mod, Queue) {
+  const { messages } = await getCollections();
+  try {
+    const count = await messages.countDocuments({ Mod, Queue });
+    const oldest = await messages.findOne({ Mod, Queue }, { sort: { createdAt: 1 } });
+    const newest = await messages.findOne({ Mod, Queue }, { sort: { createdAt: -1 } });
+    return {
+      count,
+      oldestMessage: oldest ? oldest.createdAt : null,
+      newestMessage: newest ? newest.createdAt : null
+    };
+  } catch (error) {
+    logger.error(`getQueueStats: Error getting stats for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
     throw error;
   }
 }
@@ -253,5 +432,8 @@ module.exports = {
   getPlayerStatus,
   updatePlayerStatus,
   insertMessage,
-  readMessages
+  readMessages,
+  readMessagesAndUpdatePointer,
+  purgeOldMessages,
+  getQueueStats
 };

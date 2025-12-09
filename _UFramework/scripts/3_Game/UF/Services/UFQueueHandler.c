@@ -1,34 +1,69 @@
+/**
+ * Typed Queue Handler - automatically polls and delivers typed messages
+ * @tparam T The type of messages expected from the queue
+ * 
+ * Usage:
+ * 1. Create handler with mod, queue, callback object, and callback function
+ * 2. Handler will poll at specified frequency
+ * 3. Callback receives each message individually
+ */
 class UQueueHandler<Class T> extends UQueueHandlerBase 
 {
 	override int Read(){
-		return U().Msg().Read(m_mod,m_queue, new UFMsgCallback<T>(this, "readCB", m_queue));
+		return U().Msg().Read(m_mod, m_queue, new UFMsgCallback<T>(this, "readCB", m_queue));
 	}
 	
 	int Read(int limit){
-		return U().Msg().Read(m_mod,m_queue, limit, new UFMsgCallback<T>(this, "readCB", m_queue));
+		return U().Msg().Read(m_mod, m_queue, limit, new UFMsgCallback<T>(this, "readCB", m_queue));
 	}
 	
+	/**
+	 * Write a typed message to the queue
+	 * @param message The message object to send
+	 * @return Call ID or -1 on error
+	 */
 	int Write(T message){
-		
+		if (!message){
+			Error2("[UF] UQueueHandler", "Cannot write NULL message");
+			return -1;
+		}
 		autoptr UMessage<T> msg = new UMessage<T>(message);
 		string txt = msg.ToJson();
-		delete msg;
 		return U().Msg().Write(m_mod, m_queue, txt);
 	}
  	
-	void readCB(int cid, int status, string oid, array<T> messages){
-		if (status == UF_SUCCESS){
+	/**
+	 * Internal callback - delivers each message to the registered callback
+	 */
+	void readCB(int cid, int status, string oid, array<autoptr T> messages){
+		// Mark that read has completed
+		m_ReadInProgress = false;
+		m_LastReadCall = -1;
+		
+		if (status == UF_SUCCESS && messages){
 			foreach(T message : messages){
-				g_Game.GameScript.CallFunctionParams(GetInstance(), GetFuncName(), NULL, new Param4<int, int, string, T>(cid, status, oid, message));
+				if (message && GetInstance()){
+					g_Game.GameScript.CallFunctionParams(GetInstance(), GetFuncName(), NULL, new Param4<int, int, string, T>(cid, status, oid, message));
+				}
 			}
+		} else if (status != UF_EMPTY && status != UF_SUCCESS){
+			// Log errors but don't spam for empty results
+			Print("[UF] UQueueHandler<" + T.ToString() + "> Read error: " + UUtil.StatusToString(status));
 		}
 	} 
 }
 
 
+/**
+ * String Queue Handler - automatically polls and delivers string messages
+ * 
+ * Usage:
+ * 1. Create handler with mod, queue, callback object, and callback function
+ * 2. Handler will poll at specified frequency
+ * 3. Callback receives each message individually
+ */
 class UStringQueueHandler extends UQueueHandlerBase 
 {
-	
 	override int Read(){
 		return U().Msg().Read(m_mod, m_queue, new UFMsgStringCallback(this, "readCB", m_queue));
 	}
@@ -37,28 +72,49 @@ class UStringQueueHandler extends UQueueHandlerBase
 		return U().Msg().Read(m_mod, m_queue, limit, new UFMsgStringCallback(this, "readCB", m_queue));
 	}
 	
-	
+	/**
+	 * Write a string message to the queue
+	 * @param message The string message to send
+	 * @return Call ID or -1 on error
+	 */
  	int Write(string message){
+		if (message == ""){
+			Error2("[UF] UStringQueueHandler", "Cannot write empty message");
+			return -1;
+		}
 		autoptr UStringMessage msg = new UStringMessage(message);
 		string txt = msg.ToJson();
-		delete msg;
-		return U().Msg().Write(m_mod,m_queue ,txt);
+		return U().Msg().Write(m_mod, m_queue, txt);
 	}
 	
+	/**
+	 * Internal callback - delivers each message to the registered callback
+	 */
 	void readCB(int cid, int status, string oid, TStringArray messages){
-		if (status == UF_SUCCESS){
+		// Mark that read has completed
+		m_ReadInProgress = false;
+		m_LastReadCall = -1;
+		
+		if (status == UF_SUCCESS && messages){
 			foreach(string message : messages){
-				g_Game.GameScript.CallFunctionParams(GetInstance(), GetFuncName(), NULL, new Param4<int, int, string, string>(cid, status, oid, message));
+				if (message != "" && GetInstance()){
+					g_Game.GameScript.CallFunctionParams(GetInstance(), GetFuncName(), NULL, new Param4<int, int, string, string>(cid, status, oid, message));
+				}
 			}
+		} else if (status != UF_EMPTY && status != UF_SUCCESS){
+			// Log errors but don't spam for empty results
+			Print("[UF] UStringQueueHandler Read error: " + UUtil.StatusToString(status));
 		}
 	}
 }
 
 
-
+/**
+ * Base class for queue handlers
+ * Provides automatic polling, cleanup, and common functionality
+ */
 class UQueueHandlerBase extends Managed 
 {
-	
 	protected string m_mod;
 	protected string m_queue;
 	protected Class m_obj;
@@ -66,68 +122,135 @@ class UQueueHandlerBase extends Managed
 	protected int m_limit;
 	protected int m_LastReadCall = -1;
 	protected int m_LastWriteCall = -1;
-	protected int m_PolingFrequency = 3;
+	protected int m_PollingFrequency = 3;
+	protected bool m_ReadInProgress = false;
+	protected bool m_IsDestroying = false;
     
-    void UQueueHandlerBase(string mod, string queue, Class obj, string funcName, UQueueMeta meta = NULL, int limit = -1, int polingFrequency = 3 )
+	/**
+	 * Create a queue handler for reading and writing
+	 * @param mod The mod identifier
+	 * @param queue The queue identifier
+	 * @param obj The object to call back on
+	 * @param funcName The function to call with each message
+	 * @param meta Optional queue metadata to set on creation
+	 * @param limit Maximum messages per read (-1 for all)
+	 * @param pollingFrequency How often to poll in seconds (default 3)
+	 */
+    void UQueueHandlerBase(string mod, string queue, Class obj, string funcName, UQueueMeta meta = NULL, int limit = -1, int pollingFrequency = 3)
     {
-        // Initialization code
 		m_mod = mod;
 		m_queue = queue;
 		Class.CastTo(m_obj, obj);
 		m_funcName = funcName;
 		m_limit = limit;
-		m_PolingFrequency = polingFrequency;
-		Init( meta );
+		m_PollingFrequency = pollingFrequency;
+		m_IsDestroying = false;
+		Init(meta);
     }
-		
-	//If you are only initing for writing
-    void UQueueHandlerBase(string mod, string queue, UQueueMeta meta )
+	
+	/**
+	 * Create a queue handler for writing only (no polling)
+	 * @param mod The mod identifier
+	 * @param queue The queue identifier
+	 * @param meta Optional queue metadata to set on creation
+	 */
+    void UQueueHandlerBase(string mod, string queue, UQueueMeta meta)
     {
-        // Initialization code
 		m_mod = mod;
 		m_queue = queue;
-		m_PolingFrequency = -1;
-		Init( meta );
+		m_PollingFrequency = -1;
+		m_IsDestroying = false;
+		Init(meta);
     }
 			
 	protected void Init(UQueueMeta meta)
 	{
-		if (m_PolingFrequency > 0) U().Cron().runEndless(m_PolingFrequency, this, "CheckQueue", NULL);
+		// Only start polling if we have a valid callback setup
+		if (m_PollingFrequency > 0 && m_obj && m_funcName != ""){
+			U().Cron().runEndless(m_PollingFrequency, this, "CheckQueue", NULL);
+		}
+		
+		// Only set meta from server
 		if (meta && g_Game.IsDedicatedServer()){
-			m_LastWriteCall = U().Msg().SetMeta(m_mod,m_queue,meta);
+			m_LastWriteCall = U().Msg().SetMeta(m_mod, m_queue, meta);
 		}
 	}
 
-    // Destructor: Called when the instance is destroyed (if needed)
     void ~UQueueHandlerBase()
     {
+		m_IsDestroying = true;
+		
+		// Remove from cron scheduler
 		U().Cron().Remove(this, "CheckQueue");
-		if (m_LastReadCall > 0) Cancel(m_LastReadCall);
-		if (m_LastWriteCall > 0) Cancel(m_LastWriteCall);
+		
+		// Cancel any pending calls
+		if (m_LastReadCall > 0){
+			Cancel(m_LastReadCall);
+		}
+		if (m_LastWriteCall > 0){
+			Cancel(m_LastWriteCall);
+		}
+		
+		m_obj = NULL;
     }
 
+	/**
+	 * Called by cron scheduler to check for new messages
+	 * Prevents overlapping reads
+	 */
 	void CheckQueue(){
+		// Don't start new read if one is in progress or we're destroying
+		if (m_ReadInProgress || m_IsDestroying){
+			return;
+		}
+		
+		m_ReadInProgress = true;
 		m_LastReadCall = Read();
+		
+		// If read failed to start, mark as not in progress
+		if (m_LastReadCall < 0){
+			m_ReadInProgress = false;
+		}
 	}
 	
+	/**
+	 * Write raw JSON to the queue
+	 * @param sText The JSON string (should contain {"Message": ...})
+	 * @return Call ID or -1 on error
+	 */
 	int jsonWrite(string sText){
-		return U().Msg().Write(m_mod,m_queue,sText);
+		return U().Msg().Write(m_mod, m_queue, sText);
 	}
 	
+	/**
+	 * Override in subclass to perform the read operation
+	 */
 	protected int Read(){
 		Error2("[UF] UFQueueHandlerBase", "Using unimplemented Read");
 		return -1;
 	}
 	
+	/**
+	 * Reset the queue - marks all existing messages as read
+	 * @return Call ID or -1 on error
+	 */
 	int Reset(){
-		return U().Msg().Reset(m_mod,m_queue);
+		return U().Msg().Reset(m_mod, m_queue);
 	}
 	
-	/* 
-		Call Cancel
-		
-		This allows you to cancel a call back to prevent access violations 
-	*/
+	/**
+	 * Purge old messages from the queue
+	 * @param olderThanDays Delete messages older than this many days
+	 * @return Call ID or -1 on error
+	 */
+	int Purge(int olderThanDays = 30){
+		return U().Msg().Purge(m_mod, m_queue, olderThanDays);
+	}
+	
+	/**
+	 * Cancel a pending callback to prevent access violations
+	 * @param cid The call ID to cancel
+	 */
 	void Cancel(int cid){
 		U().RequestCallCancel(cid);
 	}
@@ -138,5 +261,20 @@ class UQueueHandlerBase extends Managed
 	
 	string GetFuncName(){
 		return m_funcName;
+	}
+	
+	string GetMod(){
+		return m_mod;
+	}
+	
+	string GetQueue(){
+		return m_queue;
+	}
+	
+	/**
+	 * Check if the handler is actively reading
+	 */
+	bool IsReadInProgress(){
+		return m_ReadInProgress;
 	}
 }

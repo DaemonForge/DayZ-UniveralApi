@@ -1,11 +1,19 @@
+/**
+ * Queue metadata configuration
+ * Used to set queue behavior: ordering and player write permissions
+ */
 class UQueueMeta extends UFObject_Base {
 	
 	string Order = UF_QUEUE_FIFO;
-	bool AllowPlayerWrites = false;
+	int AllowPlayerWrites = 0;
 	
-	void UQueueMeta(string order, bool allowPlayerWrites = false){
+	void UQueueMeta(string order = UF_QUEUE_FIFO, bool allowPlayerWrites = false){
 		Order = order;
-		AllowPlayerWrites = allowPlayerWrites;
+		if (allowPlayerWrites){
+			AllowPlayerWrites = 1;
+		} else {
+			AllowPlayerWrites = 0;
+		}
 	}	
 	
 	override string ToJson(){
@@ -13,10 +21,13 @@ class UQueueMeta extends UFObject_Base {
 	}
 }
 
+/**
+ * Request object for reading messages with a limit
+ */
 class UMsgReadObj extends UFObject_Base {
 	int Limit = -1;
 	
-	void UMsgReadObj(int limit){
+	void UMsgReadObj(int limit = -1){
 		Limit = limit;
 	}
 	
@@ -25,11 +36,14 @@ class UMsgReadObj extends UFObject_Base {
 	}
 }
 
+/**
+ * Simple string message wrapper
+ */
 class UStringMessage extends UMessageBase {
 	
 	string Message = "";
 	
-	void UStringMessage(string message){
+	void UStringMessage(string message = ""){
 		Message = message;
 	}	
 	
@@ -38,43 +52,116 @@ class UStringMessage extends UMessageBase {
 	}
 }
 
-
+/**
+ * Typed message wrapper for sending structured data
+ * @tparam T The type of the message content
+ */
 class UMessage<Class T> extends UMessageBase {
 	
-	T Message;
+	autoptr T Message;
 	
-	void UMessage(T message){
+	void UMessage(T message = NULL){
 		Message = message;
 	}	
 	
+	void ~UMessage(){
+		Message = NULL;
+	}
+	
 	override string ToJson(){
-		return JsonFileLoader<T>.JsonMakeData(this);
+		// Serialize the wrapper which contains the Message field
+		return JsonFileLoader<UMessage<T>>.JsonMakeData(this);
 	}
 }
 
+/**
+ * Base class for all message types
+ */
 class UMessageBase extends UFObject_Base {
 	
-
 }
 
 
-//MessageReturn Objects
+// ============================================================================
+// Message Response Objects
+// ============================================================================
+
+/**
+ * Base class for message read responses
+ */
 class UReadMsgBase extends StatusObject {
 }
 
-
+/**
+ * Typed message array response
+ * @tparam T The type of messages in the array
+ */
 class UReadMsg<Class T> extends UReadMsgBase {
-	autoptr array<T> Messages;
+	autoptr array<autoptr T> Messages;
 
-	array<T> GetMessages(){
+	void UReadMsg(){
+		Messages = new array<autoptr T>();
+	}
+	
+	void ~UReadMsg(){
+		if (Messages){
+			Messages.Clear();
+		}
+	}
+
+	array<autoptr T> GetMessages(){
 		return Messages;
+	}
+	
+	/**
+	 * Check if there are any messages
+	 */
+	bool HasMessages(){
+		return Messages && Messages.Count() > 0;
+	}
+	
+	/**
+	 * Get the count of messages
+	 */
+	int Count(){
+		if (!Messages) return 0;
+		return Messages.Count();
 	}
 }
 
-
+/**
+ * String message array response
+ */
 class UReadMsgString extends UReadMsgBase {
 	autoptr TStringArray Messages;
 	
-	TStringArray GetMessages();
+	void UReadMsgString(){
+		Messages = new TStringArray();
+	}
+	
+	void ~UReadMsgString(){
+		if (Messages){
+			Messages.Clear();
+		}
+	}
+	
+	TStringArray GetMessages(){
+		return Messages;
+	}
+	
+	/**
+	 * Check if there are any messages
+	 */
+	bool HasMessages(){
+		return Messages && Messages.Count() > 0;
+	}
+	
+	/**
+	 * Get the count of messages
+	 */
+	int Count(){
+		if (!Messages) return 0;
+		return Messages.Count();
+	}
 }
 

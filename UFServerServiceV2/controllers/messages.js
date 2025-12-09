@@ -64,11 +64,14 @@ const {
   getPlayerStatus,
   updatePlayerStatus,
   insertMessage,
-  readMessages
+  readMessages,
+  readMessagesAndUpdatePointer,
+  purgeOldMessages,
+  getQueueStats
 } = require("../models/messages");
 const { AuthPlayerGuid, CheckServerAuth, requireServerAuth, requirePlayerOrServerAuth} = require('../auth/utils')
 const { GenerateLimiter, createLogger, tryConvertToObject} = require('../utils');
-const logger = createLogger(global.logger, 'DB.global');
+const logger = createLogger(global.logger, 'messages');
 
 // Apply rate limiting: 400 requests per 10 seconds.
 router.use(GenerateLimiter(global.config.RequestLimitQuery || 400, 10));
@@ -96,6 +99,13 @@ async function runReadMessages(req, res) {
   try {
     const ModName = req.params.Mod;
     const QueueName = req.params.Queue;
+    
+    // Validate mod and queue names (prevent injection/path traversal)
+    if (!isValidQueueName(ModName) || !isValidQueueName(QueueName)) {
+      logger.warn(`Invalid mod or queue name: Mod="${ModName}", Queue="${QueueName}"`);
+      return res.status(400).json({ Status: "Error", Error: "Invalid mod or queue name" });
+    }
+    
     logger.debug(`Parameters: Mod="${ModName}", Queue="${QueueName}"`);
     
     const limitParam = req.body.Limit;
@@ -120,22 +130,27 @@ async function runReadMessages(req, res) {
     const sortOrder = meta.order === "LIFO" ? -1 : 1;
     logger.debug(`Using sortOrder: ${sortOrder}`);
     
-    // Always use the caller's pointer (player or server) to determine effectiveTime.
-    const lastRead = await getPlayerStatus(ModName, QueueName, identifier);
-    logger.debug(`Last read timestamp for caller: ${lastRead}`);
-    const effectiveTime = meta.resetAt > lastRead ? meta.resetAt : lastRead;
-    logger.debug(`Computed effectiveTime: ${effectiveTime}`);
-    
-    // For limit = 0, update pointer and return an empty array.
+    // For limit = 0, update pointer to current time and return an empty array.
+    // This is useful for "catching up" without retrieving messages.
     if (limit === 0) {
       logger.debug("Limit is 0: updating pointer and returning empty messages array");
       await updatePlayerStatus(ModName, QueueName, identifier, new Date());
       return res.status(200).json({ Status: "Empty", Messages: [] });
     }
     
-    // Retrieve messages.
-    const rawMessages = await readMessages(ModName, QueueName, effectiveTime, sortOrder, limit);
+    // Use atomic read-and-update operation to prevent race conditions
+    const { messages: rawMessages, newPointer } = await readMessagesAndUpdatePointer(
+      ModName,
+      QueueName,
+      identifier,
+      meta.resetAt,
+      sortOrder,
+      limit
+    );
+    
     logger.debug(`Retrieved ${rawMessages.length} raw messages`);
+    
+    // Transform messages - extract the Message field and attempt JSON parsing
     const Messages = rawMessages.map(msg => {
       try {
         return tryConvertToObject(msg.Message);
@@ -144,10 +159,9 @@ async function runReadMessages(req, res) {
       }
     });
     
-    // Update the caller's pointer.
-    const newLastRead = rawMessages.length > 0 ? rawMessages[rawMessages.length - 1].createdAt : new Date();
-    logger.debug(`New pointer to be updated to: ${newLastRead}`);
-    await updatePlayerStatus(ModName, QueueName, identifier, newLastRead);
+    if (newPointer) {
+      logger.debug(`Pointer updated to: ${newPointer}`);
+    }
     
     const Status = rawMessages.length > 0 ? "Success" : "Empty";
     logger.debug(`Final response Status: ${Status}`);
@@ -156,6 +170,18 @@ async function runReadMessages(req, res) {
     logger.error(`Error reading from Mod "${req.params.Mod}" Queue "${req.params.Queue}": ${err.message}`, err);
     return res.status(500).json({ Status: "Error", Error: "Internal Server Error" });
   }
+}
+
+/**
+ * Validates that a queue/mod name contains only safe characters.
+ * @param {string} name - The name to validate
+ * @returns {boolean} True if valid
+ */
+function isValidQueueName(name) {
+  if (!name || typeof name !== 'string') return false;
+  if (name.length > 100) return false;
+  // Allow alphanumeric, dash, underscore, and period
+  return /^[a-zA-Z0-9_\-\.]+$/.test(name);
 }
 
 /**
@@ -175,36 +201,51 @@ async function runReadMessages(req, res) {
 router.post("/Write/:Mod/:Queue", requirePlayerOrServerAuth, runWriteMessage);
 async function runWriteMessage(req, res) {
   try {
-    if (req.body.Message === undefined) {
-      logger.warn(`Missing message field in request body for Mod "${req.params.Mod}" Queue "${req.params.Queue}"`);
-      return res.status(400).json({ Status: "Error", Error: "Missing message field" });
-    }
     const ModName = req.params.Mod;
     const QueueName = req.params.Queue;
+    
+    // Validate mod and queue names
+    if (!isValidQueueName(ModName) || !isValidQueueName(QueueName)) {
+      logger.warn(`Invalid mod or queue name: Mod="${ModName}", Queue="${QueueName}"`);
+      return res.status(400).json({ Status: "Error", Error: "Invalid mod or queue name" });
+    }
+    
+    if (req.body.Message === undefined) {
+      logger.warn(`Missing message field in request body for Mod "${ModName}" Queue "${QueueName}"`);
+      return res.status(400).json({ Status: "Error", Error: "Missing message field" });
+    }
+    
     logger.debug(`Parameters: Mod="${ModName}", Queue="${QueueName}"`);
     const message = req.body.Message;
-    logger.debug(`Message received: ${JSON.stringify(message)}`);
+    logger.debug(`Message received: ${typeof message === 'string' ? message.substring(0, 100) : JSON.stringify(message).substring(0, 100)}...`);
 
     // Determine if the request is from a player.
     const isServer = req.isServer || CheckServerAuth(req.headers["auth-key"]);
-    let actorId =  req.serverId || "Server";
+    let actorId = req.serverId || "Server";
     logger.debug(`Request is from ${isServer ? "Server" : "Player"}`);
+    
     if (!isServer) {
       actorId = AuthPlayerGuid(req.headers["auth-key"]);
+      if (!actorId) {
+        logger.warn(`Could not identify player for Mod "${ModName}" Queue "${QueueName}"`);
+        return res.status(401).json({ Status: "NoAuth", Error: "Could not identify player" });
+      }
+      
       const meta = await getQueueMeta(ModName, QueueName);
       logger.debug(`Queue meta for write: ${JSON.stringify(meta)}`);
       if (!meta.allowPlayerWrites) {
         logger.warn(`Player writes are not allowed for Mod "${ModName}" Queue "${QueueName}"`);
-        return res.status(204).json({ Status: "NoAuth", Error: "Player writes are not allowed for this Queue" });
+        return res.status(403).json({ Status: "NoAuth", Error: "Player writes are not allowed for this Queue" });
       }
     }
+    
     logger.debug(`Message enQueued to Mod "${ModName}" Queue "${QueueName}" by "${actorId}"`);
     await insertMessage(ModName, QueueName, actorId, message);
     logger.debug("Message inserted successfully");
     return res.status(201).json({ Status: "Success" });
   } catch (err) {
     logger.error(`Error writing to Mod "${req.params.Mod}" Queue "${req.params.Queue}": ${err.message}`, err);
-    return res.status(204).json({ Status: "Error", Error: "Internal Server Error" });
+    return res.status(500).json({ Status: "Error", Error: "Internal Server Error" });
   }
 }
 
@@ -227,13 +268,118 @@ async function runResetQueue(req, res) {
   try {
     const ModName = req.params.Mod;
     const QueueName = req.params.Queue;
+    
+    // Validate mod and queue names
+    if (!isValidQueueName(ModName) || !isValidQueueName(QueueName)) {
+      logger.warn(`Invalid mod or queue name: Mod="${ModName}", Queue="${QueueName}"`);
+      return res.status(400).json({ Status: "Error", Error: "Invalid mod or queue name" });
+    }
+    
     logger.debug(`Resetting queue for Mod="${ModName}" and Queue="${QueueName}"`);
     const resetTime = await resetQueue(ModName, QueueName);
     logger.debug(`Queue reset for Mod "${ModName}" Queue "${QueueName}" at ${resetTime.toISOString()}`);
-    return res.status(200).json({ Status: "Success", Error:"" });
+    return res.status(200).json({ Status: "Success", Error: "", ResetAt: resetTime.toISOString() });
   } catch (err) {
     logger.error(`Error resetting Mod "${req.params.Mod}" Queue "${req.params.Queue}": ${err.message}`, err);
-    return res.status(204).json({ Status: "Error", Error: `${err.message}` });
+    return res.status(500).json({ Status: "Error", Error: err.message });
+  }
+}
+
+/**
+ * POST: /Messages/Purge/:Mod/:Queue
+ * 
+ * Description: Purges old messages from the specified Mod/Queue.
+ * This is useful for cleaning up old messages to prevent unbounded database growth.
+ * 
+ * Request body:
+ * {
+ *   "OlderThanDays": number (optional, defaults to 30)
+ * }
+ * 
+ * Returns:
+ * {
+ *   Status: "Success" | "Error",
+ *   Error: "Error message if any",
+ *   DeletedCount: number
+ * }
+ *
+ * @async
+ * @function runPurgeQueue
+ */
+router.post("/Purge/:Mod/:Queue", requireServerAuth, runPurgeQueue);
+async function runPurgeQueue(req, res) {
+  try {
+    const ModName = req.params.Mod;
+    const QueueName = req.params.Queue;
+    
+    // Validate mod and queue names
+    if (!isValidQueueName(ModName) || !isValidQueueName(QueueName)) {
+      logger.warn(`Invalid mod or queue name: Mod="${ModName}", Queue="${QueueName}"`);
+      return res.status(400).json({ Status: "Error", Error: "Invalid mod or queue name" });
+    }
+    
+    // Default to 30 days if not specified
+    const olderThanDays = parseInt(req.body.OlderThanDays, 10) || 30;
+    if (olderThanDays < 1) {
+      return res.status(400).json({ Status: "Error", Error: "OlderThanDays must be at least 1" });
+    }
+    
+    const olderThan = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+    logger.debug(`Purging messages older than ${olderThan.toISOString()} for Mod="${ModName}" Queue="${QueueName}"`);
+    
+    const deletedCount = await purgeOldMessages(ModName, QueueName, olderThan);
+    logger.info(`Purged ${deletedCount} messages for Mod "${ModName}" Queue "${QueueName}"`);
+    
+    return res.status(200).json({ Status: "Success", Error: "", DeletedCount: deletedCount });
+  } catch (err) {
+    logger.error(`Error purging Mod "${req.params.Mod}" Queue "${req.params.Queue}": ${err.message}`, err);
+    return res.status(500).json({ Status: "Error", Error: err.message });
+  }
+}
+
+/**
+ * GET: /Messages/Stats/:Mod/:Queue
+ * 
+ * Description: Gets statistics for the specified Mod/Queue.
+ * 
+ * Returns:
+ * {
+ *   Status: "Success" | "Error",
+ *   Error: "Error message if any",
+ *   Stats: { count, oldestMessage, newestMessage }
+ * }
+ *
+ * @async
+ * @function runGetStats
+ */
+router.get("/Stats/:Mod/:Queue", requireServerAuth, runGetStats);
+async function runGetStats(req, res) {
+  try {
+    const ModName = req.params.Mod;
+    const QueueName = req.params.Queue;
+    
+    // Validate mod and queue names
+    if (!isValidQueueName(ModName) || !isValidQueueName(QueueName)) {
+      logger.warn(`Invalid mod or queue name: Mod="${ModName}", Queue="${QueueName}"`);
+      return res.status(400).json({ Status: "Error", Error: "Invalid mod or queue name" });
+    }
+    
+    const stats = await getQueueStats(ModName, QueueName);
+    const meta = await getQueueMeta(ModName, QueueName);
+    
+    return res.status(200).json({ 
+      Status: "Success", 
+      Error: "", 
+      Stats: stats,
+      Meta: {
+        order: meta.order,
+        allowPlayerWrites: meta.allowPlayerWrites,
+        resetAt: meta.resetAt
+      }
+    });
+  } catch (err) {
+    logger.error(`Error getting stats for Mod "${req.params.Mod}" Queue "${req.params.Queue}": ${err.message}`, err);
+    return res.status(500).json({ Status: "Error", Error: err.message });
   }
 }
 
@@ -257,6 +403,13 @@ async function runUpdateMeta(req, res) {
   try {
     const ModName = req.params.Mod;
     const QueueName = req.params.Queue;
+    
+    // Validate mod and queue names
+    if (!isValidQueueName(ModName) || !isValidQueueName(QueueName)) {
+      logger.warn(`Invalid mod or queue name: Mod="${ModName}", Queue="${QueueName}"`);
+      return res.status(400).json({ Status: "Error", Error: "Invalid mod or queue name" });
+    }
+    
     logger.debug(`Parameters: Mod="${ModName}", Queue="${QueueName}"`);
     const metaData = {};
     logger.debug(`Request body: ${JSON.stringify(req.body)}`);
@@ -265,12 +418,12 @@ async function runUpdateMeta(req, res) {
     if (req.body.Order !== undefined) {
       if (req.body.Order !== "FIFO" && req.body.Order !== "LIFO") {
         logger.debug("Invalid order value provided");
-        return res.status(204).json({ Status: "Error", Error: "Invalid order value. Must be 'FIFO' or 'LIFO'." });
+        return res.status(400).json({ Status: "Error", Error: "Invalid order value. Must be 'FIFO' or 'LIFO'." });
       }
       metaData.order = req.body.Order;
     } else {
       logger.debug("Missing order field in body");
-      return res.status(204).json({ Status: "Error", Error: "Missing order field" });
+      return res.status(400).json({ Status: "Error", Error: "Missing order field" });
     }
     
     // Validate 'allowPlayerWrites'
@@ -278,12 +431,12 @@ async function runUpdateMeta(req, res) {
       const value = parseInt(req.body.AllowPlayerWrites, 10);
       if (value !== 1 && value !== 0) {
         logger.debug("Invalid allowPlayerWrites value provided");
-        return res.status(204).json({ Status: "Error", Error: "Invalid allowPlayerWrites value" });
+        return res.status(400).json({ Status: "Error", Error: "Invalid allowPlayerWrites value" });
       }
       metaData.allowPlayerWrites = (value === 1);
     } else {
       logger.debug("Missing allowPlayerWrites field in body");
-      return res.status(204).json({ Status: "Error", Error: "Missing allowPlayerWrites field" });
+      return res.status(400).json({ Status: "Error", Error: "Missing allowPlayerWrites field" });
     }
 
     logger.debug(`Updating meta with: ${JSON.stringify(metaData)}`);
@@ -293,7 +446,7 @@ async function runUpdateMeta(req, res) {
     return res.status(200).json({ Status: "Success" });
   } catch (err) {
     logger.error(`Error updating meta for Mod "${req.params.Mod}" Queue "${req.params.Queue}": ${err.message}`, err);
-    return res.status(204).json({ Status: "Error", Error: err.message });
+    return res.status(500).json({ Status: "Error", Error: err.message });
   }
 }
 
