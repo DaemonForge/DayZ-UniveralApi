@@ -100,6 +100,24 @@ class UAIChatMessage extends UFObject_Base {
 }
 
 /**
+ * Tool definition for lightweight agentic usage.
+ * Keep parameters as strings to stay simple and avoid schema complexity on the client.
+ */
+class UAIToolDef extends Managed {
+	string Name;
+	string Description;
+	autoptr array<string> Parameters;
+
+	void UAIToolDef(string name, string desc, array<string> parameters = NULL){
+		Name = name;
+		Description = desc;
+		if (parameters){
+			Parameters = parameters;
+		}
+	}
+}
+
+/**
  * Response object for AI chat message status
  */
 class UAIChatMessageResponse extends StatusObject {

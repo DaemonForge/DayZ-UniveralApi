@@ -34,6 +34,10 @@ router.use((req, res, next) => {
     logger.warn('OpenAI is in an error state, AI Chat will not work', { status: global.OPENAISTATUS });
     return res.status(501).json({ Status: "Error", Error: "OpenAI is in an error state" });
   }
+  if (global.OPENAISTATUS !== "Online") {
+    logger.warn('OpenAI is not online yet, AI Assistant will not work', { status: global.OPENAISTATUS });
+    return res.status(503).json({ Status: "Error", Error: "OpenAI is not online" });
+  }
   next();
 });
 

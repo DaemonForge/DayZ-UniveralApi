@@ -371,7 +371,7 @@ class UAIChatHandlerBase extends Managed
 	{
 		// Initialize queue if needed
 		if (!m_MessageQueue) {
-			m_MessageQueue = new array<ref UAIChatQueuedMessage>;
+			m_MessageQueue = new array<autoptr UAIChatQueuedMessage>;
 		}
 		
 		// Create and add queued message object
@@ -389,7 +389,7 @@ class UAIChatHandlerBase extends Managed
 	{
 		// Initialize queue if needed
 		if (!m_MessageQueue) {
-			m_MessageQueue = new array<ref UAIChatQueuedMessage>;
+			m_MessageQueue = new array<autoptr UAIChatQueuedMessage>;
 		}
 		
 		// If we're busy with another message, queue this one

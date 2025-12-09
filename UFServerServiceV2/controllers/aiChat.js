@@ -47,7 +47,7 @@ async function testOpenAI() {
             logger.warn("Error: OpenAI API Key is invalid or not configured, AI Chat will not work", {error: err.message});
             global.OPENAISTATUS = "Error";
         }
-        if (global.config.OpenAIApi?.SkipCheck != undefined || global.config.OpenAIApi.SkipCheck === false){
+        if (global.config.OpenAIApi?.SkipCheck === false){
             setInterval(testOpenAI, 600000);
             logger.debug("Initialized periodic OpenAI status check");
         }
@@ -63,6 +63,10 @@ router.use((req, res, next) => {
     if (global.OPENAISTATUS === "Error"){
         logger.warn("Open AI Status Error, AI Chat will not work");
         return res.status(501).json({ Status: "Error", Error: "OpenAI is in an error state" });
+    }
+    if (global.OPENAISTATUS !== "Online"){
+        logger.warn("OpenAI is not online yet, AI Chat will not work", { status: global.OPENAISTATUS });
+        return res.status(503).json({ Status: "Error", Error: "OpenAI is not online" });
     }
     next();
 });
@@ -161,9 +165,6 @@ router.post('/Delete/:ChatId', requireServerAuth, runDeleteChat);
  */
 router.post('/Summarize/:ChatId', requirePlayerOrServerAuth, runSummarizeChat);
 
-// This endpoint starts the summary generation asynchronously.
-router.post('/Summarize/:ChatId', requirePlayerOrServerAuth, runSummarizeChat);
-
 /**
  * Endpoint to check the status of the summary generation.
  * Expects:
@@ -185,12 +186,14 @@ module.exports = router;
 
 /**
  * Generates the JSON response format enforcement message.
- * @param {object} jsonSchema - The JSON schema to be enforced.
+ * @param {object} jsonSchema - The JSON schema object (may be raw or OpenAI wrapper format).
  * @returns {string} - The enforcement message.
  */
 function getJsonResponseFormatMessage(jsonSchema) {
-    logger.debug("Generating JSON response format message", { jsonSchema });
-    return `!IMPORTANT: Respond ONLY with a valid JSON object matching this JSON schema: ${JSON.stringify(jsonSchema)}. DO NOT include extra text.`;
+    // Extract the actual schema if this is an OpenAI wrapper format
+    const schemaForMessage = jsonSchema.schema ? jsonSchema.schema : jsonSchema;
+    logger.debug("Generating JSON response format message", { schema: schemaForMessage });
+    return `!IMPORTANT: Respond ONLY with a valid JSON object matching this JSON schema: ${JSON.stringify(schemaForMessage)}. DO NOT include extra text.`;
 }
 
 /**
@@ -228,6 +231,21 @@ async function runCreateChat(req, res){
             } catch (e) {
                 logger.warn("JsonSchema string could not be parsed as JSON", { error: e.message });
                 return res.status(400).json({ Status: "Error", Error: "JsonSchema string is not valid JSON" });
+            }
+        }
+        // Validate the schema itself to avoid sending broken schemas downstream
+        // The client may send either:
+        //   1. A raw JSON Schema: { "type": "object", "properties": {...} }
+        //   2. An OpenAI wrapper: { "name": "...", "schema": {...}, "strict": true }
+        // We need to extract the actual schema for AJV validation
+        if (ResponseFormat === 'JSON') {
+            try {
+                // If this is an OpenAI wrapper format, extract the schema for validation
+                const schemaToValidate = JsonSchema.schema ? JsonSchema.schema : JsonSchema;
+                ajv.compile(schemaToValidate);
+            } catch (e) {
+                logger.warn("JsonSchema failed validation", { error: e.message });
+                return res.status(400).json({ Status: "Error", Error: "JsonSchema is invalid" });
             }
         }
         logger.debug("Creating chat with parameters", { SystemMessage, ResponseFormat, Model, MaxHistory });
@@ -433,14 +451,8 @@ async function getMessageStatus(req, res){
         }
         const { ChatId, message } = result;
         if (message.status === "Success") {
+            // Always return Message as a string - the client handles JSON parsing
             let messageContent = message.content;
-            // Attempt to parse the message content as JSON.
-            try {
-                messageContent = JSON.parse(message.content);
-                logger.debug("Parsed message content as JSON", { MessageId });
-            } catch (e) {
-                logger.warn("Failed to parse message content as JSON, returning raw content", { MessageId });
-            }
             logger.info("Returning success message status", { MessageId, ChatId });
             return res.status(200).json({ Status: message.status, Message: messageContent, ChatId });
         }
