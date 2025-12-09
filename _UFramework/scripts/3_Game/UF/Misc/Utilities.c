@@ -387,6 +387,45 @@ class UUtil extends Managed {
 		return "UNDEFINED_ERROR";
 	}
 	
+	/**
+	 * Converts a UF status code to a human-readable string.
+	 *
+	 * @param StatusCode The status code (one of UF_SUCCESS, UF_EMPTY, UF_ERROR, etc.).
+	 * @return string A string representation of the status code.
+	 */
+	static string StatusToString(int StatusCode){
+		switch ( StatusCode )
+		{
+			case UF_SUCCESS:
+				return "SUCCESS";
+			case UF_EMPTY:
+				return "EMPTY";
+			case UF_NOTSETUP:
+				return "NOT_SETUP";
+			case UF_TIMEOUT:
+				return "TIMEOUT";
+			case UF_CLIENTERROR:
+				return "CLIENT_ERROR";
+			case UF_SERVERERROR:
+				return "SERVER_ERROR";
+			case UF_ERROR:
+				return "ERROR";
+			case UF_JSONERROR:
+				return "JSON_ERROR";
+			case UF_NOTFOUND:
+				return "NOT_FOUND";
+			case UF_TOOEARLY:
+				return "TOO_EARLY";
+			case UF_UNAUTHORIZED:
+				return "UNAUTHORIZED";
+			case UF_AI_PENDING:
+				return "AI_PENDING";
+			case UF_AI_PROCESSING:
+				return "AI_PROCESSING";
+		}
+		return "UNKNOWN_STATUS(" + StatusCode + ")";
+	}
+	
 	 
 	/**
 	 * Gets the current date stamp in the format "YYYY-MM-DD".

@@ -81,7 +81,7 @@
 modded class Math
 {
 	
-	protected static ref TIntArray m_QRandomNumbers = new TIntArray;
+	protected static autoptr TIntArray m_QRandomNumbers = new TIntArray;
 	
 	//Adds a new array shouldn't be called manually Use U().CheckAndRenewQRandom();
 	static void AddQRandomNumber(TIntArray numbers){

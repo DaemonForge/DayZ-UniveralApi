@@ -4,7 +4,7 @@ static const int LOG_INFO = 2;
 static const int LOG_DEBUG = 3;
 
 class UFLog extends ULoggerBase {
-	protected static ref ULoggerBaseInstance m_ULoggerBaseInstance;
+	protected static autoptr ULoggerBaseInstance m_ULoggerBaseInstance;
 	override static void CreateInstance(){
 		m_type = "UF";
 		m_ULoggerBaseInstance = new ULoggerBaseInstance("UF");
@@ -17,7 +17,7 @@ class UFLog extends ULoggerBase {
 
 class ULoggerBase extends Managed {
 	protected static string m_type = "";
-	protected static ref ULoggerBaseInstance m_LoggerBaseInstance;
+	protected static autoptr ULoggerBaseInstance m_LoggerBaseInstance;
 	
 	static void CreateInstance(){
 		m_LoggerBaseInstance = new ULoggerBaseInstance(m_type);
