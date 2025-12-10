@@ -1,5 +1,4 @@
 const { Router } = require('express');
-const log = require("./log")
 const fetch  = require('node-fetch');
 const { requirePlayerOrServerAuth } = require('../auth/utils');
 const { GenerateLimiter, createLogger } = require('../utils');

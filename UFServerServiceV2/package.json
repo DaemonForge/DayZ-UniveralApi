@@ -8,8 +8,8 @@
     "dev": "nodemon app.js",
     "build": "dotenv -e .env.trustedsigning -- electron-builder",
     "build:unsigned": "electron-builder -c.win.azureSignOptions=null",
-    "pkg": "pkg . --compress GZip --target node18-win-x64 --output ../Build/Service/ufserverservice-win.exe && node build.js",
-    "pkg:linux": "pkg . --compress GZip --target node18-linux-x64 --output ../Build/Service/ufserverservice-linux && node -e \"require('fs').copyFileSync('install-linux.sh', '../Build/Service/install.sh')\"",
+    "pkg": "pkg . --compress GZip --target node22-win-x64 --output ../Build/Service/ufserverservice-win.exe && node build.js",
+    "pkg:linux": "pkg . --compress GZip --target node22-linux-x64 --output ../Build/Service/ufserverservice-linux && node -e \"require('fs').copyFileSync('install-linux.sh', '../Build/Service/install.sh')\"",
     "pkg:all": "npm run pkg && npm run pkg:linux",
     "tunnel": "cloudflared tunnel --config .cloudflared/config.yaml run ufdev"
   },
@@ -44,7 +44,7 @@
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
-    "@yao-pkg/pkg": "^6.3.2",
+    "@yao-pkg/pkg": "^6.10.1",
     "dotenv-cli": "^11.0.0",
     "electron": "^35.0.0",
     "electron-builder": "^26.0.12",
@@ -56,20 +56,28 @@
       "controllers/**/*.js",
       "models/**/*.js",
       "auth/**/*.js",
-      "discord/**/*.js"
+      "discord/**/*.js",
+      "node_modules/gamedig/dist/**/*.cjs"
     ],
     "assets": [
       "package.json",
       "node_modules/ffmpeg-static/ffmpeg.exe",
       "node_modules/ffmpeg-static/ffmpeg",
+      "node_modules/gamedig/dist/**/*",
+      "node_modules/gamedig/lib/**/*",
+      "node_modules/gamedig/protocols/**/*",
       "public/**/*",
       "templates/**/*",
       "sample-config.json",
       "defaultkeys.json"
     ],
+    "ignore": [
+      "node_modules/electron/**/*",
+      "node_modules/electron-builder/**/*"
+    ],
     "targets": [
-      "node18-win-x64",
-      "node18-linux-x64"
+      "node22-win-x64",
+      "node22-linux-x64"
     ]
   },
   "build": {
