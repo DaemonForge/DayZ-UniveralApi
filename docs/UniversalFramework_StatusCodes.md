@@ -1,5 +1,9 @@
 # Universal Framework - Status Codes & Constants
 
+## Overview
+
+All Universal Framework async operations return HTTP-style status codes in callbacks. Always check the status before using response data. This document covers all status constants, database type constants, and update operation codes.
+
 ## Status Codes
 
 All callbacks receive a `status` parameter (HTTP-style codes). Check before using data.

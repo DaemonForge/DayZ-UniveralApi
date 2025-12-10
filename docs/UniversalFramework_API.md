@@ -10,6 +10,19 @@ The API endpoint (`UApiEndpoint`) via `U().Api()` provides external service inte
 UApiEndpoint api = U().Api();
 ```
 
+## Permissions
+
+All external API endpoints allow both server and player access:
+
+| Operation | Server | Player (Client) |
+|-----------|--------|----------------|
+| SteamQuery | ✅ | ✅ |
+| CryptoPrice / CryptoConvert / Crypto | ✅ | ✅ |
+| RandomNumbers | ✅ | ✅ |
+| TTS Generate / Status / Download | ✅ | ✅ |
+
+> **Note:** These endpoints are rate-limited to prevent abuse.
+
 ---
 
 ## Steam Server Query

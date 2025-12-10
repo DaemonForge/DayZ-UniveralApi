@@ -1,5 +1,9 @@
 # Universal Framework - Database Handler (Advanced)
 
+## Overview
+
+Advanced database operations beyond basic Save/Load. This covers query building, atomic transactions, partial updates, pagination, and the underlying query classes for complex data retrieval patterns.
+
 ## Query Classes
 
 ### UDBQuery

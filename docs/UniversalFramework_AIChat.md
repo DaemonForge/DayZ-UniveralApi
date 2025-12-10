@@ -4,6 +4,20 @@
 
 The AI Chat system integrates OpenAI's GPT models into DayZ, enabling intelligent NPCs, player assistants, and automated systems. It supports both simple string responses (`UFAIChatAgent`) and structured JSON responses with type-safe parsing (`UAIChatAgent<T>`).
 
+## Permissions
+
+| Operation | Server | Player (Client) |
+|-----------|--------|----------------|
+| Create session | ✅ | ❌ |
+| Send message | ✅ | ✅ |
+| Check message status | ✅ | ✅ |
+| Read history | ✅ | ✅ |
+| Reset chat | ✅ | ✅ |
+| Summarize | ✅ | ✅ |
+| Delete session | ✅ | ❌ |
+
+> **Note:** The server must create chat sessions. Once created, both server and players can send messages and interact with the chat.
+
 ## UFAIChatAgent - String Response Agent
 
 High-level agent for AI chat with string responses.

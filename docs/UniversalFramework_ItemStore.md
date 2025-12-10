@@ -32,13 +32,13 @@ class UEntityStore extends UFObject_Base {
     // Custom data storage (use in OnUFSave/OnUFLoad overrides)
     void Write(string key, int value);
     void Write(string key, float value);
-    void Write(string key, bool value);
+    void Write(string key, bool value);  // Stored as int (0/1)
     void Write(string key, string value);
     void Write(string key, vector value);
     
     bool Read(string key, out int value);
     bool Read(string key, out float value);
-    bool Read(string key, out bool value);
+    bool Read(string key, out bool value);  // Reads int as bool
     bool Read(string key, out string value);
     bool Read(string key, out vector value);
 }

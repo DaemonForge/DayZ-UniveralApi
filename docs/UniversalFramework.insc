@@ -1,0 +1,23 @@
+# Universal Framework - Documentation Context
+
+Universal Framework provides backend service integration for DayZ modding including database, Discord, AI chat, messaging, and utility services accessed via the `U()` singleton. Server has full access; players have limited read access to their own data.
+
+| Section | Description |
+|---------|-------------|
+| `UniversalFramework_StatusCodes` | HTTP-style status codes for callbacks (`UF_SUCCESS`, `UF_EMPTY`, etc.) |
+| `UniversalFramework_DBHandler_Basics` | Core database operations: `UDBHandler<T>`, Save, Load, typed serialization |
+| `UniversalFramework_DBHandler_Advanced` | Queries, Transactions, Updates, pagination, Query classes |
+| `UniversalFramework_Discord` | Discord bot integration: roles, DMs, channels, voice, linking |
+| `UniversalFramework_DiscordObjects` | Data classes: `UDiscordEmbed`, `UDiscordUser`, `UDiscordMessage` |
+| `UniversalFramework_AIChat` | OpenAI chat: `UFAIChatAgent`, `UAIChatAgent<T>`, context, tools |
+| `UniversalFramework_AIVoice` | Text-to-Speech: `TTSGenerate`, `TTSPlay`, voice constants |
+| `UniversalFramework_MessageQueues` | Async messaging: `UQueueHandler<T>`, send/receive, polling |
+| `UniversalFramework_GlobalHandler` | Server-wide key-value storage: `U().globals()` |
+| `UniversalFramework_CronManager` | Scheduled tasks: `runEndless`, `runEndTime`, `runEndCount`, `runOnce` |
+| `UniversalFramework_ItemStore` | Entity serialization: `UEntityStore`, `OnUFSave`/`OnUFLoad` |
+| `UniversalFramework_TextureSystem` | Dynamic skins: `RegisterTextureAndMaterial`, `SetTexture`, client overrides |
+| `UniversalFramework_PlayerMoneyHandling` | Physical currency: `UGetPlayerBalance`, `UAddMoney`, `URemoveMoney` |
+| `UniversalFramework_Utilities` | Static helpers: `UUtil`, `UJSONHandler<T>`, time, player lookup |
+| `UniversalFramework_Logger` | Logging: `UFLog.Info/Debug/Err`, log levels, custom loggers |
+| `UniversalFramework_API` | External APIs: Steam queries, crypto prices, TTS, random numbers |
+| `UniversalFramework_Summary_DesignStructures` | Architecture overview, permissions matrix, documentation index |

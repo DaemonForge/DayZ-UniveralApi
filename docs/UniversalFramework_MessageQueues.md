@@ -12,6 +12,18 @@ The Message Queue system provides asynchronous communication between server and 
 - **Queue Reset**: Mark all existing messages as "read" for all readers
 - **Auto-Polling**: Handlers can automatically poll for new messages
 
+## Permissions
+
+| Operation | Server | Player (Client) |
+|-----------|--------|----------------|
+| Read | ✅ | ✅ |
+| Write | ✅ | ✅* |
+| Meta (configure queue) | ✅ | ❌ |
+| Reset | ✅ | ❌ |
+| Purge | ✅ | ❌ |
+
+*Player writes are controlled by the queue's `AllowPlayerWrites` metadata setting. Server must enable this for players to write.
+
 ## UQueueHandler<T> - Typed Queue Handler
 
 ### Initialization

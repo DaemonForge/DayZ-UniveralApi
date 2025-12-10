@@ -18,6 +18,17 @@ The Global Handler (`UDBGlobalEndpoint`) provides a key-value store for server-w
 UDBGlobalEndpoint globals = U().globals();
 ```
 
+## Permissions
+
+| Operation | Server | Player (Client) |
+|-----------|--------|----------------|
+| Load | ✅ | ✅ |
+| Save | ✅ | ❌ |
+| Update | ✅ | ❌ |
+| Transaction | ✅ | ❌ |
+
+> **Note:** Players can read global state but cannot modify it. All writes are server-only.
+
 ## Save Operations
 
 ### Save Full State

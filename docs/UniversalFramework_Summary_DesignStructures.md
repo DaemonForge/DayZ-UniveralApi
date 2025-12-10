@@ -22,6 +22,72 @@ All REST operations use callbacks - either pass an object instance + function na
 
 ---
 
+## Authentication & Permissions
+
+The API uses two authentication types:
+
+### Server Auth
+The DayZ server uses a static API key (`ServerAuth` in config). Has full read/write access to all endpoints.
+
+### Player Auth  
+Players receive a JWT token issued by the server on connect. Limited access - primarily read-only for their own data.
+
+### Permission Matrix
+
+| Feature | Server | Player | Notes |
+|---------|--------|--------|-------|
+| **Object DB** ||||
+| Load | ✅ Read + Create | ✅ Read only | Server can create if not exists |
+| Save | ✅ | ❌ | |
+| Update/Transaction | ✅ | ❌ | |
+| Query | ✅ | ✅ | Both can query |
+| **Player DB** ||||
+| Load | ✅ Any player | ✅ Own GUID only | Player token restricts to own data |
+| Save | ✅ | ❌ | |
+| Update/Transaction | ✅ | ❌ | |
+| Query | ✅ | ❌ | Server only |
+| PublicLoad | ✅ | ✅ (no auth) | Anyone can read `Public.{mod}` data |
+| PublicSave | ✅ | ❌ | |
+| **Globals** ||||
+| Load | ✅ | ✅ | Both can read |
+| Save/Update/Transaction | ✅ | ❌ | |
+| **Discord** ||||
+| Get / GetChannel | ✅ | ✅ Own GUID | Player can check own Discord |
+| AddRole / RemoveRole | ✅ | ❌ | |
+| Mute / Kick / Move | ✅ | ❌ | |
+| Send (DM) / SetNickname | ✅ | ❌ | |
+| Check / CheckRole | ✅ (no auth) | ✅ (no auth) | Public endpoints |
+| Channel Create/Delete/Edit | ✅ | ❌ | |
+| Channel Send/Messages | ✅ | ✅ | Both can interact |
+| **AI Chat** ||||
+| Create | ✅ | ❌ | Server creates sessions |
+| Send / Read / Reset | ✅ | ✅ | Both can use existing chats |
+| MessageStatus / Summarize | ✅ | ✅ | |
+| Delete | ✅ | ❌ | |
+| **Message Queues** ||||
+| Read | ✅ | ✅ | Per-reader pointers |
+| Write | ✅ | ✅* | *Controlled by queue `AllowPlayerWrites` setting |
+| Meta / Reset / Purge | ✅ | ❌ | |
+| **External APIs** ||||
+| TTS Generate/Status/Download | ✅ | ✅ | Rate limited |
+| ServerQuery | ✅ | ✅ | |
+| Crypto prices | ✅ | ✅ | |
+| Random numbers | ✅ | ✅ | |
+
+### Key Rules
+
+1. **Player DB is per-player isolated** - A player's auth token only allows access to their own GUID. Server can access any player.
+
+2. **Object DB is shared** - Any authenticated request can read. Only server can write.
+
+3. **Write operations are server-only** - Save, Update, Transaction always require server auth.
+
+4. **Public endpoints exist** - `PublicLoad` for player data and Discord `Check` work without auth.
+
+5. **Message queue writes are configurable** - Queue metadata controls if players can write.
+
+---
+
 ## Documentation Index
 
 ### StatusCodes.md
@@ -71,3 +137,6 @@ Logging system via `UFLog` static class. Methods: `UFLog.Info()`, `UFLog.Debug()
 
 ### API.md
 External service integrations via `U().Api()`. Steam server queries (`SteamQuery()` returns `UFServerStatus`), cryptocurrency prices (`CryptoPrice()`, `CryptoConvert()`, `Crypto()`), random numbers (`RandomNumbers()`), and TTS functions.
+
+### Context.md
+AI-friendly quick reference for documentation sections. Use to quickly identify which file covers a topic. Includes section lookup table, core concepts summary, and "when to use" decision guide.

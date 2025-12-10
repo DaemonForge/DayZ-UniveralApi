@@ -190,6 +190,8 @@ if (UUtil.GetConfigTStringArray("AKM", "chamberableFrom", chambers)) {
 
 Templated JSON serialization/deserialization utility.
 
+> **Note:** Boolean values are serialized as integers (0 = false, 1 = true) in JSON output and database storage. Deserialization handles this automatically.
+
 ```enforce
 class UJSONHandler<Class T> {
     // Object to JSON string

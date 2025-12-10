@@ -11,6 +11,25 @@
 | `OBJECT_DB` | Objects | Shared - any client can access |
 | `PLAYER_DB` | Players | Per-player - client only accesses own data |
 
+## Permissions
+
+| Operation | Server | Player (Client) |
+|-----------|--------|----------------|
+| **OBJECT_DB** |||
+| Load | ✅ Read + Create | ✅ Read only |
+| Save | ✅ | ❌ |
+| Update/Transaction | ✅ | ❌ |
+| Query | ✅ | ✅ |
+| **PLAYER_DB** |||
+| Load | ✅ Any player | ✅ Own GUID only |
+| Save | ✅ | ❌ |
+| Update/Transaction | ✅ | ❌ |
+| Query | ✅ | ❌ |
+| PublicLoad | ✅ | ✅ (no auth) |
+| PublicSave | ✅ | ❌ |
+
+> **Note:** Player auth tokens are GUID-specific. A player can only load their own data from `PLAYER_DB`. The server can access any player's data.
+
 ## Creating a Handler
 
 ```enforce
@@ -18,17 +37,22 @@
 class MyPlayerData {
     int Level;
     float Experience;
+    bool IsVIP;
     ref array<string> Achievements;
     
     void MyPlayerData() {
         Level = 1;
         Experience = 0;
+        IsVIP = false;
         Achievements = new array<string>;
     }
 }
 
 // Create handler (static singleton recommended)
 static autoptr UDBHandler<MyPlayerData> g_PlayerHandler = new UDBHandler<MyPlayerData>("MyMod", PLAYER_DB);
+```
+
+> **Note:** Boolean values are stored as integers in the database (0 = false, 1 = true). This is automatic - you still use `bool` in your classes.
 ```
 
 ## Save

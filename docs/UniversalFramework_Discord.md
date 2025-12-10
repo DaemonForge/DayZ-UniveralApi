@@ -16,6 +16,20 @@ The Discord endpoint (`UniversalDSEndpoint`) provides full Discord integration i
 UniversalDSEndpoint discord = U().ds();
 ```
 
+## Permissions
+
+| Operation | Server | Player (Client) |
+|-----------|--------|----------------|
+| Get / GetChannel | ✅ | ✅ Own GUID only |
+| AddRole / RemoveRole | ✅ | ❌ |
+| Mute / Kick / Move | ✅ | ❌ |
+| Send (DM) / SetNickname | ✅ | ❌ |
+| Check / CheckRole | ✅ (no auth) | ✅ (no auth) |
+| Channel Create/Delete/Edit | ✅ | ❌ |
+| Channel Send/Messages | ✅ | ✅ |
+
+> **Note:** Players can only query their own Discord info. Role modifications, DMs, and voice controls are server-only.
+
 ## Account Linking
 
 ### Get Link URL
