@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #1e1e1e;">
+<head>
+  <meta charset="UTF-8">
+  <title>Knowledge Base Manager</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data:;">
+  <link rel="stylesheet" href="styles/kb.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar: KB List -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>Knowledge Bases</h1>
+        <button id="createKBBtn" class="btn primary small" title="Create new KB">+ New KB</button>
+      </div>
+      <input type="search" id="searchKB" class="search" placeholder="Search KBs..." autocomplete="off">
+      <div id="kbList" class="kb-list"></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- KB Details Panel -->
+      <div id="kbDetailsPanel" class="panel hidden">
+        <div class="panel-header">
+          <div class="title-block">
+            <h2 id="kbName">No KB selected</h2>
+            <span id="kbDescription" class="description"></span>
+          </div>
+          <div class="actions">
+            <button id="kbSettingsBtn" class="btn" title="KB Settings">⚙️ Settings</button>
+            <button id="deleteKBBtn" class="btn danger" title="Delete KB">🗑️ Delete</button>
+          </div>
+        </div>
+
+        <!-- KB Stats -->
+        <div class="stats-bar">
+          <div class="stat">
+            <span class="stat-label">Documents:</span>
+            <span id="docCount" class="stat-value">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Shorter Answers:</span>
+            <span id="shorterAnswersStatus" class="stat-value">Off</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Extract Model:</span>
+            <span id="extractModel" class="stat-value">gpt-5-mini</span>
+          </div>
+        </div>
+
+        <!-- Document Actions -->
+        <div class="document-actions">
+          <button id="uploadDocBtn" class="btn primary">📤 Upload Document</button>
+          <button id="newDocBtn" class="btn">📝 New Text Document</button>
+        </div>
+
+        <!-- Documents List -->
+        <div class="documents-section">
+          <h3>Documents</h3>
+          <div id="documentsList" class="documents-list"></div>
+        </div>
+      </div>
+
+      <!-- Document Editor Panel -->
+      <div id="docEditorPanel" class="panel hidden">
+        <div class="panel-header">
+          <div class="title-block">
+            <input type="text" id="docNameInput" class="doc-name-input" placeholder="Document name">
+            <input type="text" id="docContextInput" class="doc-context-input" placeholder="Context hint (optional - helps AI understand the document)">
+          </div>
+          <div class="actions">
+            <button id="backToDocsBtn" class="btn">← Back</button>
+            <button id="saveDocBtn" class="btn primary">💾 Save</button>
+          </div>
+        </div>
+        
+        <!-- Size Warning -->
+        <div id="sizeWarning" class="size-warning hidden">
+          <span class="warning-icon">⚠️</span>
+          <span id="sizeWarningText"></span>
+        </div>
+
+        <!-- Editor -->
+        <div id="docEditor" class="doc-editor" aria-label="Document content editor"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">📚</div>
+        <h2>No Knowledge Base Selected</h2>
+        <p>Select a Knowledge Base from the sidebar or create a new one to get started.</p>
+        <button id="createKBBtnEmpty" class="btn primary">+ Create Knowledge Base</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create KB Modal -->
+  <div id="createKBModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Create Knowledge Base</h3>
+        <button class="modal-close" data-modal="createKBModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="newKBId">KB ID <span class="required">*</span></label>
+          <input type="text" id="newKBId" placeholder="my_knowledge_base" pattern="[a-zA-Z0-9_]+" title="Only letters, numbers, and underscores">
+          <small>Used to reference this KB in code. Only letters, numbers, and underscores.</small>
+        </div>
+        <div class="form-group">
+          <label for="newKBName">Name <span class="required">*</span></label>
+          <input type="text" id="newKBName" placeholder="My Knowledge Base">
+        </div>
+        <div class="form-group">
+          <label for="newKBDesc">Description</label>
+          <textarea id="newKBDesc" placeholder="Optional description..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="newKBShorterAnswers">
+            Enable Shorter Answers (uses AI to extract relevant excerpts)
+          </label>
+        </div>
+        <div class="form-group" id="extractModelGroup" style="display: none;">
+          <label for="newKBExtractModel">Extract Model</label>
+          <select id="newKBExtractModel">
+            <option value="gpt-5-mini" selected>gpt-5-mini</option>
+          </select>
+          <small>Model used for extracting shorter answers.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-modal="createKBModal">Cancel</button>
+        <button id="confirmCreateKB" class="btn primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KB Settings Modal -->
+  <div id="kbSettingsModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>KB Settings</h3>
+        <button class="modal-close" data-modal="kbSettingsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="editKBName">Name</label>
+          <input type="text" id="editKBName">
+        </div>
+        <div class="form-group">
+          <label for="editKBDesc">Description</label>
+          <textarea id="editKBDesc"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="editKBShorterAnswers">
+            Enable Shorter Answers
+          </label>
+        </div>
+        <div class="form-group" id="editExtractModelGroup" style="display: none;">
+          <label for="editKBExtractModel">Extract Model</label>
+          <select id="editKBExtractModel">
+            <option value="gpt-5-mini" selected>gpt-5-mini</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-modal="kbSettingsModal">Cancel</button>
+        <button id="confirmUpdateKB" class="btn primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Document Modal -->
+  <div id="uploadDocModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Upload Document</h3>
+        <button class="modal-close" data-modal="uploadDocModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="uploadFile">Select File</label>
+          <input type="file" id="uploadFile" accept=".txt,.md,.xml,.json,.pdf,.doc,.docx">
+          <small>Supported formats: .txt, .md, .xml, .json, .pdf, .doc, .docx</small>
+        </div>
+        <div class="form-group">
+          <label for="uploadDocName">Document Name (optional)</label>
+          <input type="text" id="uploadDocName" placeholder="Leave empty to use filename">
+        </div>
+        <div class="form-group">
+          <label for="uploadContextHint">Context Hint (optional)</label>
+          <textarea id="uploadContextHint" placeholder="Describe what this document contains to help the AI understand its context..."></textarea>
+        </div>
+        <div id="uploadProgress" class="upload-progress hidden">
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
+          <span class="progress-text">Uploading...</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-modal="uploadDocModal">Cancel</button>
+        <button id="confirmUpload" class="btn primary">Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteConfirmModal" class="modal hidden">
+    <div class="modal-content modal-small">
+      <div class="modal-header">
+        <h3>Confirm Delete</h3>
+        <button class="modal-close" data-modal="deleteConfirmModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="deleteConfirmText">Are you sure you want to delete this item?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-modal="deleteConfirmModal">Cancel</button>
+        <button id="confirmDelete" class="btn danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="../node_modules/ace-builds/src-min-noconflict/ace.js" defer></script>
+  <script src="../node_modules/ace-builds/src-min-noconflict/ext-language_tools.js" defer></script>
+  <script src="../node_modules/ace-builds/src-min-noconflict/mode-markdown.js" defer></script>
+  <script src="../node_modules/ace-builds/src-min-noconflict/mode-json.js" defer></script>
+  <script src="../node_modules/ace-builds/src-min-noconflict/mode-xml.js" defer></script>
+  <script src="../node_modules/ace-builds/src-min-noconflict/mode-text.js" defer></script>
+  <script src="../node_modules/ace-builds/src-min-noconflict/theme-twilight.js" defer></script>
+  <script src="../renderers/kb.js" defer></script>
+</body>
+</html>

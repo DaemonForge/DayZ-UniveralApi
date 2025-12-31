@@ -14,7 +14,8 @@ const router = Router();
  *  
  *  Description: This generates an auth token for the specified GUID and 
  *   updates the database so that way we can validate that the user has 
- *   already been issued a new token. The AUTHTOKEN will expire in 46 minutes
+ *   already been issued a new token. The AUTHTOKEN will expire in 15 minutes.
+ *   Tokens are renewed every 10 minutes by the client.
  * 
  *  Returns: `{ 
  *                "GUID": "|THEPASSEDGUID|", 

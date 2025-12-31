@@ -21,18 +21,26 @@ async function getCollections() {
  * @param {object|null} JsonSchema - Required if ResponseFormat is "JSON"
  * @param {string} Model - OpenAI Model to use.
  * @param {number} MaxHistory - Maximum number of Messages for context.
+ * @param {string|null} KBId - Optional Knowledge Base ID for KB-enhanced chat.
  * @returns {Promise<{ ChatId: string }>}
  */
-async function createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory) {
+async function createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory, KBId = null) {
   const { client, chats } = await getCollections();
   try {
-    logger.info("Creating new chat", { SystemMessage, ResponseFormat });
+    logger.debug("Creating new chat session", { 
+      SystemMessageLen: SystemMessage?.length, 
+      ResponseFormat, 
+      Model: Model || 'gpt-4o-mini',
+      MaxHistory: MaxHistory || 20,
+      KBId: KBId || 'none'
+    });
     const chatData = {
       SystemMessage,
       ResponseFormat,
       JsonSchema: JsonSchema || {},
       Model: Model || 'gpt-4o-mini',
       MaxHistory: MaxHistory || 20,
+      KBId: KBId || null,
       Messages: [],
       createdAt: new Date(),
       lastUpdated: new Date()
@@ -40,7 +48,7 @@ async function createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxH
     const result = await chats.insertOne(chatData);
     const ChatId = result.insertedId.toString();
     await chats.updateOne({ _id: result.insertedId }, { $set: { ChatId } });
-    logger.info(`Chat created successfully with ChatId ${ChatId}`);
+    logger.info(`Chat created successfully`, { ChatId, KBId: KBId || 'none' });
     return { ChatId };
   } catch (error) {
     logger.error(`Error creating chat: ${error.message}`, { error });
@@ -352,6 +360,66 @@ async function getSummaryById(SummaryId) {
   }
 }
 
+/**
+ * Updates a message with tool call information.
+ * @param {string} ChatId
+ * @param {string} MessageId
+ * @param {object} toolCall - The tool call info { id, name, arguments }
+ * @returns {Promise<boolean>}
+ */
+async function updateMessageWithToolCall(ChatId, MessageId, toolCall) {
+  const { client, chats } = await getCollections();
+  try {
+    logger.info(`Updating message with tool call for MessageId ${MessageId}`, { toolCall });
+    const now = new Date();
+    const result = await chats.updateOne(
+      { ChatId, "Messages.MessageId": MessageId },
+      { 
+        $set: { 
+          "Messages.$.toolCall": toolCall,
+          "Messages.$.timestamp": now,
+          lastUpdated: now
+        } 
+      }
+    );
+    return result.modifiedCount > 0;
+  } catch (error) {
+    logger.error(`Error updating message with tool call: ${error.message}`, { error });
+    throw error;
+  } finally {
+    await client.close();
+  }
+}
+
+/**
+ * Gets a message with its tool call info.
+ * @param {string} MessageId
+ * @returns {Promise<{ ChatId: string, message: object } | null>}
+ */
+async function getMessageWithToolCall(MessageId) {
+  const { client, chats } = await getCollections();
+  try {
+    logger.info(`Retrieving message with tool call for MessageId ${MessageId}`);
+    const chat = await chats.findOne(
+      { "Messages.MessageId": MessageId },
+      { projection: { ChatId: 1, SystemMessage: 1, ResponseFormat: 1, JsonSchema: 1, Model: 1, MaxHistory: 1, Messages: 1 } }
+    );
+    if (!chat || !chat.Messages) {
+      return null;
+    }
+    const message = chat.Messages.find(m => m.MessageId === MessageId);
+    if (!message) {
+      return null;
+    }
+    return { chat, message };
+  } catch (error) {
+    logger.error(`Error retrieving message with tool call: ${error.message}`, { error });
+    throw error;
+  } finally {
+    await client.close();
+  }
+}
+
 module.exports = {
   createChatSummary,
   getSummaryById,
@@ -361,6 +429,8 @@ module.exports = {
   getChat,
   addMessageToChat,
   updateMessageStatus,
+  updateMessageWithToolCall,
+  getMessageWithToolCall,
   getMessageById,
   getChatHistory,
   resetChat,

@@ -44,13 +44,15 @@ class UAIChatCreateRequest extends UFObject_Base {
 	string JsonSchema;
 	string Model;
 	int MaxHistory;
+	string KBId;
 	
-	void UAIChatCreateRequest(string systemMessage, string responseFormat, string jsonSchema = "", string model = "", int maxHistory = -1) {
+	void UAIChatCreateRequest(string systemMessage, string responseFormat, string jsonSchema = "", string model = "", int maxHistory = -1, string kbId = "") {
 		SystemMessage = systemMessage;
 		ResponseFormat = responseFormat;
 		JsonSchema = jsonSchema;
 		Model = model;
 		MaxHistory = maxHistory;
+		KBId = kbId;
 	}
 	
 	override string ToJson() {
@@ -80,16 +82,20 @@ class UAIChatContext extends Managed {
 }
 
 /**
- * Message to send to AI chat
+ * Message to send to AI chat (with optional tools)
  */
 class UAIChatMessage extends UFObject_Base {
 	string Message;
 	autoptr array<autoptr UAIChatContext> Context;
+	autoptr array<autoptr UAIToolDef> Tools;
 	
-	void UAIChatMessage(string message, array<autoptr UAIChatContext> context = NULL) {
+	void UAIChatMessage(string message, array<autoptr UAIChatContext> context = NULL, array<autoptr UAIToolDef> tools = NULL) {
 		Message = message;
 		if (context) {
 			Context = context;
+		}
+		if (tools) {
+			Tools = tools;
 		}
 	}
 	
@@ -101,18 +107,33 @@ class UAIChatMessage extends UFObject_Base {
 
 /**
  * Tool definition for lightweight agentic usage.
- * Keep parameters as strings to stay simple and avoid schema complexity on the client.
+ * Sent to the server which builds proper OpenAI function schemas.
+ * 
+ * ParamTypes: "string", "int", "float", "bool", "vector"
+ *   - string -> JSON Schema: { type: "string" }
+ *   - int -> JSON Schema: { type: "integer" }
+ *   - float -> JSON Schema: { type: "number" }
+ *   - bool -> JSON Schema: { type: "boolean" }
+ *   - vector -> JSON Schema: { type: "string" } with "x y z" format hint
  */
 class UAIToolDef extends Managed {
 	string Name;
 	string Description;
 	autoptr array<string> Parameters;
+	autoptr array<string> ParamTypes;
+	autoptr array<string> ParamDescs;
 
-	void UAIToolDef(string name, string desc, array<string> parameters = NULL){
+	void UAIToolDef(string name, string desc, array<string> parameters = NULL, array<string> paramTypes = NULL, array<string> paramDescs = NULL){
 		Name = name;
 		Description = desc;
 		if (parameters){
 			Parameters = parameters;
+		}
+		if (paramTypes){
+			ParamTypes = paramTypes;
+		}
+		if (paramDescs){
+			ParamDescs = paramDescs;
 		}
 	}
 }
@@ -130,6 +151,53 @@ class UAIChatMessageResponse extends StatusObject {
 	
 	string GetMessageId() {
 		return MessageId;
+	}
+}
+
+/**
+ * Response object for AI chat tool call request.
+ * Returned when the AI wants to call a tool - modder executes the tool and submits result.
+ */
+class UAIChatToolCallResponse extends StatusObject {
+	string ChatId;
+	string MessageId;
+	string ToolCallId;
+	string ToolName;
+	string P1;
+	string P2;
+	string P3;
+	string P4;
+	string P5;
+	
+	string GetToolName() {
+		return ToolName;
+	}
+	
+	string GetP1() { return P1; }
+	string GetP2() { return P2; }
+	string GetP3() { return P3; }
+	string GetP4() { return P4; }
+	string GetP5() { return P5; }
+	
+	string GetMessageId() { return MessageId; }
+	string GetToolCallId() { return ToolCallId; }
+}
+
+/**
+ * Request object for submitting a tool result
+ */
+class UAIChatToolResultRequest extends UFObject_Base {
+	string ToolCallId;
+	string Result;
+	
+	void UAIChatToolResultRequest(string toolCallId, string result) {
+		ToolCallId = toolCallId;
+		Result = result;
+	}
+	
+	override string ToJson() {
+		string jsonString = JsonFileLoader<UAIChatToolResultRequest>.JsonMakeData(this);
+		return jsonString;
 	}
 }
 

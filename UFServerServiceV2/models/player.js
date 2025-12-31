@@ -3,18 +3,99 @@ const { MongoClient } = require("mongodb");
 const config = require('../config');  // config should export DBServer and DB values
 const { createHash } = require('crypto');
 const { buildUpdateDoc, processValue, createLogger } = require('../utils');
-const logger = createLogger(global.logger, 'db.object');
+const logger = createLogger(global.logger, 'db.player');
+
+// Connection pool - reuse connections across requests
+let _client = null;
+let _db = null;
+let _connectionPromise = null;
 
 /**
- * Returns an object with a connected MongoClient and the "Players" collection.
- * Caller should close the client after the operation.
+ * Gets a shared MongoDB connection with automatic reconnection.
+ * Uses connection pooling to avoid creating new connections for each request.
+ * 
+ * @async
+ * @function getConnection
+ * @returns {Promise<Object>} MongoDB database instance
+ */
+async function getConnection() {
+  if (_db) {
+    // Verify connection is still alive
+    try {
+      await _client.db("admin").command({ ping: 1 });
+      return _db;
+    } catch (e) {
+      logger.warn("MongoDB connection lost, reconnecting...", { error: e.message });
+      _client = null;
+      _db = null;
+      _connectionPromise = null;
+    }
+  }
+
+  // Prevent multiple simultaneous connection attempts
+  if (_connectionPromise) {
+    await _connectionPromise;
+    return _db;
+  }
+
+  _connectionPromise = (async () => {
+    try {
+      _client = new MongoClient(config.DBServer, {
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        maxIdleTimeMS: 60000,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000
+      });
+      await _client.connect();
+      _db = _client.db(config.DB);
+      logger.info("MongoDB connection pool established for Players");
+      
+      // Handle connection errors
+      _client.on('error', (err) => {
+        logger.error("MongoDB connection error", { error: err.message });
+        _client = null;
+        _db = null;
+        _connectionPromise = null;
+      });
+      
+      _client.on('close', () => {
+        logger.warn("MongoDB connection closed");
+        _client = null;
+        _db = null;
+        _connectionPromise = null;
+      });
+      
+      return _db;
+    } catch (err) {
+      _connectionPromise = null;
+      throw err;
+    }
+  })();
+
+  await _connectionPromise;
+  _connectionPromise = null;
+  return _db;
+}
+
+/**
+ * Returns the "Players" collection using the pooled connection.
+ * 
+ * @deprecated Use getCollection() instead - this is kept for backwards compatibility
  */
 async function getClientAndCollection() {
-    const client = new MongoClient(config.DBServer);
-    await client.connect();
-    const db = client.db(config.DB);
+    const db = await getConnection();
     const collection = db.collection("Players");
-    return { client, collection };
+    // Return a dummy client with a no-op close for backwards compatibility
+    return { client: { close: () => {} }, collection };
+}
+
+/**
+ * Returns the "Players" collection using the pooled connection.
+ */
+async function getCollection() {
+  const db = await getConnection();
+  return db.collection("Players");
 }
 
 /**
@@ -23,16 +104,14 @@ async function getClientAndCollection() {
  * @returns {Promise<Object|null>} - The player document, or null if not found.
  */
 async function getPlayer(GUID) {
-    const { client, collection } = await getClientAndCollection();
-    let player;
+    const collection = await getCollection();
     try {
-        player = await collection.findOne({ GUID });
+        const player = await collection.findOne({ GUID });
+        return player;
     } catch (err) {
         logger.error(`Error in getPlayer: ${err.message}. GUID: ${GUID}`, { error: err, stack: err.stack });
-    } finally {
-        await client.close();
+        return null;
     }
-    return player;
 }
 
 /**
@@ -65,15 +144,13 @@ async function getPlayerModData(GUID, mod) {
  * @returns {Promise<boolean>} - True if the player exists, false otherwise.
  */
 async function playerExists(GUID) {
-    const { client, collection } = await getClientAndCollection();
+    const collection = await getCollection();
     try {
         const count = await collection.countDocuments({ GUID });
         return count === 1;
     } catch (err) {
         logger.warn(`Error in playerExists: ${err.message}. GUID: ${GUID}`, { error: err, stack: err.stack });
         throw err;
-    } finally {
-        await client.close();
     }
 }
 
@@ -83,7 +160,7 @@ async function playerExists(GUID) {
  * @returns {Promise<Object>} - The result of the insert operation.
  */
 async function newPlayer(GUID, doc) {
-    const { client, collection } = await getClientAndCollection();
+    const collection = await getCollection();
     try {
         doc.GUID = GUID;
         const result = await collection.insertOne(doc);
@@ -91,8 +168,6 @@ async function newPlayer(GUID, doc) {
     } catch (err) {
         logger.warn(`Error in newPlayer/insertPlayer: ${err.message}. GUID: ${GUID}`, { error: err, stack: err.stack });
         throw err;
-    } finally {
-        await client.close();
     }
 }
 
@@ -104,15 +179,13 @@ async function newPlayer(GUID, doc) {
  * @returns {Promise<Object>} - The result of the update operation.
  */
 async function updatePlayer(GUID, updateDoc, options = {}) {
-    const { client, collection } = await getClientAndCollection();
+    const collection = await getCollection();
     try {
         const result = await collection.updateOne({ GUID }, { $set: updateDoc }, options);
         return result;
     } catch (err) {
         logger.warn(`Error in updatePlayer: ${err.message}. GUID: ${GUID}`, { error: err, stack: err.stack });
         throw err;
-    } finally {
-        await client.close();
     }
 }
 
@@ -124,7 +197,7 @@ async function updatePlayer(GUID, updateDoc, options = {}) {
  * @returns {Promise<Object>} - The result of the update operation.
  */
 async function updatePlayerModData(GUID, mod, modData) {
-    const { client, collection } = await getClientAndCollection();
+    const collection = await getCollection();
     try {
         const updateDoc = { $set: { [mod]: modData } };
         const result = await collection.updateOne({ GUID }, updateDoc);
@@ -133,8 +206,6 @@ async function updatePlayerModData(GUID, mod, modData) {
     } catch (err) {
         logger.warn(`Error in updatePlayerModData: ${err.message}. GUID: ${GUID}, mod: ${mod}`, { error: err, stack: err.stack });
         throw err;
-    } finally {
-        await client.close();
     }
 }
 
@@ -150,7 +221,7 @@ async function updatePlayerModData(GUID, mod, modData) {
  * @returns {Promise<Object>} - The result of the update operation.
  */
 async function updatePlayerField(GUID, mod, element, operation, value) {
-    const { client, collection } = await getClientAndCollection();
+    const collection = await getCollection();
     try {
         const processedValue = processValue(value);
         const updateDoc = buildUpdateDoc(mod, element, operation, processedValue);
@@ -160,8 +231,6 @@ async function updatePlayerField(GUID, mod, element, operation, value) {
     } catch (err) {
         logger.warn(`Error in updatePlayerField: ${err.message}. GUID: ${GUID}, mod: ${mod}, element: ${element}, operation: ${operation}`, { error: err, stack: err.stack });
         throw err;
-    } finally {
-        await client.close();
     }
 }
 
@@ -183,7 +252,7 @@ async function executeUpdate(collection, GUID, updateDoc) {
  * @returns {Promise<Object>} - An object with the update result.
  */
 async function runPlayerTransaction(data, mod, GUID) {
-    const { client, collection } = await getClientAndCollection();
+    const collection = await getCollection();
     try {
         const query = { GUID };
         const field = `${mod}.${data.Element}`;
@@ -202,8 +271,6 @@ async function runPlayerTransaction(data, mod, GUID) {
     } catch (err) {
         logger.error(`Transaction error for mod: ${mod}, GUID: ${GUID}, element: ${data.Element}: ${err.message}`, { error: err, stack: err.stack });
         return { Status: "Error", ID: GUID, Mod: mod, Value: 0, Element: data.Element };
-    } finally {
-        await client.close();
     }
 }
 
@@ -222,7 +289,7 @@ async function runPlayerTransaction(data, mod, GUID) {
  * @returns {Promise<Object>} Transaction result
  */
 async function runValidatedPlayerTransaction(data, mod, GUID) {
-    const { client, collection } = await getClientAndCollection();
+    const collection = await getCollection();
     try {
         const query = { GUID };
         const field = `${mod}.${data.Element}`;
@@ -256,8 +323,6 @@ async function runValidatedPlayerTransaction(data, mod, GUID) {
     } catch (err) {
         logger.error(`Validated transaction error for mod: ${mod}, GUID: ${GUID}, element: ${data.Element}: ${err.message}`, { error: err, stack: err.stack });
         return { Status: "Error", Error: `Err: ${err}`, ID: GUID, Mod: mod, Value: 0, Element: data.Element };
-    } finally {
-        await client.close();
     }
 }
 

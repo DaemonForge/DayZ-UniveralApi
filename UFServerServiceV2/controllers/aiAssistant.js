@@ -622,17 +622,13 @@ async function runSummarizeChat(req, res) {
           conversationText += `${msg.role}: ${msg.content}\n`;
         });
         logger.debug(`[runSummarizeChat] Built conversation text: ${conversationText.substring(0,100)}...`);
-        const summaryResponse = await openai.chat.completions.create({
+        const summaryResponse = await openai.responses.create({
           model: 'o3-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are tasked with summarizing a conversation between an NPC (an AI in DayZ Standalone) and a player to create a concise, historically accurate record for internal memory management. This summary will replace storing the full conversation, so it must capture essential details while preserving the unique tone and immersion of the interaction. Follow these guidelines: ...'
-            },
-            { role: 'user', content: `Summarize the following conversation:\n\n"${conversationText}"` }
-          ]
+          reasoning: { effort: "medium" },
+          instructions: 'You are tasked with summarizing a conversation between an NPC (an AI in DayZ Standalone) and a player to create a concise, historically accurate record for internal memory management. This summary will replace storing the full conversation, so it must capture essential details while preserving the unique tone and immersion of the interaction. Follow these guidelines: ...',
+          input: `Summarize the following conversation:\n\n"${conversationText}"`
         });
-        const summaryText = summaryResponse.choices[0].message.content.trim();
+        const summaryText = (summaryResponse.output_text || '').trim();
         logger.info(`[runSummarizeChat] Summary generated: ${summaryText.substring(0,50)}...`, { SummaryId });
         await updateChatSummaryStatus(SummaryId, "Success", summaryText);
         logger.info(`[runSummarizeChat] Updated summary record ${SummaryId} with Success status`);

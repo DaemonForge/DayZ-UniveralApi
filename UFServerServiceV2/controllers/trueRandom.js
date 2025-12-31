@@ -4,6 +4,12 @@ const logger = createLogger(global.logger, 'random');
 const { requirePlayerOrServerAuth } = require("../auth/utils");
 const cluster = require('cluster');
 
+// Quantum source parameters and fallbacks.
+const FETCH_TIMEOUT_MS = 10_000; // Avoid hanging fetches
+const FAILURE_COOLDOWN_MS = 10 * 60 * 1000; // Pause quantum fetches after repeated failures
+const MAX_POOL_SIZE = 100_000; // Safety cap for the shared pool
+const FALLBACK_BATCH_COUNT = 1024; // How many JS numbers to add when quantum fetch fails
+
 const router = Router();
 
 let randomNumbers = [];
@@ -107,6 +113,8 @@ router.post('/', requirePlayerOrServerAuth, getRandom);
 
 let errorCount = 0;
 let errorLimit = 3;
+let consecutiveFailures = 0;
+let circuitOpenUntil = 0;
 
 async function getRandom(req, res) {
     let count = req.body.Count || 4096;
@@ -159,8 +167,38 @@ function AddToInts(ints, hex) {
     return ints;
 }
 
+function fillWithJsRandom(targetArray, count) {
+    const capacity = Math.max(0, MAX_POOL_SIZE - targetArray.length);
+    const toGenerate = Math.min(count, capacity);
+    for (let i = 0; i < toGenerate; i++) {
+        const randomInt = Math.floor(Math.random() * 4294967295) - 2147483647;
+        targetArray.push(randomInt);
+    }
+    return targetArray;
+}
+
+async function fetchQuantum(length, bitsize) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+        const res = await fetch(`https://qrng.anu.edu.au/API/jsonI.php?length=${length}&type=hex16&size=${bitsize}` , { signal: controller.signal });
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
+        return await res.json();
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
 async function FillRandomNumbers(bitsize) {
-    if (randomNumbers.length > 1024 * 600) {
+    const now = Date.now();
+    if (now < circuitOpenUntil) {
+        logger.warn('Quantum source in cooldown; skipping fetch', { nextRetryInMs: circuitOpenUntil - now });
+        return;
+    }
+
+    if (randomNumbers.length > MAX_POOL_SIZE) {
         return;
     }
 
@@ -169,25 +207,55 @@ async function FillRandomNumbers(bitsize) {
     data.success = false;
     
     try {
-        const res = await fetch(`https://qrng.anu.edu.au/API/jsonI.php?length=1024&type=hex16&size=${bitsize}`);
-        data = await res.json();
+        data = await fetchQuantum(1024, bitsize);
+        if (!data || !data.data || !Array.isArray(data.data)) {
+            throw new Error('Quantum source returned invalid payload');
+        }
         data.success = true;
         logger.debug('Successfully fetched random numbers from quantum source', {
-            dataSize: data.data ? data.data.length : 0,
-            responseStatus: res.status
+            dataSize: data.data ? data.data.length : 0
         });
         errorCount = 0;
+        consecutiveFailures = 0;
     } catch (error) {
         errorCount++;
-        if (errorCount >= errorLimit) {
-            logger.error(`Failed to fetch random numbers from quantum source after ${errorCount} attempts: ${error.message}`, { error, stack: error.stack });
+        consecutiveFailures++;
+
+        const shouldOpenCircuit = consecutiveFailures >= errorLimit;
+        if (shouldOpenCircuit) {
+            circuitOpenUntil = Date.now() + FAILURE_COOLDOWN_MS;
         }
+
+        logger.warn(`Failed to fetch random numbers from quantum source: ${error.message}`, {
+            consecutiveFailures,
+            willCooldown: shouldOpenCircuit,
+            nextRetryInMs: shouldOpenCircuit ? FAILURE_COOLDOWN_MS : 0,
+            stack: error.stack
+        });
+
+        // Ensure we still have some entropy available even if quantum source is down.
+        fillWithJsRandom(randomNumbers, FALLBACK_BATCH_COUNT);
+        logger.info('Filled pool with JS fallback numbers after quantum fetch failure', { newPoolSize: randomNumbers.length });
+        return;
     }
     if (data.success) {
-        data.data.forEach(e => {
+        const capacity = Math.max(0, MAX_POOL_SIZE - randomNumbers.length);
+        let added = 0;
+        for (const e of data.data) {
+            if (randomNumbers.length >= MAX_POOL_SIZE) {
+                break;
+            }
+            const before = randomNumbers.length;
             randomNumbers = AddToInts(randomNumbers, e);
-        });
-        logger.debug('Added fetched random numbers to the pool', { newPoolSize: randomNumbers.length });
+            if (randomNumbers.length > MAX_POOL_SIZE) {
+                randomNumbers = randomNumbers.slice(0, MAX_POOL_SIZE);
+            }
+            added += randomNumbers.length - before;
+            if (added >= capacity) {
+                break;
+            }
+        }
+        logger.debug('Added fetched random numbers to the pool', { added, newPoolSize: randomNumbers.length, capacity });
     }
 }
 

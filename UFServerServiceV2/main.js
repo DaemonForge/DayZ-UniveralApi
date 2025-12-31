@@ -15,13 +15,27 @@ let tray = null;
 let ConsoleWindow = null;
 let settingsWindow = null;
 let globalsWindow = null;
+let kbWindow = null;
 let cachedGlobalModel = null;
+let cachedKBModel = null;
 
 function getGlobalModel() {
   if (!cachedGlobalModel) {
     cachedGlobalModel = require('./models/global');
   }
   return cachedGlobalModel;
+}
+
+function getKBModel() {
+  if (!cachedKBModel) {
+    cachedKBModel = require('./models/kb');
+  }
+  return cachedKBModel;
+}
+
+function getKBController() {
+  // Lazy load the KB controller for embedding generation
+  return require('./controllers/kb');
 }
 
 
@@ -330,6 +344,12 @@ function updateTrayMenu() {
             }
           },
           {
+            label: '📚 KB Manager',
+            click: () => {
+              openKBWindow();
+            }
+          },
+          {
             label: '📁 Logs',
             click: () => {
               shell.openPath(path.join(global.SAVEPATH,'logs'));
@@ -385,6 +405,36 @@ function openGlobalsWindow() {
   globalsWindow.loadURL(globalsUrl.toString());
   globalsWindow.on('closed', () => {
     globalsWindow = null;
+  });
+}
+
+function openKBWindow() {
+  if (kbWindow) {
+    kbWindow.restore();
+    kbWindow.focus();
+    return;
+  }
+
+  kbWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    title: 'Knowledge Base Manager',
+    icon: windowIconImage || resolveAssetPath('public', 'icon.ico'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+      preload: path.join(__dirname, 'preload', 'kb.js')
+    }
+  });
+
+  kbWindow.setMenu(null);
+  const kbPath = path.join(__dirname, 'views', 'kb.html');
+  const kbUrl = pathToFileURL(kbPath);
+  kbUrl.searchParams.set('ts', Date.now().toString());
+  kbWindow.loadURL(kbUrl.toString());
+  kbWindow.on('closed', () => {
+    kbWindow = null;
   });
 }
 
@@ -476,6 +526,10 @@ ipcMain.on('force-close', () => {
     globalsWindow.removeAllListeners('close');
     globalsWindow.close();
   }
+  if (kbWindow) {
+    kbWindow.removeAllListeners('close');
+    kbWindow.close();
+  }
 });
 ipcMain.on('restart-app', () => {
   if (settingsWindow) {
@@ -489,6 +543,10 @@ ipcMain.on('restart-app', () => {
   if (globalsWindow) {
     globalsWindow.removeAllListeners('close');
     globalsWindow.close();
+  }
+  if (kbWindow) {
+    kbWindow.removeAllListeners('close');
+    kbWindow.close();
   }
   app.relaunch();
   app.exit();
@@ -555,6 +613,222 @@ ipcMain.handle('globals:delete', async (event, mod) => {
     return { success: true };
   } catch (err) {
     (global.logger || console).error('[GlobalsEditor] Failed to delete module', { mod, error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+// ===================== KB IPC Handlers =====================
+
+ipcMain.handle('kb:list', async () => {
+  try {
+    const { listKBs } = getKBModel();
+    const data = await listKBs();
+    return { success: true, data };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to list KBs', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:get', async (event, kbId) => {
+  try {
+    if (!kbId) throw new Error('KB ID is required.');
+    const { getKB } = getKBModel();
+    const data = await getKB(kbId);
+    if (!data) {
+      return { success: false, error: 'KB not found.' };
+    }
+    return { success: true, data };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to get KB', { kbId, error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:create', async (event, payload) => {
+  try {
+    const { kbId, name, description, shorterAnswers, extractModel } = payload || {};
+    if (!kbId || !name) throw new Error('KB ID and name are required.');
+    const { createKB } = getKBModel();
+    const data = await createKB(kbId, name, description, { shorterAnswers, extractModel });
+    return { success: true, data };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to create KB', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:update', async (event, payload) => {
+  try {
+    const { kbId, data } = payload || {};
+    if (!kbId) throw new Error('KB ID is required.');
+    const { updateKB } = getKBModel();
+    const success = await updateKB(kbId, data);
+    return { success };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to update KB', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:delete', async (event, kbId) => {
+  try {
+    if (!kbId) throw new Error('KB ID is required.');
+    const { deleteKB } = getKBModel();
+    const success = await deleteKB(kbId);
+    return { success };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to delete KB', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:listDocuments', async (event, kbId) => {
+  try {
+    if (!kbId) throw new Error('KB ID is required.');
+    const { listDocuments } = getKBModel();
+    const data = await listDocuments(kbId);
+    return { success: true, data };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to list documents', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:getDocument', async (event, payload) => {
+  try {
+    const { kbId, documentId } = payload || {};
+    if (!kbId || !documentId) throw new Error('KB ID and Document ID are required.');
+    const { getDocument } = getKBModel();
+    const data = await getDocument(kbId, documentId);
+    if (!data) {
+      return { success: false, error: 'Document not found.' };
+    }
+    return { success: true, data };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to get document', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:addDocument', async (event, payload) => {
+  try {
+    const { kbId, name, content, contextHint, fileType } = payload || {};
+    if (!kbId || !name || !content) throw new Error('KB ID, name, and content are required.');
+    const { addDocument, updateDocumentEmbeddings, splitTextIntoChunks } = getKBModel();
+    const kbController = getKBController();
+    
+    // Add the document
+    const result = await addDocument(kbId, name, content, contextHint || '', fileType || 'txt');
+    
+    // Generate embeddings
+    try {
+      const chunks = splitTextIntoChunks(content);
+      const embeddings = await kbController.generateEmbeddings(chunks);
+      await updateDocumentEmbeddings(kbId, result.documentId, embeddings);
+      result.hasEmbedding = true;
+    } catch (embErr) {
+      (global.logger || console).warn('[KBManager] Failed to generate embeddings', { error: embErr.message });
+      result.hasEmbedding = false;
+    }
+    
+    return { success: true, data: result };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to add document', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:updateDocument', async (event, payload) => {
+  try {
+    const { kbId, documentId, name, content, contextHint } = payload || {};
+    if (!kbId || !documentId) throw new Error('KB ID and Document ID are required.');
+    const { updateDocument, updateDocumentEmbeddings, splitTextIntoChunks } = getKBModel();
+    const kbController = getKBController();
+    
+    const result = await updateDocument(kbId, documentId, name, content, contextHint);
+    
+    // Regenerate embeddings if content changed
+    if (result.needsEmbedding && content) {
+      try {
+        const chunks = splitTextIntoChunks(content);
+        const embeddings = await kbController.generateEmbeddings(chunks);
+        await updateDocumentEmbeddings(kbId, documentId, embeddings);
+        result.hasEmbedding = true;
+      } catch (embErr) {
+        (global.logger || console).warn('[KBManager] Failed to regenerate embeddings', { error: embErr.message });
+        result.hasEmbedding = false;
+      }
+    }
+    
+    return { success: true, data: result };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to update document', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:deleteDocument', async (event, payload) => {
+  try {
+    const { kbId, documentId } = payload || {};
+    if (!kbId || !documentId) throw new Error('KB ID and Document ID are required.');
+    const { deleteDocument } = getKBModel();
+    const success = await deleteDocument(kbId, documentId);
+    return { success };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to delete document', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:regenerateEmbeddings', async (event, kbId) => {
+  try {
+    if (!kbId) throw new Error('KB ID is required.');
+    const { getDocumentsMissingEmbeddings, updateDocumentEmbeddings } = getKBModel();
+    const kbController = getKBController();
+    
+    const docsMissing = await getDocumentsMissingEmbeddings(kbId);
+    if (docsMissing.length === 0) {
+      return { success: true, processed: 0, message: 'All documents have embeddings' };
+    }
+
+    // Group by documentId
+    const byDoc = {};
+    for (const doc of docsMissing) {
+      if (!byDoc[doc.documentId]) byDoc[doc.documentId] = [];
+      byDoc[doc.documentId].push(doc);
+    }
+
+    let processed = 0;
+    let failed = 0;
+
+    for (const [documentId, chunks] of Object.entries(byDoc)) {
+      try {
+        chunks.sort((a, b) => a.chunkIndex - b.chunkIndex);
+        const contents = chunks.map(c => c.content);
+        const embeddings = await kbController.generateEmbeddings(contents);
+        await updateDocumentEmbeddings(kbId, documentId, embeddings);
+        processed++;
+      } catch (err) {
+        (global.logger || console).warn('[KBManager] Failed to regenerate embeddings for document', { documentId, error: err.message });
+        failed++;
+      }
+    }
+
+    return { success: true, processed, failed, total: Object.keys(byDoc).length };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to regenerate embeddings', { error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('kb:listModels', async () => {
+  try {
+    const kbController = getKBController();
+    const models = await kbController.listOpenAIModels();
+    return { success: true, models };
+  } catch (err) {
+    (global.logger || console).error('[KBManager] Failed to list OpenAI models', { error: err.message });
     return { success: false, error: err.message };
   }
 });
