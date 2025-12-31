@@ -7,12 +7,12 @@ class UFDLDiscordAvatarCallback : UFRestCallBackBase
 	}
 	
 	override void OnError(int errorCode) {
-		Print("[UF] [UFDLDiscordAvatarCallback] Save of a File Failed errorCode: " + UUtil.RestErrorToString(errorCode) + "(" + errorCode + ")");
+		UFLog.Err("[UFDLDiscordAvatarCallback] Save of a File Failed errorCode: " + UUtil.RestErrorToString(errorCode) + "(" + errorCode + ")");
 		
 		super.OnError(errorCode);
 	};
 	override void OnTimeout() {
-		Print("[UF] [UFDLDiscordAvatarCallback] Save of a File Timeout");
+		UFLog.Err("[UFDLDiscordAvatarCallback] Save of a File Timeout");
 		super.OnTimeout();
 	};
 	
@@ -23,13 +23,13 @@ class UFDLDiscordAvatarCallback : UFRestCallBackBase
 			if (FileExist(filename)){
 				DeleteFile(filename);
 			}
-        	Print("[UF] [UFDLDiscordAvatarCallback] Saving " + filename + " Size: " + dataSize);
+        	UFLog.Debug("[UFDLDiscordAvatarCallback] Saving " + filename + " Size: " + dataSize);
             UUtil.SaveBase64ToFileSplit(data, filename);
 
 			super.OnSuccess(data,dataSize);
 			return
         }
-        Print("[UF] [UFDLDiscordAvatarCallback] an error occured");
+        UFLog.Err("[UFDLDiscordAvatarCallback] an error occured");
 		super.OnSuccess(data,dataSize);
 	}
 

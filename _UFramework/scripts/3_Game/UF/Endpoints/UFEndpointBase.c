@@ -21,7 +21,13 @@ class UFBaseEndpoint extends Managed {
 			clCore.EnableDebug(true);
 		}
 		m_Context = clCore.GetRestContext(EndpointBaseUrl());
-		m_Context.SetHeader(AuthToken());
+		
+		// Get fresh token and set header
+		string token = AuthToken();
+		if (token == "" || token == "null"){
+			UFLog.Info("[WARN] Api() called with invalid token: '" + token + "' - request will likely fail");
+		}
+		m_Context.SetHeader(token);
 		return m_Context;
 	}
 	

@@ -36,6 +36,10 @@ class UFrameworkConfig extends Managed {
 		return ServerURL;
 	}
 	
+	string GetServerID(){
+		return ServerID;
+	}
+	
 	string GetAuth(){
 		if (g_Game.IsServer()){
 			return ServerAuth;
@@ -62,7 +66,7 @@ static UFrameworkConfig UFConfig()
 			m_UFrameworkConfig.Load();
 		}
 	} else if (!m_UFrameworkConfig){
-		Print("[UF] [WARN] UFramework Config is null on client");
+		UFLog.Info("[WARN] UFramework Config is null on client");
 	}
 	return m_UFrameworkConfig;
 };

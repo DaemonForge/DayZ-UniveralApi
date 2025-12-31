@@ -9,7 +9,7 @@ modded class TurnItemIntoItemLambda extends ReplaceItemWithNewLambda
 		{
 			if (ItemBase.Cast(new_item) && ItemBase.Cast(old_item))
 			{
-				ItemBase.Cast(new_item).SetTexture(ItemBase.Cast(old_item).GetCurrentSkinIdx())
+				ItemBase.Cast(new_item).SetTexture(ItemBase.Cast(old_item).GetCurrentSkinIdx());
 			}
 		}
 	}

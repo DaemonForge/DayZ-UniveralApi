@@ -3,15 +3,39 @@ static const int LOG_VERBOSE = 1;
 static const int LOG_INFO = 2;
 static const int LOG_DEBUG = 3;
 
-class UFLog extends ULoggerBase {
-	protected static autoptr ULoggerBaseInstance m_ULoggerBaseInstance;
-	override static void CreateInstance(){
-		m_type = "UF";
-		m_ULoggerBaseInstance = new ULoggerBaseInstance("UF");
+class UFLog {
+	protected static autoptr ULoggerBaseInstance m_Instance;
+	
+	protected static ULoggerBaseInstance GetInstance(){
+		if (!m_Instance){
+			m_Instance = new ULoggerBaseInstance("UF");
+		}
+		return m_Instance;
 	}
-	override static ULoggerBaseInstance GetInstance(){
-		if (!m_ULoggerBaseInstance){CreateInstance();}
-		return m_ULoggerBaseInstance;
+	
+	static void Log(string text, int level = 1) {
+		GetInstance().DoLog(text, level);
+	}
+	
+	static void Info(string text){
+		GetInstance().DoLog(text, LOG_INFO);
+	}
+	
+	static void Debug(string text){
+		GetInstance().DoLog(text, LOG_DEBUG);
+	}
+
+	static void Err(string text){
+		Error2("[UF] Error", text);
+		GetInstance().DoLog(text, LOG_ERROR);
+	}
+	
+	static void SetLogLevels(int level, int apiLevel = -99){
+		if (apiLevel == -99){
+			apiLevel = level;
+		}
+		GetInstance().SetLogLevel(level);
+		GetInstance().SetApiLogLevel(apiLevel);
 	}
 }
 
@@ -60,7 +84,7 @@ class ULoggerBaseInstance extends Managed {
 	protected int				m_LogToApiLevel = 3;
 	protected bool 			m_isInit = false;
 	
-	protected static string LogDir = "$profile:";
+	protected static string LogDir = "$profile:UF/Logs/";
 	protected string m_LogType = "";
 	protected FileHandle		m_FileHandle;
 	
@@ -70,6 +94,10 @@ class ULoggerBaseInstance extends Managed {
 		if ( !g_Game.IsServer() || g_Game.IsClient() ){
 			return;	
 		}
+		// Ensure log directory exists
+		MakeDirectory("$profile:UF");
+		MakeDirectory(LogDir);
+		
 		m_FileHandle = CreateFile(LogDir + m_LogType + "_" + GetDateStampFile() + ".log");
 		if (m_FileHandle != 0){
 			m_isInit = true;
@@ -97,10 +125,10 @@ class ULoggerBaseInstance extends Managed {
 		
 		FileHandle fHandle = OpenFile(path, FileMode.WRITE);
 		if (fHandle != 0) {
-			FPrintln(fHandle, "MapLink Log Started: " + GetDateStamp() + " " + GetTimeStamp() );
+			FPrintln(fHandle, "[" + m_LogType + "] Log Started: " + GetDateStamp() + " " + GetTimeStamp() );
 			return fHandle;
 		}
-		Error2("[MapLink] Error", "Unable to create" + path + " file in Profile.");
+		Error2("[" + m_LogType + "] Error", "Unable to create " + path + " file in Profile.");
 		return fHandle;
 	}
 	

@@ -64,7 +64,7 @@ class UFConfigBase : UFRestCallBackBase {
 	string ToJson(){
 		// Override and Replace with your class Name
 		string jsonString = UJSONHandler<UFConfigBase>.ToString(this);
-		Print("[UF] Error You didn't override ToJson: " + jsonString); 
+		UFLog.Err("You didn't override ToJson: " + jsonString); 
 		return jsonString;
 	}
 	
@@ -97,7 +97,7 @@ class UFConfigBase : UFRestCallBackBase {
 		if (this){
 			OnDataReceive();
 		} else {
-			Print("[UF] CallBack Failed errorCode: Invalid Data");
+			UFLog.Err("CallBack Failed errorCode: Invalid Data");
 		}
 		//dont' call super or it will delete the object
 	};
@@ -106,10 +106,10 @@ class UFConfigBase : UFRestCallBackBase {
 		
 	// This Are Called by the API System on errors from the API System
 	override void OnError(int errorCode) {
-		Print("[UF] CallBack Failed errorCode: " + U().ErrorToString(errorCode));
+		UFLog.Err("CallBack Failed errorCode: " + U().ErrorToString(errorCode));
 	};
 	
 	override void OnTimeout() {
-		Print("[UF] CallBack Failed errorCode: Timeout");
+		UFLog.Err("CallBack Failed errorCode: Timeout");
 	};
 }

@@ -18,3 +18,4 @@ DesktopManager/.greenlockrc
 **/greenlock.d/
 **/greenlock/
 .env.trustedsigning
+debug.log

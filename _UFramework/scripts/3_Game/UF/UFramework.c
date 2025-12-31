@@ -54,6 +54,13 @@
  * Overall, UFramework centralizes the operations required by the Universal Framework, facilitating communication,
  * configuration, and periodic task execution, making it a fundamental component in the DayZ Universal API infrastructure.
  */
+
+// Native RPC IDs for UFramework authentication system
+// Using unique IDs to avoid conflicts with other mods
+const int UF_RPC_CONFIG        = 237983606; // Server -> Client: Send auth token + config
+const int UF_RPC_REQUEST_AUTH  = 237983607; // Client -> Server: Request auth token
+const int UF_RPC_REQUEST_RETRY = 237983608; // Server -> Client: Request client to retry
+
 class UFramework extends Managed {
 		
 	/**
@@ -385,6 +392,14 @@ class UFramework extends Managed {
 		return m_UFOnline;
 	}
 	
+	//Returns the Server ID from the config (available on both client and server after auth)
+	string GetServerID(){
+		if (UFConfig()){
+			return UFConfig().GetServerID();
+		}
+		return "";
+	}
+	
 	//Returns current Version Offset 0 Version Matches exactly
 	// -1 or 1 off by a patch this is not a problem and won't cause any major issues
 	// -2 or 2 off by a Minor Version this may cause some endpoints to not work or features to be missing
@@ -708,7 +723,19 @@ class UFramework extends Managed {
 	
 	string GetAuthToken(){
 		if (m_UFauthToken && !g_Game.IsServer()){
-			if (m_UFauthToken.IsExpired()) RequestAuthToken(false); //Shouldn't ever be expired but just encase
+			if (m_UFauthToken.IsExpired()) {
+				// Token is expired - trigger renewal and return empty to prevent using stale token
+				UFLog.Info("[Auth] Token expired when GetAuthToken called, triggering renewal");
+				RequestAuthToken(true); // Force immediate renewal
+				return ""; // Return empty so request will fail gracefully instead of using expired token
+			}
+			// Proactive renewal: if token expires in less than 4 minutes, trigger background renewal
+			// This is a fallback - if we get here, the cron job (every 10 min) likely failed
+			// Token expires at 15 min, cron runs at 10 min, so 4 min buffer = cron missed
+			if (m_UFauthToken.IsExpiringSoon(240)) {
+				UFLog.Info("[Auth] Token expiring soon (" + m_UFauthToken.GetSecondsUntilExpiry() + "s left) - cron renewal may have failed, triggering proactive renewal");
+				RequestAuthToken(false); // Non-blocking renewal (rate limited to 30s)
+			}
 			return m_UFauthToken.GetAuthToken();
 		} else if (g_Game.IsServer() && UFConfig().ServerAuth != ""){
 			return UFConfig().ServerAuth;
@@ -725,6 +752,27 @@ class UFramework extends Managed {
 	bool IsTokenExpiringSoon(int bufferSeconds = 120){
 		if (!m_UFauthToken || g_Game.IsServer()) return false;
 		return m_UFauthToken.IsExpiringSoon(bufferSeconds);
+	}
+	
+	// Get seconds remaining until token expires (for logging)
+	int GetTokenSecondsRemaining(){
+		if (!m_UFauthToken) return -1;
+		return m_UFauthToken.GetSecondsUntilExpiry();
+	}
+	
+	// Get token suffix for logging (last 8 chars - safe to log)
+	string GetTokenSuffix(){
+		if (!m_UFauthToken) return "NO_TOKEN";
+		return m_UFauthToken.GetTokenSuffix();
+	}
+	
+	// Debug dump current token state
+	void DebugTokenState(){
+		if (!m_UFauthToken){
+			UFLog.Debug("[Auth] DebugTokenState: No token exists");
+			return;
+		}
+		m_UFauthToken.DoDebug();
 	}
 	
 	
@@ -746,16 +794,18 @@ class UFramework extends Managed {
 	
 	void Init(){
 		#ifdef NO_GUI
-			Print("[UF] Detected Server");
+			UFLog.Info("Detected Server");
 			m_IsServer = true;
 		#endif
 		if (!UF_Init){
 			setGlobalInit();
-			Print("[UF] First Init");
+			UFLog.Info("First Init");
 			UF_Init = true;
-			GetRPCManager().AddRPC( "UF", "RPCUFrameworkConfig", this, SingeplayerExecutionType.Both );
-			GetRPCManager().AddRPC( "UF", "RPCRequestAuthToken", this, SingeplayerExecutionType.Both );
-			GetRPCManager().AddRPC( "UF", "RPCRequestRetry", this, SingeplayerExecutionType.Both );
+			
+			// Register centralized RPC handler with DayZGame.Event_OnRPC
+			// This eliminates the need for duplicate OnRPC overrides in PlayerBase/MissionBase
+			UFRPCHandler.Register();
+			
 			if (m_IsServer){
 				U().api().Status(this, "CBStatusCheck");
 				CheckAndRenewQRandom();
@@ -765,18 +815,50 @@ class UFramework extends Managed {
 	
 	protected bool m_InitialTokenReceived = false;
 	
-	protected void RPCUFrameworkConfig( CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target )
+	/**
+	 * Native RPC handler for receiving auth token and config from server.
+	 * Called via OnRPC in PlayerBase or MissionBase.
+	 */
+	void OnRPC_UFrameworkConfig(ParamsReadContext ctx, PlayerIdentity sender)
 	{
-		Print("[UF] Received UF Config");
+		UFLog.Debug("[Auth] RPCUFrameworkConfig received - processing...");
 		Param2<ApiAuthToken, UFrameworkConfig> data; 
-		if ( !ctx.Read( data ) ) return;
+		if ( !ctx.Read( data ) ){
+			UFLog.Err("Failed to read RPC data in RPCUFrameworkConfig - data may be corrupted");
+			return;
+		}
+		
+		if (!data.param1 || !data.param2){
+			UFLog.Err("RPC data params are null - param1: " + data.param1 + " param2: " + data.param2);
+			return;
+		}
+		
 		m_AuthRetries = 0;
+		
+		// Log old token info before replacing (if exists)
+		if (m_UFauthToken){
+			UFLog.Debug("[Auth] Replacing old token - OldSuffix: ..." + m_UFauthToken.GetTokenSuffix() + " SecsLeft: " + m_UFauthToken.GetSecondsUntilExpiry());
+		} else {
+			UFLog.Debug("[Auth] No existing token - this is the first token");
+		}
+		
+		// Replace with new token
 		Class.CastTo(m_UFauthToken, data.param1);
 		Class.CastTo(m_UFrameworkConfig, data.param2);
+		
+		// CRITICAL: RPC deserialization doesn't call constructors, so Expiry is not set!
+		// We must manually reset the expiry after receiving the token
+		if (m_UFauthToken){
+			m_UFauthToken.ResetExpiry();
+			UFLog.Debug("[Auth] New token active - Suffix: ..." + m_UFauthToken.GetTokenSuffix() + " ExpiresIn: " + m_UFauthToken.GetSecondsUntilExpiry() + "s");
+		} else {
+			UFLog.Err("Failed to cast token from RPC data");
+		}
+		
 		if (m_UFrameworkConfig && m_UFrameworkConfig.ServerURL != ""){
 			m_BaseURL = m_UFrameworkConfig.ServerURL;
 		} else {
-			Print("[UF] Received Config and Auth Token but Config or Server URL are Null");
+			UFLog.Info("Received Config and Auth Token but Config or Server URL are Null");
 		}
 		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnTokenReceived);
 	}
@@ -788,37 +870,85 @@ class UFramework extends Managed {
 		// Only run full initialization on first token
 		if (!m_InitialTokenReceived){
 			m_InitialTokenReceived = true;
-			Print("[UF] [UAPI] Initial token received, initializing services");
+			UFLog.Info("[UAPI] Initial token received, initializing services");
 			U().api().Status(this, "CBStatusCheck");
 			U().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
 			g_Game.GameScript.CallFunction(g_Game.GetMission(), "UFrameworkReadyTokenReceived", NULL, NULL);
 		} else {
-			Print("[UF] [UAPI] Token renewed successfully");
+			UFLog.Info("[UAPI] Token renewed successfully");
+		}
+	}
+	
+	/**
+	 * Called by callbacks when they receive an auth failure (401/204 unauthorized).
+	 * Triggers a token renewal with 30s rate limit to prevent spam.
+	 */
+	void OnAuthFailure(){
+		if (!g_Game.IsServer()){
+			UFLog.Info("[Auth] Auth failure detected, requesting token renewal (30s rate limited)");
+			RequestAuthToken(false); // Use rate-limited renewal, not forced
 		}
 	}
 	
 	
-	void RPCRequestRetry( CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target ) {
+	/**
+	 * Native RPC handler for retry request from server.
+	 * Called via OnRPC in PlayerBase or MissionBase.
+	 */
+	void OnRPC_RequestRetry(ParamsReadContext ctx, PlayerIdentity sender) {
 		if (g_Game.IsClient() && ++m_AuthRetries <= 20){
 			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestAuthToken, m_AuthRetries * 2200, false, true);
 		}
 	}
 	
 	protected int m_LastRequestAuthRetry = 0;
+	protected int m_LastForcedAuthRequest = 0;
 	
+	/**
+	 * Request a new auth token from the server.
+	 * 
+	 * Token lifecycle:
+	 *   - Token expires: 15 minutes (900s)
+	 *   - Cron renewal: every 10 minutes (600s) - primary renewal mechanism
+	 *   - Proactive check: triggers at 4 minutes remaining (240s) - fallback if cron fails
+	 *   - Rate limits: 30s between any renewal requests to prevent spam
+	 * 
+	 * @param first - If true, this is a forced/initial request (only for actual expiry, not proactive)
+	 */
 	void RequestAuthToken(bool first = false){
 		if (!m_IsServer){
 			int currentTime = UUtil.GetUTCUnixInt();
-			// If this is a forced/initial request, bypass the rate limit to avoid blocking retries
+			
+			// Log current token state before making request
+			if (m_UFauthToken){
+				UFLog.Debug("[Auth] RequestAuthToken called - first=" + first + " TokenExpired=" + m_UFauthToken.IsExpired() + " SecsLeft=" + m_UFauthToken.GetSecondsUntilExpiry() + " Suffix=..." + m_UFauthToken.GetTokenSuffix());
+			} else {
+				UFLog.Debug("[Auth] RequestAuthToken called - first=" + first + " NO TOKEN EXISTS");
+			}
+			
+			// Forced requests (first=true) have a 30 second rate limit
+			// This prevents spam when token is fully expired and multiple requests fail
 			if (first){
+				if ((currentTime - m_LastForcedAuthRequest) < 30){
+					UFLog.Debug("[Auth] Forced auth request rate limited (30s cooldown), last=" + (currentTime - m_LastForcedAuthRequest) + "s ago");
+					return;
+				}
+				m_LastForcedAuthRequest = currentTime;
 				m_LastRequestAuthRetry = currentTime;
-				GetRPCManager().SendRPC("UF", "RPCRequestAuthToken", new Param1<bool>(true), true);
+				UFLog.Debug("[Auth] Sending FORCED auth token RPC to server (UF_RPC_REQUEST_AUTH=" + UF_RPC_REQUEST_AUTH + ")");
+				// Native RPC: Client -> Server (use NULL target for server)
+				GetGame().RPCSingleParam(NULL, UF_RPC_REQUEST_AUTH, new Param1<bool>(true), true);
 				return;
 			}
-			// Rate limit to 1 per 30 seconds to prevent spam
+			
+			// Normal/proactive requests have a 30 second rate limit
 			if ((currentTime - m_LastRequestAuthRetry) >= 30){
 				m_LastRequestAuthRetry = currentTime;
-				GetRPCManager().SendRPC("UF", "RPCRequestAuthToken", new Param1<bool>(false), true);
+				UFLog.Debug("[Auth] Sending SCHEDULED auth token RPC to server (UF_RPC_REQUEST_AUTH=" + UF_RPC_REQUEST_AUTH + ")");
+				// Native RPC: Client -> Server (use NULL target for server)
+				GetGame().RPCSingleParam(NULL, UF_RPC_REQUEST_AUTH, new Param1<bool>(false), true);
+			} else {
+				UFLog.Debug("[Auth] Scheduled auth request rate limited (" + (30 - (currentTime - m_LastRequestAuthRetry)) + "s until next allowed)");
 			}
 		}
 	}
@@ -826,7 +956,7 @@ class UFramework extends Managed {
 	void PreparePlayerAuth(string guid){
 		// Check if request is already pending to avoid duplicates
 		if (m_PendingAuthRequests && m_PendingAuthRequests.Find(guid) != -1){
-			Print("[UF] Auth request already pending for " + guid + ", skipping duplicate request");
+			UFLog.Debug("Auth request already pending for " + guid + ", skipping duplicate request");
 			return;
 		}
 		// Mark as pending
@@ -834,7 +964,7 @@ class UFramework extends Managed {
 			m_PendingAuthRequests = new set<string>;
 		}
 		m_PendingAuthRequests.Insert(guid);
-		Print("[UF] Preparing auth token for " + guid);
+		UFLog.Debug("Preparing auth token for " + guid);
 		this.Rest().GetAuth(guid);
 	}
 	
@@ -846,7 +976,7 @@ class UFramework extends Managed {
 			m_PendingAuthRequests.RemoveItem(guid);
 		}
 		
-		Print("[UF] Adding PlayerAuth for " + guid + " to cache");
+		UFLog.Debug("Adding PlayerAuth for " + guid + " to cache");
 		PlayerAuths.Set(guid, auth); //Set Auth in case a request comes in.
 		
 		// Send token to player if they are connected
@@ -861,13 +991,13 @@ class UFramework extends Managed {
 			auth = PlayerAuths.Get(guid);
 			return true;
 		}
-		Print("[UF] Failed to find Player Auth for " + guid);
+		UFLog.Debug("Failed to find Player Auth for " + guid);
 		return false;
 	}
 	
 	void ClearPlayerAuth(string guid){
 		if (PlayerAuths && PlayerAuths.Contains(guid)){
-			Print("[UF] Clearing cached auth token for " + guid);
+			UFLog.Debug("Clearing cached auth token for " + guid);
 			PlayerAuths.Remove(guid);
 		}
 		// Also clear any pending request status
@@ -876,40 +1006,69 @@ class UFramework extends Managed {
 		}
 	}		
 		
-	protected void RPCRequestAuthToken( CallType type, ParamsReadContext ctx, PlayerIdentity sender, Object target )
+	/**
+	 * Native RPC handler for auth token requests from client.
+	 * Called via OnRPC in PlayerBase or MissionBase.
+	 * 
+	 * IMPORTANT: We ALWAYS request fresh tokens from the web service because:
+	 * - JWT tokens have a fixed expiry (15 min from creation)
+	 * - Cached tokens will eventually expire and become useless
+	 * - Each renewal request should get a NEW token with fresh 15-min expiry
+	 */
+	void OnRPC_RequestAuthToken(ParamsReadContext ctx, PlayerIdentity sender)
 	{
+		string senderInfo = "null";
+		if (sender){
+			senderInfo = sender.GetId();
+		}
+		UFLog.Debug("[Auth] OnRPC_RequestAuthToken ENTRY - sender=" + senderInfo);
 		Param1<bool> data; 
-		if ( !ctx.Read( data ) ) return;
-		PlayerIdentity identity = PlayerIdentity.Cast(sender);
+		if ( !ctx.Read( data ) ){
+			UFLog.Err("[Auth] OnRPC_RequestAuthToken ERROR: Failed to read RPC data");
+			return;
+		}
+		UFLog.Debug("[Auth] OnRPC_RequestAuthToken - isInitial=" + data.param1);
+		PlayerIdentity identity = sender;
 		if (m_IsServer && identity){
 			UFConfig();
-			string authtoken = "";
 			if (UFConfig().ServerAuth != "" && UFConfig().ServerAuth != "null" ){
-				// For initial connection (data.param1 == true), always prepare fresh token
-				// This ensures MapLink transfers get new tokens
-				if (data.param1){
-					Print("[UF] RPCRequestAuthToken Initial connection, preparing fresh auth token for " + identity.GetId());
-					PreparePlayerAuth(identity.GetId());
-				} else if (GetPlayerAuth(identity.GetId(), authtoken)){
-					// For subsequent requests, use cached token if available
-					Print("[UF] RPCRequestAuthToken Sending Cached Token for " + identity.GetId());
-					SendAuthToken(identity, authtoken);
-				} else if (FindPlayer(identity.GetId())){
-					Print("[UF] RPCRequestAuthToken Renewing Auth Token for " + identity.GetId());
-					PreparePlayerAuth(identity.GetId());
+				string guid = identity.GetId();
+				
+				// Always request a fresh token from the web service
+				// This ensures the client always gets a token with full 15-min expiry
+				// The old approach of sending cached tokens was wrong because:
+				// - Cached token has same expiry as when first created
+				// - After 10 min, cached token only has 5 min left
+				// - Client needs a FRESH token with 15 min expiry
+				if (FindPlayer(guid)){
+					if (data.param1){
+						UFLog.Debug("[Auth] [SERVER] Initial connection - requesting fresh token for " + guid);
+					} else {
+						UFLog.Debug("[Auth] [SERVER] Renewal request - requesting NEW fresh token for " + guid);
+					}
+					// Clear old cached token and request fresh one
+					ClearPlayerAuth(guid);
+					PreparePlayerAuth(guid);
 				} else {
-					Print("[UF] RPCRequestAuthToken Requesting client retry for " + identity.GetId());
-					GetRPCManager().SendRPC("UF", "RPCRequestRetry", new Param1<bool>(true), true, identity);
+					UFLog.Debug("[Auth] [SERVER] Player not found for " + guid + ", requesting client retry");
+					// Try to find any player object to send retry RPC
+					DayZPlayer player = FindPlayer(guid);
+					if (player){
+						GetGame().RPCSingleParam(player, UF_RPC_REQUEST_RETRY, new Param1<bool>(true), true, identity);
+					}
 				}
-			} else if (UFConfig().ServerAuth && UFConfig().ServerAuth != "" && UFConfig().ServerAuth != "null") {
-				Error("[UF] Server Auth is empty or null");
+			} else {
+				UFLog.Err("[Auth] [SERVER] ServerAuth is empty or null - cannot process auth request");
 			}
+		} else {
+			UFLog.Debug("[Auth] OnRPC_RequestAuthToken - SKIPPED: m_IsServer=" + m_IsServer + " identity=" + (identity != null));
 		}
 	}
 	
-	void SendAuthToken(PlayerIdentity idenitity, string auth){
-		if (idenitity && auth != ""){
-			Print("[UF] Sending PlayerAuth Token to " + idenitity.GetId());
+	void SendAuthToken(PlayerIdentity identity, string auth){
+		if (identity && auth != ""){
+			string authSuffix = auth.Substring(Math.Max(0, auth.Length() - 10), 10);
+			UFLog.Debug("[Auth] [SERVER] SendAuthToken to " + identity.GetId() + " - AuthSuffix: ..." + authSuffix);
 			autoptr UFrameworkConfig cClientConfig = new UFrameworkConfig;
 			cClientConfig.ConfigVersion = UFConfig().ConfigVersion;
 			cClientConfig.ServerURL = UFConfig().ServerURL;
@@ -917,17 +1076,27 @@ class UFramework extends Managed {
 			cClientConfig.ServerAuth = "null";
 			cClientConfig.EnableBuiltinLogging = UFConfig().EnableBuiltinLogging;
 			cClientConfig.PromptDiscordOnConnect = UFConfig().PromptDiscordOnConnect;
-			GetRPCManager().SendRPC("UF", "RPCUFrameworkConfig", new Param2<ApiAuthToken, UFrameworkConfig>(new ApiAuthToken(idenitity.GetId(), auth), cClientConfig), true, idenitity);
+			
+			// Native RPC: Server -> specific Client
+			// Find the player object to use as RPC target
+			DayZPlayer player = FindPlayer(identity.GetId());
+			if (player){
+				UFLog.Debug("[Auth] [SERVER] Sending UF_RPC_CONFIG (" + UF_RPC_CONFIG + ") to player " + player.GetType());
+				GetGame().RPCSingleParam(player, UF_RPC_CONFIG, new Param2<ApiAuthToken, UFrameworkConfig>(new ApiAuthToken(identity.GetId(), auth), cClientConfig), true, identity);
+				UFLog.Debug("[Auth] [SERVER] RPC sent successfully");
+			} else {
+				UFLog.Err("[Auth] [SERVER] Cannot find player object for " + identity.GetId() + " to send auth token");
+			}
 		} else {
-			Print("[UF] [UAuthCallBack] ERROR ");
-			if (idenitity){
-				U().AuthError(idenitity.GetId());
+			UFLog.Err("[Auth] [SERVER] SendAuthToken ERROR - identity=" + (identity != null) + " auth.len=" + auth.Length());
+			if (identity){
+				U().AuthError(identity.GetId());
 			}
 		}
 	}
 	
 	void AuthError(string guid){
-		Print("[UF] Auth Error for " + guid);
+		UFLog.Err("Auth Error for " + guid);
 		//If Auth Token Failed just try again in 3 minutes 
 		if (guid != "" && IsOnline()){
 			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuth, 180 * 1000, false, guid);
@@ -1023,18 +1192,18 @@ class UFramework extends Managed {
 			Math.Randomize(Math.QRandom()); //Randomize the Vanilla Randomization a bit more.
 			return;
 		}
-		Print("[UF] Failed to update the Q Random Numbers");
+		UFLog.Err("Failed to update the Q Random Numbers");
 	}
 	
 	protected void CBStatusCheck(int cid, int status, string oid, UFStatus data){
 		if (status == UF_SUCCESS && data){
 			if (data.Error == "noerror"){
 				m_UFOnline = true;
-				Print("[UF] WebService Online Version: " + data.Version + " Mod Version: " + UF_VERSION);
+				UFLog.Info("WebService Online Version: " + data.Version + " Mod Version: " + UF_VERSION);
 			}
 			if (data.Error == "noauth"){
 				m_UFOnline = false;
-				Print("[UF] Auth Key is not vaild");
+				UFLog.Err("Auth Key is not vaild");
 				if (!m_IsServer){
 					this.RequestAuthToken(false);
 				}
@@ -1058,7 +1227,7 @@ class UFramework extends Managed {
 				return;
 			}
 			if (m_UFVersionOffset > 0){
-				Print("[UF] You may want to check for new versions of the Universal Framework WebService");
+				UFLog.Info("You may want to check for new versions of the Universal Framework WebService");
 				return;
 			}
 			if (m_UFVersionOffset < -2){
@@ -1066,7 +1235,7 @@ class UFramework extends Managed {
 				return;
 			}
 			if (m_UFVersionOffset < -1){
-				Print("[UF] Universal Framework Mod maybe outdated and should be updated right away");
+				UFLog.Info("Universal Framework Mod maybe outdated and should be updated right away");
 				return;
 			}					
 			return;

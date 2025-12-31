@@ -48,7 +48,7 @@ class UQueueHandler<Class T> extends UQueueHandlerBase
 			}
 		} else if (status != UF_EMPTY && status != UF_SUCCESS){
 			// Log errors but don't spam for empty results
-			Print("[UF] UQueueHandler<" + T.ToString() + "> Read error: " + UUtil.StatusToString(status));
+			UFLog.Err("UQueueHandler<" + T.ToString() + "> Read error: " + UUtil.StatusToString(status));
 		}
 	} 
 }
@@ -103,7 +103,7 @@ class UStringQueueHandler extends UQueueHandlerBase
 			}
 		} else if (status != UF_EMPTY && status != UF_SUCCESS){
 			// Log errors but don't spam for empty results
-			Print("[UF] UStringQueueHandler Read error: " + UUtil.StatusToString(status));
+			UFLog.Err("UStringQueueHandler Read error: " + UUtil.StatusToString(status));
 		}
 	}
 }

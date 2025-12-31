@@ -7,7 +7,7 @@ modded class MissionBase extends MissionBaseWorld
 	
 	override void UFrameworkReady(){
 		super.UFrameworkReady();
-			Print("[UF] MissionBase UFrameworkReady");
+			UFLog.Info("MissionBase UFrameworkReady");
 		//A Safe Place to start pulling datadown from the WebServer 
 		//(This will be called on init for the server, and after should be after the AuthToken Is received)
 		

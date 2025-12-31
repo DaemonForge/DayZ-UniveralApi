@@ -8,10 +8,10 @@ modded class Weapon_Base extends Weapon {
 	override void OnUFLoad(UEntityStore data){
 		int i;
 		super.OnUFLoad(data);
-		Print("===========================================================================================================");
-		Print("===========================================================================================================");
-		Print("[UF] [INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
-		Print("-----------------------------------------------------------------------------------------------------------");
+		UFLog.Info("===========================================================================================================");
+		UFLog.Info("===========================================================================================================");
+		UFLog.Info("[INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
+		UFLog.Info("-----------------------------------------------------------------------------------------------------------");
 			ValidateAndRepair();
 			int dummy_version = int.MAX;
 			PlayerBase parentPlayer = PlayerBase.Cast(GetHierarchyRootPlayer());
@@ -24,7 +24,7 @@ modded class Weapon_Base extends Weapon {
 			for (int mi = 0; mi < GetMuzzleCount(); ++mi)
 			{
 				if (data.m_ChamberedRound){
-					Print("[UF] Pushing Round to Chamber");
+					UFLog.Debug("Pushing Round to Chamber");
 					PushCartridgeToChamber(mi, data.m_ChamberedRound.dmg(), data.m_ChamberedRound.cartTypeName());
 				}
 				for (i = 0; i < data.m_MagAmmo.Count(); i++){
@@ -35,10 +35,10 @@ modded class Weapon_Base extends Weapon {
 			SetStepZeroing(GetCurrentMuzzle(), data.GetInt("m_Zeroing"));
 			SetZoom(data.GetFloat("m_Zoom"));
 			DryFire(GetCurrentMuzzle());
-		Print("===========================================================================================================");
-		Print("===========================================================================================================");
+		UFLog.Info("===========================================================================================================");
+		UFLog.Info("===========================================================================================================");
 			if (data.GetInt("m_IsJammed") == 1){
-				Print("Setting SetJammed");
+				UFLog.Debug("Setting SetJammed");
 				SetJammed(true);
 			}
 			if (data.m_FireModes){
@@ -82,7 +82,7 @@ modded class Weapon_Base extends Weapon {
 		if (rpc_type == 155494166 && g_Game.IsClient()) {
 			Param1<bool> data;
 			if (ctx.Read(data))	{
-				Print("[UF] OnRPC" + GetType());
+				UFLog.Debug("OnRPC" + GetType());
 				if (data.param1 && g_Game.IsClient()){
 					UFWeaponAfterLoadClient();
 				}
@@ -94,10 +94,10 @@ modded class Weapon_Base extends Weapon {
 		int i;
 		//if (!data){return;}
 		if (!g_Game.IsMultiplayer() || g_Game.IsServer()){return;}
-		Print("===========================================================================================================");
-		Print("===========================================================================================================");
-		Print("[UF] [INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
-		Print("-----------------------------------------------------------------------------------------------------------");
+		UFLog.Info("===========================================================================================================");
+		UFLog.Info("===========================================================================================================");
+		UFLog.Info("[INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
+		UFLog.Info("-----------------------------------------------------------------------------------------------------------");
 			ValidateAndRepair();
 			/*int dummy_version = int.MAX;
 			PlayerBase parentPlayer = PlayerBase.Cast(GetHierarchyRootPlayer());

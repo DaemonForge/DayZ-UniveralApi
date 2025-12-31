@@ -134,7 +134,7 @@ modded class UEntityStore extends UFObject_Base {
 			item = EntityAI.Cast(g_Game.CreateObject(m_Type, parent.GetPosition()));
 		} 
 		if (!item){
-			Print("[UF] [ERROR] Couldn't create item " + m_Type);
+			UFLog.Err("[ERROR] Couldn't create item " + m_Type);
 			return NULL;
 		} 
 		LoadEntity(item);
@@ -145,7 +145,7 @@ modded class UEntityStore extends UFObject_Base {
 		EntityAI item;
 		item = EntityAI.Cast(g_Game.CreateObject(m_Type, Pos));
 		if (!item){
-			Print("[UF] [UF] [ERROR] Couldn't create item " + m_Type);
+			UFLog.Err("[ERROR] Couldn't create item " + m_Type);
 			return NULL;
 		} 
 		item.SetPosition(Pos);
@@ -199,7 +199,7 @@ modded class UEntityStore extends UFObject_Base {
 		PlayerBase HoldingPlayer;
 		if (Class.CastTo(HoldingPlayer, item.GetHierarchyRootPlayer())){
 			if (m_QuickBarSlot >= 0){
-				Print("[UF] SetQuickBarEntityShortcut " + m_Type + " to " + m_QuickBarSlot);
+				UFLog.Debug("SetQuickBarEntityShortcut " + m_Type + " to " + m_QuickBarSlot);
 				HoldingPlayer.SetQuickBarEntityShortcut(item, m_QuickBarSlot);
 			}
 		}

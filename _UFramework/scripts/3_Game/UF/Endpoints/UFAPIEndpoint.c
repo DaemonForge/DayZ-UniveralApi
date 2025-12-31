@@ -148,7 +148,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		if (  ip && ip != "" && queryPort && queryPort != "" && DBCBX){
 			Post(endpoint,"{}", U().RegisterCall(DBCBX, cid));
 		} else {
-			Print("[UF] [Api] Error ServerQuery IP:" +  ip + " Port:" + queryPort);
+			UFLog.Err("[Api] Error ServerQuery IP:" + ip + " Port:" + queryPort);
 			cid = -1;
 		}
 		return cid;
@@ -171,7 +171,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		if (  ip && ip != "" && queryPort && queryPort != "" && DBCBX){
 			Post(endpoint,"{}",U().RegisterCall(DBCBX, cid));
 		} else {
-			Print("[UF] [Api] Error ServerQuery IP:" +  ip + " Port:" + queryPort);
+			UFLog.Err("[Api] Error ServerQuery IP:" + ip + " Port:" + queryPort);
 			cid = -1;
 		}
 		return cid;
@@ -185,7 +185,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		if (  ip && ip != "" && queryPort && queryPort != "" ){
 			Post(endpoint,"{}",U().RegisterCall(new UNestedCallBack(new UFCallback<UFServerStatus>(cbInstance, cbFunction, oid)), cid));
 		} else {
-			Print("[UF] [Api] Error ServerQuery IP:" +  ip + " Port:" + queryPort);
+			UFLog.Err("[Api] Error ServerQuery IP:" + ip + " Port:" + queryPort);
 			cid = -1;
 		}
 		return cid;
@@ -356,7 +356,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 			return -1;
 		}
 		if (FileExist("$saves:" + ttsId + ".mp4")){
-			Print("[UF] PlayTTS ttsId already downloaded");
+			UFLog.Debug("PlayTTS ttsId already downloaded");
 			GetUFVideoPlayer().LoadAndPlay(ttsId, true);
 			return -1;
 		}

@@ -68,7 +68,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		if (mod && jsonString){
 			Post(endpoint,jsonString, U().RegisterCall(new USilentCallBack(), cid));
 		} else {
-			Print("[UF] [Api] Error Saving " + endpoint + " Data for " + mod);
+			UFLog.Err("[Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
 		}
 		return cid;
@@ -80,7 +80,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		if (mod && jsonString){
 			Post(endpoint,jsonString, new UDBCallBack(cbInstance, cbFunction, cid, mod));
 		} else {
-			Print("[UF] [Api] Error Saving " + endpoint + " Data for " + mod);
+			UFLog.Err("[Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
 		}
 		return cid;
@@ -93,7 +93,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 			cb.SetOID(mod); //Only sets if not set
 			Post(endpoint,jsonString, U().RegisterCall(new UNestedCallBack(cb), cid));
 		} else {
-			Print("[UF] [Api] Error Saving " + endpoint + " Data for " + mod);
+			UFLog.Err("[Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
 		}
 		return cid;
@@ -106,7 +106,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		if (mod && jsonString){
 			Post(endpoint,jsonString,U().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, mod), cid));
 		} else {
-			Print("[UF] [Api] Error Loading Player Data for " + mod);
+			UFLog.Err("[Api] Error Loading Player Data for " + mod);
 			cid = -1;
 		}
 		return cid;
@@ -119,7 +119,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 			cb.SetOID(mod); //Only sets if not set
 			Post(endpoint,jsonString, U().RegisterCall(new UNestedCallBack(cb), cid));
 		} else {
-			Print("[UF] [Api] Error Loading Player Data for " + mod);
+			UFLog.Err("[Api] Error Loading Player Data for " + mod);
 			cid = -1;
 		}
 		return cid;
@@ -138,7 +138,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		if ( element && transaction && mod){
 			Post(endpoint,transaction.ToJson(), U().RegisterCall(new USilentCallBack(), cid));
 		} else {
-			Print("[UF] [Api] Error Transaction " +  mod);
+			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;
 		}
 		return cid;
@@ -153,7 +153,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		if ( element && transaction && mod){
 			Post(endpoint,transaction.ToJson(), new UDBCallBack(cbInstance, cbFunction, cid, mod));
 		} else {
-			Print("[UF] [Api] Error Transaction " +  mod);
+			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;
 		}
 		return cid;
@@ -169,7 +169,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 			cb.SetOID(mod); //Only sets if not set
 			Post(endpoint,transaction.ToJson(),  U().RegisterCall(new UNestedCallBack(cb), cid));
 		} else {
-			Print("[UF] [Api] Error Transaction " +  mod);
+			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;
 		}
 		return cid;
@@ -192,7 +192,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		if ( element && updatedata && DBCBX){
 			Post(endpoint, updatedata.ToJson(), U().RegisterCall(DBCBX, cid));
 		} else {
-			Print("[UF] [Api] Error Transaction " +  mod);
+			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;
 		}
 		return cid;

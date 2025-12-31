@@ -102,6 +102,9 @@ class UCronManager extends Managed {
 		if (!m_CronFunctions) return;
 		if (m_CronFunctions.Count() < 1) return;
 		
+		// Collect functions to remove after iteration (avoid modifying array during foreach)
+		array<UCronFunction> toRemove = new array<UCronFunction>;
+		
 		// Iterate through all registered cron functions.
 		foreach(UCronFunction cronFunc : m_CronFunctions){
 			Class obj;           // Object on which the function will be executed.
@@ -111,14 +114,19 @@ class UCronManager extends Managed {
 			
 			// Check if the scheduled time for the function is due.
 			if (cronFunc.shouldAttemptCall(curTime, obj, funcName, params, shouldDelete)){
-				Print("[UF] [Cron] Running Function " + funcName + " @ " + curTime);
+				UFLog.Debug("[Cron] Running Function " + funcName + " @ " + curTime);
 				// Enqueue the function call via the system call queue.
 				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallByName(obj, funcName, params);
 			}
-			// If flagged for removal, schedule the removal call.
+			// If flagged for removal, collect it for removal after iteration.
 			if (shouldDelete){
-				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.RemoveByFunc, cronFunc);
+				toRemove.Insert(cronFunc);
 			}
+		}
+		
+		// Remove collected functions after iteration is complete
+		foreach(UCronFunction removeFunc : toRemove){
+			RemoveByFunc(removeFunc);
 		}
 	}
 	
@@ -133,8 +141,9 @@ class UCronManager extends Managed {
 	 * @param params       Optional parameters for the function.
 	 */
 	void runEndless(int freqSeconds, Class obj, string fnName, Param params = NULL) {
-		Print("[UF] [Cron] Registering Endless Function " + fnName + " every " + freqSeconds);
+		UFLog.Debug("[Cron] Registering Endless Function " + fnName + " every " + freqSeconds);
 		int idx = m_CronFunctions.Insert(new UCronFunction(freqSeconds, obj, fnName, params));
+		UFLog.Debug("[Cron] Total registered cron jobs: " + m_CronFunctions.Count());
 	}
 	
 	/**
@@ -149,7 +158,7 @@ class UCronManager extends Managed {
 	 * @param params       Optional parameters for the function.
 	 */
 	void runEndTime(int freqSeconds, int endCallUnix, Class obj, string fnName, Param params = NULL) {
-		Print("[UF] [Cron] Registering Function w/ Endtime " + fnName + " every " + freqSeconds + " end at " + endCallUnix);
+		UFLog.Debug("[Cron] Registering Function w/ Endtime " + fnName + " every " + freqSeconds + " end at " + endCallUnix);
 		int idx = m_CronFunctions.Insert(new UCronFunction(freqSeconds, obj, fnName, params));
 		// Set the end time for scheduled executions.
 		m_CronFunctions.Get(idx).setEndTime(endCallUnix);
@@ -167,7 +176,7 @@ class UCronManager extends Managed {
 	 * @param params       Optional parameters for the function.
 	 */
 	void runEndCount(int freqSeconds, int maxCount, Class obj, string fnName, Param params = NULL) {
-		Print("[UF] [Cron] Registering Function w/ maxCount " + fnName + " every " + freqSeconds + " end after " + maxCount);
+		UFLog.Debug("[Cron] Registering Function w/ maxCount " + fnName + " every " + freqSeconds + " end after " + maxCount);
 		int idx = m_CronFunctions.Insert(new UCronFunction(freqSeconds, obj, fnName, params));
 		// Set the maximum execution count allowed.
 		m_CronFunctions.Get(idx).setMaxCount(maxCount);
@@ -184,7 +193,7 @@ class UCronManager extends Managed {
 	 * @param params       Optional parameters for the function.
 	 */
 	void runOnce(int nextRunUnix, Class obj, string fnName, Param params = NULL) {
-		Print("[UF] [Cron] Registering run Once Function " + fnName + " run at " + nextRunUnix);
+		UFLog.Debug("[Cron] Registering run Once Function " + fnName + " run at " + nextRunUnix);
 		// Use a negative frequency to indicate one-time execution.
 		int idx = m_CronFunctions.Insert(new UCronFunction(-1, obj, fnName, params));
 		// Manually set the scheduled time for execution.
@@ -199,7 +208,7 @@ class UCronManager extends Managed {
 	 * @param cronFunc  The cron function instance to remove.
 	 */
 	void RemoveByFunc(UCronFunction cronFunc){
-		Print("[UF] [Cron] Removing Function " + cronFunc.GetFuncName());
+		UFLog.Debug("[Cron] Removing Function " + cronFunc.GetFuncName() + " | Remaining: " + (m_CronFunctions.Count() - 1));
 		m_CronFunctions.RemoveItem(cronFunc);
 	}
 	
@@ -212,11 +221,15 @@ class UCronManager extends Managed {
 	 * @param fnName   The name of the function to remove.
 	 */
 	void Remove(Class obj, string fnName){
-		Print("[UF] [Cron] Removing Function " + fnName);
+		UFLog.Debug("[Cron] Removing Function " + fnName);
 		if(!obj) return;
-		// Iterate and remove each matching cron function.
+		// Collect matching functions first, then remove (avoid modifying array during iteration)
+		array<UCronFunction> toRemove = new array<UCronFunction>;
 		foreach(UCronFunction cronFunc : m_CronFunctions){
-			if (cronFunc.is(obj, fnName)) RemoveByFunc(cronFunc);
+			if (cronFunc.is(obj, fnName)) toRemove.Insert(cronFunc);
+		}
+		foreach(UCronFunction removeFunc : toRemove){
+			RemoveByFunc(removeFunc);
 		}
 	}
 	
@@ -227,15 +240,35 @@ class UCronManager extends Managed {
 	 * This is typically used as a clean-up mechanism.
 	 */
 	void RemoveNull(){
-		Print("[UF] [Cron] Running RemoveNull");
+		UFLog.Debug("[Cron] Running RemoveNull - checking " + m_CronFunctions.Count() + " cron jobs");
 		// Check if there are any functions to process.
 		if (m_CronFunctions.Count() < 1) return;
-		// Iterate through the cron functions and remove invalid ones.
+		// Collect invalid functions first, then remove (avoid modifying array during iteration)
+		array<UCronFunction> toRemove = new array<UCronFunction>;
 		foreach(UCronFunction cronFunc : m_CronFunctions){
 			if (!cronFunc.isValid()) {
-				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.RemoveByFunc, cronFunc);
+				UFLog.Debug("[Cron] RemoveNull: Found invalid cron job: " + cronFunc.GetFuncName());
+				toRemove.Insert(cronFunc);
 			}
 		}
+		foreach(UCronFunction removeFunc : toRemove){
+			RemoveByFunc(removeFunc);
+		}
+	}
+	
+	/**
+	 * DebugDump
+	 *
+	 * Prints all currently registered cron jobs for debugging purposes.
+	 */
+	void DebugDump(){
+		UFLog.Debug("[Cron] === DEBUG DUMP === Total: " + m_CronFunctions.Count());
+		int i = 0;
+		foreach(UCronFunction cronFunc : m_CronFunctions){
+			UFLog.Debug("[Cron] [" + i + "] " + cronFunc.GetFuncName() + " | valid=" + cronFunc.isValid() + " | nextCall=" + cronFunc.GetNextCall());
+			i++;
+		}
+		UFLog.Debug("[Cron] === END DUMP ===");
 	}
 }
 
@@ -341,6 +374,17 @@ class UCronFunction extends Managed {
 	}
 	
 	/**
+	 * GetNextCall
+	 *
+	 * Retrieves the next scheduled call time (Unix timestamp).
+	 *
+	 * @return The Unix timestamp of the next scheduled call.
+	 */
+	int GetNextCall(){
+		return m_nextCall;
+	}
+	
+	/**
 	 * shouldAttemptCall
 	 *
 	 * Evaluates whether the cron function should be executed based on the current Unix time.
@@ -358,13 +402,21 @@ class UCronFunction extends Managed {
 		shouldDelete = false;
 		// If the next scheduled call time is reached
 		if (m_nextCall <= curTime){
-			// Update the scheduling information and determine if the function should be deleted
-			shouldDelete = setNextbyCurent(curTime);
 			funcName = m_funcName;
 			params = m_params;
+			
+			// Check if object is valid BEFORE updating the schedule
+			if (!Class.CastTo(obj, m_obj)){
+				// Object is no longer valid - mark for deletion and warn
+				UFLog.Info("[Cron] Object for function " + m_funcName + " is no longer valid, removing cron job");
+				shouldDelete = true;
+				return false;
+			}
+			
+			// Object is valid, now update the scheduling information
+			shouldDelete = setNextbyCurent(curTime);
 			m_curCount++;
-			// Attempt to cast and return the target object
-			return Class.CastTo(obj, m_obj);
+			return true;
 		}
 		return false;
 	}

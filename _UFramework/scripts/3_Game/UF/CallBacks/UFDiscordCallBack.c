@@ -2,11 +2,11 @@ class UDiscordCallBack: RestCallback
 {
 	
 	override void OnError(int errorCode) {
-		Print("[UF] [UDiscordCallBack] Failed errorCode: " + errorCode);
+		UFLog.Err("[UDiscordCallBack] Failed errorCode: " + errorCode);
 	};
 	
 	override void OnTimeout() {
-		Print("[UF] [UDiscordCallBack] Failed errorCode: Timeout");
+		UFLog.Err("[UDiscordCallBack] Failed errorCode: Timeout");
 	};
 	
 	override void OnSuccess(string data, int dataSize) {
@@ -16,7 +16,7 @@ class UDiscordCallBack: RestCallback
 		string error;
 		js.ReadFromString(user, data, error);
 		if (error != ""){
-			Print("[UF] [UDiscordCallBack] Error: " + error);
+			UFLog.Err("[UDiscordCallBack] Error: " + error);
 		}
 		if (user.Status && user.Status == "Success" && user.id && user.id != "0"){
 			OnDiscordUserReceived(UDiscordUser.Cast(user));
@@ -30,18 +30,18 @@ class UDiscordCallBack: RestCallback
 	
 	void OnDiscordUserReceived(UDiscordUser user){
 		//Do Stuff Here
-		Print("[UF] [UDiscordCallBack] Success: " + user.id );
+		UFLog.Info("[UDiscordCallBack] Success: " + user.id);
 		
 	}
 	
 	void OnDiscordUserNotFound(UDiscordUser user){
 		//Do Stuff Here
-		Print("[UF] [UDiscordCallBack] User not found");
+		UFLog.Info("[UDiscordCallBack] User not found");
 	}
 	
 	void OnDiscordUserError(UDiscordUser user){
 		//Do Stuff Here
-		Print("[UF] [UDiscordCallBack] Error: " + user.Error);
+		UFLog.Err("[UDiscordCallBack] Error: " + user.Error);
 		
 	}
 }

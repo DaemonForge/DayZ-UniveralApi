@@ -19,7 +19,7 @@ class UDBCallBack : UFRestCallBackBase
 	
 	override void OnError(int errorCode) {
 		if (U().IsCallCanceled(CallId)){
-			Print("[UF] Call " + CallId + " not called as it was requested to be canceled - OnError " + U().ErrorToString(errorCode));
+			UFLog.Debug("Call " + CallId + " not called as it was requested to be canceled - OnError " + U().ErrorToString(errorCode));
 			return;
 		}
 		int rstatus = UF_SERVERERROR;
@@ -33,7 +33,7 @@ class UDBCallBack : UFRestCallBackBase
 	
 	override void OnTimeout() {
 		if (U().IsCallCanceled(CallId)){
-			Print("[UF] Call " + CallId + " not called as it was requested to be canceled - OnTimeout");
+			UFLog.Debug("Call " + CallId + " not called as it was requested to be canceled - OnTimeout");
 			return;
 		}
 		if (GetInstance() && Function != ""){
@@ -43,7 +43,7 @@ class UDBCallBack : UFRestCallBackBase
 	
 	override void OnSuccess(string data, int dataSize) {
 		if (U().IsCallCanceled(CallId)){
-			Print("[UF] Call " + CallId + " not called as it was requested to be canceled - OnSuccess");
+			UFLog.Debug("Call " + CallId + " not called as it was requested to be canceled - OnSuccess");
 			return;
 		}
 		int rstatus = UF_SUCCESS;

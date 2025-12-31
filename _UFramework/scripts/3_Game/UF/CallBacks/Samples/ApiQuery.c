@@ -14,7 +14,7 @@ class ApiQueryBase : RestCallback{
 	string ToJson(){
 		// Override and Replace with your class Name
 		string jsonString = JsonFileLoader<ApiQueryBase>.JsonMakeData(this);
-		Print("[UF] Error You didn't override ToJson: " + jsonString); 
+		UFLog.Err("Error You didn't override ToJson: " + jsonString); 
 		return jsonString;
 	}
 	
@@ -24,7 +24,7 @@ class ApiQueryBase : RestCallback{
 		if (this){
 			
 		} else {
-			Print("[UF] CallBack Failed errorCode: Invalid Data");
+			UFLog.Err("CallBack Failed errorCode: Invalid Data");
 		}
 	};
 	

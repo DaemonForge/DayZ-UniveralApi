@@ -36,7 +36,7 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
         if (m_Video){
 			#ifndef NO_GUI
 				m_icon.Show(false);
-	            Print("[UF] Stopping: " + m_Video);
+	            UFLog.Debug("Stopping: " + m_Video);
 	            m_Video.Stop();
 	            m_Video.Unload();
         	#endif
@@ -65,13 +65,13 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 		string videoPath =  "$saves:" + oid + ".mp4";
 		m_isAudioPlaying = true;
 		#ifndef NO_GUI
-            Print("[UF] Loading Video: " + videoPath);
+            UFLog.Debug("Loading Video: " + videoPath);
             m_Video.Load(videoPath, false);
 			int playTime = m_Video.GetTotalTime();
          	m_Video.Play();
 			//m_Video.Stop();
            	g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(m_Video.Stop, 1, false);
-            Print("[UF] Loading Video: " + videoPath + " Time:" + playTime);
+            UFLog.Debug("Loading Video: " + videoPath + " Time:" + playTime);
             g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(this.Play, 650, false, showIcon);
 			g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(this.Stop, playTime + 990, false);
         #endif
@@ -82,7 +82,7 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
         if (!m_Video) return;
 		#ifndef NO_GUI
             m_Video.Load(videoPath, false);
-            Print("[UF] Loading Video: " + videoPath + " Time:" + m_Video.GetTotalTime());
+            UFLog.Debug("Loading Video: " + videoPath + " Time:" + m_Video.GetTotalTime());
         #endif
 
     }
@@ -93,7 +93,7 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 		string videoPath =  "$saves:" + oid + ".mp4";
 		#ifndef NO_GUI
             m_Video.Load(videoPath, false);
-            Print("[UF] Loading Video: " + videoPath + " Time:" + m_Video.GetTotalTime());
+            UFLog.Debug("Loading Video: " + videoPath + " Time:" + m_Video.GetTotalTime());
         #endif
 
     }
@@ -103,7 +103,7 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
         if (!m_Video) return;
 		#ifndef NO_GUI
 			m_icon.Show(showIcon);
-            Print("[UF] Playing Video: " + m_Video.GetTotalTime());
+            UFLog.Debug("Playing Video: " + m_Video.GetTotalTime());
          	m_Video.Play();
         #endif
 	}
@@ -114,7 +114,7 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 		m_isAudioPlaying = false;
 		#ifndef NO_GUI
 			m_icon.Show(false);
-            Print("[UF] Stopping: " + m_Video);
+            UFLog.Debug("Stopping: " + m_Video);
             m_Video.Stop();
             m_Video.Unload();
         #endif
@@ -142,7 +142,7 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 			AddToQueue(oid);
 		} 
 		else {
-			Print("[UF] Error playing audio " + oid + " cid" + cid + " Message: " + msg);
+			UFLog.Err("Error playing audio " + oid + " cid" + cid + " Message: " + msg);
 		}
 	}
 

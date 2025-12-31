@@ -4,8 +4,7 @@ class CfgPatches
 	{
 		requiredVersion=0.1;
 		requiredAddons[]={
-			"UFBase",
-			"JM_CF_Scripts"
+			"UFBase"
 		};
 	};
 };

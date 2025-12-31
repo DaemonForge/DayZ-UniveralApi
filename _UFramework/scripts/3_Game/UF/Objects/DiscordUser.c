@@ -56,7 +56,7 @@ class UDiscordUser extends StatusObject{
 				}
 			}
 			
-			Print("[UF] [UDiscordUser] Role added successfully for user: " + id);
+			UFLog.Debug("[UDiscordUser] Role added successfully for user: " + id);
 		} else {
 			Error("[UF] [UDiscordUser] Failed to add role for user: " + id + " Error: " + user.Error);
 		}
@@ -86,7 +86,7 @@ class UDiscordUser extends StatusObject{
 				}
 			}
 			
-			Print("[UF] [UDiscordUser] Role removed successfully for user: " + id);
+			UFLog.Debug("[UDiscordUser] Role removed successfully for user: " + id);
 		} else {
 			Error("[UF] [UDiscordUser] Failed to remove role for user: " + id + " Error: " + user.Error);
 		}

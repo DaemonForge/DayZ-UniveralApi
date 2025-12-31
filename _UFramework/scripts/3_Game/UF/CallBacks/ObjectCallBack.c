@@ -32,11 +32,11 @@ class UFRestCallBackBase : RestCallback
 class UFCallback<Class T> extends UFCallbackBase {
 	
 	override void OnError(int errorCode, int cid) {
-		Print("[UF] UFCallback<" + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
+		UFLog.Err("UFCallback<" + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != "") {
 			Param4<int, int, string, T> p = new Param4<int, int, string, T>(cid, errorCode, OID, null);
-			Print(GetInstance());
-			Print(this);
+			UFLog.Debug("" + GetInstance());
+			UFLog.Debug("" + this);
 			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, null, p);
 		}
 	}
@@ -63,9 +63,11 @@ class UFCallback<Class T> extends UFCallbackBase {
 							break;
 						case "NoAuth":
 							rstatus = UF_UNAUTHORIZED;
+							U().OnAuthFailure(); // Trigger token renewal
 							break;
 						case "InvalidAuth":
 							rstatus = UF_UNAUTHORIZED;
+							U().OnAuthFailure(); // Trigger token renewal
 							break;
 						case "NotSetup":
 							rstatus = UF_NOTSETUP;
@@ -90,7 +92,7 @@ class UFCallbackLoader<Class T> extends UFCallbackBase {
 	}
 	
 	override void OnError(int errorCode, int cid) {
-		Print("[UF] UFCallbackLoader<" + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
+		UFLog.Err("UFCallbackLoader<" + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != "") {
 			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, errorCode, OID, NULL));
 		}
@@ -117,9 +119,11 @@ class UFCallbackLoader<Class T> extends UFCallbackBase {
 						break;
 					case "NoAuth":
 						rstatus = UF_UNAUTHORIZED;
+						U().OnAuthFailure(); // Trigger token renewal
 						break;
 					case "InvalidAuth":
 						rstatus = UF_UNAUTHORIZED;
+						U().OnAuthFailure(); // Trigger token renewal
 						break;
 					case "NotSetup":
 						rstatus = UF_NOTSETUP;
@@ -136,7 +140,7 @@ class UFCallbackLoader<Class T> extends UFCallbackBase {
 class UJSONCallback extends UFCallbackBase {
 	
 	override void OnError(int errorCode, int cid) {
-		Print("[UF] UJSONCallback OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
+		UFLog.Err("UJSONCallback OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != ""){
 			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(cid, errorCode, OID, "{}"));
 		}
@@ -207,7 +211,7 @@ class UNestedCallBack : UFRestCallBackBase
 	
 	override void OnError(int errorCode) {
 		if (U().IsCallCanceled(m_UFid)){
-			Print("[UF] Call " + m_UFid + " not called as it was requested to be canceled - OnError " + U().ErrorToString(errorCode));
+			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnError " + U().ErrorToString(errorCode));
 			super.OnError(errorCode);
 			return;
 		}
@@ -221,7 +225,7 @@ class UNestedCallBack : UFRestCallBackBase
 	
 	override void OnTimeout() {
 		if (U().IsCallCanceled(m_UFid)){
-			Print("[UF] Call " + m_UFid + " not called as it was requested to be canceled - OnTimeout");
+			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnTimeout");
 			super.OnTimeout();
 			return;
 		}
@@ -232,7 +236,7 @@ class UNestedCallBack : UFRestCallBackBase
 	
 	override void OnSuccess(string data, int dataSize) {
 		if (U().IsCallCanceled(m_UFid)){
-			Print("[UF] Call " + m_UFid + " not called as it was requested to be canceled - OnSuccess");
+			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnSuccess");
 			super.OnSuccess(data, dataSize);
 			return;
 		}

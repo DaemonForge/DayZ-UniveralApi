@@ -204,7 +204,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 				Error2("[UF] Error failed to register callback with UF", "Query");
 			}
 		} else {
-			Print("[UF] [Api] Error Querying " +  mod);
+			UFLog.Err("[Api] Error Querying " + mod);
 			cid = -1;
 		}
 		return cid;
@@ -485,7 +485,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 				Error2("[UF] Error failed to register callback with UF", "PublicSave");
 			}
 		} else {
-			Print("[UF] [Api] Error Saving " + endpoint + " Data for " + mod);
+			UFLog.Err("[Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
 		}
 		return cid;
@@ -515,7 +515,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 				Error2("[UF] Error failed to register callback with UF", "PublicLoad");
 			}
 		} else {
-			Print("[UF] [Api] Error Loading Player Data for " + mod);
+			UFLog.Err("[Api] Error Loading Player Data for " + mod);
 			cid = -1;
 		}
 		return cid;

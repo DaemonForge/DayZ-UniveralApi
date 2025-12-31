@@ -39,12 +39,12 @@ class UFDownloadTTS : UFRestCallBackBase
 	}
 	
 	override void OnError(int errorCode) {
-		Print("[UF] [UFDownloadAudio] Save of a File Failed errorCode: " + errorCode);
+		UFLog.Err("[UFDownloadAudio] Save of a File Failed errorCode: " + errorCode);
 		
 		super.OnError(errorCode);
 	};
 	override void OnTimeout() {
-		Print("[UF] [UFDownloadAudio] Save of a File Timeout");
+		UFLog.Err("[UFDownloadAudio] Save of a File Timeout");
 		super.OnTimeout();
 	};
 	
@@ -55,12 +55,12 @@ class UFDownloadTTS : UFRestCallBackBase
 			int rnd = Math.RandomInt(100,990);
 			string filename =  "$saves:" + m_oid + ".mp4";
             UUtil.SaveBase64ToFileSplit(data, filename);
-			Print("[UF] [UFDownloadAudio] File '" + filename + "' saved successfully.");
+			UFLog.Debug("[UFDownloadAudio] File '" + filename + "' saved successfully.");
 
 			super.OnSuccess(data,dataSize);
 			return
         }
-        Print("[UF] [UFDownloadAudio] an error occured");
+        UFLog.Err("[UFDownloadAudio] an error occured");
 		super.OnSuccess(data,dataSize);
 	}
 
@@ -90,7 +90,7 @@ class UDLTTSNestedCallback : UNestedCallBack
 {
 	override void OnSuccess(string data, int dataSize) {
 		if (U().IsCallCanceled(m_UFid)){
-			Print("[UF] Call " + m_UFid + " not called as it was requested to be canceled - OnSuccess");
+			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnSuccess");
 			super.OnSuccess(data, dataSize);
 			return;
 		}
@@ -102,7 +102,7 @@ class UDLTTSNestedCallback : UNestedCallBack
 		int rnd = Math.RandomInt(100,990);
 		string filename =  "$saves:" + GetCB().GetOID() + ".mp4";
         UUtil.SaveBase64ToFile(data, filename);
-		Print("[UF] [UFDownloadTTS] File '" + filename + "' saved successfully.");
+		UFLog.Debug("[UFDownloadTTS] File '" + filename + "' saved successfully.");
 
 		super.OnSuccess(data,dataSize);
 	}

@@ -1,48 +1,12 @@
 /**
  * File: UFAIChatEndpoint.c
  * Description: The class for interacting with the AI Chat endpoints
+ * 
+ * Tool calling is now handled natively by OpenAI's function calling feature.
+ * Tools are passed in the request body and OpenAI returns structured tool call responses.
  */
+
 class UFAIChatEndpoint extends UFBaseEndpoint {
-
-	/**
-	 * Helper: build context entries from tool definitions (string-only parameters for simplicity).
-	 */
-	static array<autoptr UAIChatContext> BuildToolContext(array<autoptr UAIToolDef> tools){
-		if (!tools || tools.Count() == 0) return NULL;
-		autoptr array<autoptr UAIChatContext> ctx = new array<autoptr UAIChatContext>;
-		foreach (UAIToolDef tool : tools){
-			if (!tool || tool.Name == "" || tool.Description == "") continue;
-			autoptr UAIChatContext c = new UAIChatContext("tool:" + tool.Name);
-			c.AddContext("description:" + tool.Description);
-			if (tool.Parameters){
-				for (int i = 0; i < tool.Parameters.Count(); i++){
-					string p = tool.Parameters.Get(i);
-					if (p != "") c.AddContext("param:" + p);
-				}
-			}
-			ctx.Insert(c);
-		}
-		if (ctx.Count() == 0) return NULL;
-		return ctx;
-	}
-
-	/**
-	 * Helper: merge existing context with tool-derived context.
-	 */
-	static array<autoptr UAIChatContext> MergeContextWithTools(array<autoptr UAIChatContext> context, array<autoptr UAIToolDef> tools){
-		autoptr array<autoptr UAIChatContext> toolCtx = BuildToolContext(tools);
-		if (!context && !toolCtx) return NULL;
-		if (!context) return toolCtx;
-		if (!toolCtx) return context;
-		autoptr array<autoptr UAIChatContext> merged = new array<autoptr UAIChatContext>;
-		foreach (autoptr UAIChatContext c : context){
-			merged.Insert(c);
-		}
-		foreach (autoptr UAIChatContext t : toolCtx){
-			merged.Insert(t);
-		}
-		return merged;
-	}
 
 	override protected string EndpointBaseUrl(){
 		return UFConfig().GetBaseURL() + "AI/Chat/";
@@ -56,9 +20,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @param model - Optional AI model to use
 	 * @param maxHistory - Optional maximum history to keep
 	 * @param cb - Callback for response handling
+	 * @param kbId - Optional Knowledge Base ID for enhanced context retrieval
 	 * @return Call ID or -1 on error
 	 */
-	int Create(string systemMessage, string responseFormat, string jsonSchema = "", string model = "", int maxHistory = -1, UFCallbackBase cb = NULL) {
+	int Create(string systemMessage, string responseFormat, string jsonSchema = "", string model = "", int maxHistory = -1, UFCallbackBase cb = NULL, string kbId = "") {
 		if (!U().IsOpenAIEnabled()){
 			Error2("[UF] AI Chat Create", "OpenAI service is not online");
 			return -1;
@@ -68,8 +33,17 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			return -1;
 		}
 		
+		// Debug logging for KB integration
+		if (kbId != "") {
+			UFLog.Debug("[AI Chat] Creating session with KB: " + kbId);
+		} else {
+			UFLog.Debug("[AI Chat] Creating session without KB");
+		}
+		
 		int cid = -1;
-		autoptr UAIChatCreateRequest req = new UAIChatCreateRequest(systemMessage, responseFormat, jsonSchema, model, maxHistory);
+		autoptr UAIChatCreateRequest req = new UAIChatCreateRequest(systemMessage, responseFormat, jsonSchema, model, maxHistory, kbId);
+		
+		UFLog.Debug("[AI Chat] Create request body: " + req.ToJson());
 		
 		if (cb) {
 			Post("Create", req.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
@@ -79,6 +53,8 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat Create", "Error Registering Callback");
+		} else {
+			UFLog.Debug("[AI Chat] Create registered with CID: " + cid);
 		}
 		return cid;
 	}
@@ -89,7 +65,7 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @param message - The message content to send
 	 * @param cb - Callback for response handling (required)
 	 * @param context - Optional context information
-	 * @param tools - Optional tool definitions to expose to the AI
+	 * @param tools - Optional tool definitions to expose to the AI (uses native OpenAI function calling)
 	 * @return Call ID or -1 on error
 	 */
 	int Send(string chatId, string message, UFCallbackBase cb, array<autoptr UAIChatContext> context = NULL, array<autoptr UAIToolDef> tools = NULL) {
@@ -107,13 +83,26 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			return -1;
 		}
 		
+		// Debug logging
+		UFLog.Debug("[AI Chat] Sending message to chat: " + chatId);
+		UFLog.Debug("[AI Chat] Message length: " + message.Length().ToString());
+		if (context) {
+			UFLog.Debug("[AI Chat] Context items: " + context.Count().ToString());
+		}
+		if (tools) {
+			UFLog.Debug("[AI Chat] Tools count: " + tools.Count().ToString());
+		}
+		
 		int cid = -1;
-		autoptr UAIChatMessage req = new UAIChatMessage(message, MergeContextWithTools(context, tools));
+		// Pass tools directly in the message - service handles OpenAI native function calling
+		autoptr UAIChatMessage req = new UAIChatMessage(message, context, tools);
 		
 		Post("Send/" + chatId, req.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat Send", "Error Registering Callback");
+		} else {
+			UFLog.Debug("[AI Chat] Send registered with CID: " + cid);
 		}
 		return cid;
 	}
@@ -301,6 +290,41 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat SummaryStatus", "Error Registering Callback");
+		}
+		return cid;
+	}
+	
+	/**
+	 * Submits a tool execution result back to the AI to continue the conversation.
+	 * Use this after receiving a "ToolCall" status from MessageStatus.
+	 * @param messageId - The message ID that requested the tool call
+	 * @param toolCallId - The tool call ID from the ToolCall response
+	 * @param result - The result of executing the tool (as a string)
+	 * @param cb - Callback for response handling (will return new MessageId to poll)
+	 * @return Call ID or -1 on error
+	 */
+	int SubmitToolResult(string messageId, string toolCallId, string result, UFCallbackBase cb) {
+		if (!U().IsOpenAIEnabled()){
+			Error2("[UF] AI Chat SubmitToolResult", "OpenAI service is not online");
+			return -1;
+		}
+		if (messageId == "" || toolCallId == "") {
+			Error2("[UF] AI Chat SubmitToolResult", "messageId and toolCallId must be valid strings");
+			return -1;
+		}
+		
+		if (!cb) {
+			Error2("[UF] AI Chat SubmitToolResult", "Callback is required");
+			return -1;
+		}
+		
+		int cid = -1;
+		autoptr UAIChatToolResultRequest req = new UAIChatToolResultRequest(toolCallId, result);
+		
+		Post("ToolResult/" + messageId, req.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
+		
+		if (cid == -1) {
+			Error2("[UF] AI Chat SubmitToolResult", "Error Registering Callback");
 		}
 		return cid;
 	}

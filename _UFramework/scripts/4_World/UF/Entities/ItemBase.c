@@ -6,6 +6,10 @@ modded class ItemBase {
 	protected autoptr TStringArray m_AvaibleSkinNames = {};
 	protected autoptr array<autoptr TStringArray> m_AllowedIds = new array<autoptr TStringArray>;
 	
+	protected int m_SkinNeedRefresh = 1;
+	protected int m_SkinNeedRefreshRemote = -1;
+
+
 	override void OnUFSave(UEntityStore data){
 		super.OnUFSave(data);
 		
@@ -20,8 +24,10 @@ modded class ItemBase {
 	
 	override void EEOnCECreate() {
 		super.EEOnCECreate();
-		m_SkinPaintIdx = m_AvaibleSkinNames.GetRandomIndex();
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater( this.RefreshTextures, 100, false );
+		if(m_AvaibleSkinNames && m_AvaibleSkinNames.Count() > 0 && m_SkinPaintIdx == -1){
+			m_SkinPaintIdx = m_AvaibleSkinNames.GetRandomIndex();
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater( this.RefreshTextures, 100, false );
+		}
 	}
 	
 	override void EEInit() {
@@ -35,6 +41,7 @@ modded class ItemBase {
 	
 	
 	void ItemBase() {
+		RegisterNetSyncVariableInt("m_SkinNeedRefresh", -1, 1);
 		RegisterNetSyncVariableInt("m_SkinPaintIdx", -1, 9999);
 		InitSkins();
 	}
@@ -148,14 +155,19 @@ modded class ItemBase {
 		if (g_Game.IsServer()){
 			SetSynchDirty();
 		}
-		if (GetTexture(index).Count() > 0) {
-			for (i = 0; i < GetTexture(index).Count(); i++){
-				SetObjectTexture(i, GetTexture(index).Get(i));
+		RefreshTextures();
+	}
+
+	void RefreshTextures() {
+		if (GetCurrentSkinIdx() < 0 || GetCurrentSkinIdx() >= GetTextureCount()){return;}// Cancel if the texture is not valid
+		if (GetTexture(GetCurrentSkinIdx()).Count() > 0) {
+			for (int i = 0; i < GetTexture(GetCurrentSkinIdx()).Count(); i++){
+				SetObjectTexture(i, GetTexture(GetCurrentSkinIdx()).Get(i));
 			}
 		}
-		if (GetMaterial(index).Count() > 0) {
-			for (i = 0; i < GetMaterial(index).Count(); i++){
-				SetObjectMaterial(i, GetMaterial(index).Get(i));
+		if (GetMaterial(GetCurrentSkinIdx()).Count() > 0) {
+			for (int j = 0; j < GetMaterial(GetCurrentSkinIdx()).Count(); j++){
+				SetObjectMaterial(j, GetMaterial(GetCurrentSkinIdx()).Get(j));
 			}
 		}
 	}
@@ -184,6 +196,12 @@ modded class ItemBase {
 	{    
 		super.AfterStoreLoad();
 		SetTexture( GetCurrentSkinIdx() );
+		if(g_Game.IsClient()){
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater( this.RefreshTextures, 100, false );
+		}
+		if (g_Game.IsServer()){
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater( this.MarkSkinRefreshNeeded, 100, false );
+		}
 	}
 	
 	override void OnVariablesSynchronized() 
@@ -191,23 +209,43 @@ modded class ItemBase {
         super.OnVariablesSynchronized();
         if (m_SkinPaintIdx != m_SkinPaintIdxRemote ) {
             m_SkinPaintIdxRemote = m_SkinPaintIdx;
-            SetTexture( GetCurrentSkinIdx() );
+            RefreshTextures();
         } 
+		if (m_SkinNeedRefresh != m_SkinNeedRefreshRemote ) {
+			m_SkinNeedRefreshRemote = m_SkinNeedRefresh;
+			RefreshTextures();
+		}
     }
 	
-	void RefreshTextures(){
-		SetTexture(GetCurrentSkinIdx());
+	void MarkSkinRefreshNeeded() {
+		if (!g_Game.IsServer()){
+			return;
+		}
+		if (m_SkinNeedRefresh == 1){
+			m_SkinNeedRefresh = 0;
+		} else {
+			m_SkinNeedRefresh = 1;
+		}
+		SetSynchDirty();
 	}
-	
-	
 
 	override void OnWasAttached( EntityAI parent, int slot_id ) {
 		super.OnWasAttached(parent, slot_id);
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call( this.RefreshTextures );
+		if(m_AvaibleSkinNames && m_AvaibleSkinNames.Count() > 0 && m_SkinPaintIdx == -1){
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call( this.RefreshTextures );
+			if (g_Game.IsServer()){
+				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater( this.MarkSkinRefreshNeeded, 100, false );
+			}
+		}
 	}
 	
 	override void OnWasDetached( EntityAI parent, int slot_id ) {
 		super.OnWasDetached(parent, slot_id);
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call( this.RefreshTextures);
+		if(m_AvaibleSkinNames && m_AvaibleSkinNames.Count() > 0 && m_SkinPaintIdx == -1){
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call( this.RefreshTextures );
+			if (g_Game.IsServer()){
+				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater( this.MarkSkinRefreshNeeded );
+			}
+		}
 	}
 }

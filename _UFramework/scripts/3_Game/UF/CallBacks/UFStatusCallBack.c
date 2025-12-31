@@ -24,7 +24,7 @@ class UFStatusCallBack : UDBCallBack
 			string error;
 			js.ReadFromString(obj, data, error);
 			if (error != ""){
-				Print("[UF] [UFStatusCallBack] Error: " + error);
+				UFLog.Err("[UFStatusCallBack] Error: " + error);
 			}
 			if (obj && obj.Status && (obj.Status == "Success" || obj.Status == "Ok") ){ //Will eventually Phase out "Ok"			
 				g_Game.GameScript.CallFunctionParams(Instance, Function, NULL, new Param4<int, int, string, autoptr StatusObject>(CallId, UF_SUCCESS, OID, StatusObject.Cast(obj)));

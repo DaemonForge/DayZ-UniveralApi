@@ -62,7 +62,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 		if (m_ChatId == "") {
 			if (m_IsCreating) {
 				// Chat is being created, queue the message
-				Print("[UF] [UAIChatHandler] Chat is being created, queuing message: " + message);
+				UFLog.Debug("[UAIChatHandler] Chat is being created, queuing message: " + message);
 				QueueMessage(message, context);
 				return 0;
 			} else {
@@ -232,7 +232,7 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 		if (m_ChatId == "") {
 			if (m_IsCreating) {
 				// Chat is being created, queue the message
-				Print("[UF] [UStringAIChatHandler] Chat is being created, queuing message: " + message);
+				UFLog.Debug("[UStringAIChatHandler] Chat is being created, queuing message: " + message);
 				QueueMessage(message, context);
 				return 0;
 			} else {
@@ -394,7 +394,7 @@ class UAIChatHandlerBase extends Managed
 		
 		// If we're busy with another message, queue this one
 		if (m_PendingMessageId != "" || m_IsProcessingQueue || m_IsCreating) {
-			Print("[UF] [UAIChatHandlerBase] Queuing message: " + message);
+			UFLog.Debug("[UAIChatHandlerBase] Queuing message: " + message);
 			
 			// Create and add queued message object
 			UAIChatQueuedMessage queuedMsg = new UAIChatQueuedMessage(message, context);
@@ -434,7 +434,7 @@ class UAIChatHandlerBase extends Managed
 		m_MessageQueue.RemoveOrdered(0);
 		
 		// Send the message
-		Print("[UF] [UAIChatHandlerBase] Processing queued message: " + nextMsg.message);
+		UFLog.Debug("[UAIChatHandlerBase] Processing queued message: " + nextMsg.message);
 		SendMessage(nextMsg.message, nextMsg.context);
 	}
 	
@@ -456,7 +456,7 @@ class UAIChatHandlerBase extends Managed
 		if (!m_PollingEnabled || m_IsPollingActive) return;
 		
 		// Register with the cron system to poll periodically
-		Print("[UF] [UAIChatHandlerBase] Starting polling with frequency: " + m_PollingFrequency);
+		UFLog.Debug("[UAIChatHandlerBase] Starting polling with frequency: " + m_PollingFrequency);
 		U().Cron().runEndless(m_PollingFrequency, this, "PollPendingOperations", NULL);
 		m_IsPollingActive = true;
 	}
@@ -468,7 +468,7 @@ class UAIChatHandlerBase extends Managed
 	{
 		if (!m_IsPollingActive) return;
 		
-		Print("[UF] [UAIChatHandlerBase] Stopping polling");
+		UFLog.Debug("[UAIChatHandlerBase] Stopping polling");
 		U().Cron().Remove(this, "PollPendingOperations");
 		m_IsPollingActive = false;
 	}
@@ -724,7 +724,7 @@ class UAIChatHandlerBase extends Managed
 		
 		// Store the chat ID for future operations
 		m_ChatId = response.ChatId;
-		Print("[UF] [UAIChatHandlerBase] Chat created with ID: " + m_ChatId);
+		UFLog.Debug("[UAIChatHandlerBase] Chat created with ID: " + m_ChatId);
 		
 		// Notify client about creation success if callback is set
 		if (m_CreateCallbackFunc != "") {

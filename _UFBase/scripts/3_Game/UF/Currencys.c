@@ -61,15 +61,15 @@ class UCurrency extends UCurrencyBase{
 	}
 	
 	static void UDebug(){
-		Print("[UF] UCurrency Debug Start ---------");
+		UFLog.Debug("UCurrency Debug Start ---------");
 		for (int i = 0; i < m_UCurrencysMap.Count(); i++){
-			Print("- - - - - - - - - - -");
-			Print(m_UCurrencysMap.GetKey(i));
-			Print(m_UCurrencysMap.GetElement(i));
+			UFLog.Debug("- - - - - - - - - - -");
+			UFLog.Debug("" + m_UCurrencysMap.GetKey(i));
+			UFLog.Debug("" + m_UCurrencysMap.GetElement(i));
 			m_UCurrencysMap.GetElement(i).Debug();
-			Print("- - - - - - - - - - -");
+			UFLog.Debug("- - - - - - - - - - -");
 		}
-		Print("[UF] UCurrency Debug End  ---------");
+		UFLog.Debug("UCurrency Debug End  ---------");
 	}
 	
 	protected bool m_IsSorted = false;
