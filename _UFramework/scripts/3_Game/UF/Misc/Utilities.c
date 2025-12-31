@@ -891,4 +891,258 @@ class UUtil extends Managed {
 	    serializer.Close();
 	    //Print("Binary file saved successfully to: " + filePath);
 	}
+	/**
+	* UMapLocation
+	* ------------
+	* Represents a named location on the map (city, town, village, etc.)
+	* retrieved from CfgWorlds configuration.
+	*
+	* Properties:
+	*   - ClassName: The config class name of the location entry.
+	*   - Name: The display name of the location (e.g., "Chernogorsk").
+	*   - Type: The location type (e.g., "City", "Village", "Capital").
+	*   - Position: The 3D world position of the location (includes terrain height).
+	*
+	* Common Location Types:
+	*   - "Capital" - Major cities
+	*   - "City" - Large towns/cities
+	*   - "Village" - Small villages
+	*   - "Local" - Local landmarks
+	*   - "Marine" - Marine/coastal points
+	*   - "Hill" - Hills and elevated areas
+	*   - "Ruin" - Ruins and historical sites
+	*   - "ViewPoint" - Scenic viewpoints
+	*/
+
+	/**
+	 * GetMapLocations
+	 * ---------------
+	 * Summary:
+	 *   Retrieves all named locations (cities, towns, villages, etc.) from the current map's
+	 *   CfgWorlds configuration. Each location includes its class name, display name, type,
+	 *   and 3D world position (with terrain height).
+	 *
+	 * Parameters:
+	 *   - typeFilters: (Optional) Array of location types to include (e.g., {"City", "Village", "Capital"}).
+	 *                  Pass NULL or empty array to include all types.
+	 *
+	 * Returns:
+	 *   An array of UMapLocation objects containing all matching locations.
+	 *
+	 * Example Usage:
+	 * @code
+	 *   // Get all cities and villages
+	 *   array<string> filters = {"City", "Village"};
+	 *   array<ref UMapLocation> towns = UUtil.GetMapLocations(filters);
+	 *   
+	 *   // Get all locations (no filter)
+	 *   array<ref UMapLocation> allLocations = UUtil.GetMapLocations();
+	 *   
+	 *   foreach (UMapLocation loc : allLocations)
+	 *   {
+	 *       Print("Location: " + loc.Name + " (" + loc.Type + ") at " + loc.Position.ToString());
+	 *   }
+	 * @endcode
+	 *
+	 * Note:
+	 *   This reads from CfgWorlds <worldName> Names, which contains map marker data.
+	 *   Common types include: "City", "Village", "Capital", "Local", "Marine", "Hill", etc.
+	 *   Position is computed with terrain height using SurfaceY().
+	 */
+	static array<autoptr UMapLocation> GetMapLocations(array<string> typeFilters = NULL)
+	{
+		array<autoptr UMapLocation> locations = new array<autoptr UMapLocation>();
+		
+		// Get current world name
+		string worldName = "";
+		GetGame().GetWorldName(worldName);
+		
+		if (worldName == "")
+		{
+			return locations;
+		}
+		
+		// Build path to the Names config section
+		string cfgPath = "CfgWorlds " + worldName + " Names";
+		
+		// Check if the config path exists
+		if (!GetGame().ConfigIsExisting(cfgPath))
+		{
+			return locations;
+		}
+		
+		// Determine if we should filter
+		bool hasFilters = (typeFilters && typeFilters.Count() > 0);
+		
+		// Get number of location entries
+		int count = GetGame().ConfigGetChildrenCount(cfgPath);
+		
+		for (int i = 0; i < count; i++)
+		{
+			string className = "";
+			GetGame().ConfigGetChildName(cfgPath, i, className);
+			
+			if (className == "")
+			{
+				continue;
+			}
+			
+			string entryPath = cfgPath + " " + className;
+			
+			// Get the display name
+			string name = "";
+			GetGame().ConfigGetText(entryPath + " name", name);
+			
+			// Get the type
+			string type = "";
+			GetGame().ConfigGetText(entryPath + " type", type);
+			
+			// Apply type filter if specified
+			if (hasFilters && typeFilters.Find(type) == -1)
+			{
+				continue;
+			}
+			
+			// Get position (stored as 2D float array [x, z])
+			array<float> posArray = new array<float>();
+			GetGame().ConfigGetFloatArray(entryPath + " position", posArray);
+			
+			vector position = vector.Zero;
+			if (posArray.Count() >= 2)
+			{
+				float x = posArray.Get(0);
+				float z = posArray.Get(1);
+				float y = GetGame().SurfaceY(x, z);
+				position = Vector(x, y, z);
+			}
+			
+			// Create and add the location
+			UMapLocation loc = new UMapLocation();
+			loc.ClassName = className;
+			loc.Name = name;
+			loc.Type = type;
+			loc.Position = position;
+			
+			locations.Insert(loc);
+		}
+		
+		return locations;
+	}
+	
+	/**
+	 * GetNearestMapLocation
+	 * ---------------------
+	 * Summary:
+	 *   Finds the nearest named location to a given position.
+	 *
+	 * Parameters:
+	 *   - position: The world position to search from.
+	 *   - typeFilters: (Optional) Array of location types to include. Pass NULL for all types.
+	 *
+	 * Returns:
+	 *   The nearest UMapLocation, or NULL if no locations found.
+	 *
+	 * Example Usage:
+	 * @code
+	 *   vector playerPos = player.GetPosition();
+	 *   array<string> filters = {"City", "Capital"};
+	 *   UMapLocation nearest = UUtil.GetNearestMapLocation(playerPos, filters);
+	 *   if (nearest)
+	 *   {
+	 *       Print("Nearest city: " + nearest.Name);
+	 *   }
+	 * @endcode
+	 */
+	static UMapLocation GetNearestMapLocation(vector position, array<string> typeFilters = NULL)
+	{
+		array<autoptr UMapLocation> locations = GetMapLocations(typeFilters);
+		
+		UMapLocation nearest = NULL;
+		float nearestDist = 999999999; // Large initial value (Enforce Script has no float.MAX)
+		
+		foreach (UMapLocation loc : locations)
+		{
+			float dist = vector.Distance(position, loc.Position);
+			if (dist < nearestDist)
+			{
+				nearestDist = dist;
+				nearest = loc;
+			}
+		}
+		
+		return nearest;
+	}
+
+	/**
+	 * GetNearestMapLocationName
+	 * ---------------------
+	 * Summary:
+	 *   Finds the nearest named location to a given position and return its name.
+	 *
+	 * Parameters:
+	 *   - position: The world position to search from.
+	 *   - typeFilters: (Optional) Array of location types to include. Pass NULL for all types.
+	 *
+	 * Returns:
+	 *   The nearest name, or "unknown" if no locations found.
+	 *
+	 * Example Usage:
+	 * @code
+	 *   vector playerPos = player.GetPosition();
+	 *   array<string> filters = {"City", "Capital"};
+	 *   UMapLocation nearest = UUtil.GetNearestMapLocation(playerPos, filters);
+	 *   if (nearest)
+	 *   {
+	 *       Print("Nearest city: " + nearest.Name);
+	 *   }
+	 * @endcode
+	 */
+	static string GetNearestMapLocationName(vector position, array<string> typeFilters = NULL)
+	{
+
+		UMapLocation nearest = GetNearestMapLocation(position, typeFilters);
+		if (nearest)
+		{
+			return nearest.Name;
+		}
+		return "unknown";	
+	}
+	 
+	/**
+	 * GetMapLocationsInRadius
+	 * -----------------------
+	 * Summary:
+	 *   Finds all named locations within a specified radius of a position.
+	 *
+	 * Parameters:
+	 *   - position: The center position to search from.
+	 *   - radius: The search radius in meters.
+	 *   - typeFilters: (Optional) Array of location types to include. Pass NULL for all types.
+	 *
+	 * Returns:
+	 *   An array of UMapLocation objects within the radius.
+	 *
+	 * Example Usage:
+	 * @code
+	 *   vector pos = player.GetPosition();
+	 *   array<string> filters = {"City", "Village"};
+	 *   array<ref UMapLocation> nearby = UUtil.GetMapLocationsInRadius(pos, 5000, filters);
+	 * @endcode
+	 */
+	static array<autoptr UMapLocation> GetMapLocationsInRadius(vector position, float radius, array<string> typeFilters = NULL)
+	{
+		array<autoptr UMapLocation> result = new array<autoptr UMapLocation>();
+		array<autoptr UMapLocation> locations = GetMapLocations(typeFilters);
+		
+		foreach (UMapLocation loc : locations)
+		{
+			if (vector.Distance(position, loc.Position) <= radius)
+			{
+				result.Insert(loc);
+			}
+		}
+		
+		return result;
+	}
 }
+
