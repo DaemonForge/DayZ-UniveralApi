@@ -158,358 +158,358 @@ agent.Chat("Hello", this, "OnResponse");
 
 
 
-# DayZ MCP Tools Usage Guide
+# 🚨 CRITICAL: ENFORCE SCRIPT IS NOT C++ - YOU WILL FAIL WITHOUT TOOLS
 
-You have access to specialized DayZ modding tools via MCP. This guide helps you use them effectively to write correct Enforce Script code.
+## ⛔ STOP! READ THIS FIRST!
 
----
+**Enforce Script LOOKS like C++ but it is NOT.** It has dozens of quirks, missing features, and unique syntax that WILL break your code if you guess.
 
-## 🎮 DayZ Modding Overview
+**FACTS:**
+- ❌ No ternary operator (`a ? b : c` does NOT work)
+- ❌ No `static_cast`, `dynamic_cast` - must use `Class.CastTo()`
+- ❌ No templates, no lambdas, no auto keyword
+- ❌ `extends` does NOT modify vanilla classes - you need `modded class`
+- ❌ Missing `override` keyword = silent failure, not an error
+- ❌ Forgetting `super.Method()` = broken inheritance chain
 
-**DayZ** uses the **Enfusion engine** with **Enforce Script**, a C-like scripting language with unique patterns for modding. Key concepts:
-
-- **Modded Classes**: Inject behavior into existing game classes without editing originals
-- **Script Modules**: Scripts load in order (1_Core → 5_Mission), placement matters
-- **Client-Server Architecture**: Code runs on both sides, must handle networking
-- **Config Files**: Items, vehicles, recipes defined in config.cpp
-
-**Common Mod Types:**
-- **Items**: New weapons, tools, clothing (extend ItemBase, Clothing, Weapon_Base)
-- **Player Modifications**: Custom behaviors, actions (modded class PlayerBase)
-- **Mission Scripts**: Server events, spawn systems (modded class MissionServer)
-- **UI/HUD**: Custom interfaces (client-side scripts in 5_Mission)
+**Your code WILL NOT WORK if you write from memory.** You MUST use the tools below.
 
 ---
 
-## 🔧 Available Tools
+## 🔥 YOU HAVE FULL TOOL ACCESS - USE IT!
 
-### Reference & Context
-| Tool | Purpose |
-|------|---------|
-| `get_enforce_context` | Enforce Script syntax reference (see sections below) |
-| `list_context_sections` | List all available context sections with descriptions |
-| `get_enforce_warnings` | Common syntax pitfalls to avoid |
+You have access to the complete DayZ modding toolkit. **USE THESE TOOLS FOR EVERY TASK.**
 
-### Context Sections (use with `get_enforce_context section:"..."`)
+### 📚 KNOWLEDGE BASE TOOLS (Start Here!)
 
-**Language Basics:**
-| Section | Description |
-|---------|-------------|
-| `inheritance` | How to create new classes using extends keyword |
-| `overrides` | How to properly override methods using override and super |
-| `modifiers` | Access levels (private, protected) and variable modifiers (ref, autoptr) |
-| `variables` | Variable declaration, primitive types (int, float, bool, string, vector) |
-| `functions` | Function declaration, parameters (out, inout), return types |
-| `operators` | Arithmetic, comparison, logical operators (NO ternary!) |
-| `control_flow` | If/else, switch, for, foreach, while loops |
-| `arrays` | Static arrays and dynamic array<T> with methods |
-| `maps` | Key-value storage using map<K,V> |
-| `enums` | Enum declaration and usage |
-| `oop` | Classes, constructors, this/super, managed classes |
+#### `search_dayz_kb` - YOUR FIRST STOP FOR EVERY TASK
+**What it does:** Searches a curated knowledge base of DayZ modding tutorials, best practices, and expert guides.
 
-**Modded Classes:**
-| Section | Description |
-|---------|-------------|
-| `modded_class_overview` | Quick reference for modded class basics, key rules, mod chaining |
-| `modded_class_advanced` | Advanced techniques, constants, private members, best practices |
-| `modded_class_examples` | Real-world examples: hygiene, stamina, recoil, nitro, earplugs |
-| `modding_core_classes` | How to mod MissionServer, MissionGameplay, PlayerBase, CarScript |
-| `custom_actions` | Custom player actions: SingleUse, Interact, Continuous patterns |
+**Why it's critical:** The KB contains solutions to problems the community has already solved. It knows about quirks, pitfalls, and the RIGHT way to implement features.
 
-**Networking:**
-| Section | Description |
-|---------|-------------|
-| `networking_overview` | Server/client architecture, detection, quick reference table |
-| `networking_classes` | Key classes: DayZGame, MissionServer, MissionGameplay, PlayerBase |
-| `networking_constraints` | Server-side vs client-side scripting limitations and rules |
-| `networking_scenarios` | What runs where: inventory, player status, world, UI, persistence |
-| `networking_rpc` | Detailed RPC patterns for server-client communication |
-| `networking_netsync` | NetSync variables for automatic state synchronization |
+**Parameters:**
+- `query` (required): What you're trying to do or learn about
+- `limit` (optional): Number of results (default: 5)
 
-**DayZ Systems:**
-| Section | Description |
-|---------|-------------|
-| `patterns` | Essential code patterns: safe casting, server/client checks |
-| `base_classes` | Key classes to extend: ItemBase, PlayerBase, EntityAI, etc. |
-| `modules` | Load order of script modules and where to place files |
-| `lifecycle` | Important methods for items, players, and missions |
-| `entity_management` | Spawning, manipulating, and deleting entities |
-| `inventory` | Inventory manipulation, cargo, attachments |
-| `plugins` | Creating and registering custom plugins |
-| `config` | Structure of config.cpp, CfgPatches, CfgVehicles |
-| `file_structure` | Standard mod folder layout and organization |
-| `actions` | How to create and register custom actions |
-| `crafting` | How to define and register crafting recipes |
-| `persistence` | Saving and loading data using storage and JSON |
-| `events` | ScriptInvoker events and custom event patterns |
-| `timers` | Timer class, CallLater patterns, delayed execution |
-| `best_practices` | Code organization, performance, common mistakes |
-| `limitations` | Enforce Script quirks and unsupported features |
-| `debugging` | Print statements, logging, debugging tools |
-| `pbo` | How mods are packaged and loaded |
+**Example usage:**
+```
+search_dayz_kb query:"how to create custom item"
+search_dayz_kb query:"modded class override method"
+search_dayz_kb query:"RPC server client communication"
+search_dayz_kb query:"player inventory manipulation"
+search_dayz_kb query:"config.cpp CfgVehicles syntax"
+```
 
-### Search & Discovery
-| Tool | Purpose |
-|------|---------|
-| `search_dayz_kb` | Community tutorials and best practices |
-| `search_dayz_files` | Search actual DayZ source code |
+**USE THIS BEFORE WRITING ANY CODE!**
 
-### Mod Scaffolding & Generation
-| Tool | Purpose |
-|------|---------|
-| `scaffold_mod` | Generate complete mod folder structure |
-| `generate_item_config` | Create CfgVehicles entry for new items |
-| `find_parent_class` | Find parent class for any DayZ class |
-| `check_class_references` | Validate that referenced classes exist |
-| `list_base_classes` | List known base classes with properties |
+---
+
+#### `list_dayz_kb` - See All Available KB Articles
+**What it does:** Returns a list of all available knowledge base articles.
+
+**When to use:** When you want to browse what documentation is available, or find the exact name of an article.
+
+**Parameters:** None
+
+---
+
+#### `get_dayz_kb_article` - Get a Specific KB Article
+**What it does:** Retrieves the full content of a specific KB article by name.
+
+**Parameters:**
+- `name` (required): The exact article name from `list_dayz_kb`
+
+**Example:**
+```
+get_dayz_kb_article name:"modded_class_overview"
+get_dayz_kb_article name:"custom_actions"
+```
+
+---
+
+### 🔍 SOURCE CODE SEARCH TOOLS (Find Exact Implementations!)
+
+#### `search_dayz_files` - FIND THE ACTUAL VANILLA CODE
+**What it does:** Vector search across ALL DayZ source files to find relevant code, classes, and implementations.
+
+**Why it's critical:** You MUST see the actual vanilla implementation before overriding methods. The method signature, parameters, and return type must match EXACTLY.
+
+**Parameters:**
+- `query` (required): What to search for (class names, method names, concepts)
+- `limit` (optional): Number of results (default: 5)
+- `includeMods` (optional): Include community mod code (default: false)
+
+**Example usage:**
+```
+search_dayz_files query:"PlayerBase OnConnect"
+search_dayz_files query:"ItemBase EEKilled"
+search_dayz_files query:"override void Init"
+search_dayz_files query:"GetGame().CreateObject"
+search_dayz_files query:"RPC SendRPC"
+```
+
+**ALWAYS use this to find method signatures before overriding!**
+
+---
+
+#### `get_dayz_file_by_class` - Get File Content by Class Name
+**What it does:** Finds and returns the file(s) containing a specific class, including the first 3 parts of content.
+
+**Parameters:**
+- `className` (required): The class name to find
+- `includeMods` (optional): Include community mods
+
+**Example:**
+```
+get_dayz_file_by_class className:"PlayerBase"
+get_dayz_file_by_class className:"ItemBase"
+get_dayz_file_by_class className:"CarScript"
+```
+
+---
+
+#### `get_dayz_file_parts` - Get Parts List for Large Files
+**What it does:** Large files are split into parts. This returns the list of available parts for a file.
+
+**Parameters:**
+- `filePath` (required): The file path
+
+**Example:**
+```
+get_dayz_file_parts filePath:"scripts/4_world/entities/manbase/playerbase.c"
+```
+
+---
+
+#### `get_dayz_file_part` - Get Specific Part of a File
+**What it does:** Retrieves a specific part of a large file.
+
+**Parameters:**
+- `filePath` (required): The file path
+- `partNumber` (required): Part number (1-based)
+
+**Example:**
+```
+get_dayz_file_part filePath:"scripts/4_world/entities/manbase/playerbase.c" partNumber:2
+```
+
+---
+
+#### `search_in_dayz_file` - Search Within a Specific File
+**What it does:** Text search within a specific file to find methods, variables, or patterns.
+
+**Parameters:**
+- `filePath` (required): The file path
+- `searchTerm` (required): Text to search for (case-insensitive)
+
+**Example:**
+```
+search_in_dayz_file filePath:"scripts/4_world/entities/itembase.c" searchTerm:"OnInventoryEnter"
+```
+
+---
+
+#### `get_dayz_credits` - Check API Credits
+**What it does:** Returns your remaining DaemonForge API credits.
+
+---
+
+## 📋 MANDATORY WORKFLOW - FOLLOW THIS EVERY TIME!
+
+### Step 1: Research the Feature (BEFORE writing ANY code)
+```
+search_dayz_kb query:"[what you want to build]"
+```
+Read the KB articles. They contain the RIGHT way to do things.
+
+### Step 2: Find the Vanilla Implementation
+```
+search_dayz_files query:"[class or method you need]"
+get_dayz_file_by_class className:"[TargetClass]"
+```
+You MUST see the original code to override correctly.
+
+### Step 3: Understand the Class Structure
+```
+lsp_find_class className:"[TargetClass]"
+lsp_get_class_hierarchy className:"[TargetClass]"
+lsp_get_class_methods className:"[TargetClass]"
+```
+
+### Step 4: Check for Known Quirks
+```
+list_enforce_quirks search:"[topic]"
+get_enforce_context section:"[topic]"
+```
+
+### Step 5: Write Code
+NOW you can write code, using the information you gathered.
+
+### Step 6: VALIDATE (Required!)
+```
+lsp_get_diagnostics filePath:"[your file]"
+check_class_references classNames:["Class1", "Class2"]
+```
+**DO NOT present code with compile errors!**
+
+---
+
+## 🛠️ COMPLETE TOOL REFERENCE
+
+### 📚 DayZ Knowledge Base Tools
+| Tool | Description |
+|------|-------------|
+| `search_dayz_kb` | Vector search the knowledge base for tutorials, guides, best practices |
+| `list_dayz_kb` | List all available KB articles |
+| `get_dayz_kb_article` | Get full content of a specific KB article |
+
+### 🔍 DayZ Source Code Tools
+| Tool | Description |
+|------|-------------|
+| `search_dayz_files` | Vector search across all DayZ source files |
+| `get_dayz_file_by_class` | Get file content by class name |
+| `get_dayz_file_parts` | Get list of parts for a large file |
+| `get_dayz_file_part` | Get specific part of a file |
+| `search_in_dayz_file` | Search within a specific file |
+| `get_dayz_credits` | Check remaining API credits |
+
+### 🏗️ Mod Scaffolding Tools
+| Tool | Description |
+|------|-------------|
+| `scaffold_mod` | Generate complete mod folder structure with all required files |
+| `generate_item_config` | Generate config.cpp CfgVehicles entry for new items |
+| `list_base_classes` | List common base classes with their properties |
+| `find_parent_class` | Find the parent class of a given class |
+| `check_class_references` | Verify that class names exist in vanilla |
 | `list_inventory_slots` | List valid inventory slot names |
 
-### Quirks (Long-Term Memory)
-| Tool | Purpose |
-|------|---------|
-| `list_enforce_quirks` | List known quirks and gotchas |
-| `get_enforce_quirk` | Get full details of a quirk by ID |
-| `save_enforce_quirk` | Save newly discovered quirks |
-
-### Code Intelligence (LSP)
-| Tool | Purpose |
-|------|---------|
-| `lsp_get_diagnostics` | Get compile errors/warnings for a file |
-| `lsp_get_file_outline` | Get class/method structure of a file |
-| `lsp_go_to_definition` | Find where a symbol is defined |
+### 🔬 Code Intelligence (LSP) Tools
+| Tool | Description |
+|------|-------------|
+| `lsp_find_class` | Find a class definition by exact name |
+| `lsp_search_classes` | Search for classes matching a pattern |
+| `lsp_get_class_hierarchy` | Get complete inheritance hierarchy |
+| `lsp_find_child_classes` | Find all classes extending a base class |
+| `lsp_get_class_methods` | Get all methods defined in a class |
+| `lsp_find_method_overrides` | Find all overrides of a method |
+| `lsp_search_symbols` | Search for any symbol type |
+| `lsp_get_file_outline` | Get structure/outline of a file |
+| `lsp_go_to_definition` | Navigate to symbol definition |
 | `lsp_find_references` | Find all usages of a symbol |
-| `lsp_get_symbol_info` | Get type info for a symbol |
-| `lsp_get_completions` | Get code completions at a position |
+| `lsp_get_symbol_info` | Get detailed info about a symbol |
+| `lsp_get_completions` | Get code completion suggestions |
+| `lsp_get_diagnostics` | **CRITICAL** - Get compile errors/warnings |
+
+### 📂 Project Drive Tools (P:\ Access)
+| Tool | Description |
+|------|-------------|
+| `project_read_file` | Read vanilla source file content |
+| `project_list_files` | List files in vanilla directories |
+| `project_grep` | Search vanilla code with text/regex |
+
+### 🧠 Quirks & Context Tools
+| Tool | Description |
+|------|-------------|
+| `get_enforce_context` | Get syntax reference for a topic |
+| `list_context_sections` | List all available context sections |
+| `get_enforce_warnings` | Get common Enforce Script pitfalls to avoid |
+| `refresh_context` | Reload context after adding new .insc files |
+| `list_enforce_quirks` | List known Enforce Script quirks |
+| `get_enforce_quirk` | Get details on a specific quirk |
+| `save_enforce_quirk` | Save a new quirk you discovered |
 
 ---
 
-## 📋 Required Workflow
+## ⚠️ ENFORCE SCRIPT TRAPS - MEMORIZE THESE!
 
-### BEFORE Writing Code:
+### ❌ Things That DO NOT Work (Even Though They Look Like C++)
 
-1. **Check for relevant quirks first**
-   ```
-   list_enforce_quirks search:"topic you're working on"
-   ```
+| What You Might Try | Why It Fails | What To Do Instead |
+|-------------------|--------------|---------------------|
+| `x = a ? b : c;` | No ternary operator | `if (a) x = b; else x = c;` |
+| `PlayerBase.Cast(entity)` | Wrong cast syntax | `Class.CastTo(player, entity);` |
+| `class MyPlayer extends PlayerBase` | Creates NEW class, doesn't modify vanilla | `modded class PlayerBase` |
+| `void OnInit() { ... }` | Missing override keyword | `override void OnInit() { ... }` |
+| `override void OnInit() { MyCode(); }` | Missing super call | `super.OnInit(); MyCode();` |
+| `static MyClass instance;` | Static member syntax differs | Use singleton pattern with function |
+| `auto x = GetSomething();` | No auto keyword | Explicitly declare type |
+| `[](int x) { return x * 2; }` | No lambdas | Use named functions |
+| `template<T>` | No templates | Use specific types or Managed |
 
-2. **Get the right context section**
-   ```
-   get_enforce_context section:"modded_class"
-   get_enforce_context section:"lifecycle"
-   get_enforce_context section:"networking"
-   ```
+### ✅ Correct Patterns
 
-3. **Find the original implementation before overriding**
-   ```
-   search_dayz_files "ClassName MethodName"
-   find_parent_class className:"ClassName"
-   ```
-
-4. **For new items, scaffold correctly**
-   ```
-   scaffold_mod modName:"MyMod" includeExampleItem:true
-   generate_item_config className:"MyItem" displayName:"My Item" baseClass:"ItemBase"
-   ```
-
-### BEFORE Finishing:
-
-5. **Validate class references**
-   ```
-   check_class_references classNames:["ParentClass", "OtherClass"]
-   ```
-
-6. **Always validate with diagnostics**
-   ```
-   lsp_get_diagnostics for each file you created/modified
-   ```
-   Do not present code with errors.
-
-7. **Save any new quirks discovered**
-   ```
-   save_enforce_quirk summary:"..." details:"..." tags:["syntax", "compiler"]
-   ```
-
----
-
-## 🎯 Tool Usage Patterns
-
-**Starting a new mod:**
-```
-scaffold_mod modName:"MyMod" authorName:"Me" includeExampleItem:true includeExampleScript:true
+**Casting:**
+```cpp
+PlayerBase player;
+if (Class.CastTo(player, entity)) {
+    // player is now valid
+}
 ```
 
-**Adding a new item:**
-```
-list_base_classes                          → Find appropriate base class
-generate_item_config className:"..." ...   → Generate config entry
-get_enforce_context section:"config"       → Understand config structure
-```
-
-**Modifying existing behavior:**
-```
-search_dayz_files "ClassName"              → Find the class
-find_parent_class className:"ClassName"    → Understand hierarchy
-get_enforce_context section:"modded_class" → Get modded class syntax
-list_enforce_quirks tag:"inheritance"      → Check known issues
-```
-
-**Understanding how something works:**
-```
-search_dayz_kb "topic"                     → Get tutorials first
-search_dayz_files "ClassName"              → Find actual implementation
-get_enforce_context section:"lifecycle"    → Understand method timing
-```
-
-**When something doesn't work:**
-```
-lsp_get_diagnostics                        → Check for compile errors
-get_enforce_warnings                       → Check syntax pitfalls
-list_enforce_quirks search:"..."           → Check if it's a known quirk
-```
-
----
-
-## 🧠 Quirks System
-
-The quirks system stores knowledge about unexpected Enforce Script behaviors. **Always check before coding, always save when you discover something new.**
-
-**Useful tags:** `syntax`, `inheritance`, `networking`, `compiler`, `lifecycle`, `null`, `casting`, `inventory`, `ui`, `performance`
-
-**Example save:**
-```
-save_enforce_quirk
-  summary: "Ternary operator doesn't work for assignments"
-  details: "Enforce Script doesn't support x = a ? b : c syntax. Use if/else instead. The compiler will not error but behavior is undefined."
-  tags: ["syntax", "compiler"]
-```
-
----
-
-## ✅ Pre-Completion Checklist
-
-Before presenting code:
-- [ ] Got appropriate context sections for the task
-- [ ] Ran `lsp_get_diagnostics` - no errors
-- [ ] Checked `list_enforce_quirks` for related issues
-- [ ] Used `search_dayz_files` to verify override signatures
-- [ ] Validated class references with `check_class_references`
-- [ ] Saved any new quirks discovered
-
----
-
-## ⚠️ Critical DayZ Modding Rules
-
-### Modded Classes (MOST IMPORTANT!)
-
-**To modify an existing vanilla class, use `modded class`:**
+**Modifying Vanilla Classes:**
 ```cpp
 modded class PlayerBase {
     override void Init() {
-        super.Init();  // ALWAYS call super first!
-        // Your custom code here
+        super.Init();  // ALWAYS call super FIRST!
+        // Your modifications here
     }
 }
 ```
 
-**Do NOT use `extends` for existing classes:**
+**Null Checks:**
 ```cpp
-// ❌ WRONG - This creates a NEW class, doesn't modify existing
-class MyPlayer extends PlayerBase { }
-
-// ✅ RIGHT - This modifies the existing PlayerBase everywhere
-modded class PlayerBase { }
-```
-
-### Override Rules
-
-1. **Always use the `override` keyword** - Compiler catches typos
-2. **Always call `super.MethodName()`** - Preserves original behavior and mod compatibility
-3. **Match exact method signatures** - Use `search_dayz_files` to find the original
-
-```cpp
-modded class ItemBase {
-    override void OnInventoryEnter(Man player) {
-        super.OnInventoryEnter(player);  // Call parent first
-        // Your code after
-    }
+if (object && object.IsValid()) {
+    // Safe to use object
 }
-```
-
-### Script Module Placement
-
-Place your scripts in the **same module as the class you're modding**:
-
-| Class | Module | Your Script Goes In |
-|-------|--------|---------------------|
-| `PlayerBase` | 4_World | `Scripts/4_World/` |
-| `ItemBase` | 4_World | `Scripts/4_World/` |
-| `MissionServer` | 5_Mission | `Scripts/5_Mission/` |
-| `DayZGame` | 3_Game | `Scripts/3_Game/` |
-
-### Client-Server Architecture
-
-```cpp
-// Code that should only run on server
-if (GetGame().IsServer()) {
-    // Spawn items, process game logic
-    GetGame().CreateObject("ItemClassName", position, false, false, true);
-}
-
-// Code that should only run on client
-if (GetGame().IsClient()) {
-    // UI updates, local effects
-}
-```
-
-### Common Patterns
-
-**Safe Casting (ALWAYS use this):**
-```cpp
-PlayerBase player;
-if (Class.CastTo(player, someEntity)) {
-    player.DoSomething();
-}
-```
-
-**Creating Objects (server-side):**
-```cpp
-EntityAI obj = GetGame().CreateObject("ClassName", position, false, false, true);
-```
-
-### Syntax Pitfalls
-
-```cpp
-// ❌ NO ternary assignments
-x = condition ? a : b;
-
-// ✅ Use if/else instead
-if (condition) { x = a; } else { x = b; }
-```
-
-```cpp
-// ❌ NO inline single-statement if
-if (x) DoA(); DoB();  // DoB always runs!
-
-// ✅ Use braces
-if (x) { DoA(); DoB(); }
 ```
 
 ---
 
-## 📁 Mod File Structure
+## 📁 MOD STRUCTURE
 
 ```
 YourMod/
-├── mod.cpp                 # Mod registration
-├── config.cpp              # CfgPatches, CfgMods, CfgVehicles
-├── Scripts/
-│   ├── 3_Game/             # Game logic (rare)
-│   ├── 4_World/            # Entities, items, players (most common)
-│   │   ├── MyModdedPlayer.c
-│   │   └── MyNewItem.c
-│   └── 5_Mission/          # Mission, UI scripts
-├── data/                   # Models, textures (optional)
-└── keys/                   # Server signature keys
+├── mod.cpp              # Mod registration (name, author, version)
+├── config.cpp           # CfgPatches, CfgVehicles, CfgMods
+└── Scripts/
+    ├── 3_Game/          # Core game systems (rare to modify)
+    ├── 4_World/         # Items, players, entities, vehicles (most common)
+    │   └── YourMod/     # Your script files go here
+    └── 5_Mission/       # Mission logic, UI, menus
 ```
 
-Use `scaffold_mod` to generate this structure automatically!
+Use `scaffold_mod modName:"YourMod"` to generate this automatically!
+
+---
+
+## ✅ FINAL CHECKLIST - DO NOT SKIP!
+
+Before presenting ANY code to the user, verify:
+
+- [ ] ✅ Used `search_dayz_kb` to find the right approach
+- [ ] ✅ Used `search_dayz_files` to find vanilla implementation
+- [ ] ✅ Method signatures match vanilla EXACTLY
+- [ ] ✅ Used `lsp_get_diagnostics` - **ZERO compile errors**
+- [ ] ✅ All `override` methods call `super.MethodName()` first
+- [ ] ✅ Used `modded class` (NOT `extends`) for vanilla modifications
+- [ ] ✅ Checked `list_enforce_quirks` for known issues
+- [ ] ✅ No ternary operators, no auto, no lambdas
+- [ ] ✅ Using `Class.CastTo()` for all casts
+
+---
+
+## 📚 CONTEXT SECTIONS
+
+Use `get_enforce_context section:"name"` for detailed syntax reference:
+
+| Category | Available Sections |
+|----------|-------------------|
+| **Core Language** | `variables`, `functions`, `operators`, `control_flow`, `arrays`, `enums` |
+| **OOP** | `oop`, `inheritance`, `overrides`, `modded_class_overview`, `modded_class_advanced` |
+| **Patterns** | `patterns`, `base_classes`, `modules`, `lifecycle` |
+| **Networking** | `networking_overview`, `networking_rpc`, `networking_netsync` |
+| **UI** | `ui_widget_types`, `ui_widget_code`, `ui_quick_reference` |
+| **Systems** | `actions`, `inventory`, `config`, `file_structure`, `persistence` |
+
+Use `list_context_sections` to see all available sections with descriptions.
+

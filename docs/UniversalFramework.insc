@@ -4,12 +4,14 @@ Universal Framework provides backend service integration for DayZ modding includ
 
 | Section | Description |
 |---------|-------------|
+| `UniversalFramework_BestPractices` | **START HERE** - Initialization, UFrameworkReady, client offloading, patterns |
 | `UniversalFramework_StatusCodes` | HTTP-style status codes for callbacks (`UF_SUCCESS`, `UF_EMPTY`, etc.) |
 | `UniversalFramework_DBHandler_Basics` | Core database operations: `UDBHandler<T>`, Save, Load, typed serialization |
 | `UniversalFramework_DBHandler_Advanced` | Queries, Transactions, Updates, pagination, Query classes |
 | `UniversalFramework_Discord` | Discord bot integration: roles, DMs, channels, voice, linking |
 | `UniversalFramework_DiscordObjects` | Data classes: `UDiscordEmbed`, `UDiscordUser`, `UDiscordMessage` |
 | `UniversalFramework_AIChat` | OpenAI chat: `UFAIChatAgent`, `UAIChatAgent<T>`, context, tools |
+| `UniversalFramework_AIChat_KnowledgeBase` | Document-backed AI: vector search, KB Manager UI, embedding generation |
 | `UniversalFramework_AIVoice` | Text-to-Speech: `TTSGenerate`, `TTSPlay`, voice constants |
 | `UniversalFramework_MessageQueues` | Async messaging: `UQueueHandler<T>`, send/receive, polling |
 | `UniversalFramework_GlobalHandler` | Server-wide key-value storage: `U().globals()` |

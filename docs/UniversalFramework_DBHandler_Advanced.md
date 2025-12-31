@@ -4,6 +4,65 @@
 
 Advanced database operations beyond basic Save/Load. This covers query building, atomic transactions, partial updates, pagination, and the underlying query classes for complex data retrieval patterns.
 
+---
+
+## Method Signatures
+
+All advanced `UDBHandlerBase` methods with exact parameter types:
+
+```enforce
+// Query for multiple documents
+// Returns: int callId (-1 on error)
+int Query(UDBQueryBase query, Class cbInstance, string cbFunction);
+int Query(string query, Class cbInstance, string cbFunction);
+
+// Atomic transaction (increment/decrement numeric field)
+// Returns: int callId
+int Transaction(string oid, string element, float value, Class cbInstance, string cbFunction);
+int Transaction(string oid, string element, float value, float min, float max, Class cbInstance, string cbFunction);
+
+// Fire-and-forget increment (no callback)
+void Increment(string oid, string element, float value = 1);
+
+// Update specific field with operation
+// Returns: int callId
+int Update(string oid, string element, string value, string operation);
+int Update(string oid, string element, string value, string operation, Class cbInstance, string cbFunction);
+
+// Update all documents matching query
+int QueryUpdate(UDBQueryBase query, string element, string value, string operation);
+int QueryUpdate(UDBQueryBase query, string element, string value, string operation, Class cbInstance, string cbFunction);
+```
+
+### Callback Signatures
+
+```enforce
+// Query callback
+void OnQuery(int cid, int status, string oid, UDBQueryResult<T> results);
+
+// Transaction callback  
+void OnTransaction(int cid, int status, string oid, UDBTransactionResponse resp);
+
+// Update callback
+void OnUpdate(int cid, int status, string oid, string response);
+
+// QueryUpdate callback
+void OnQueryUpdate(int cid, int status, string oid, UDBQueryUpdateResponse resp);
+```
+
+### Parameter Reference
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `oid` | `string` | Object ID - unique identifier for the record |
+| `element` | `string` | Field name (supports dot notation: `"Stats.Kills"`) |
+| `value` | `float`/`string` | Value for transaction or update |
+| `min` / `max` | `float` | Bounds for transaction (clamp result) |
+| `operation` | `string` | Update operation constant (see UpdateOpts) |
+| `query` | `UDBQueryBase` | Query object or JSON string |
+
+---
+
 ## Query Classes
 
 ### UDBQuery

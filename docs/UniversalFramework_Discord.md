@@ -51,9 +51,9 @@ Print("Link your Discord: " + linkUrl);
 // Check if player has Discord linked
 U().ds().CheckDiscord(playerId, this, "OnDiscordCheck");
 
-void OnDiscordCheck(int cid, int status, string oid, UDiscordUser user) {
-    if (status == UF_SUCCESS && user) {
-        Print("Discord linked: " + user.Username);
+void OnDiscordCheck(int cid, int status, string oid, StatusObject result) {
+    if (status == UF_SUCCESS) {
+        Print("Discord linked");
     } else if (status == UF_NOTSETUP) {
         Print("Discord not linked");
     }
@@ -66,8 +66,8 @@ void OnDiscordCheck(int cid, int status, string oid, UDiscordUser user) {
 // Check if player has a specific role
 U().ds().CheckRoleDiscord(playerId, "RoleId123", this, "OnRoleCheck");
 
-void OnRoleCheck(int cid, int status, string oid, UDiscordUser user) {
-    if (status == UF_SUCCESS && user) {
+void OnRoleCheck(int cid, int status, string oid, StatusObject result) {
+    if (status == UF_SUCCESS) {
         Print("Player has the required role");
     } else {
         Print("Player does not have the role");
@@ -262,11 +262,11 @@ class VIPManager {
         U().ds().CheckRoleDiscord(guid, m_VIPRoleId, this, "OnVIPCheck");
     }
     
-    void OnVIPCheck(int cid, int status, string oid, UDiscordUser user) {
+    void OnVIPCheck(int cid, int status, string oid, StatusObject result) {
         PlayerBase player = PlayerBase.Cast(UUtil.FindPlayer(oid));
         if (!player) return;
         
-        if (status == UF_SUCCESS && user) {
+        if (status == UF_SUCCESS) {
             // Player has VIP role
             GrantVIPPerks(player);
             UUtil.SendNotification("VIP", "Welcome VIP!", player.GetIdentity());

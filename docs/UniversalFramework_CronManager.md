@@ -17,6 +17,53 @@ The Cron Manager (`UCronManager`) provides scheduled task execution using Unix t
 UCronManager cron = U().Cron();
 ```
 
+---
+
+## Method Signatures
+
+```enforce
+// All UCronManager methods with exact parameter types:
+
+// Run forever at fixed interval
+// Params: (int freqSeconds, Class obj, string fnName, Param params = NULL)
+void runEndless(int freqSeconds, Class obj, string fnName, Param params = NULL);
+
+// Run at interval until absolute Unix timestamp is reached
+// Params: (int freqSeconds, int endCallUnix, Class obj, string fnName, Param params = NULL)
+// NOTE: endCallUnix is ABSOLUTE Unix timestamp, NOT relative seconds!
+void runEndTime(int freqSeconds, int endCallUnix, Class obj, string fnName, Param params = NULL);
+
+// Run at interval for exactly N executions
+// Params: (int freqSeconds, int maxCount, Class obj, string fnName, Param params = NULL)
+void runEndCount(int freqSeconds, int maxCount, Class obj, string fnName, Param params = NULL);
+
+// Run once at absolute Unix timestamp
+// Params: (int nextRunUnix, Class obj, string fnName, Param params = NULL)
+// NOTE: nextRunUnix is ABSOLUTE Unix timestamp, NOT relative seconds!
+void runOnce(int nextRunUnix, Class obj, string fnName, Param params = NULL);
+
+// Remove a scheduled task by object and function name
+void Remove(Class obj, string fnName);
+```
+
+### Parameter Reference
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `freqSeconds` | `int` | Interval in seconds between executions |
+| `endCallUnix` | `int` | **Absolute** Unix timestamp when task should stop |
+| `nextRunUnix` | `int` | **Absolute** Unix timestamp when task should execute |
+| `maxCount` | `int` | Maximum number of executions before removal |
+| `obj` | `Class` | Object instance containing the callback method (`this`) |
+| `fnName` | `string` | Name of method to call as string (`"MyMethod"`) |
+| `params` | `Param` | Optional parameters passed to callback (default: `NULL`) |
+
+> **CRITICAL:** `runEndTime` and `runOnce` use **absolute Unix timestamps**!  
+> Use `UUtil.GetUnixInt()` to get current time, then add your offset.
+> Example: `UUtil.GetUnixInt() + 3600` = one hour from now
+
+---
+
 ## Scheduling Methods
 
 ### runEndless
@@ -24,8 +71,9 @@ UCronManager cron = U().Cron();
 Execute a function repeatedly at a fixed interval forever.
 
 ```enforce
-// Run every 60 seconds
-U().Cron().runEndless(60, this, "OnMinuteTick");
+// Run every 60 seconds forever
+// Params: (int freqSeconds, Class obj, string fnName, Param params)
+U().Cron().runEndless(60, this, "OnMinuteTick", NULL);
 
 // With parameters
 Param1<string> params = new Param1<string>("hello");
@@ -45,13 +93,16 @@ void OnHalfMinute(string message) {
 Execute repeatedly until a specific Unix timestamp.
 
 ```enforce
+// Params: (int freqSeconds, int endCallUnix, Class obj, string fnName, Param params)
+// NOTE: endCallUnix must be an ABSOLUTE Unix timestamp!
+
 // Run every 5 seconds until midnight UTC
 int midnight = GetMidnightUnix();
-U().Cron().runEndTime(5, midnight, this, "OnPoll");
+U().Cron().runEndTime(5, midnight, this, "OnPoll", NULL);
 
-// Run for the next hour
-int oneHourFromNow = UUtil.GetUnixInt() + 3600;
-U().Cron().runEndTime(10, oneHourFromNow, this, "HourlyTask");
+// Run every 10 seconds for the next hour
+int oneHourFromNow = UUtil.GetUnixInt() + 3600;  // Current time + 3600 seconds
+U().Cron().runEndTime(10, oneHourFromNow, this, "HourlyTask", NULL);
 
 void OnPoll() {
     Print("Polling...");
@@ -63,8 +114,10 @@ void OnPoll() {
 Execute a specific number of times then stop.
 
 ```enforce
-// Run 5 times, every 10 seconds
-U().Cron().runEndCount(10, 5, this, "OnCountedRun");
+// Params: (int freqSeconds, int maxCount, Class obj, string fnName, Param params)
+
+// Run 5 times total, every 10 seconds
+U().Cron().runEndCount(10, 5, this, "OnCountedRun", NULL);
 
 // Run 3 times with params
 Param2<int, string> params = new Param2<int, string>(100, "bonus");
@@ -84,13 +137,16 @@ void GiveBonus(int amount, string type) {
 Execute a function once at a specific Unix timestamp.
 
 ```enforce
+// Params: (int nextRunUnix, Class obj, string fnName, Param params)
+// NOTE: nextRunUnix must be an ABSOLUTE Unix timestamp!
+
 // Run 5 minutes from now
-int fiveMinutes = UUtil.GetUnixInt() + 300;
-U().Cron().runOnce(fiveMinutes, this, "DelayedAction");
+int fiveMinutes = UUtil.GetUnixInt() + 300;  // Current time + 300 seconds
+U().Cron().runOnce(fiveMinutes, this, "DelayedAction", NULL);
 
 // Schedule for specific time
 int targetTime = CalculateNextEventTime();
-U().Cron().runOnce(targetTime, this, "ScheduledEvent");
+U().Cron().runOnce(targetTime, this, "ScheduledEvent", NULL);
 
 void DelayedAction() {
     Print("Delayed action executed");

@@ -186,6 +186,195 @@ if (UUtil.GetConfigTStringArray("AKM", "chamberableFrom", chambers)) {
 }
 ```
 
+## Framework Configuration
+
+Access the Universal Framework's server configuration via the `UFConfig()` singleton. Configuration is loaded from `$profile:UF/UFramework.json`.
+
+### Configuration Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ServerURL` | string | Base URL of the UFServerService (e.g., `"https://api.example.com/"`) |
+| `ServerID` | string | Unique identifier for this server (used in logging, globals) |
+| `ServerAuth` | string | Authentication key for server-to-service communication (server-only) |
+| `EnableBuiltinLogging` | int | Enable/disable built-in logging (0 = off, 1 = on) |
+| `PromptDiscordOnConnect` | int | Prompt players to link Discord on connect (0 = off, 1 = on) |
+
+### Configuration Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `GetBaseURL()` | string | Returns the ServerURL |
+| `GetServerID()` | string | Returns the ServerID (available on client and server) |
+| `GetAuth()` | string | Returns the ServerAuth (server-only, returns "ERROR" on client) |
+
+### Accessing Configuration
+
+The `ServerID` is available on **both client and server**. On the client, it becomes available after the auth token is received from the server.
+
+```enforce
+// Preferred: Via UFramework singleton (works on client and server)
+string serverId = U().GetServerID();
+
+// Alternative: Via config directly
+string serverId = UFConfig().GetServerID();
+
+// Get the base URL
+string baseUrl = UFConfig().GetBaseURL();
+
+// Check if Discord prompt is enabled (server-only check recommended)
+if (GetGame().IsServer() && UFConfig().PromptDiscordOnConnect == 1) {
+    // Prompt player to link Discord
+}
+```
+
+### Example: Server-Specific Logging
+
+```enforce
+void LogPlayerAction(PlayerIdentity identity, string action) {
+    if (!GetGame().IsServer()) return;
+    
+    string serverName = U().GetServerID();
+    string logMsg = "[" + serverName + "] " + identity.GetName() + ": " + action;
+    
+    U().Logger().Log(logMsg);
+}
+```
+
+### Example: Server-Aware Welcome Message
+
+```enforce
+void OnPlayerConnect(PlayerIdentity identity) {
+    if (!GetGame().IsServer()) return;
+    
+    string serverName = U().GetServerID();
+    string welcomeMsg = "Welcome to " + serverName + "!";
+    
+    UUtil.SendNotification("Welcome", welcomeMsg, identity);
+}
+```
+
+### Example: Client-Side Server ID Usage
+
+```enforce
+// On client, ServerID is available after auth token is received
+void ShowServerInfo() {
+    string serverId = U().GetServerID();
+    if (serverId != "") {
+        Print("Connected to server: " + serverId);
+    }
+}
+```
+
+> **Note:** The `ServerID`, `ServerURL`, and non-sensitive config fields are synced to the client after authentication. The `ServerAuth` field is **never** sent to the client for security reasons - `GetAuth()` returns "ERROR" on the client.
+
+## Map Location Utilities
+
+Retrieve named locations (cities, towns, villages, etc.) from the current map's CfgWorlds configuration.
+
+### UMapLocation Class
+
+```enforce
+class UMapLocation
+{
+    string ClassName;  // Config class name
+    string Name;       // Display name (e.g., "Chernogorsk")
+    string Type;       // Location type (e.g., "City", "Village")
+    vector Position;   // 3D world position (includes terrain height)
+}
+```
+
+### Common Location Types
+
+| Type | Description |
+|------|-------------|
+| `"Capital"` | Major cities |
+| `"City"` | Large towns/cities |
+| `"Village"` | Small villages |
+| `"Local"` | Local landmarks |
+| `"Marine"` | Marine/coastal points |
+| `"Hill"` | Hills and elevated areas |
+| `"Ruin"` | Ruins and historical sites |
+| `"ViewPoint"` | Scenic viewpoints |
+
+### Functions
+
+```enforce
+// Get all map locations (optionally filtered by type)
+static array<autoptr UMapLocation> GetMapLocations(array<string> typeFilters = NULL);
+
+// Find the nearest location to a position
+static UMapLocation GetNearestMapLocation(vector position, array<string> typeFilters = NULL);
+
+// Find the nearest location name (convenience wrapper)
+static string GetNearestMapLocationName(vector position, array<string> typeFilters = NULL);
+
+// Find all locations within a radius
+static array<autoptr UMapLocation> GetMapLocationsInRadius(vector position, float radius, array<string> typeFilters = NULL);
+```
+
+### Usage Examples
+
+```enforce
+// Get all cities and villages on the map
+array<string> filters = new array<string>();
+filters.Insert("City");
+filters.Insert("Village");
+
+array<autoptr UMapLocation> towns = UUtil.GetMapLocations(filters);
+foreach (UMapLocation loc : towns)
+{
+    Print("Found: " + loc.Name + " (" + loc.Type + ") at " + loc.Position.ToString());
+}
+
+// Get ALL locations (no filter)
+array<autoptr UMapLocation> allLocations = UUtil.GetMapLocations();
+Print("Total locations on map: " + allLocations.Count());
+
+// Find the nearest city to a player
+vector playerPos = player.GetPosition();
+array<string> cityFilter = new array<string>();
+cityFilter.Insert("City");
+cityFilter.Insert("Capital");
+
+UMapLocation nearest = UUtil.GetNearestMapLocation(playerPos, cityFilter);
+if (nearest)
+{
+    float distance = vector.Distance(playerPos, nearest.Position);
+    Print("Nearest city: " + nearest.Name + " (" + distance.ToString() + "m away)");
+}
+
+// Quick way to get just the name (returns "unknown" if not found)
+string nearestName = UUtil.GetNearestMapLocationName(playerPos);
+Print("Player is near: " + nearestName);
+
+// Find all locations within 5km of a position
+array<autoptr UMapLocation> nearby = UUtil.GetMapLocationsInRadius(playerPos, 5000);
+Print("Locations within 5km: " + nearby.Count());
+```
+
+### Practical Example: Spawn Near Town
+
+```enforce
+// Spawn an item near a random village
+array<string> villageFilter = new array<string>();
+villageFilter.Insert("Village");
+
+array<autoptr UMapLocation> villages = UUtil.GetMapLocations(villageFilter);
+if (villages.Count() > 0)
+{
+    int randomIndex = Math.RandomInt(0, villages.Count());
+    UMapLocation village = villages.Get(randomIndex);
+    
+    // Offset position slightly
+    vector spawnPos = village.Position + Vector(Math.RandomFloat(-50, 50), 0, Math.RandomFloat(-50, 50));
+    spawnPos[1] = GetGame().SurfaceY(spawnPos[0], spawnPos[2]);
+    
+    GetGame().CreateObject("Barrel_Green", spawnPos, false, false, true);
+    Print("Spawned barrel near " + village.Name);
+}
+```
+
 ## JSON Handler
 
 Templated JSON serialization/deserialization utility.

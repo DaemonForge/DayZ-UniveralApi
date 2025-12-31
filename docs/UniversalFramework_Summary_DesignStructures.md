@@ -16,6 +16,7 @@ U().IsOnline()          // True if service is connected
 U().IsDiscordEnabled()  // True if Discord bot configured
 U().IsOpenAIEnabled()   // True if OpenAI API configured
 U().HasValidAuth()      // True if auth token is valid
+U().GetServerID()       // Returns the ServerID (available on client and server)
 ```
 
 All REST operations use callbacks - either pass an object instance + function name string, or pass a `UFCallbackBase` subclass. Always check the status code (e.g., `UF_SUCCESS`, `UF_EMPTY`, `UF_ERROR`) before using response data. Use `autoptr` for memory management and cancel pending callbacks in destructors.
@@ -107,6 +108,9 @@ Data classes for Discord integration: `UDiscordEmbed` (rich embeds with fields, 
 
 ### AIChat.md
 AI chat system using OpenAI integration. `UFAIChatAgent` for simple string responses, `UAIChatAgent<T>` for typed JSON responses. Covers system instructions, context blocks with `UAIChatContext`, tool definitions with `UAIChatToolDef`, session management, and async polling for responses.
+
+### AIChat_KnowledgeBase.md
+Knowledge Base integration for document-backed AI responses. Attach a KB to agents with `SetKBId()`. Automatic vector search for relevant documents. KB Manager UI for document upload. REST API for embedding generation and search. Supports PDF, TXT, MD, and DOCX files.
 
 ### AIVoice.md
 Text-to-Speech via OpenAI. Use `U().Api().TTSGenerate()` with `UTTSMessage` objects, `TTSStatus()` to check completion, `TTSDownload()` to save audio. Voice constants in `UTTSVoice` class. Files saved to `$saves:{id}.mp4`.

@@ -32,6 +32,18 @@
 
 ## Creating a Handler
 
+### Constructor Signature
+
+```enforce
+// UDBHandler constructor
+// Params:
+//   mod (string): Your mod's unique identifier - used as collection prefix
+//   database (int): PLAYER_DB or OBJECT_DB constant (default: PLAYER_DB)
+UDBHandler<Class T>(string mod, int database = PLAYER_DB);
+```
+
+### Example
+
 ```enforce
 // Define your data class
 class MyPlayerData {
@@ -48,12 +60,73 @@ class MyPlayerData {
     }
 }
 
-// Create handler (static singleton recommended)
+// Create handler - MUST specify template type, mod name, and database
+// Params: ("ModName", PLAYER_DB or OBJECT_DB)
 static autoptr UDBHandler<MyPlayerData> g_PlayerHandler = new UDBHandler<MyPlayerData>("MyMod", PLAYER_DB);
+
+// For shared/global data, use OBJECT_DB
+static autoptr UDBHandler<MyConfigData> g_ConfigHandler = new UDBHandler<MyConfigData>("MyMod", OBJECT_DB);
 ```
 
 > **Note:** Boolean values are stored as integers in the database (0 = false, 1 = true). This is automatic - you still use `bool` in your classes.
+
+---
+
+## Method Signatures
+
+All `UDBHandler<T>` methods with exact parameter types:
+
+```enforce
+class UDBHandler<Class T> extends UDBHandlerBase {
+    // Save object to database
+    // Returns: int callId (-1 on error)
+    int Save(string oid, Class object);
+    int Save(string oid, Class object, Class cbInstance, string cbFunction);
+    
+    // Load object from database  
+    // Returns: int callId (-1 on error)
+    int Load(string oid, Class cbInstance, string cbFunction);
+    int Load(string oid, Class cbInstance, string cbFunction, string defaultJson);
+    int Load(string oid, Class cbInstance, string cbFunction, Class inObject);
+    
+    // Load raw JSON string (not parsed to object)
+    int LoadJson(string oid, Class cbInstance, string cbFunction, string defaultJson);
+    
+    // Query for multiple records
+    int Query(UDBQueryBase query, Class cbInstance, string cbFunction);
+    int Query(string query, Class cbInstance, string cbFunction);
+    
+    // Cancel a pending callback to prevent crashes on object deletion
+    void Cancel(int cid);
+}
 ```
+
+### Callback Signatures
+
+```enforce
+// Typed callback (Save/Load with UDBHandler<T>)
+void MyCallback(int cid, int status, string oid, T data);
+
+// JSON callback (LoadJson)
+void MyJsonCallback(int cid, int status, string oid, string jsonData);
+
+// Query callback
+void MyQueryCallback(int cid, int status, string oid, UDBQueryResult<T> results);
+```
+
+### Parameter Types
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `oid` | `string` | Object ID - unique identifier for the record |
+| `object` | `Class` | The data object to save (must match template type T) |
+| `cbInstance` | `Class` | Object instance containing the callback method (`this`) |
+| `cbFunction` | `string` | Name of callback method as string (`"OnLoaded"`) |
+| `defaultJson` | `string` | JSON string to use if record doesn't exist |
+| `inObject` | `Class` | Template object for defaults |
+| `cid` | `int` | Call ID returned by async operations |
+
+---
 
 ## Save
 
@@ -180,23 +253,45 @@ void OnJsonLoaded(int cid, int status, string oid, string jsonData) {
 
 ## Cancel Pending Calls
 
-Prevent callbacks on destroyed objects:
+Prevent callbacks on destroyed objects. **CRITICAL:** If an object is deleted while an API call is pending, the callback will crash when it tries to invoke a method on the deleted object.
+
+### Method Signature
+
+```enforce
+// UDBHandler<T>.Cancel - wraps U().RequestCallCancel(cid)
+void Cancel(int cid);
+
+// Parameter:
+//   cid (int): The call ID returned by Load/Save/Query operations
+//              Only valid if cid > 0 (cid of -1 means the call failed to start)
+```
+
+### Usage Pattern
 
 ```enforce
 class MyManager {
-    protected int m_PendingCallId = -1;
+    protected int m_PendingCallId = -1;  // Track the call ID
     
     void LoadData(string id) {
+        // Load returns int callId (-1 on error)
         m_PendingCallId = g_PlayerHandler.Load(id, this, "OnLoaded");
     }
     
+    void OnLoaded(int cid, int status, string oid, MyPlayerData data) {
+        m_PendingCallId = -1;  // Clear tracking - call completed
+        // Process data...
+    }
+    
     void ~MyManager() {
+        // Cancel pending call in destructor to prevent crash
         if (m_PendingCallId > 0) {
             g_PlayerHandler.Cancel(m_PendingCallId);
         }
     }
 }
 ```
+
+> **Note:** You can also use `U().RequestCallCancel(cid)` directly instead of going through the handler.
 
 ## Complete Example
 

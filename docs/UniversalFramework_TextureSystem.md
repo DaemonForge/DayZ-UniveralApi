@@ -62,15 +62,9 @@ class MyPaintableItem extends ItemBase {
         super.InitSkins();
         // RegisterTextureAndMaterial(name, texturePath, materialPath, allowedPlayerIds)
         RegisterTextureAndMaterial("Default", "", "");  // Original texture
-        RegisterTextureAndMaterial("Red", 
-            "#(argb,8,8,3)color(0.8,0,0,1.0,CO)", 
-            "");
-        RegisterTextureAndMaterial("Blue",
-            "#(argb,8,8,3)color(0,0,0.8,1.0,CO)",
-            "");
-        RegisterTextureAndMaterial("Custom",
-            "MyMod\\data\\custom_texture.paa",
-            "MyMod\\data\\custom_material.rvmat");
+        RegisterTextureAndMaterial("Red",  "#(argb,8,8,3)color(0.8,0,0,1.0,CO)",  "");
+        RegisterTextureAndMaterial("Blue",  "#(argb,8,8,3)color(0,0,0.8,1.0,CO)",       "");
+        RegisterTextureAndMaterial("Custom",  "MyMod\\data\\custom_texture.paa",MyMod\\data\\custom_material.rvmat");
     }
 }
 ```
@@ -87,7 +81,7 @@ class MyMultiTextureItem extends ItemBase {
         // RegisterTextureAndMaterialArray(name, textureArray, materialArray, allowedIds)
         
         // Each array index corresponds to a selection set on the model
-        TStringArray redTextures = {
+        TStringArray redTextures = { 
             "#(argb,8,8,3)color(0.8,0,0,1.0,CO)",   // Selection 0
             "#(argb,8,8,3)color(0.8,0,0,1.0,CO)",   // Selection 1
             "#(argb,8,8,3)color(0.6,0,0,1.0,CO)"    // Selection 2
@@ -254,34 +248,15 @@ class ActionPaintItem : ActionSingleUseBase {
 }
 ```
 
-## Debug
-
-```enforce
-void DebugSkins(ItemBase item) {
-    Print("=== Skin Debug ===");
-    Print("Can Paint: " + item.CanPaint());
-    Print("Skin Count: " + item.GetTextureCount());
-    Print("Current Skin: " + item.GetCurrentSkinIdx());
-    
-    for (int i = 0; i < item.GetTextureCount(); i++) {
-        Print("Skin " + i + ": " + item.GetTextureName(i));
-    }
-    
-    // Full debug
-    item.SkinMgr_debug();
-}
-```
-
 ## Client-Side Skin Override
 
 You can override which skin is displayed on the client by overriding `GetCurrentSkinIdx()`. This is useful for:
-- Displaying different textures for certain skins locally (e.g., higher-res versions)
-- Player preferences (substituting one color for another)
-- Client-side skin packs that remap skins
+- Displaying different textures for certain skins locally, eg perks on a server that's not to affect other players
+
 
 ### Override by Skin Name
 
-Override `GetCurrentSkinIdx()` to return a different skin index based on the current skin's name:
+Override `GetCurrentSkinIdx()` to return a different skin index based on the current skin's name, this can be useful if you want to ensure change texture on specific clients.
 
 ```enforce
 modded class MyItem {
