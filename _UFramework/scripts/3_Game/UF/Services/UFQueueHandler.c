@@ -18,6 +18,17 @@ class UQueueHandler<Class T> extends UQueueHandlerBase
 	}
 	
 	/**
+	 * Read the latest N messages, skipping any older unread messages
+	 * This marks all older messages as read, then returns the N most recent
+	 * Useful for catching up on a backlog while keeping only recent context
+	 * @param limit Maximum number of recent messages to return
+	 * @return Call ID or -1 on error
+	 */
+	int ReadLatest(int limit){
+		return U().Msg().ReadLatest(m_mod, m_queue, limit, new UFMsgCallback<T>(this, "readCB", m_queue));
+	}
+	
+	/**
 	 * Write a typed message to the queue
 	 * @param message The message object to send
 	 * @return Call ID or -1 on error
@@ -70,6 +81,17 @@ class UStringQueueHandler extends UQueueHandlerBase
 	
 	int Read(int limit){
 		return U().Msg().Read(m_mod, m_queue, limit, new UFMsgStringCallback(this, "readCB", m_queue));
+	}
+	
+	/**
+	 * Read the latest N messages, skipping any older unread messages
+	 * This marks all older messages as read, then returns the N most recent
+	 * Useful for catching up on a backlog while keeping only recent context
+	 * @param limit Maximum number of recent messages to return
+	 * @return Call ID or -1 on error
+	 */
+	int ReadLatest(int limit){
+		return U().Msg().ReadLatest(m_mod, m_queue, limit, new UFMsgStringCallback(this, "readCB", m_queue));
 	}
 	
 	/**

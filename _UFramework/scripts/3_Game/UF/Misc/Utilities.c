@@ -577,6 +577,277 @@ class UUtil extends Managed {
 		return (GetUTCDateInt() * 86400) + (hr * 3600) + (min * 60) + sec;
 	}
 	
+	/**
+	 * Gets the timezone offset in seconds between local time and UTC.
+	 *
+	 * A positive value means local time is ahead of UTC (e.g., UTC+2 returns 7200).
+	 * A negative value means local time is behind UTC (e.g., UTC-5 returns -18000).
+	 *
+	 * @return int The timezone offset in seconds.
+	 */
+	static int GetTimezoneOffsetSeconds()
+	{
+		return GetUnixInt() - GetUTCUnixInt();
+	}
+	
+	/**
+	 * Gets the timezone offset in hours between local time and UTC.
+	 *
+	 * A positive value means local time is ahead of UTC (e.g., UTC+2 returns 2).
+	 * A negative value means local time is behind UTC (e.g., UTC-5 returns -5).
+	 * Note: This rounds to whole hours and may not be accurate for timezones with 30/45 minute offsets.
+	 *
+	 * @return int The timezone offset in hours.
+	 */
+	static int GetTimezoneOffsetHours()
+	{
+		return GetTimezoneOffsetSeconds() / 3600;
+	}
+	
+	/**
+	 * Gets the timezone offset as a formatted string (e.g., "UTC+02:00" or "UTC-05:00").
+	 *
+	 * @return string The timezone offset in standard format.
+	 */
+	static string GetTimezoneString()
+	{
+		int offsetSeconds = GetTimezoneOffsetSeconds();
+		string sign = "+";
+		if (offsetSeconds < 0)
+		{
+			sign = "-";
+			offsetSeconds = Math.AbsInt(offsetSeconds);
+		}
+		
+		int hours = offsetSeconds / 3600;
+		int minutes = (offsetSeconds % 3600) / 60;
+		
+		string hoursStr = hours.ToString();
+		if (hoursStr.Length() == 1) hoursStr = "0" + hoursStr;
+		
+		string minutesStr = minutes.ToString();
+		if (minutesStr.Length() == 1) minutesStr = "0" + minutesStr;
+		
+		return "UTC" + sign + hoursStr + ":" + minutesStr;
+	}
+	
+	/**
+	 * Converts a UTC Unix timestamp to a local Unix timestamp.
+	 *
+	 * Adds the current timezone offset to convert UTC time to local time.
+	 *
+	 * @param utcUnixTime The UTC Unix timestamp to convert.
+	 * @return int The equivalent local Unix timestamp.
+	 */
+	static int UTCToLocalUnix(int utcUnixTime)
+	{
+		return utcUnixTime + GetTimezoneOffsetSeconds();
+	}
+	
+	/**
+	 * Converts a local Unix timestamp to a UTC Unix timestamp.
+	 *
+	 * Subtracts the current timezone offset to convert local time to UTC.
+	 *
+	 * @param localUnixTime The local Unix timestamp to convert.
+	 * @return int The equivalent UTC Unix timestamp.
+	 */
+	static int LocalToUTCUnix(int localUnixTime)
+	{
+		return localUnixTime - GetTimezoneOffsetSeconds();
+	}
+	
+	/**
+	 * Converts a UTC Unix timestamp to local date and time components.
+	 *
+	 * @param utcUnixTime The UTC Unix timestamp to convert.
+	 * @param year (Out) The local year component.
+	 * @param month (Out) The local month component (1-12).
+	 * @param day (Out) The local day component (1-31).
+	 * @param hour (Out) The local hour component (0-23).
+	 * @param minute (Out) The local minute component (0-59).
+	 * @param second (Out) The local second component (0-59).
+	 */
+	static void UTCToLocalDateTime(int utcUnixTime, out int year, out int month, out int day, out int hour, out int minute, out int second)
+	{
+		int localUnix = UTCToLocalUnix(utcUnixTime);
+		UnixToDateTime(localUnix, year, month, day, hour, minute, second);
+	}
+	
+	/**
+	 * Converts a UTC Unix timestamp to a local formatted date-time string.
+	 *
+	 * @param utcUnixTime The UTC Unix timestamp to convert.
+	 * @return string The formatted local date-time string in "YYYY-MM-DD HH:MM:SS" format.
+	 */
+	static string UTCToLocalDateTimeString(int utcUnixTime)
+	{
+		return UnixToDateTimeString(UTCToLocalUnix(utcUnixTime));
+	}
+	
+	/**
+	 * Converts a Unix timestamp to date and time components.
+	 *
+	 * Breaks down a Unix timestamp (seconds since Jan 1, 1970) into its constituent
+	 * year, month, day, hour, minute, and second values.
+	 *
+	 * @param unixTime The Unix timestamp to convert.
+	 * @param year (Out) The year component.
+	 * @param month (Out) The month component (1-12).
+	 * @param day (Out) The day component (1-31).
+	 * @param hour (Out) The hour component (0-23).
+	 * @param minute (Out) The minute component (0-59).
+	 * @param second (Out) The second component (0-59).
+	 */
+	static void UnixToDateTime(int unixTime, out int year, out int month, out int day, out int hour, out int minute, out int second)
+	{
+		// Extract time of day
+		int timeOfDay = unixTime % 86400;
+		hour = timeOfDay / 3600;
+		minute = (timeOfDay % 3600) / 60;
+		second = timeOfDay % 60;
+		
+		// Calculate total days since epoch
+		int totalDays = unixTime / 86400;
+		
+		// Find the year
+		year = UnixStartYear;
+		while (true)
+		{
+			int daysInYear = 365;
+			if (IsLeapYear(year))
+			{
+				daysInYear = 366;
+			}
+			if (totalDays < daysInYear)
+			{
+				break;
+			}
+			totalDays = totalDays - daysInYear;
+			year++;
+		}
+		
+		// Find the month
+		month = 1;
+		for (int i = 0; i < 12; i++)
+		{
+			int daysThisMonth = DaysInMonth[i];
+			if (IsLeapYear(year) && i == 1)
+			{
+				daysThisMonth = 29;
+			}
+			if (totalDays < daysThisMonth)
+			{
+				break;
+			}
+			totalDays = totalDays - daysThisMonth;
+			month++;
+		}
+		
+		// Remaining days plus 1 (days are 1-indexed)
+		day = totalDays + 1;
+	}
+	
+	/**
+	 * Converts a Unix timestamp to date components only.
+	 *
+	 * @param unixTime The Unix timestamp to convert.
+	 * @param year (Out) The year component.
+	 * @param month (Out) The month component (1-12).
+	 * @param day (Out) The day component (1-31).
+	 */
+	static void UnixToDate(int unixTime, out int year, out int month, out int day)
+	{
+		int hour, minute, second;
+		UnixToDateTime(unixTime, year, month, day, hour, minute, second);
+	}
+	
+	/**
+	 * Converts a Unix timestamp to time components only.
+	 *
+	 * @param unixTime The Unix timestamp to convert.
+	 * @param hour (Out) The hour component (0-23).
+	 * @param minute (Out) The minute component (0-59).
+	 * @param second (Out) The second component (0-59).
+	 */
+	static void UnixToTime(int unixTime, out int hour, out int minute, out int second)
+	{
+		int year, month, day;
+		UnixToDateTime(unixTime, year, month, day, hour, minute, second);
+	}
+	
+	/**
+	 * Converts a Unix timestamp to a formatted date-time string.
+	 *
+	 * @param unixTime The Unix timestamp to convert.
+	 * @return string The formatted date-time string in "YYYY-MM-DD HH:MM:SS" format.
+	 */
+	static string UnixToDateTimeString(int unixTime)
+	{
+		int year, month, day, hour, minute, second;
+		UnixToDateTime(unixTime, year, month, day, hour, minute, second);
+		
+		string sday = day.ToString();
+		if (sday.Length() == 1) sday = "0" + sday;
+		
+		string smonth = month.ToString();
+		if (smonth.Length() == 1) smonth = "0" + smonth;
+		
+		string shour = hour.ToString();
+		if (shour.Length() == 1) shour = "0" + shour;
+		
+		string sminute = minute.ToString();
+		if (sminute.Length() == 1) sminute = "0" + sminute;
+		
+		string ssecond = second.ToString();
+		if (ssecond.Length() == 1) ssecond = "0" + ssecond;
+		
+		return year.ToString() + "-" + smonth + "-" + sday + " " + shour + ":" + sminute + ":" + ssecond;
+	}
+	
+	/**
+	 * Converts a Unix timestamp to a formatted date string.
+	 *
+	 * @param unixTime The Unix timestamp to convert.
+	 * @return string The formatted date string in "YYYY-MM-DD" format.
+	 */
+	static string UnixToDateString(int unixTime)
+	{
+		int year, month, day;
+		UnixToDate(unixTime, year, month, day);
+		
+		string sday = day.ToString();
+		if (sday.Length() == 1) sday = "0" + sday;
+		
+		string smonth = month.ToString();
+		if (smonth.Length() == 1) smonth = "0" + smonth;
+		
+		return year.ToString() + "-" + smonth + "-" + sday;
+	}
+	
+	/**
+	 * Converts a Unix timestamp to a formatted time string.
+	 *
+	 * @param unixTime The Unix timestamp to convert.
+	 * @return string The formatted time string in "HH:MM:SS" format.
+	 */
+	static string UnixToTimeString(int unixTime)
+	{
+		int hour, minute, second;
+		UnixToTime(unixTime, hour, minute, second);
+		
+		string shour = hour.ToString();
+		if (shour.Length() == 1) shour = "0" + shour;
+		
+		string sminute = minute.ToString();
+		if (sminute.Length() == 1) sminute = "0" + sminute;
+		
+		string ssecond = second.ToString();
+		if (ssecond.Length() == 1) ssecond = "0" + ssecond;
+		
+		return shour + ":" + sminute + ":" + ssecond;
+	}
+	
 	
 	
 	 

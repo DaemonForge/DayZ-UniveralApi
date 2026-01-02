@@ -134,7 +134,7 @@ Dynamic texture/material system via `modded class ItemBase`. Override `InitSkins
 Physical currency system using inventory items. Register currency types via `UCurrency.Register()`. PlayerBase methods: `UGetPlayerBalance(key)`, `UAddMoney(key, amount)`, `URemoveMoney(key, amount)`. Synchronous, handles making change automatically.
 
 ### Utilities.md
-Static helper functions in `UUtil` class. Player finding (FindPlayer, FindPlayerByIdentity), time functions (GetUnixInt, GetUTCUnixInt, GetDateStamp, GetTimeStamp), notifications (SendNotification), config access (GetConfigInt/Float/String/Array), file I/O (SaveBase64ToFile), and status code formatting.
+Static helper functions in `UUtil` class. Player finding (FindPlayer, FindPlayerByIdentity), time functions (GetUnixInt, GetUTCUnixInt, GetDateStamp, GetTimeStamp, UnixToDateTime, UnixToDateTimeString, GetTimezoneOffsetSeconds, UTCToLocalUnix), notifications (SendNotification), config access (GetConfigInt/Float/String/Array), file I/O (SaveBase64ToFile), and status code formatting.
 
 ### Logger.md
 Logging system via `UFLog` static class. Methods: `UFLog.Info()`, `UFLog.Debug()`, `UFLog.Err()`. Extend `ULoggerBase` for custom categories. Server-side file logging to `$profile:`. Configure levels with `SetLogLevels()`.

@@ -50,6 +50,27 @@ static string GetDateStamp();
 
 // Get time string "HH:MM:SS"
 static string GetTimeStamp();
+
+// Convert Unix timestamp to components
+static void UnixToDateTime(int unixTime, out int year, out int month, out int day, out int hour, out int minute, out int second);
+static void UnixToDate(int unixTime, out int year, out int month, out int day);
+static void UnixToTime(int unixTime, out int hour, out int minute, out int second);
+
+// Convert Unix timestamp to formatted strings
+static string UnixToDateTimeString(int unixTime);  // "YYYY-MM-DD HH:MM:SS"
+static string UnixToDateString(int unixTime);      // "YYYY-MM-DD"
+static string UnixToTimeString(int unixTime);      // "HH:MM:SS"
+
+// Timezone functions
+static int GetTimezoneOffsetSeconds();   // Offset in seconds (e.g., 7200 for UTC+2)
+static int GetTimezoneOffsetHours();     // Offset in hours (e.g., 2 for UTC+2)
+static string GetTimezoneString();       // Formatted string (e.g., "UTC+02:00")
+
+// UTC to Local conversion
+static int UTCToLocalUnix(int utcUnixTime);        // Convert UTC timestamp to local
+static int LocalToUTCUnix(int localUnixTime);      // Convert local timestamp to UTC
+static void UTCToLocalDateTime(int utcUnixTime, out int year, out int month, out int day, out int hour, out int minute, out int second);
+static string UTCToLocalDateTimeString(int utcUnixTime);
 ```
 
 ### Usage
@@ -59,6 +80,41 @@ int now = UUtil.GetUnixInt();
 int utcNow = UUtil.GetUTCUnixInt();
 string date = UUtil.GetDateStamp();  // "2024-01-15"
 string time = UUtil.GetTimeStamp();  // "14:30:00"
+
+// Convert Unix timestamp to components
+int year, month, day, hour, minute, second;
+UUtil.UnixToDateTime(now, year, month, day, hour, minute, second);
+
+// Get just the date components
+int yr, mth, dy;
+UUtil.UnixToDate(now, yr, mth, dy);
+
+// Get just the time components
+int hr, min, sec;
+UUtil.UnixToTime(now, hr, min, sec);
+
+// Convert to formatted strings
+string datetime = UUtil.UnixToDateTimeString(now);  // "2024-01-15 14:30:00"
+string dateStr = UUtil.UnixToDateString(now);       // "2024-01-15"
+string timeStr = UUtil.UnixToTimeString(now);       // "14:30:00"
+
+// Timezone info
+int offsetSec = UUtil.GetTimezoneOffsetSeconds();   // e.g., 7200 for UTC+2
+int offsetHrs = UUtil.GetTimezoneOffsetHours();     // e.g., 2 for UTC+2
+string tz = UUtil.GetTimezoneString();              // e.g., "UTC+02:00"
+
+// Convert UTC timestamp to local time
+int utcTimestamp = 1735689600;
+int localTimestamp = UUtil.UTCToLocalUnix(utcTimestamp);
+string localStr = UUtil.UTCToLocalDateTimeString(utcTimestamp);
+
+// Convert local timestamp to UTC
+int myLocalTime = UUtil.GetUnixInt();
+int myUtcTime = UUtil.LocalToUTCUnix(myLocalTime);
+
+// Get local date/time components from UTC timestamp
+int lYear, lMonth, lDay, lHour, lMinute, lSecond;
+UUtil.UTCToLocalDateTime(utcTimestamp, lYear, lMonth, lDay, lHour, lMinute, lSecond);
 ```
 
 ## Random ID

@@ -66,6 +66,7 @@ const {
   insertMessage,
   readMessages,
   readMessagesAndUpdatePointer,
+  readLatestMessagesAndUpdatePointer,
   purgeOldMessages,
   getQueueStats
 } = require("../models/messages");
@@ -116,13 +117,17 @@ async function runReadMessages(req, res) {
       return res.status(400).json({ Status: "Error", Error: "Invalid limit value" });
     }
     
+    // Check for SkipToLatest parameter - if true, skip older messages and return only the latest N
+    const skipToLatest = req.body.SkipToLatest === 1 || req.body.SkipToLatest === true;
+    logger.debug(`SkipToLatest: ${skipToLatest}`);
+    
     // Derive caller's identifier: either the player's GUID or "Server".
     let identifier = AuthPlayerGuid(req.headers["auth-key"]);
     if (!identifier) {
       identifier = req.serverId || "Server";
     }
     logger.debug(`Caller identifier: ${identifier}`);
-    logger.debug(`"${identifier}" reading from Mod "${ModName}" Queue "${QueueName}" with limit ${limit}`);
+    logger.debug(`"${identifier}" reading from Mod "${ModName}" Queue "${QueueName}" with limit ${limit}, skipToLatest ${skipToLatest}`);
     
     // Get the Queue meta.
     const meta = await getQueueMeta(ModName, QueueName);
@@ -138,15 +143,33 @@ async function runReadMessages(req, res) {
       return res.status(200).json({ Status: "Empty", Messages: [] });
     }
     
-    // Use atomic read-and-update operation to prevent race conditions
-    const { messages: rawMessages, newPointer } = await readMessagesAndUpdatePointer(
-      ModName,
-      QueueName,
-      identifier,
-      meta.resetAt,
-      sortOrder,
-      limit
-    );
+    let rawMessages, newPointer;
+    
+    if (skipToLatest && limit > 0) {
+      // SkipToLatest mode: Get the latest N messages regardless of read pointer,
+      // then update the pointer to skip all older messages
+      const result = await readLatestMessagesAndUpdatePointer(
+        ModName,
+        QueueName,
+        identifier,
+        meta.resetAt,
+        limit
+      );
+      rawMessages = result.messages;
+      newPointer = result.newPointer;
+    } else {
+      // Normal mode: Use atomic read-and-update operation to prevent race conditions
+      const result = await readMessagesAndUpdatePointer(
+        ModName,
+        QueueName,
+        identifier,
+        meta.resetAt,
+        sortOrder,
+        limit
+      );
+      rawMessages = result.messages;
+      newPointer = result.newPointer;
+    }
     
     logger.debug(`Retrieved ${rawMessages.length} raw messages`);
     

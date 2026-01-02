@@ -353,6 +353,78 @@ async function readMessagesAndUpdatePointer(Mod, Queue, playerGuid, resetAt, sor
 }
 
 /**
+ * Reads the latest N messages from a queue, skipping older unread messages.
+ * This is useful when a client wants to "catch up" to the latest messages without
+ * processing older ones. The player's pointer is updated to skip all older messages.
+ * 
+ * @async
+ * @function readLatestMessagesAndUpdatePointer
+ * @param {string} Mod - The Mod identifier.
+ * @param {string} Queue - The Queue identifier.
+ * @param {string} playerGuid - The player's GUID (or "Server" for server reads).
+ * @param {Date} resetAt - The queue's reset timestamp.
+ * @param {number} limit - Maximum number of latest messages to return.
+ * @returns {Promise<Object>} An object containing { messages: Array, newPointer: Date }
+ */
+async function readLatestMessagesAndUpdatePointer(Mod, Queue, playerGuid, resetAt, limit) {
+  const { messages, playerStatus } = await getCollections();
+  
+  try {
+    // Get the current player status
+    const status = await playerStatus.findOne({ Mod, Queue, playerGuid });
+    const lastRead = status && status.lastRead ? new Date(status.lastRead) : new Date(0);
+    
+    // Use the later of resetAt or lastRead as the effective time
+    const effectiveTime = resetAt > lastRead ? resetAt : lastRead;
+    
+    // Query for unread messages after the effective time, sorted newest first
+    const query = {
+      Mod,
+      Queue,
+      createdAt: { $gt: effectiveTime }
+    };
+    
+    // Get the latest N messages (sorted by createdAt descending = newest first)
+    const effectiveLimit = Math.min(limit, 1000);
+    const latestMsgs = await messages.find(query)
+      .sort({ createdAt: -1 })
+      .limit(effectiveLimit)
+      .toArray();
+    
+    if (latestMsgs.length === 0) {
+      // No messages, but update pointer to current time to skip any future old messages
+      await playerStatus.updateOne(
+        { Mod, Queue, playerGuid },
+        { $set: { lastRead: new Date() } },
+        { upsert: true }
+      );
+      return { messages: [], newPointer: new Date() };
+    }
+    
+    // The newest message is at index 0 (since sorted descending)
+    const newestMessageTime = latestMsgs[0].createdAt;
+    
+    // Update the player's pointer to the newest message time
+    // This effectively marks all older messages as "read"
+    await playerStatus.updateOne(
+      { Mod, Queue, playerGuid },
+      { $set: { lastRead: newestMessageTime } },
+      { upsert: true }
+    );
+    
+    // Reverse the array so messages are returned in chronological order (oldest of the N first)
+    latestMsgs.reverse();
+    
+    logger.debug(`readLatestMessagesAndUpdatePointer: Read ${latestMsgs.length} latest messages and updated pointer to ${newestMessageTime} for ${playerGuid}`);
+    
+    return { messages: latestMsgs, newPointer: newestMessageTime };
+  } catch (error) {
+    logger.error(`readLatestMessagesAndUpdatePointer: Error for Mod: ${Mod} Queue: ${Queue} player: ${playerGuid}: ${error.message}`, { error });
+    throw error;
+  }
+}
+
+/**
  * Resets the Queue by updating its global reset pointer to the current time.
  * 
  * @async
@@ -434,6 +506,7 @@ module.exports = {
   insertMessage,
   readMessages,
   readMessagesAndUpdatePointer,
+  readLatestMessagesAndUpdatePointer,
   purgeOldMessages,
   getQueueStats
 };

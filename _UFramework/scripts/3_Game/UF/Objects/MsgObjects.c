@@ -26,9 +26,15 @@ class UQueueMeta extends UFObject_Base {
  */
 class UMsgReadObj extends UFObject_Base {
 	int Limit = -1;
+	int SkipToLatest = 0;
 	
-	void UMsgReadObj(int limit = -1){
+	void UMsgReadObj(int limit = -1, bool skipToLatest = false){
 		Limit = limit;
+		if (skipToLatest){
+			SkipToLatest = 1;
+		} else {
+			SkipToLatest = 0;
+		}
 	}
 	
 	override string ToJson(){

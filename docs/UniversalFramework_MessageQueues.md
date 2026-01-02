@@ -11,12 +11,48 @@ The Message Queue system provides asynchronous communication between server and 
 - **Player Write Control**: Enable/disable player write permissions per queue
 - **Queue Reset**: Mark all existing messages as "read" for all readers
 - **Auto-Polling**: Handlers can automatically poll for new messages
+- **Skip to Latest**: Read only the most recent N messages, skipping older ones
+
+## How Limit Works with Queue Ordering
+
+When reading messages with a limit, the behavior depends on the queue order:
+
+### FIFO (First In, First Out) - Default
+
+Messages are returned **oldest first**. With a limit of 15 and 100 unread messages:
+- **First read**: Returns messages 1-15 (oldest 15 unread)
+- **Second read**: Returns messages 16-30
+- **...and so on**
+
+This is useful for processing messages in order.
+
+### LIFO (Last In, First Out)
+
+Messages are returned **newest first**. With a limit of 15 and 100 unread messages:
+- **First read**: Returns messages 86-100 (newest 15 unread)
+- The pointer still advances to the newest message, so subsequent reads continue from older messages
+
+### Skip to Latest Mode
+
+Use `ReadLatest()` when you want **only the most recent N messages** and want to **skip older unread messages**:
+- Reads the newest N messages from the queue
+- Updates your pointer to mark all older messages as "read"
+- Perfect for "catch up" scenarios where old messages are no longer relevant
+
+```enforce
+// Example: 100 messages in queue, you want only the latest 15
+U().Msg().ReadLatest("MyMod", "notifications", 15, callback);
+// Returns: messages 86-100 (newest 15)
+// Your pointer is updated to skip messages 1-85
+// Next regular Read() would return nothing (all caught up)
+```
 
 ## Permissions
 
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
 | Read | ✅ | ✅ |
+| ReadLatest | ✅ | ✅ |
 | Write | ✅ | ✅* |
 | Meta (configure queue) | ✅ | ❌ |
 | Reset | ✅ | ❌ |
@@ -137,9 +173,25 @@ UFMsgEndpoint msg = U().Msg();
 // Read all unread messages
 msg.Read("MyMod", "notifications", new UFMsgCallback<MyMessage>(this, "OnMessage", "notifications"));
 
-// Read with limit
+// Read with limit (FIFO: oldest N unread, LIFO: newest N unread)
 msg.Read("MyMod", "notifications", 10, callback);
 ```
+
+### Read Latest (Skip Older Messages)
+
+Skip older unread messages and read only the most recent N:
+
+```enforce
+UFMsgEndpoint msg = U().Msg();
+
+// Read only the latest 15 messages, skip/discard older ones
+msg.ReadLatest("MyMod", "notifications", 15, callback);
+```
+
+This is useful when:
+- A client reconnects and has many old messages queued
+- You only care about recent state, not history
+- Catching up quickly without processing stale data
 
 ### Write Messages
 
@@ -307,3 +359,14 @@ class FeedbackSystem {
 4. **Purge old messages** periodically to manage storage
 5. **Handle UF_EMPTY status** - it's normal when no new messages exist
 6. **Cancel pending reads** in destructors
+7. **Use ReadLatest() for reconnection** - skip stale messages when a client reconnects
+8. **Choose FIFO for ordered processing** - when message order matters
+9. **Choose LIFO for latest-first** - when you want newest messages first
+
+## Special Limit Values
+
+| Limit Value | Behavior |
+|-------------|----------|
+| `-1` | Return all unread messages (up to 1000 max) |
+| `0` | Update pointer to current time, return empty array (catch up without reading) |
+| `N` (positive) | Return up to N messages based on queue order |

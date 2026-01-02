@@ -46,11 +46,46 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 		
 		int cid = -1;	
 		string endpoint = "Read/" + mod + "/" + queue;
-		autoptr UMsgReadObj obj = new UMsgReadObj(limit);
+		autoptr UMsgReadObj obj = new UMsgReadObj(limit, false);
 		Post(endpoint, obj.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
 		
 		if (cid == -1){
 			Error2("[UF] Message Queue Read", "Error registering callback");
+		}
+		return cid;
+	}
+	
+	/**
+	 * Read the latest N messages from a queue, skipping older unread messages
+	 * This is useful when you want the most recent messages and don't care about older ones.
+	 * Older messages are marked as read (pointer is updated to skip them).
+	 * @param mod The mod identifier
+	 * @param queue The queue identifier
+	 * @param limit Maximum number of latest messages to read
+	 * @param cb Callback to receive the messages
+	 * @return Call ID or -1 on error
+	 */
+	int ReadLatest(string mod, string queue, int limit, UFCallbackBase cb){
+		if (mod == "" || queue == ""){
+			Error2("[UF] Message Queue ReadLatest", "mod and queue must be valid strings");
+			return -1;
+		}
+		if (!cb){
+			Error2("[UF] Message Queue ReadLatest", "Callback is NULL");
+			return -1;
+		}
+		if (limit <= 0){
+			Error2("[UF] Message Queue ReadLatest", "limit must be greater than 0");
+			return -1;
+		}
+		
+		int cid = -1;	
+		string endpoint = "Read/" + mod + "/" + queue;
+		autoptr UMsgReadObj obj = new UMsgReadObj(limit, true);
+		Post(endpoint, obj.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
+		
+		if (cid == -1){
+			Error2("[UF] Message Queue ReadLatest", "Error registering callback");
 		}
 		return cid;
 	}
