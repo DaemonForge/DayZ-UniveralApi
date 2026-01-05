@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #1e1e1e;">
+<head>
+  <meta charset="UTF-8">
+  <title>Log Viewer</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:;">
+  <link rel="stylesheet" href="styles/logs.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar with filters -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>📋 Log Viewer</h1>
+      </div>
+      
+      <!-- Search input -->
+      <div class="filter-section">
+        <label for="searchInput">Search</label>
+        <input type="search" id="searchInput" class="search" placeholder="Search logs..." autocomplete="off">
+      </div>
+      
+      <!-- Server filter -->
+      <div class="filter-section">
+        <label for="serverFilter">Server</label>
+        <select id="serverFilter" class="filter-select">
+          <option value="">All Servers</option>
+        </select>
+      </div>
+      
+      <!-- Log level filter -->
+      <div class="filter-section">
+        <label>Log Level</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="levelInfo" checked>
+            <span class="level-indicator level-info"></span>
+            Info
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="levelWarn" checked>
+            <span class="level-indicator level-warn"></span>
+            Warning
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="levelError" checked>
+            <span class="level-indicator level-error"></span>
+            Error
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="levelDebug" checked>
+            <span class="level-indicator level-debug"></span>
+            Debug
+          </label>
+        </div>
+      </div>
+      
+      <!-- Client type filter -->
+      <div class="filter-section">
+        <label>Client Type</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="typeServer" checked>
+            🖥️ Server
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="typeClient" checked>
+            👤 Client
+          </label>
+        </div>
+      </div>
+      
+      <!-- Date range filter -->
+      <div class="filter-section">
+        <label for="dateFrom">Date Range</label>
+        <div class="date-range">
+          <input type="datetime-local" id="dateFrom" class="date-input">
+          <span class="date-separator">to</span>
+          <input type="datetime-local" id="dateTo" class="date-input">
+        </div>
+      </div>
+      
+      <!-- Quick date presets -->
+      <div class="filter-section">
+        <label>Quick Select</label>
+        <div class="quick-dates">
+          <button class="quick-date-btn" data-range="1h">1 Hour</button>
+          <button class="quick-date-btn" data-range="6h">6 Hours</button>
+          <button class="quick-date-btn" data-range="24h">24 Hours</button>
+          <button class="quick-date-btn" data-range="7d">7 Days</button>
+          <button class="quick-date-btn active" data-range="all">All Time</button>
+        </div>
+      </div>
+      
+      <!-- Actions -->
+      <div class="sidebar-actions">
+        <button id="refreshBtn" class="btn primary">
+          🔄 Refresh
+        </button>
+        <button id="clearFiltersBtn" class="btn">
+          ✖️ Clear Filters
+        </button>
+      </div>
+    </aside>
+    
+    <!-- Main content area -->
+    <main class="main-pane">
+      <!-- Header with stats and live toggle -->
+      <div class="main-header">
+        <div class="stats-bar">
+          <div class="stat">
+            <span class="stat-value" id="totalLogs">0</span>
+            <span class="stat-label">Total</span>
+          </div>
+          <div class="stat stat-info">
+            <span class="stat-value" id="infoCount">0</span>
+            <span class="stat-label">Info</span>
+          </div>
+          <div class="stat stat-warn">
+            <span class="stat-value" id="warnCount">0</span>
+            <span class="stat-label">Warnings</span>
+          </div>
+          <div class="stat stat-error">
+            <span class="stat-value" id="errorCount">0</span>
+            <span class="stat-label">Errors</span>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <div class="live-toggle">
+            <input type="checkbox" id="liveMode" checked>
+            <label for="liveMode" class="live-label">
+              <span class="live-dot"></span>
+              Live View
+            </label>
+          </div>
+          <button id="exportBtn" class="btn">📥 Export</button>
+        </div>
+      </div>
+      
+      <!-- Log table -->
+      <div class="log-table-container">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th class="col-time">Timestamp</th>
+              <th class="col-level">Level</th>
+              <th class="col-server">Server</th>
+              <th class="col-type">Type</th>
+              <th class="col-message">Message</th>
+              <th class="col-details">Details</th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody">
+            <!-- Log rows will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          Showing <span id="showingStart">0</span> - <span id="showingEnd">0</span> of <span id="showingTotal">0</span>
+        </div>
+        <div class="pagination-controls">
+          <button id="prevPage" class="btn pagination-btn" disabled>← Previous</button>
+          <span class="page-info">Page <span id="currentPage">1</span> of <span id="totalPages">1</span></span>
+          <button id="nextPage" class="btn pagination-btn">Next →</button>
+        </div>
+        <div class="page-size">
+          <label for="pageSize">Per page:</label>
+          <select id="pageSize" class="filter-select small">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Log detail modal -->
+  <div id="detailModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Log Details</h2>
+        <button class="modal-close" id="closeModal">×</button>
+      </div>
+      <div class="modal-body">
+        <pre id="logDetailContent"></pre>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading logs...</div>
+  </div>
+  
+  <script src="../renderers/logs.js" defer></script>
+</body>
+</html>

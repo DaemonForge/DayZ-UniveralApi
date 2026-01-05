@@ -13,6 +13,7 @@ global.APIVERSION = process.env.npm_package_version || app.getVersion();
 global.rootPath = path.join(__dirname);
 let tray = null;
 let ConsoleWindow = null;
+let logsWindow = null;
 let settingsWindow = null;
 let globalsWindow = null;
 let kbWindow = null;
@@ -204,6 +205,44 @@ function OpenConsoleWindow() {
   ConsoleWindow.loadFile(path.join(__dirname, 'views', 'console.html'));
 }
 
+function openLogsWindow() {
+  if (logsWindow) {
+    logsWindow.restore();
+    logsWindow.focus();
+    return;
+  }
+
+  logsWindow = new BrowserWindow({
+    width: 1400,
+    height: 800,
+    title: 'Log Viewer',
+    icon: windowIconImage || resolveAssetPath('public', 'icon.ico'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+      preload: path.join(__dirname, 'preload', 'logs.js')
+    }
+  });
+
+  logsWindow.setMenu(null);
+  const logsPath = path.join(__dirname, 'views', 'logs.html');
+  const logsUrl = pathToFileURL(logsPath);
+  logsUrl.searchParams.set('ts', Date.now().toString());
+  logsWindow.loadURL(logsUrl.toString());
+  
+  // Enable dev tools with F12 or Ctrl+Shift+I
+  logsWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'F12' || (input.control && input.shift && input.key === 'I')) {
+      logsWindow.webContents.toggleDevTools();
+    }
+  });
+  
+  logsWindow.on('closed', () => {
+    logsWindow = null;
+  });
+}
+
 function fetchAPIStatus(callback) {
   const options = {
     hostname: 'localhost',
@@ -313,6 +352,12 @@ function updateTrayMenu() {
         label: '🖥️ Console',
         click: () => {
           OpenConsoleWindow();
+        }
+      },
+      {
+        label: '🧾 Log Viewer',
+        click: () => {
+          openLogsWindow();
         }
       },
       {
@@ -613,6 +658,202 @@ ipcMain.handle('globals:delete', async (event, mod) => {
     return { success: true };
   } catch (err) {
     (global.logger || console).error('[GlobalsEditor] Failed to delete module', { mod, error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+// ===================== Logs IPC Handlers =====================
+
+// Lazy load MongoDB client for logs
+let cachedLogsClient = null;
+
+async function getLogsCollection() {
+  const { MongoClient } = require('mongodb');
+  if (!cachedLogsClient) {
+    cachedLogsClient = new MongoClient(global.config.DBServer);
+    await cachedLogsClient.connect();
+  }
+  return cachedLogsClient.db(global.config.DB).collection('Logs');
+}
+
+ipcMain.handle('logs:query', async (event, filters = {}) => {
+  try {
+    const collection = await getLogsCollection();
+    
+    const query = {};
+    const options = {
+      sort: { LoggedDateTime: -1 },
+      limit: parseInt(filters.limit) || 50,
+      skip: ((parseInt(filters.page) || 1) - 1) * (parseInt(filters.limit) || 50)
+    };
+
+    // Search filter (text search in Message field + DayZ mod Log/Action/Item fields)
+    if (filters.search) {
+      query.$or = [
+        { Message: { $regex: filters.search, $options: 'i' } },
+        { message: { $regex: filters.search, $options: 'i' } },
+        { Log: { $regex: filters.search, $options: 'i' } },
+        { Action: { $regex: filters.search, $options: 'i' } },
+        { Item: { $regex: filters.search, $options: 'i' } },
+        { Target: { $regex: filters.search, $options: 'i' } },
+        { GUID: { $regex: filters.search, $options: 'i' } },
+        { KilledBy: { $regex: filters.search, $options: 'i' } }
+      ];
+    }
+
+    // Server ID filter
+    if (filters.serverId) {
+      query.ServerId = filters.serverId;
+    }
+
+    // Level filter - handle case-insensitive field name (Level or level)
+    if (filters.levels && Array.isArray(filters.levels) && filters.levels.length > 0) {
+      const levelCondition = { 
+        $or: [
+          { Level: { $in: filters.levels } },
+          { level: { $in: filters.levels } }
+        ]
+      };
+      
+      // If we already have a search $or, combine with $and
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          levelCondition
+        ];
+        delete query.$or;
+      } else {
+        // Just add the level condition directly
+        query.$and = [levelCondition];
+      }
+    }
+
+    // Client type filter
+    if (filters.clientType) {
+      query.ClientType = filters.clientType;
+    }
+
+    // Date range filter
+    if (filters.dateFrom || filters.dateTo) {
+      query.LoggedDateTime = {};
+      if (filters.dateFrom) {
+        query.LoggedDateTime.$gte = new Date(filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        query.LoggedDateTime.$lte = new Date(filters.dateTo);
+      }
+    }
+
+    // Specific ID lookup
+    if (filters._id) {
+      const { ObjectId } = require('mongodb');
+      try {
+        query._id = new ObjectId(filters._id);
+        console.log('[logs:query] Looking up by _id:', filters._id);
+      } catch (idErr) {
+        console.error('[logs:query] Invalid ObjectId:', filters._id, idErr.message);
+        return { logs: [], total: 0, error: 'Invalid log ID format' };
+      }
+    }
+
+    console.log('[logs:query] Final query:', JSON.stringify(query));
+    const [logs, total] = await Promise.all([
+      collection.find(query, options).toArray(),
+      collection.countDocuments(query)
+    ]);
+
+    return { logs, total };
+  } catch (err) {
+    (global.logger || console).error('[LogViewer] Failed to query logs', { error: err.message });
+    return { logs: [], total: 0, error: err.message };
+  }
+});
+
+ipcMain.handle('logs:getServers', async () => {
+  try {
+    const collection = await getLogsCollection();
+    const servers = await collection.distinct('ServerId');
+    return servers.filter(s => s); // Filter out null/undefined
+  } catch (err) {
+    (global.logger || console).error('[LogViewer] Failed to get servers', { error: err.message });
+    return [];
+  }
+});
+
+ipcMain.handle('logs:getStats', async (event, filters = {}) => {
+  try {
+    const collection = await getLogsCollection();
+    
+    const matchQuery = {};
+    
+    if (filters.serverId) {
+      matchQuery.ServerId = filters.serverId;
+    }
+    if (filters.clientType) {
+      matchQuery.ClientType = filters.clientType;
+    }
+    if (filters.dateFrom || filters.dateTo) {
+      matchQuery.LoggedDateTime = {};
+      if (filters.dateFrom) matchQuery.LoggedDateTime.$gte = new Date(filters.dateFrom);
+      if (filters.dateTo) matchQuery.LoggedDateTime.$lte = new Date(filters.dateTo);
+    }
+
+    const pipeline = [
+      { $match: matchQuery },
+      {
+        $group: {
+          _id: { $toLower: { $ifNull: ['$Level', '$level'] } },
+          count: { $sum: 1 }
+        }
+      }
+    ];
+
+    const results = await collection.aggregate(pipeline).toArray();
+    
+    const stats = {
+      total: 0,
+      info: 0,
+      warn: 0,
+      error: 0,
+      debug: 0
+    };
+
+    results.forEach(r => {
+      const level = r._id || 'info';
+      stats.total += r.count;
+      if (level === 'info') stats.info = r.count;
+      else if (level === 'warn' || level === 'warning') stats.warn += r.count;
+      else if (level === 'error') stats.error = r.count;
+      else if (level === 'debug') stats.debug = r.count;
+    });
+
+    return stats;
+  } catch (err) {
+    (global.logger || console).error('[LogViewer] Failed to get stats', { error: err.message });
+    return { total: 0, info: 0, warn: 0, error: 0, debug: 0 };
+  }
+});
+
+ipcMain.handle('logs:delete', async (event, filters = {}) => {
+  try {
+    const collection = await getLogsCollection();
+    
+    const query = {};
+    if (filters.serverId) query.ServerId = filters.serverId;
+    if (filters.dateFrom || filters.dateTo) {
+      query.LoggedDateTime = {};
+      if (filters.dateFrom) query.LoggedDateTime.$gte = new Date(filters.dateFrom);
+      if (filters.dateTo) query.LoggedDateTime.$lte = new Date(filters.dateTo);
+    }
+
+    if (Object.keys(query).length === 0) {
+      return { success: false, error: 'At least one filter is required to delete logs' };
+    }
+
+    const result = await collection.deleteMany(query);
+    return { success: true, deletedCount: result.deletedCount };
+  } catch (err) {
+    (global.logger || console).error('[LogViewer] Failed to delete logs', { error: err.message });
     return { success: false, error: err.message };
   }
 });
