@@ -28,7 +28,8 @@ try {
     global.DISCORDSTATUS = "Error";
 }
 
-client.on('ready', () => {
+// Use 'clientReady' instead of deprecated 'ready' event (deprecated in discord.js v14, removed in v15)
+client.on('clientReady', () => {
     logger.info(`Discord Bot Ready! ${client.user.tag}`, { username: client.user.tag });
     global.DISCORDSTATUS = "Online";
 });

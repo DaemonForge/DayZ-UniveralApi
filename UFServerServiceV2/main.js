@@ -762,7 +762,13 @@ ipcMain.handle('logs:query', async (event, filters = {}) => {
       collection.countDocuments(query)
     ]);
 
-    return { logs, total };
+    // Convert ObjectId to string for IPC serialization
+    const serializedLogs = logs.map(log => ({
+      ...log,
+      _id: log._id?.toString?.() || String(log._id)
+    }));
+
+    return { logs: serializedLogs, total };
   } catch (err) {
     (global.logger || console).error('[LogViewer] Failed to query logs', { error: err.message });
     return { logs: [], total: 0, error: err.message };
