@@ -210,18 +210,40 @@ class UFAIChatAgent extends Managed {
     protected string m_PendingMessage;
     protected Class m_PendingHandler;
     protected string m_PendingHandlerFn;
+    
+    // Holds the current polling callback to prevent garbage collection during CallLater delay
+    protected autoptr UFCallbackBase m_PendingPollCallback;
+    
+    // Configurable poll timeout in seconds (default 90)
+    protected int m_PollTimeout;
 
     void UFAIChatAgent(){
         m_Ready = false;
         m_IncludeHistory = true;
         m_MaxHistory = 25;
         m_KBId = "";
+        m_PollTimeout = 90;
         m_History = new array<autoptr UAIChatHistoryEntry>;
         m_StaticContext = new array<autoptr UAIChatContext>;
         m_Tools = new array<autoptr UAIChatToolDef>;
 
         // Let subclass register tools
         RegisterTools(m_Tools);
+    }
+    
+    // Called by polling callbacks to keep themselves alive during CallLater delay
+    void SetPendingPollCallback(UFCallbackBase cb){
+        m_PendingPollCallback = cb;
+    }
+    
+    // Set the polling timeout in seconds (default 90). Call before Chat() or override in subclass.
+    void SetPollTimeout(int seconds){
+        m_PollTimeout = Math.Max(10, seconds); // Minimum 10 seconds
+    }
+    
+    // Get the current poll timeout
+    int GetPollTimeout(){
+        return m_PollTimeout;
     }
 
     // ============ OVERRIDE HOOKS ============
@@ -241,6 +263,10 @@ class UFAIChatAgent extends Managed {
 
     // Override to access or transform history before sending. Return the history entries.
     array<autoptr UAIChatHistoryEntry> GetHistory(){ return m_History; }
+
+    // Override to specify the AI model to use. Return empty string for default (gpt-4o-mini).
+    // Available models: "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo", "o1", "o1-mini", "o3-mini"
+    string GetModel(){ return ""; }
     
     // ============ TOOL DISPATCH ============
     
@@ -367,7 +393,7 @@ class UFAIChatAgent extends Managed {
     protected void CreateSession(){
         UFLog.Debug("[AIChatAgent] CreateSession - Starting, KBId: " + m_KBId);
         UFAIChatEndpoint ai = U().AI();
-        int cid = ai.Create(SystemInstructions(), "string", "", "", m_MaxHistory, new UFAIChatAgentCreateCB(this, ""), m_KBId);
+        int cid = ai.Create(SystemInstructions(), "string", "", GetModel(), m_MaxHistory, new UFAIChatAgentCreateCB(this, ""), m_KBId);
         if (cid == -1){
             Error2("[UF][AIChatAgent] CreateSession", "Failed to create AI chat session");
             CallHandlerError(m_PendingHandler, m_PendingHandlerFn, -1, "Failed to create session");
@@ -378,16 +404,21 @@ class UFAIChatAgent extends Managed {
     }
 
     void OnSessionCreated(string chatId){
+        string hasPending = "no";
+        if (m_PendingMessage != "") hasPending = "yes";
+        UFLog.Debug("[AIChatAgent] OnSessionCreated - ChatId: " + chatId + ", PendingMessage: " + hasPending);
         m_ChatId = chatId;
         m_Ready = true;
 
         if (m_PendingMessage != "" && m_PendingHandler){
+            UFLog.Debug("[AIChatAgent] OnSessionCreated - Sending pending message");
             SendMessage(m_PendingMessage, m_PendingHandler, m_PendingHandlerFn);
             ClearPending();
         }
     }
 
     void OnSessionCreateFailed(string error){
+        UFLog.Debug("[AIChatAgent] OnSessionCreateFailed - Error: " + error);
         Error2("[UF][AIChatAgent] OnSessionCreateFailed", error);
         CallHandlerError(m_PendingHandler, m_PendingHandlerFn, -1, error);
         ClearPending();
@@ -540,6 +571,7 @@ class UFAIChatAgentCreateCB extends UFCallbackBase {
     }
 
     override void OnError(int errorCode, int cid){
+        UFLog.Debug("[UFAIChatAgentCreateCB] OnError - CID: " + cid + ", ErrorCode: " + errorCode);
         if (!m_Agent) return;
         m_Agent.OnSessionCreateFailed("Error code: " + errorCode);
     }
@@ -551,7 +583,7 @@ class UFAIChatAgentSendCB extends UFCallbackBase {
     protected string m_HandlerFn;
     protected string m_PendingMessageId;
     protected int m_PollRetries;
-    static const int MAX_POLL_RETRIES = 120; // ~2 minutes at 1 second intervals
+    protected int m_MaxPollRetries;
     protected int m_ToolCallDepth;
     static const int MAX_TOOL_CALL_DEPTH = 10;
 
@@ -559,7 +591,11 @@ class UFAIChatAgentSendCB extends UFCallbackBase {
         Class.CastTo(m_Agent, instance);
         m_PendingMessageId = "";
         m_PollRetries = 0;
+        m_MaxPollRetries = 90; // Default, will be overridden from agent
         m_ToolCallDepth = 0;
+        if (m_Agent) {
+            m_MaxPollRetries = m_Agent.GetPollTimeout();
+        }
     }
     
     void Init(Class handler, string handlerFn){
@@ -570,10 +606,19 @@ class UFAIChatAgentSendCB extends UFCallbackBase {
     void SetToolCallDepth(int depth){
         m_ToolCallDepth = depth;
     }
+    
+    // Direct callback to user when agent is unavailable - ensures callback always fires
+    protected void CallHandlerDirect(int cid, int status, string data){
+        if (!m_Handler || m_HandlerFn == "") return;
+        g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallByName(m_Handler, m_HandlerFn, new Param4<int, int, string, string>(cid, status, "", data));
+    }
 
     override void OnSuccess(string jsonData, int cid){
         UFLog.Debug("[UFAIChatAgentSendCB] OnSuccess - CID: " + cid + ", DataLen: " + jsonData.Length().ToString());
-        if (!m_Agent) return;
+        if (!m_Agent) {
+            CallHandlerDirect(cid, UF_ERROR, "Agent no longer available");
+            return;
+        }
         
         // First try to parse as tool call response
         autoptr UAIChatToolCallResponse toolResp = new UAIChatToolCallResponse;
@@ -612,30 +657,48 @@ class UFAIChatAgentSendCB extends UFCallbackBase {
         
         // Handle different status responses
         if (resp.Status == "Success"){
+            UFLog.Debug("[UFAIChatAgentSendCB] Success - Message length: " + resp.Message.Length().ToString());
             m_Agent.OnMessageResponse(cid, UF_SUCCESS, resp.Message, m_Handler, m_HandlerFn);
         } else if (resp.Status == "Pending" || resp.Status == "Wait"){
             // Start or continue polling
-            m_PendingMessageId = resp.MessageId;
+            // Only update MessageId if the response contains one - poll responses may not include it
+            if (resp.MessageId != "") {
+                m_PendingMessageId = resp.MessageId;
+            }
             m_PollRetries++;
-            if (m_PollRetries > MAX_POLL_RETRIES){
+            UFLog.Debug("[UFAIChatAgentSendCB] " + resp.Status + " - MessageId: " + m_PendingMessageId + ", Retry: " + m_PollRetries + "/" + m_MaxPollRetries);
+            if (m_PollRetries > m_MaxPollRetries){
+                UFLog.Debug("[UFAIChatAgentSendCB] Max poll retries exceeded, timing out");
                 m_Agent.OnMessageResponse(cid, UF_TIMEOUT, "AI response timed out", m_Handler, m_HandlerFn);
                 return;
             }
-            // Poll again after delay
-            GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(PollMessageStatus, 1000, false, cid);
+            // Create a NEW callback for polling IMMEDIATELY - don't use CallLater on 'this'
+            // because 'this' will be deleted after OnSuccess returns (UNestedCallBack cleanup).
+            // The new callback will schedule its own delayed poll.
+            autoptr UFAIChatAgentSendCB pollCB = new UFAIChatAgentSendCB(m_Agent, "");
+            pollCB.Init(m_Handler, m_HandlerFn);
+            pollCB.SetPollState(m_PendingMessageId, m_PollRetries, m_ToolCallDepth, m_MaxPollRetries);
+            pollCB.ScheduleDelayedPoll(cid);
         } else if (resp.Status == "NotFound"){
+            UFLog.Debug("[UFAIChatAgentSendCB] NotFound status received");
             m_Agent.OnMessageResponse(cid, UF_NOTFOUND, "Message not found", m_Handler, m_HandlerFn);
         } else if (resp.Status == "ToolCall"){
             // Also handle ToolCall status from regular response (shouldn't happen but handle it)
+            UFLog.Debug("[UFAIChatAgentSendCB] Unexpected ToolCall status in message response");
             m_Agent.OnMessageResponse(cid, UF_ERROR, "Unexpected ToolCall status in message response", m_Handler, m_HandlerFn);
         } else {
             // Error or unknown status
+            UFLog.Debug("[UFAIChatAgentSendCB] Error or unknown status: " + resp.Status);
             m_Agent.OnMessageResponse(cid, UF_ERROR, "Status: " + resp.Status, m_Handler, m_HandlerFn);
         }
     }
     
     protected void SubmitToolResultAndContinue(string messageId, string toolCallId, string result, int cid){
-        if (!m_Agent) return;
+        UFLog.Debug("[UFAIChatAgentSendCB] SubmitToolResultAndContinue - MessageId: " + messageId + ", ToolCallId: " + toolCallId);
+        if (!m_Agent) {
+            CallHandlerDirect(cid, UF_ERROR, "Agent no longer available");
+            return;
+        }
         
         // Create a callback that continues with the same handler
         autoptr UFAIChatAgentSendCB continueCB = new UFAIChatAgentSendCB(m_Agent, "");
@@ -647,14 +710,54 @@ class UFAIChatAgentSendCB extends UFCallbackBase {
         ai.SubmitToolResult(messageId, toolCallId, result, continueCB);
     }
     
-    protected void PollMessageStatus(int cid){
-        if (!m_Agent || m_PendingMessageId == "") return;
+    void SetPollState(string messageId, int pollRetries, int toolCallDepth, int maxRetries = 90){
+        m_PendingMessageId = messageId;
+        m_PollRetries = pollRetries;
+        m_ToolCallDepth = toolCallDepth;
+        m_MaxPollRetries = maxRetries;
+    }
+    
+    // Schedule a delayed poll using a static reference to prevent premature deletion
+    void ScheduleDelayedPoll(int cid){
+        UFLog.Debug("[UFAIChatAgentSendCB] ScheduleDelayedPoll - CID: " + cid + ", MessageId: " + m_PendingMessageId);
+        // Store a reference to prevent garbage collection until CallLater fires
+        // The agent keeps us alive by holding the pending poll reference
+        m_Agent.SetPendingPollCallback(this);
+        GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(ExecutePoll, 1000, false, cid);
+    }
+    
+    protected void ExecutePoll(int cid){
+        UFLog.Debug("[UFAIChatAgentSendCB] ExecutePoll - CID: " + cid + ", MessageId: " + m_PendingMessageId);
+        // Clear the agent's reference to us since we're about to make the API call
+        if (m_Agent) {
+            m_Agent.SetPendingPollCallback(NULL);
+        }
+        
+        if (!m_Agent) {
+            UFLog.Debug("[UFAIChatAgentSendCB] ExecutePoll - Agent is null, failing safely");
+            CallHandlerDirect(cid, UF_ERROR, "Agent no longer available");
+            return;
+        }
+        
+        if (m_PendingMessageId == "") {
+            UFLog.Debug("[UFAIChatAgentSendCB] ExecutePoll - MessageId is empty, failing safely");
+            CallHandlerDirect(cid, UF_ERROR, "No message ID to poll");
+            return;
+        }
+        
         UFAIChatEndpoint ai = U().AI();
+        // 'this' will be wrapped in UNestedCallBack and deleted after the call completes
+        // That's fine - OnSuccess will create a new callback for the next poll if needed
         ai.MessageStatus(m_PendingMessageId, this);
     }
 
     override void OnError(int errorCode, int cid){
-        if (!m_Agent) return;
+        UFLog.Debug("[UFAIChatAgentSendCB] OnError - CID: " + cid + ", ErrorCode: " + errorCode);
+        if (!m_Agent) {
+            // Agent gone but we still need to notify the handler
+            CallHandlerDirect(cid, errorCode, "Error code: " + errorCode);
+            return;
+        }
         m_Agent.OnMessageResponse(cid, errorCode, "Error code: " + errorCode, m_Handler, m_HandlerFn);
     }
 }
@@ -718,12 +821,19 @@ class UAIChatAgent<Class T> extends Managed {
     protected string m_PendingMessage;
     protected Class m_PendingHandler;
     protected string m_PendingHandlerFn;
+    
+    // Holds the current polling callback to prevent garbage collection during CallLater delay
+    protected autoptr UFCallbackBase m_PendingPollCallback;
+    
+    // Configurable poll timeout in seconds (default 90)
+    protected int m_PollTimeout;
 
     void UAIChatAgent(){
         m_Ready = false;
         m_IncludeHistory = true;
         m_MaxHistory = 25;
         m_KBId = "";
+        m_PollTimeout = 90;
         m_History = new array<autoptr UAIChatHistoryEntry>;
         m_StaticContext = new array<autoptr UAIChatContext>;
         m_Tools = new array<autoptr UAIChatToolDef>;
@@ -732,6 +842,21 @@ class UAIChatAgent<Class T> extends Managed {
 
         // Let subclass register tools
         RegisterTools(m_Tools);
+    }
+    
+    // Called by polling callbacks to keep themselves alive during CallLater delay
+    void SetPendingPollCallback(UFCallbackBase cb){
+        m_PendingPollCallback = cb;
+    }
+    
+    // Set the polling timeout in seconds (default 90). Override in subclass or call before Chat().
+    void SetPollTimeout(int seconds){
+        m_PollTimeout = Math.Max(10, seconds); // Minimum 10 seconds
+    }
+    
+    // Get the current poll timeout
+    int GetPollTimeout(){
+        return m_PollTimeout;
     }
 
     // ============ OVERRIDE HOOKS ============
@@ -751,6 +876,10 @@ class UAIChatAgent<Class T> extends Managed {
 
     // Override to access or transform history before sending. Return the history entries.
     array<autoptr UAIChatHistoryEntry> GetHistory(){ return m_History; }
+
+    // Override to specify the AI model to use. Return empty string for default (gpt-4o-mini).
+    // Available models: "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo", "o1", "o1-mini", "o3-mini"
+    string GetModel(){ return ""; }
     
     // ============ TOOL DISPATCH ============
     
@@ -901,7 +1030,7 @@ class UAIChatAgent<Class T> extends Managed {
         UFAIChatEndpoint ai = U().AI();
         string schema = GetSchemaForAPI();
         // Use "JSON" response format with schema
-        int cid = ai.Create(SystemInstructions(), "JSON", schema, "", m_MaxHistory, new UAIChatAgentCreateCB<T>(this, ""), m_KBId);
+        int cid = ai.Create(SystemInstructions(), "JSON", schema, GetModel(), m_MaxHistory, new UAIChatAgentCreateCB<T>(this, ""), m_KBId);
         if (cid == -1){
             Error2("[UF][UAIChatAgent<T>] CreateSession", "Failed to create AI chat session");
             CallHandlerError(m_PendingHandler, m_PendingHandlerFn, -1);
@@ -914,15 +1043,19 @@ class UAIChatAgent<Class T> extends Managed {
     void OnSessionCreated(string chatId){
         m_ChatId = chatId;
         m_Ready = true;
-        UFLog.Debug("[UAIChatAgent<T>] OnSessionCreated - ChatId: " + chatId + ", KBId: " + m_KBId);
+        string hasPending = "no";
+        if (m_PendingMessage != "") hasPending = "yes";
+        UFLog.Debug("[UAIChatAgent<T>] OnSessionCreated - ChatId: " + chatId + ", KBId: " + m_KBId + ", PendingMessage: " + hasPending);
 
         if (m_PendingMessage != "" && m_PendingHandler){
+            UFLog.Debug("[UAIChatAgent<T>] OnSessionCreated - Sending pending message");
             SendMessage(m_PendingMessage, m_PendingHandler, m_PendingHandlerFn);
             ClearPending();
         }
     }
 
     void OnSessionCreateFailed(string error){
+        UFLog.Debug("[UAIChatAgent<T>] OnSessionCreateFailed - Error: " + error);
         Error2("[UF][UAIChatAgent<T>] OnSessionCreateFailed", error);
         CallHandlerError(m_PendingHandler, m_PendingHandlerFn, -1);
         ClearPending();
@@ -1087,7 +1220,7 @@ class UAIChatAgentSendCB<Class T> extends UFCallbackBase {
     protected string m_HandlerFn;
     protected string m_PendingMessageId;
     protected int m_PollRetries;
-    static const int MAX_POLL_RETRIES = 120; // ~2 minutes at 1 second intervals
+    protected int m_MaxPollRetries;
     protected int m_ToolCallDepth;
     static const int MAX_TOOL_CALL_DEPTH = 10;
 
@@ -1095,7 +1228,12 @@ class UAIChatAgentSendCB<Class T> extends UFCallbackBase {
         // instance is stored in parent's Instance field
         m_PendingMessageId = "";
         m_PollRetries = 0;
+        m_MaxPollRetries = 90; // Default, will be overridden from agent
         m_ToolCallDepth = 0;
+        UAIChatAgent<T> agent = GetAgent();
+        if (agent) {
+            m_MaxPollRetries = agent.GetPollTimeout();
+        }
     }
     
     void Init(Class handler, string handlerFn){
@@ -1107,6 +1245,12 @@ class UAIChatAgentSendCB<Class T> extends UFCallbackBase {
         m_ToolCallDepth = depth;
     }
     
+    // Direct callback to user when agent is unavailable - ensures callback always fires
+    protected void CallHandlerDirect(int cid, int status){
+        if (!m_Handler || m_HandlerFn == "") return;
+        g_Game.GameScript.CallFunctionParams(m_Handler, m_HandlerFn, NULL, new Param4<int, int, string, T>(cid, status, "", NULL));
+    }
+    
     protected UAIChatAgent<T> GetAgent(){
         UAIChatAgent<T> agent;
         Class.CastTo(agent, Instance);
@@ -1114,8 +1258,12 @@ class UAIChatAgentSendCB<Class T> extends UFCallbackBase {
     }
 
     override void OnSuccess(string jsonData, int cid){
+        UFLog.Debug("[UAIChatAgentSendCB<T>] OnSuccess - CID: " + cid + ", DataLen: " + jsonData.Length().ToString());
         UAIChatAgent<T> agent = GetAgent();
-        if (!agent) return;
+        if (!agent) {
+            CallHandlerDirect(cid, UF_ERROR);
+            return;
+        }
         
         // First try to parse as tool call response
         autoptr UAIChatToolCallResponse toolResp = new UAIChatToolCallResponse;
@@ -1124,15 +1272,19 @@ class UAIChatAgentSendCB<Class T> extends UFCallbackBase {
         
         if (js.ReadFromString(toolResp, jsonData, error) && toolResp && toolResp.Status == "ToolCall"){
             // Handle tool call
+            UFLog.Debug("[UAIChatAgentSendCB<T>] Tool call detected: " + toolResp.ToolName + ", Depth: " + m_ToolCallDepth);
             m_ToolCallDepth++;
             if (m_ToolCallDepth > MAX_TOOL_CALL_DEPTH){
+                UFLog.Debug("[UAIChatAgentSendCB<T>] Max tool call depth exceeded!");
                 agent.OnMessageResponse(cid, UF_ERROR, NULL, "Maximum tool call depth reached", m_Handler, m_HandlerFn);
                 return;
             }
             
             // Get param count for this tool and execute it
             int paramCount = agent.GetToolParamCount(toolResp.ToolName);
+            UFLog.Debug("[UAIChatAgentSendCB<T>] Executing tool: " + toolResp.ToolName + ", ParamCount: " + paramCount);
             string toolResult = agent.ExecuteTool(toolResp.ToolName, toolResp.P1, toolResp.P2, toolResp.P3, toolResp.P4, toolResp.P5, paramCount);
+            UFLog.Debug("[UAIChatAgentSendCB<T>] Tool result length: " + toolResult.Length().ToString());
             
             // Submit the result back to continue the conversation
             SubmitToolResultAndContinue(toolResp.MessageId, toolResp.ToolCallId, toolResult, cid);
@@ -1140,12 +1292,15 @@ class UAIChatAgentSendCB<Class T> extends UFCallbackBase {
         }
         
         // Not a tool call - parse as regular message response
+        UFLog.Debug("[UAIChatAgentSendCB<T>] Parsing as regular message response");
         autoptr UAIChatMessageResponse resp = new UAIChatMessageResponse;
         if (!js.ReadFromString(resp, jsonData, error) || !resp){
+            UFLog.Debug("[UAIChatAgentSendCB<T>] Failed to parse response: " + error);
             agent.OnMessageResponse(cid, UF_JSONERROR, NULL, "Failed to parse response", m_Handler, m_HandlerFn);
             return;
         }
         
+        UFLog.Debug("[UAIChatAgentSendCB<T>] Response status: " + resp.Status + ", MessageId: " + resp.MessageId);
         // Handle different status responses
         if (resp.Status == "Success"){
             // Parse the Message field (AI's JSON response) into type T
@@ -1159,28 +1314,45 @@ class UAIChatAgentSendCB<Class T> extends UFCallbackBase {
             }
         } else if (resp.Status == "Pending" || resp.Status == "Wait"){
             // Start or continue polling
-            m_PendingMessageId = resp.MessageId;
+            // Only update MessageId if the response contains one - poll responses may not include it
+            if (resp.MessageId != "") {
+                m_PendingMessageId = resp.MessageId;
+            }
             m_PollRetries++;
-            if (m_PollRetries > MAX_POLL_RETRIES){
+            UFLog.Debug("[UAIChatAgentSendCB<T>] " + resp.Status + " - MessageId: " + m_PendingMessageId + ", Retry: " + m_PollRetries + "/" + m_MaxPollRetries);
+            if (m_PollRetries > m_MaxPollRetries){
+                UFLog.Debug("[UAIChatAgentSendCB<T>] Max poll retries exceeded, timing out");
                 agent.OnMessageResponse(cid, UF_TIMEOUT, NULL, "", m_Handler, m_HandlerFn);
                 return;
             }
-            // Poll again after delay
-            GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(PollMessageStatus, 1000, false, cid);
+            // Create a NEW callback for polling IMMEDIATELY - don't use CallLater on 'this'
+            // because 'this' will be deleted after OnSuccess returns (UNestedCallBack cleanup).
+            // The new callback will schedule its own delayed poll.
+            autoptr UAIChatAgentSendCB<T> pollCB = new UAIChatAgentSendCB<T>(agent, "");
+            pollCB.Init(m_Handler, m_HandlerFn);
+            pollCB.SetPollState(m_PendingMessageId, m_PollRetries, m_ToolCallDepth, m_MaxPollRetries);
+            pollCB.ScheduleDelayedPoll(agent, cid);
         } else if (resp.Status == "NotFound"){
+            UFLog.Debug("[UAIChatAgentSendCB<T>] NotFound status received");
             agent.OnMessageResponse(cid, UF_NOTFOUND, NULL, "", m_Handler, m_HandlerFn);
         } else if (resp.Status == "ToolCall"){
             // Should have been caught above, but handle edge case
+            UFLog.Debug("[UAIChatAgentSendCB<T>] Unexpected ToolCall status in message response");
             agent.OnMessageResponse(cid, UF_ERROR, NULL, "Unexpected ToolCall status", m_Handler, m_HandlerFn);
         } else {
             // Error or unknown status
+            UFLog.Debug("[UAIChatAgentSendCB<T>] Error or unknown status: " + resp.Status);
             agent.OnMessageResponse(cid, UF_ERROR, NULL, "", m_Handler, m_HandlerFn);
         }
     }
     
     protected void SubmitToolResultAndContinue(string messageId, string toolCallId, string result, int cid){
+        UFLog.Debug("[UAIChatAgentSendCB<T>] SubmitToolResultAndContinue - MessageId: " + messageId + ", ToolCallId: " + toolCallId);
         UAIChatAgent<T> agent = GetAgent();
-        if (!agent) return;
+        if (!agent) {
+            CallHandlerDirect(cid, UF_ERROR);
+            return;
+        }
         
         // Create a callback that continues with the same handler
         autoptr UAIChatAgentSendCB<T> continueCB = new UAIChatAgentSendCB<T>(agent, "");
@@ -1192,16 +1364,56 @@ class UAIChatAgentSendCB<Class T> extends UFCallbackBase {
         ai.SubmitToolResult(messageId, toolCallId, result, continueCB);
     }
     
-    protected void PollMessageStatus(int cid){
+    void SetPollState(string messageId, int pollRetries, int toolCallDepth, int maxRetries = 90){
+        m_PendingMessageId = messageId;
+        m_PollRetries = pollRetries;
+        m_ToolCallDepth = toolCallDepth;
+        m_MaxPollRetries = maxRetries;
+    }
+    
+    // Schedule a delayed poll using the agent to hold our reference
+    void ScheduleDelayedPoll(UAIChatAgent<T> agent, int cid){
+        UFLog.Debug("[UAIChatAgentSendCB<T>] ScheduleDelayedPoll - CID: " + cid + ", MessageId: " + m_PendingMessageId);
+        // Store a reference to prevent garbage collection until CallLater fires
+        agent.SetPendingPollCallback(this);
+        GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(ExecutePoll, 1000, false, cid);
+    }
+    
+    protected void ExecutePoll(int cid){
+        UFLog.Debug("[UAIChatAgentSendCB<T>] ExecutePoll - CID: " + cid + ", MessageId: " + m_PendingMessageId);
         UAIChatAgent<T> agent = GetAgent();
-        if (!agent || m_PendingMessageId == "") return;
+        
+        // Clear the agent's reference to us since we're about to make the API call
+        if (agent) {
+            agent.SetPendingPollCallback(NULL);
+        }
+        
+        if (!agent) {
+            UFLog.Debug("[UAIChatAgentSendCB<T>] ExecutePoll - Agent is null, failing safely");
+            CallHandlerDirect(cid, UF_ERROR);
+            return;
+        }
+        
+        if (m_PendingMessageId == "") {
+            UFLog.Debug("[UAIChatAgentSendCB<T>] ExecutePoll - MessageId is empty, failing safely");
+            CallHandlerDirect(cid, UF_ERROR);
+            return;
+        }
+        
         UFAIChatEndpoint ai = U().AI();
+        // 'this' will be wrapped in UNestedCallBack and deleted after the call completes
+        // That's fine - OnSuccess will create a new callback for the next poll if needed
         ai.MessageStatus(m_PendingMessageId, this);
     }
 
     override void OnError(int errorCode, int cid){
+        UFLog.Debug("[UAIChatAgentSendCB<T>] OnError - CID: " + cid + ", ErrorCode: " + errorCode);
         UAIChatAgent<T> agent = GetAgent();
-        if (!agent) return;
+        if (!agent) {
+            // Agent gone but we still need to notify the handler
+            CallHandlerDirect(cid, errorCode);
+            return;
+        }
         agent.OnMessageResponse(cid, errorCode, NULL, "", m_Handler, m_HandlerFn);
     }
 }

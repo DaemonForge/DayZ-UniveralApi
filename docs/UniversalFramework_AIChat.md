@@ -33,6 +33,273 @@ The AI Chat system integrates OpenAI's GPT models into DayZ, enabling intelligen
 
 > **Note:** The server must create chat sessions. Once created, both server and players can send messages and interact with the chat.
 
+### Server-Client Architecture
+
+The AI Chat system is designed for server-authoritative usage:
+
+1. **Server creates the chat session** - Only the server can call `Create()` or instantiate Agent classes
+2. **Server sends Chat ID to client** - Use RPC to transmit the chat ID
+3. **Client uses Handler classes** - Clients use `UStringAIChatHandler` or `UAIChatHandler<T>` with the received chat ID
+4. **Both can send messages** - Once the session exists, either side can send messages
+
+```
+Server                                    Client
+  │                                         │
+  │  Agent.Chat() creates session           │
+  ├─────────────────────────────────────────┤
+  │  ──── RPC: Send ChatId to client ────>  │
+  │                                         │
+  │                     Handler receives messages
+  │                                         │
+  │  <──── Both can send messages ────>     │
+  │                                         │
+```
+
+---
+
+## Usage Patterns
+
+There are **three** ways to use the AI Chat system, each suited for different scenarios:
+
+### Pattern 1: Agent Classes (Server-Only, Subclass)
+
+Best for **server-side AI** like NPC brains, game masters, or automated systems.
+
+```enforce
+// Define your agent by subclassing
+class MyNPC extends UFAIChatAgent {
+    override string SystemInstructions() {
+        return "You are a helpful NPC.";
+    }
+    
+    override string GetModel() {
+        return "gpt-4o-mini";  // Optional: specify model
+    }
+}
+
+// Use on SERVER
+autoptr MyNPC npc = new MyNPC();
+npc.Chat("Hello!", this, "OnResponse");
+```
+
+**Classes:** `UFAIChatAgent` (string responses), `UAIChatAgent<T>` (typed responses)
+
+### Pattern 2: Handler Classes (Server or Client, Direct Instantiation)
+
+Best for **client-side chat** or when you have an existing chat ID from the server.
+
+```enforce
+// SERVER: Create chat
+// Parameters: systemMessage, callbackTarget, callbackFunc, model, maxHistory
+// NOTE: The callback is for MESSAGE responses, not creation!
+autoptr UStringAIChatHandler serverHandler = new UStringAIChatHandler("You are a helpful assistant", this, "OnMessageResponse", "gpt-4o-mini", 25);
+
+// To get ChatId when creation completes, use NotifyOnCreated
+serverHandler.NotifyOnCreated("OnChatCreated");
+
+void OnChatCreated(int cid, int status, string chatId, bool success) {
+    if (success) {
+        // NOW send ChatId to client via RPC
+    }
+}
+
+// CLIENT: Connect to existing chat using ChatId received from server
+autoptr UStringAIChatHandler clientHandler = new UStringAIChatHandler(chatIdFromServer, this, "OnMessageResponse");
+clientHandler.SendMessage("Hello from client!");
+```
+
+**Classes:** `UStringAIChatHandler` (string responses), `UAIChatHandler<T>` (typed responses)
+
+### Pattern 3: Low-Level Endpoint (Full Control)
+
+Best for **advanced scenarios** requiring direct API control.
+
+```enforce
+UFAIChatEndpoint ai = U().AI();
+
+// Create session - params: systemMessage, format, jsonSchema, model, maxHistory, callback, kbId
+int cid = ai.Create("System message", "string", "", "gpt-4o-mini", 25, callback, "");
+
+// Send message
+ai.Send(chatId, "Hello", callback, context, tools);
+```
+
+---
+
+## Handler Classes (Client-Compatible)
+
+Handler classes allow clients to interact with AI chats after the server creates the session.
+
+### UStringAIChatHandler - String Responses
+
+**Constructor 1: Create new chat (SERVER ONLY)**
+
+Chat creation happens automatically - messages can be sent immediately (they queue until ready).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `systemMessage` | string | System prompt for the AI |
+| `obj` | Class | Callback target for MESSAGE responses (not creation) |
+| `funcName` | string | Callback function name for messages |
+| `model` | string | AI model (optional - default: "gpt-4o-mini") |
+| `maxHistory` | int | Max history entries (optional - default: -1 unlimited) |
+
+```enforce
+autoptr UStringAIChatHandler handler = new UStringAIChatHandler("You are a helpful NPC.", this, "OnMessage");
+```
+
+**Constructor 2: Connect to existing chat (SERVER or CLIENT)**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `chatId` | string | Existing chat ID received from server |
+| `obj` | Class | Callback target |
+| `funcName` | string | Callback function for messages |
+
+```enforce
+autoptr UStringAIChatHandler handler = new UStringAIChatHandler(chatId, this, "OnMessage");
+```
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `SendMessage(string message, context)` | Send a message (auto-queues if chat not ready) |
+| `SetPolling(bool enabled, int frequency)` | Configure auto-polling |
+| `NotifyOnCreated(string callbackFunc)` | Set callback for when chat creation completes |
+| `Summarize(callback)` | Get conversation summary |
+| `Reset()` | Clear chat history |
+| `Delete()` | Delete the session (server only) |
+| `GetChatId()` | Get the chat ID (empty until created) |
+| `GetQueueCount()` | Get number of messages waiting to be sent |
+
+**Message Callback Signature:**
+```enforce
+// Called for each message response
+void OnMessageResponse(int cid, int status, string chatId, string response);
+```
+
+**Creation Callback Signature (via NotifyOnCreated):**
+```enforce
+// Called once when chat creation completes
+void OnChatCreated(int cid, int status, string chatId, bool success);
+```
+
+> **Important:** The constructor callback is for **message responses only**. To be notified when chat creation completes (to get the ChatId for RPC), use `NotifyOnCreated()`.
+
+### UAIChatHandler<T> - Typed Responses
+
+**Constructor 1: Create new chat (SERVER ONLY)**
+
+Chat creation happens automatically - messages queue until ready.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `systemMessage` | string | System prompt for the AI |
+| `obj` | Class | Callback target for MESSAGE responses |
+| `funcName` | string | Callback function for messages |
+| `jsonSchema` | string | JSON schema for response format (REQUIRED) |
+| `model` | string | AI model (optional - default: "gpt-4o-mini") |
+| `maxHistory` | int | Max history entries (optional) |
+
+```enforce
+autoptr UAIChatHandler<MyResponse> handler = new UAIChatHandler<MyResponse>("You are helpful.", this, "OnMessage", mySchema);
+```
+
+**Constructor 2: Connect to existing chat (SERVER or CLIENT)**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `chatId` | string | Existing chat ID received from server |
+| `obj` | Class | Callback target |
+| `funcName` | string | Callback function for messages |
+| `jsonSchema` | string | Schema for parsing (optional if server set it) |
+
+```enforce
+autoptr UAIChatHandler<MyResponse> handler = new UAIChatHandler<MyResponse>(chatId, this, "OnMessage", mySchema);
+```
+
+**Message Callback Signature:**
+```enforce
+void OnMessageResponse(int cid, int status, string chatId, T response);
+```
+
+> Same behavior as `UStringAIChatHandler` - use `NotifyOnCreated()` if you need to know when the chat is created.
+
+### Complete Server-Client Example
+
+```enforce
+// ======== SERVER SIDE ========
+class ServerNPCManager {
+    protected autoptr UStringAIChatHandler m_Handler;
+    protected PlayerBase m_Player;
+    
+    void CreateNPCChat(PlayerBase player) {
+        m_Player = player;
+        
+        // Create the chat on server
+        // Parameters: systemMessage, callbackTarget, callbackFunc, model, maxHistory
+        // NOTE: The callback ("OnNPCMessage") is for MESSAGE responses
+        m_Handler = new UStringAIChatHandler("You are a friendly trader NPC.", this, "OnNPCMessage", "gpt-4o-mini", 25);
+        
+        // Set a SEPARATE callback for when creation completes
+        m_Handler.NotifyOnCreated("OnChatCreated");
+    }
+    
+    // Called when chat creation completes (via NotifyOnCreated)
+    void OnChatCreated(int cid, int status, string chatId, bool success) {
+        if (success && chatId != "") {
+            // Send chat ID to client via RPC
+            if (m_Player && m_Player.GetIdentity()) {
+                GetGame().RPCSingleParam(m_Player, RPC_NPC_CHAT_ID, 
+                    new Param1<string>(chatId), true, m_Player.GetIdentity());
+            }
+        }
+    }
+    
+    // Called for each message response
+    void OnNPCMessage(int cid, int status, string chatId, string response) {
+        if (status == UF_SUCCESS) {
+            Print("NPC says: " + response);
+        }
+    }
+}
+
+// ======== CLIENT SIDE ========
+class ClientNPCChat {
+    protected autoptr UStringAIChatHandler m_Handler;
+    
+    // Called when receiving RPC from server with chat ID
+    void OnReceiveChatId(string chatId) {
+        // Connect to the existing chat - no creation needed
+        m_Handler = new UStringAIChatHandler(chatId, this, "OnNPCResponse");
+        
+        // Enable auto-polling for async responses
+        m_Handler.SetPolling(true, 1);
+    }
+    
+    void SayToNPC(string message) {
+        if (m_Handler) {
+            m_Handler.SendMessage(message);
+        }
+    }
+    
+    void OnNPCResponse(int cid, int status, string chatId, string response) {
+        if (status == UF_SUCCESS) {
+            // Display NPC response to player
+            ShowNPCDialogue(response);
+        } else if (status == UF_AI_PENDING || status == UF_AI_PROCESSING) {
+            // Still processing - polling will retry automatically
+            ShowTypingIndicator();
+        }
+    }
+}
+```
+
+> **Key Pattern:** Use `NotifyOnCreated()` to get the ChatId, then RPC it to clients. The constructor callback is for message responses only.
+
+---
+
 ## UFAIChatAgent - String Response Agent
 
 High-level agent for AI chat with string responses.
@@ -544,14 +811,8 @@ Direct endpoint access for advanced control.
 ```enforce
 UFAIChatEndpoint ai = U().AI();
 
-int cid = ai.Create(
-    "You are a helpful assistant",  // System message
-    "string",                        // Response format: "string" or "JSON"
-    "",                              // JSON schema (if format is "JSON")
-    "gpt-4o-mini",                  // Model (optional)
-    25,                              // Max history (optional)
-    new UFCallback<UAIChatCreateResponse>(this, "OnSessionCreated")
-);
+// Parameters: systemMessage, format, jsonSchema, model, maxHistory, callback
+int cid = ai.Create("You are a helpful assistant", "string", "", "gpt-4o-mini", 25, new UFCallback<UAIChatCreateResponse>(this, "OnSessionCreated"));
 
 void OnSessionCreated(int cid, int status, string oid, UAIChatCreateResponse resp) {
     if (status == UF_SUCCESS && resp) {
@@ -715,12 +976,29 @@ class NPCManager {
 
 ## Quick Reference
 
-### Agent Classes
+### Agent Classes (Server-Only, Subclass Pattern)
 
-| Class | Description |
-|-------|-------------|
-| `UFAIChatAgent` | Base agent returning string responses |
-| `UAIChatAgent<T>` | Template agent returning typed objects |
+| Class | Response Type | Use `GetModel()` Override |
+|-------|---------------|---------------------------|
+| `UFAIChatAgent` | `string` | Yes |
+| `UAIChatAgent<T>` | Typed object | Yes |
+
+### Handler Classes (Server or Client, Direct Instantiation)
+
+| Class | Response Type | Pass Model in Constructor |
+|-------|---------------|---------------------------|
+| `UStringAIChatHandler` | `string` | Yes |
+| `UAIChatHandler<T>` | Typed object | Yes |
+
+### When to Use Which
+
+| Scenario | Use |
+|----------|-----|
+| Server-only AI (NPC brains, game master) | Agent classes |
+| Client needs to send messages | Handler classes |
+| You want to subclass with overrides | Agent classes |
+| You have an existing Chat ID | Handler classes |
+| Simple direct instantiation | Handler classes |
 
 ### Configuration Methods
 
@@ -753,10 +1031,41 @@ class NPCManager {
 | Method | Purpose |
 |--------|---------|
 | `SystemInstructions()` | Return system prompt for the AI |
+| `GetModel()` | Return AI model name (default: "gpt-4o-mini") |
 | `RegisterTools()` | Register tool definitions |
 | `ExtraContext()` | Add dynamic context lines |
 | `SystemContext()` | Add static context lines |
 | `GetHistory()` | Access/transform history |
+
+### Model Selection
+
+Override `GetModel()` to specify which OpenAI model to use:
+
+```enforce
+class EfficientNPC extends UFAIChatAgent {
+    override string GetModel() {
+        return "gpt-4o-mini";  // Cheaper and faster for simple NPCs
+    }
+    
+    override string SystemInstructions() {
+        return "You are a villager. Keep responses brief.";
+    }
+}
+```
+
+#### Available Models
+
+| Model | Best For | Speed | Cost |
+|-------|----------|-------|------|
+| `"gpt-4o"` | Complex tasks | Fast | Medium |
+| `"gpt-4o-mini"` | General use (default) | Very Fast | Low |
+| `"gpt-4-turbo"` | Legacy complex tasks | Medium | High |
+| `"gpt-3.5-turbo"` | Simple tasks | Very Fast | Very Low |
+| `"o1"` | Advanced reasoning | Slow | Very High |
+| `"o1-mini"` | Balanced reasoning | Medium | High |
+| `"o3-mini"` | Best reasoning/cost | Medium | Medium |
+
+> **Tip:** Return empty string `""` to use the default model (`gpt-4o-mini`).
 
 ### Tool Method Requirements
 
@@ -764,3 +1073,105 @@ class NPCManager {
 - Method must return `string`
 - Parameters are always passed as `string` - convert with `UAIChatToolParams`
 - Maximum 5 parameters per tool
+
+---
+
+## Gotchas & Limitations
+
+### Handler Callback Flow
+
+| Issue | Correct Approach |
+|-------|-----------------|
+| Constructor callback is for messages only | Use `NotifyOnCreated()` to get ChatId on creation |
+| Callback fires for every message | Handle multiple responses in your callback |
+| ChatId is empty until created | Check `GetChatId() != ""` or use `NotifyOnCreated()` |
+
+### Tool Calling Limits
+
+| Limit | Value | What Happens |
+|-------|-------|--------------|
+| Max tool calls per turn | 10 | Returns `UF_ERROR` with "Maximum tool call depth reached" |
+| Max poll retries | 120 (~2 min) | Returns `UF_TIMEOUT` with "AI response timed out" |
+| Max parameters per tool | 5 | Additional params ignored |
+
+### Polling Behavior
+
+- Handlers with `SetPolling(true)` automatically retry pending messages
+- Default poll frequency: 1 second
+- Agents use `CallLater` with 1 second delay for polling
+
+### Server vs Client
+
+| Operation | Server | Client | Notes |
+|-----------|--------|--------|-------|
+| Create session | ✅ | ❌ | Use Agent or Handler with systemMessage |
+| Send messages | ✅ | ✅ | Need ChatId |
+| Delete session | ✅ | ❌ | Only server can clean up |
+| Use Agents | ✅ | ❌ | Agents create sessions on first Chat() |
+| Use Handlers | ✅ | ✅ | Use chatId constructor on client |
+
+### Common Mistakes
+
+```enforce
+// ❌ WRONG: Assuming callback fires on creation
+autoptr UStringAIChatHandler h = new UStringAIChatHandler("System prompt", this, "OnCreated", "gpt-4o-mini");  // OnCreated is for MESSAGES!
+// ✅ CORRECT: Use NotifyOnCreated for creation callback
+h.NotifyOnCreated("OnChatCreated");
+
+// ❌ WRONG: Using Agent on client
+autoptr MyAgent agent = new MyAgent();  // Creates session - clients can't!
+agent.Chat("Hello", this, "OnReply");
+// ✅ CORRECT: Client uses Handler with ChatId from server
+autoptr UStringAIChatHandler h = new UStringAIChatHandler(chatIdFromRPC, this, "OnReply");
+
+// ❌ WRONG: Not checking if chat is ready before getting ID
+void CreateChat() {
+    m_Handler = new UStringAIChatHandler("System prompt", this, "OnMsg");
+    string chatId = m_Handler.GetChatId();  // Empty! Creation is async
+    SendToClient(chatId);
+}
+// ✅ CORRECT: Wait for creation callback
+void CreateChat() {
+    m_Handler = new UStringAIChatHandler("System prompt", this, "OnMsg");
+    m_Handler.NotifyOnCreated("OnReady");
+}
+void OnReady(int cid, int status, string chatId, bool success) {
+    if (success) SendToClient(chatId);  // Now chatId is valid
+}
+```
+
+### Message Queue Behavior
+
+When using Handlers with the creation constructor:
+- Messages sent before creation completes are **automatically queued**
+- Queued messages are sent in order once creation completes
+- Use `GetQueueCount()` to check pending messages
+
+```enforce
+autoptr UStringAIChatHandler h = new UStringAIChatHandler("Prompt", this, "OnMsg");
+h.SendMessage("Hello");  // Queued (chat not ready yet)
+h.SendMessage("World");  // Queued
+// Both messages send automatically when chat is created
+```
+
+---
+
+## Migration Notes
+
+### v2.x: GetModel() Now Requires Override
+
+If you have an existing mod that extends `UFAIChatAgent` or `UAIChatAgent<T>` and defines a `GetModel()` method, you must add the `override` keyword:
+
+```enforce
+// ❌ OLD (will cause compile error)
+class MyAgent extends UFAIChatAgent {
+    string GetModel() { return "gpt-4o"; }
+}
+
+// ✅ NEW (correct)
+class MyAgent extends UFAIChatAgent {
+    override string GetModel() { return "gpt-4o"; }
+}
+```
+
+This change was made to provide a default implementation in the base class that returns an empty string (uses default model `gpt-4o-mini`).

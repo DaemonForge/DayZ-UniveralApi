@@ -3,16 +3,17 @@
 Complete, ready-to-use examples demonstrating different AI Chat patterns.
 
 **Key Features Demonstrated:**
-- Simple NPC dialogue
+- Simple NPC dialogue with model selection
+- Server-client handler pattern for player chat
 - Quest givers with tool calling
 - Typed agents for structured responses
 - Knowledge Base integration for document-backed NPCs
 
 ---
 
-## Example 1: Simple NPC Dialogue
+## Example 1: Simple NPC Dialogue (Server-Side Agent)
 
-A basic AI-powered NPC that players can talk to.
+A basic AI-powered NPC that players can talk to. Uses Agent class pattern with model selection.
 
 ```enforce
 // ============================================================
@@ -26,6 +27,11 @@ class NPCDialogueAgent extends UFAIChatAgent {
     void NPCDialogueAgent(string npcName, string role) {
         m_NPCName = npcName;
         m_NPCRole = role;
+    }
+    
+    // Optional: Specify a cheaper model for simple NPCs
+    override string GetModel() {
+        return "gpt-4o-mini";  // Fast and cost-effective
     }
     
     override string SystemInstructions() {
@@ -75,7 +81,144 @@ class NPCInteraction {
 
 ---
 
-## Example 2: Quest Giver NPC
+## Example 2: Server-Client Handler Pattern
+
+This example shows how to create an AI chat on the server and allow clients to interact with it.
+
+**Key Concepts:**
+- Constructor callback is for **MESSAGE responses**, not creation
+- Use `NotifyOnCreated()` to get the ChatId when creation completes
+- Messages can be queued immediately - they auto-send when chat is ready
+
+```enforce
+// ============================================================
+// SERVER SIDE - Creates chat and sends ID to client
+// ============================================================
+
+class ServerNPCChatManager {
+    protected ref map<string, autoptr UStringAIChatHandler> m_PlayerChats;
+    protected ref map<string, PlayerBase> m_ChatPlayers;  // Map ChatId -> Player
+    
+    void ServerNPCChatManager() {
+        m_PlayerChats = new map<string, autoptr UStringAIChatHandler>;
+        m_ChatPlayers = new map<string, PlayerBase>;
+    }
+    
+    // Called when player interacts with NPC
+    void PlayerStartsNPCChat(PlayerBase player, string npcName) {
+        if (!GetGame().IsServer()) return;
+        
+        string guid = player.GetIdentity().GetPlainId();
+        
+        // Create new chat for this player
+        string systemPrompt = "You are " + npcName + ", a survivor in DayZ. Keep responses short.";
+        
+        // Parameters: systemMessage, callbackTarget, callbackFunc, model, maxHistory
+        UStringAIChatHandler handler = new UStringAIChatHandler(systemPrompt, this, "OnNPCMessage", "gpt-4o-mini", 25);
+        
+        // IMPORTANT: Set callback for when creation completes
+        handler.NotifyOnCreated("OnChatCreated");
+        
+        // Store for later reference
+        m_PlayerChats.Set(guid, handler);
+        
+        // We'll map ChatId -> Player when creation completes
+    }
+    
+    // Called when chat creation completes (via NotifyOnCreated)
+    // Signature: (int cid, int status, string chatId, bool success)
+    void OnChatCreated(int cid, int status, string chatId, bool success) {
+        if (!success || chatId == "") {
+            Print("[NPC] Chat creation failed");
+            return;
+        }
+        
+        // Find which handler this belongs to by checking all handlers
+        string playerGuid = "";
+        foreach (string guid, UStringAIChatHandler handler : m_PlayerChats) {
+            if (handler && handler.GetChatId() == chatId) {
+                playerGuid = guid;
+                break;
+            }
+        }
+        
+        if (playerGuid == "") return;
+        
+        PlayerBase player = GetPlayerByGUID(playerGuid);
+        if (!player || !player.GetIdentity()) return;
+        
+        // Remember which player owns this chat
+        m_ChatPlayers.Set(chatId, player);
+        
+        // Send the chat ID to the client via RPC
+        GetGame().RPCSingleParam(player, RPC_AI_CHAT_CREATED, 
+            new Param1<string>(chatId), true, player.GetIdentity());
+    }
+    
+    // Called when any message response comes back (from constructor callback)
+    void OnNPCMessage(int cid, int status, string chatId, string response) {
+        if (status != UF_SUCCESS || response == "") return;
+        
+        // Forward response to the player who owns this chat
+        PlayerBase player;
+        if (m_ChatPlayers.Find(chatId, player) && player && player.GetIdentity()) {
+            // Send response to client via RPC
+            GetGame().RPCSingleParam(player, RPC_AI_NPC_RESPONSE,
+                new Param2<string, string>(chatId, response), true, player.GetIdentity());
+        }
+    }
+}
+
+// ============================================================
+// CLIENT SIDE - Connects to existing chat
+// ============================================================
+
+class ClientNPCChat {
+    protected autoptr UStringAIChatHandler m_Handler;
+    protected string m_ChatId;
+    
+    // Called when receiving RPC from server with chat ID
+    void OnReceiveChatId(string chatId) {
+        m_ChatId = chatId;
+        
+        // Connect to the existing chat (no system message = connect mode)
+        m_Handler = new UStringAIChatHandler(chatId, this, "OnNPCResponse");
+        
+        // Enable polling for async responses
+        m_Handler.SetPolling(true, 1);
+    }
+    
+    // Player types a message to the NPC
+    void SendToNPC(string message) {
+        if (m_Handler) {
+            m_Handler.SendMessage(message);
+        }
+    }
+    
+    // Callback when NPC responds
+    void OnNPCResponse(int cid, int status, string chatId, string response) {
+        if (status == UF_SUCCESS && response != "") {
+            // Display in your UI
+            ShowNPCDialogue(response);
+        } else if (status == UF_AI_PENDING || status == UF_AI_PROCESSING) {
+            // Still waiting - handler polls automatically
+            ShowTypingIndicator();
+        }
+    }
+    
+    void ShowNPCDialogue(string text) {
+        // Your UI code here
+    }
+    
+    void ShowTypingIndicator() {
+        // Show "..." or similar
+    }
+}
+```
+
+---
+
+## Example 3: Quest Giver NPC
 
 An NPC that gives quests and tracks player progress using tools.
 
@@ -105,29 +248,10 @@ class QuestGiverAgent extends UFAIChatAgent {
     }
     
     override void RegisterTools(out array<autoptr UAIChatToolDef> tools) {
-        tools.Insert(new UAIChatToolDef(
-            "CheckQuestStatus",
-            "Check player's current quest and available quests",
-            NULL
-        ));
-        
-        tools.Insert(new UAIChatToolDef(
-            "GiveQuest",
-            "Give a quest to the player",
-            {"questId"}
-        ));
-        
-        tools.Insert(new UAIChatToolDef(
-            "CompleteQuest",
-            "Mark the current quest as complete and give reward",
-            NULL
-        ));
-        
-        tools.Insert(new UAIChatToolDef(
-            "CheckPlayerInventory",
-            "Check if player has required items for quest",
-            {"itemClass", "quantity"}
-        ));
+        tools.Insert(new UAIChatToolDef("CheckQuestStatus", "Check player's current quest and available quests", NULL));
+        tools.Insert(new UAIChatToolDef("GiveQuest", "Give a quest to the player", {"questId"}));
+        tools.Insert(new UAIChatToolDef("CompleteQuest", "Mark the current quest as complete and give reward", NULL));
+        tools.Insert(new UAIChatToolDef("CheckPlayerInventory", "Check if player has required items for quest", {"itemClass", "quantity"}));
     }
     
     // ===== TOOL IMPLEMENTATIONS =====
@@ -311,17 +435,8 @@ class ThreatAssessmentAgent extends UAIChatAgent<ThreatReport> {
     }
     
     override void RegisterTools(out array<autoptr UAIChatToolDef> tools) {
-        tools.Insert(new UAIChatToolDef(
-            "ScanArea",
-            "Scan the area for threats within range",
-            {"range"}
-        ));
-        
-        tools.Insert(new UAIChatToolDef(
-            "GetPlayerStatus",
-            "Check player's combat readiness",
-            NULL
-        ));
+        tools.Insert(new UAIChatToolDef("ScanArea", "Scan the area for threats within range", {"range"}));
+        tools.Insert(new UAIChatToolDef("GetPlayerStatus", "Check player's combat readiness", NULL));
     }
     
     string ScanArea(string range) {
@@ -426,23 +541,9 @@ class EventGeneratorAgent extends UAIChatAgent<WorldEvent> {
     }
     
     override void RegisterTools(out array<autoptr UAIChatToolDef> tools) {
-        tools.Insert(new UAIChatToolDef(
-            "GetPlayerLocation",
-            "Get player's current location and surroundings",
-            NULL
-        ));
-        
-        tools.Insert(new UAIChatToolDef(
-            "GetTimeOfDay",
-            "Get current game time and weather",
-            NULL
-        ));
-        
-        tools.Insert(new UAIChatToolDef(
-            "GetRecentEvents",
-            "Get events that happened recently to avoid repetition",
-            NULL
-        ));
+        tools.Insert(new UAIChatToolDef("GetPlayerLocation", "Get player's current location and surroundings", NULL));
+        tools.Insert(new UAIChatToolDef("GetTimeOfDay", "Get current game time and weather", NULL));
+        tools.Insert(new UAIChatToolDef("GetRecentEvents", "Get events that happened recently to avoid repetition", NULL));
     }
     
     string GetPlayerLocation() {
@@ -561,29 +662,10 @@ class PersistentTraderAgent extends UFAIChatAgent {
     }
     
     override void RegisterTools(out array<autoptr UAIChatToolDef> tools) {
-        tools.Insert(new UAIChatToolDef(
-            "CheckInventory",
-            "Check what trade goods the player has",
-            NULL
-        ));
-        
-        tools.Insert(new UAIChatToolDef(
-            "ExecuteTrade",
-            "Execute a trade with the player",
-            {"giving", "receiving"}
-        ));
-        
-        tools.Insert(new UAIChatToolDef(
-            "RememberFact",
-            "Remember something important about this player",
-            {"fact"}
-        ));
-        
-        tools.Insert(new UAIChatToolDef(
-            "RecallMemories",
-            "Recall memories about this player",
-            NULL
-        ));
+        tools.Insert(new UAIChatToolDef("CheckInventory", "Check what trade goods the player has", NULL));
+        tools.Insert(new UAIChatToolDef("ExecuteTrade", "Execute a trade with the player", {"giving", "receiving"}));
+        tools.Insert(new UAIChatToolDef("RememberFact", "Remember something important about this player", {"fact"}));
+        tools.Insert(new UAIChatToolDef("RecallMemories", "Recall memories about this player", NULL));
     }
     
     string CheckInventory() {

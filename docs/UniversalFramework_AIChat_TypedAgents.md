@@ -47,6 +47,11 @@ class DecisionAI extends UAIChatAgent<NPCDecision> {
         return "You are an NPC decision-making AI. Analyze situations and decide on actions.";
     }
     
+    // Optional: Specify model (default is gpt-4o-mini)
+    override string GetModel() {
+        return "gpt-4o";  // Use more capable model for complex decisions
+    }
+    
     protected string BuildSchema() {
         return "{\"type\":\"object\",\"properties\":{\"Action\":{\"type\":\"string\",\"enum\":[\"attack\",\"flee\",\"trade\",\"wait\"]},\"Target\":{\"type\":\"string\"},\"Priority\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":10},\"Reason\":{\"type\":\"string\"},\"Items\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"Action\",\"Target\",\"Priority\",\"Reason\"],\"additionalProperties\":false}";
     }
@@ -475,9 +480,29 @@ void OnDecision(int cid, int status, string oid, NPCDecision decision) {
 
 ---
 
-## Related Documentation
+## Typed Handler Class (UAIChatHandler<T>)
 
-- [AI Chat - Overview](UniversalFramework_AIChat_Overview.md) - Basic concepts
-- [AI Chat - Knowledge Base](UniversalFramework_AIChat_KnowledgeBase.md) - Document-backed AI responses
-- [AI Chat - Tool Calling](UniversalFramework_AIChat_Tools.md) - Function calling
-- [AI Chat - Examples](UniversalFramework_AIChat_Examples.md) - Complete examples
+For client-side usage or direct instantiation without subclassing, use `UAIChatHandler<T>`:
+
+```enforce
+// SERVER: Create typed chat with schema
+string schema = "{\"type\":\"object\",\"properties\":{\"action\":{\"type\":\"string\"}},\"required\":[\"action\"]}";
+
+// Parameters: systemMessage, callbackTarget, callbackFunc, jsonSchema, model, maxHistory
+// NOTE: The callback is for MESSAGE responses, not creation!
+autoptr UAIChatHandler<MyResponse> handler = new UAIChatHandler<MyResponse>("You are an AI that returns JSON.", this, "OnTypedMessage", schema, "gpt-4o-mini", 25);
+
+// IMPORTANT: To get ChatId for sending to clients, use NotifyOnCreated
+handler.NotifyOnCreated("OnChatCreated");
+
+void OnChatCreated(int cid, int status, string chatId, bool success) {
+    if (success) {
+        // Send chatId to client via RPC
+    }
+}
+
+// CLIENT: Connect to existing typed chat
+autoptr UAIChatHandler<MyResponse> clientHandler = new UAIChatHandler<MyResponse>(chatIdFromServer, this, "OnTypedMessage", schema);
+```
+
+> **Note:** Like `UStringAIChatHandler`, the constructor callback is for message responses. Use `NotifyOnCreated()` if you need to know when the chat is created.

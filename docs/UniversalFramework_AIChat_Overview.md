@@ -47,6 +47,38 @@ OpenAI API                        (GPT models)
 
 > **Note:** The server must create chat sessions. Once created, both server and players can send messages.
 
+### Server-Client Workflow
+
+For player-facing AI (like NPC dialogue), use this pattern:
+
+1. **Server** creates the chat session using an Agent or Handler class
+2. **Server** uses `NotifyOnCreated()` to get the Chat ID when creation completes
+3. **Server** sends the Chat ID to the client via RPC
+4. **Client** uses a Handler class to connect to the existing chat
+5. **Both** can now send messages and receive responses
+
+```enforce
+// SERVER: Create chat and get notified when ready
+// Parameters: systemMessage, callbackTarget, callbackFunc, model
+autoptr UStringAIChatHandler handler = new UStringAIChatHandler("You are a friendly NPC", this, "OnNPCMessage", "gpt-4o-mini");
+handler.NotifyOnCreated("OnChatCreated");  // Callback for creation complete
+
+void OnChatCreated(int cid, int status, string chatId, bool success) {
+    if (success) {
+        // NOW send ChatId to client via RPC
+        SendRPCToPlayer(chatId);
+    }
+}
+
+// CLIENT: Connect to existing chat
+autoptr UStringAIChatHandler clientHandler = new UStringAIChatHandler(chatIdFromServer, this, "OnResponse");
+clientHandler.SendMessage("Hello!");
+```
+
+> **Important:** The constructor callback is for message responses. Use `NotifyOnCreated()` to get the ChatId.
+
+See [Handler Classes](UniversalFramework_AIChat.md#handler-classes-client-compatible) for complete documentation.
+
 ---
 
 ## Quick Start
@@ -95,6 +127,7 @@ The base agent class for AI chat. Returns string responses.
 | Method | Purpose | Required |
 |--------|---------|----------|
 | `SystemInstructions()` | Return the system prompt | Yes |
+| `GetModel()` | Return AI model name (e.g., "gpt-4o-mini") | No |
 | `RegisterTools()` | Register callable tools | No |
 | `ExtraContext()` | Add dynamic context each message | No |
 | `SystemContext()` | Add static context | No |
@@ -113,6 +146,46 @@ void SetKBId(string kbId);
 void AddStaticContext(string description, array<string> items);
 ```
 
+### Model Selection
+
+Override `GetModel()` to specify which AI model to use:
+
+```enforce
+class CostEfficientAI extends UFAIChatAgent {
+    override string GetModel() {
+        return "gpt-4o-mini";  // Faster and cheaper
+    }
+    
+    override string SystemInstructions() {
+        return "You are a helpful assistant.";
+    }
+}
+
+class AdvancedReasoningAI extends UFAIChatAgent {
+    override string GetModel() {
+        return "o3-mini";  // Best for complex reasoning
+    }
+    
+    override string SystemInstructions() {
+        return "You are an expert problem solver.";
+    }
+}
+```
+
+#### Available Models
+
+| Model | Best For | Speed | Cost |
+|-------|----------|-------|------|
+| `"gpt-4o"` | Complex tasks | Fast | Medium |
+| `"gpt-4o-mini"` | General use (default) | Very Fast | Low |
+| `"gpt-4-turbo"` | Legacy complex tasks | Medium | High |
+| `"gpt-3.5-turbo"` | Simple tasks | Very Fast | Very Low |
+| `"o1"` | Advanced reasoning | Slow | Very High |
+| `"o1-mini"` | Balanced reasoning | Medium | High |
+| `"o3-mini"` | Best reasoning/cost | Medium | Medium |
+
+> **Tip:** Use `"gpt-4o-mini"` for NPCs with simple dialogue. Use `"gpt-4o"` or better for complex decision-making.
+
 ### Main API
 
 ```enforce
@@ -123,8 +196,11 @@ void Chat(string input, Class handler, string handlerFn);
 ### Callback Signature
 
 ```enforce
+// Agent callback - 'oid' is the ChatId
 void OnResponse(int cid, int status, string oid, string response);
 ```
+
+> **Note:** For Agents, the third parameter is named `oid` (object ID) but it contains the ChatId. Handler callbacks also use ChatId in this position.
 
 ---
 
@@ -256,15 +332,8 @@ For advanced control, use the endpoint directly:
 ```enforce
 UFAIChatEndpoint ai = U().AI();
 
-// Create session
-int cid = ai.Create(
-    "You are a helpful assistant",  // System message
-    "string",                        // Response format
-    "",                              // JSON schema (for typed)
-    "gpt-4o-mini",                   // Model (optional)
-    25,                              // Max history
-    new UFCallback<UAIChatCreateResponse>(this, "OnCreated")
-);
+// Create session - params: systemMessage, format, jsonSchema, model, maxHistory, callback
+int cid = ai.Create("You are a helpful assistant", "string", "", "gpt-4o-mini", 25, new UFCallback<UAIChatCreateResponse>(this, "OnCreated"));
 
 // Send message with context
 array<autoptr UAIChatContext> ctx = new array<autoptr UAIChatContext>;

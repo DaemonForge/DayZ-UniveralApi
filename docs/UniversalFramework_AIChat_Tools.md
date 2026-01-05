@@ -39,34 +39,23 @@ class GameMasterAI extends UFAIChatAgent {
         return "You are a game master assistant. Use tools to manage players.";
     }
     
+    // Optional: Specify model
+    override string GetModel() {
+        return "gpt-4o";  // Tool-heavy agents benefit from smarter models
+    }
+    
     override void RegisterTools(out array<autoptr UAIChatToolDef> tools) {
-        // Tool with 1 parameter
-        tools.Insert(new UAIChatToolDef(
-            "GetPlayerHealth",                    // Tool name (must match method name!)
-            "Get a player's current health",      // Description for AI
-            {"playerName"}                        // Parameter names
-        ));
+        // Tool with 1 parameter: name, description, params array
+        tools.Insert(new UAIChatToolDef("GetPlayerHealth", "Get a player's current health", {"playerName"}));
         
         // Tool with 2 parameters
-        tools.Insert(new UAIChatToolDef(
-            "SetPlayerHealth",
-            "Set a player's health value",
-            {"playerName", "health"}
-        ));
+        tools.Insert(new UAIChatToolDef("SetPlayerHealth", "Set a player's health value", {"playerName", "health"}));
         
         // Tool with no parameters
-        tools.Insert(new UAIChatToolDef(
-            "GetServerTime",
-            "Get the current server time",
-            NULL
-        ));
+        tools.Insert(new UAIChatToolDef("GetServerTime", "Get the current server time", NULL));
         
         // Tool with 3 parameters
-        tools.Insert(new UAIChatToolDef(
-            "GiveItem",
-            "Give items to a player",
-            {"playerName", "itemClass", "quantity"}
-        ));
+        tools.Insert(new UAIChatToolDef("GiveItem", "Give items to a player", {"playerName", "itemClass", "quantity"}));
     }
 }
 ```
@@ -238,30 +227,49 @@ string SpawnItem(string itemClass, string quantity, string pristine, string posi
 
 ### UAIChatToolDef
 
-```enforce
-// Simple constructor - all params are strings
-new UAIChatToolDef(
-    string name,           // Tool name (matches method name)
-    string description,    // Description for AI
-    array<string> params   // Parameter names (or NULL)
-)
-
-// Typed constructor - via static method
-UAIChatToolDef.CreateTyped(
-    string name,
-    string description,
-    array<autoptr UAIChatToolParam> params
-)
+**Simple Constructor** - All parameters are strings:
 ```
+UAIChatToolDef(name, description, params)
+```
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Tool name (must match your method name) |
+| `description` | string | Description for the AI to understand when to use this tool |
+| `params` | array<string> | Parameter names, or NULL for no parameters |
+
+**Example:**
+```enforce
+new UAIChatToolDef("GetPlayerHealth", "Get a player's current health", {"playerName"})
+new UAIChatToolDef("GetServerTime", "Get the current server time", NULL)
+```
+
+**Typed Constructor** - For detailed parameter types:
+```
+UAIChatToolDef.CreateTyped(name, description, params)
+```
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Tool name (must match your method name) |
+| `description` | string | Description for the AI |
+| `params` | array<autoptr UAIChatToolParam> | Array of typed parameter definitions |
 
 ### UAIChatToolParam
 
+**Constructor:**
+```
+UAIChatToolParam(name, type, desc)
+```
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | string | - | Parameter name |
+| `type` | string | "string" | Type: "string", "int", "float", "bool", "vector" |
+| `desc` | string | "" | Description for the AI |
+
+**Example:**
 ```enforce
-new UAIChatToolParam(
-    string name,           // Parameter name
-    string type = "string", // Type: "string", "int", "float", "bool", "vector"
-    string desc = ""       // Description for AI
-)
+new UAIChatToolParam("playerName", "string", "The player's name")
+new UAIChatToolParam("amount", "int", "Number of items (1-100)")
+new UAIChatToolParam("position", "vector", "Position as 'x y z'")
 ```
 
 ---
@@ -495,9 +503,7 @@ class AdminPanel {
 
 ```enforce
 // GOOD - AI knows when to use it
-new UAIChatToolDef("GetPlayerHealth", 
-    "Get a player's current health percentage. Returns health, blood, and shock values.",
-    {"playerName"})
+new UAIChatToolDef("GetPlayerHealth", "Get a player's current health percentage. Returns health, blood, and shock values.", {"playerName"})
 
 // BAD - Too vague
 new UAIChatToolDef("GetPlayerHealth", "Gets health", {"playerName"})

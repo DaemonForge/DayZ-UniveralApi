@@ -135,6 +135,7 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			return -1;
 		}
 		
+		UFLog.Debug("[AI Chat] Checking message status: " + messageId);
 		int cid = -1;
 		Post("MessageStatus/" + messageId, "{}", U().RegisterCall(new UNestedCallBack(cb), cid));
 		

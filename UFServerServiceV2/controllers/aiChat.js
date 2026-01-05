@@ -106,8 +106,38 @@ async function handleKBToolCall(kbId, query) {
 
 /**
  * Converts a Chat Completions style messages array to Responses API input format.
+ * 
+ * ============================================================================
+ * RESPONSES API FUNCTION CALLING - ARCHITECTURE NOTES
+ * ============================================================================
+ * 
+ * The OpenAI Responses API (used instead of Chat Completions) has specific 
+ * requirements for function calling that differ from the older API:
+ * 
+ * INPUT ITEM TYPES:
+ * - { type: 'message', role: 'user'|'assistant', content: string }
+ * - { type: 'function_call', call_id: string, name: string, arguments: string }
+ * - { type: 'function_call_output', call_id: string, output: string }
+ * 
+ * OUTPUT ITEM TYPES (from response.output):
+ * - { type: 'message', role: 'assistant', content: [...] }
+ * - { type: 'function_call', id: string, call_id: string, name: string, arguments: string }
+ * - { type: 'reasoning', ... } (for o-series models)
+ * 
+ * MULTI-TURN FUNCTION CALLING FLOW:
+ * 1. Send request with tools defined
+ * 2. Response contains function_call item(s) in output
+ * 3. To continue, add ALL output items to input array
+ * 4. Add function_call_output item(s) with call_id matching the function_call
+ * 5. Repeat until response has no function_call items
+ * 
+ * KEY POINTS:
+ * - call_id is used to correlate function_call with function_call_output
+ * - All output items must be passed back to preserve conversation state
+ * - For o-series models, reasoning items must also be passed back
+ * ============================================================================
+ * 
  * @param {array} messages - Array of { role, content } messages
- * @param {string} systemMessage - The system message (used as instructions)
  * @returns {{ instructions: string, input: array }}
  */
 function convertToResponsesInput(messages) {
@@ -122,12 +152,13 @@ function convertToResponsesInput(messages) {
             input.push({ type: 'message', role: 'user', content: msg.content });
         } else if (msg.role === 'assistant') {
             if (msg.tool_calls && msg.tool_calls.length > 0) {
-                // Convert assistant tool call to function_call output item
+                // Convert assistant tool calls to function_call items
+                // Note: Responses API function_call items need call_id for correlation
                 for (const tc of msg.tool_calls) {
+                    const callId = tc.id; // Original ID from Chat Completions format
                     input.push({
                         type: 'function_call',
-                        id: tc.id,
-                        call_id: tc.id,
+                        call_id: callId,
                         name: tc.function?.name || tc.name,
                         arguments: tc.function?.arguments || tc.arguments || '{}'
                     });
@@ -140,7 +171,7 @@ function convertToResponsesInput(messages) {
             input.push({
                 type: 'function_call_output',
                 call_id: msg.tool_call_id,
-                output: msg.content
+                output: msg.content || ''
             });
         }
     }
@@ -150,8 +181,15 @@ function convertToResponsesInput(messages) {
 
 /**
  * Extracts tool calls from Responses API output.
+ * 
+ * Responses API function_call items have:
+ * - id: The item's unique ID (e.g., "fc_xxxxx")
+ * - call_id: The call ID for correlating with function_call_output (e.g., "call_xxxxx")
+ * - name: Function name
+ * - arguments: JSON-encoded arguments
+ * 
  * @param {array} output - The response.output array
- * @returns {array} - Array of tool call objects
+ * @returns {array} - Array of tool call objects with normalized IDs
  */
 function extractToolCallsFromOutput(output) {
     if (!output || !Array.isArray(output)) return [];
@@ -159,9 +197,12 @@ function extractToolCallsFromOutput(output) {
     return output
         .filter(item => item.type === 'function_call')
         .map(item => ({
-            id: item.call_id || item.id,
+            // call_id is used for function_call_output correlation
+            call_id: item.call_id,
+            // id is the unique item ID
+            id: item.id,
             name: item.name,
-            arguments: item.arguments
+            arguments: item.arguments || '{}'
         }));
 }
 
@@ -200,6 +241,23 @@ function extractTextFromOutput(response) {
  * If the AI calls the KB tool, this function handles it internally and loops
  * until the AI provides a final response.
  * 
+ * Key Implementation Notes (per OpenAI Responses API documentation):
+ * 1. function_call items have:
+ *    - id: Unique item ID (e.g., "fc_xxxxx") 
+ *    - call_id: Call correlation ID (e.g., "call_xxxxx")
+ *    - name: Function name
+ *    - arguments: JSON string of arguments
+ * 
+ * 2. function_call_output items need:
+ *    - type: "function_call_output"
+ *    - call_id: Must match the call_id from the function_call item
+ *    - output: String result of the function
+ * 
+ * 3. When providing tool results, we MUST include:
+ *    - The original function_call item(s) from the response.output
+ *    - The function_call_output item(s) with the results
+ *    - Any reasoning items (for o-series models) from response.output
+ * 
  * @param {object} chatReqBody - The request body containing messages, model, tools, etc.
  * @param {string} kbId - The KB ID (null if no KB attached)
  * @param {object} updatedChat - The chat document
@@ -208,29 +266,31 @@ function extractTextFromOutput(response) {
  */
 async function executeWithKBInterception(chatReqBody, kbId, updatedChat, maxKBLoops = 5) {
     let loopCount = 0;
-    let messages = [...chatReqBody.messages];
+    
+    // Convert initial messages to Responses API format once
+    const { instructions, input: initialInput } = convertToResponsesInput(chatReqBody.messages);
+    
+    // We'll work directly in Responses API input format to avoid conversion issues
+    let currentInput = [...initialInput];
     
     logger.debug('executeWithKBInterception: Starting', { 
         kbId, 
         hasKB: !!kbId,
         maxKBLoops,
-        messageCount: messages.length,
+        initialInputCount: currentInput.length,
         model: chatReqBody.model,
         hasTools: !!(chatReqBody.tools && chatReqBody.tools.length > 0)
     });
     
     while (loopCount < maxKBLoops) {
         loopCount++;
-        logger.debug('executeWithKBInterception: Loop iteration', { loopCount, maxKBLoops });
-        
-        // Convert messages to Responses API format
-        const { instructions, input } = convertToResponsesInput(messages);
+        logger.debug('executeWithKBInterception: Loop iteration', { loopCount, maxKBLoops, inputCount: currentInput.length });
         
         // Build Responses API request body
         const reqBody = {
             model: chatReqBody.model,
             instructions: instructions || undefined,
-            input: input.length > 0 ? input : undefined,
+            input: currentInput.length > 0 ? currentInput : undefined,
             ...(chatReqBody.tools && chatReqBody.tools.length > 0 ? { tools: chatReqBody.tools } : {}),
             ...(chatReqBody.reasoning_effort ? { reasoning: { effort: chatReqBody.reasoning_effort } } : {})
         };
@@ -273,91 +333,126 @@ async function executeWithKBInterception(chatReqBody, kbId, updatedChat, maxKBLo
         
         // Check if AI wants to call a tool
         if (toolCalls.length > 0) {
-            const toolCall = toolCalls[0];
-            logger.debug('executeWithKBInterception: Tool call detected', {
-                toolName: toolCall.name,
-                toolId: toolCall.id,
-                isKBTool: toolCall.name === KB_TOOL_NAME,
+            // Handle all KB tool calls in this turn (there may be multiple)
+            const kbToolCalls = toolCalls.filter(tc => tc.name === KB_TOOL_NAME && kbId);
+            const externalToolCalls = toolCalls.filter(tc => tc.name !== KB_TOOL_NAME || !kbId);
+            
+            logger.debug('executeWithKBInterception: Tool calls detected', {
+                totalToolCalls: toolCalls.length,
+                kbToolCalls: kbToolCalls.length,
+                externalToolCalls: externalToolCalls.length,
                 loopCount
             });
             
-            // Check if it's the internal KB tool
-            if (toolCall.name === KB_TOOL_NAME && kbId) {
-                logger.info("Intercepting KB tool call internally", { 
+            // If there are external tool calls, return them for client handling
+            // (Even if there are also KB calls, the external ones take priority for client)
+            if (externalToolCalls.length > 0) {
+                const toolCall = externalToolCalls[0];
+                logger.debug('executeWithKBInterception: External tool call, returning for client handling', {
+                    toolName: toolCall.name,
+                    toolCallId: toolCall.call_id,
+                    itemId: toolCall.id
+                });
+                
+                let parsedArgs = {};
+                try {
+                    parsedArgs = JSON.parse(toolCall.arguments || "{}");
+                } catch (e) {
+                    logger.warn("Failed to parse tool arguments", { error: e.message });
+                }
+                
+                const textContent = extractTextFromOutput(response);
+                return {
+                    content: textContent || "",
+                    toolCall: {
+                        // Use call_id for external correlation - this is what clients need to provide in function_call_output
+                        ToolCallId: toolCall.call_id,
+                        ToolName: toolCall.name,
+                        P1: parsedArgs.p1 || "",
+                        P2: parsedArgs.p2 || "",
+                        P3: parsedArgs.p3 || "",
+                        P4: parsedArgs.p4 || "",
+                        P5: parsedArgs.p5 || ""
+                    },
+                    error: null
+                };
+            }
+            
+            // Handle KB tool calls internally
+            if (kbToolCalls.length > 0) {
+                logger.info("Intercepting KB tool calls internally", { 
                     kbId, 
-                    toolId: toolCall.id,
+                    callCount: kbToolCalls.length,
                     loopCount 
                 });
                 
-                // Parse the query
-                let query = "";
-                try {
-                    const args = JSON.parse(toolCall.arguments || "{}");
-                    query = args.query || "";
-                    logger.debug('executeWithKBInterception: KB query parsed', { query, queryLength: query.length });
-                } catch (e) {
-                    query = toolCall.arguments || "";
-                    logger.warn('executeWithKBInterception: Failed to parse KB query args, using raw', { raw: query });
+                // Prepare function_call_output items for all KB tool calls
+                const kbOutputs = [];
+                
+                for (const toolCall of kbToolCalls) {
+                    // Parse the query
+                    let query = "";
+                    try {
+                        const args = JSON.parse(toolCall.arguments || "{}");
+                        query = args.query || "";
+                        logger.debug('executeWithKBInterception: KB query parsed', { 
+                            callId: toolCall.call_id, 
+                            query, 
+                            queryLength: query.length 
+                        });
+                    } catch (e) {
+                        query = toolCall.arguments || "";
+                        logger.warn('executeWithKBInterception: Failed to parse KB query args, using raw', { raw: query });
+                    }
+                    
+                    // Execute KB search
+                    const kbResult = await handleKBToolCall(kbId, query);
+                    logger.debug('executeWithKBInterception: KB search result', { 
+                        callId: toolCall.call_id,
+                        resultLength: kbResult?.length,
+                        preview: kbResult?.substring(0, 100) + '...'
+                    });
+                    
+                    // Create function_call_output - MUST use call_id for correlation
+                    kbOutputs.push({
+                        type: 'function_call_output',
+                        call_id: toolCall.call_id,
+                        output: kbResult || "No results found."
+                    });
                 }
                 
-                // Execute KB search
-                const kbResult = await handleKBToolCall(kbId, query);
-                logger.debug('executeWithKBInterception: KB search result', { 
-                    resultLength: kbResult?.length,
-                    preview: kbResult?.substring(0, 100) + '...'
+                // For the Responses API multi-turn with function calling:
+                // We need to add ALL output items from the response, then our function_call_output items
+                // This includes function_call items, any reasoning items (for o-series), etc.
+                
+                logger.debug('executeWithKBInterception: Response output items', {
+                    outputItems: response.output.map(o => ({ 
+                        type: o.type, 
+                        id: o.id, 
+                        call_id: o.call_id,
+                        name: o.name 
+                    }))
                 });
                 
-                // Add the function call and result to messages for next iteration
-                messages.push({
-                    role: 'assistant',
-                    content: null,
-                    tool_calls: [{
-                        id: toolCall.id,
-                        type: 'function',
-                        function: {
-                            name: toolCall.name,
-                            arguments: toolCall.arguments
-                        }
-                    }]
+                // Add all output items from the response
+                // The Responses API expects these to be passed back as-is
+                for (const outputItem of response.output) {
+                    currentInput.push(outputItem);
+                }
+                
+                // Add all function_call_output items
+                for (const output of kbOutputs) {
+                    currentInput.push(output);
+                }
+                
+                logger.debug('executeWithKBInterception: Prepared input for next iteration', {
+                    outputItemsAdded: response.output.length,
+                    kbOutputsAdded: kbOutputs.length,
+                    totalInputCount: currentInput.length
                 });
                 
-                messages.push({
-                    role: 'tool',
-                    tool_call_id: toolCall.id,
-                    content: kbResult
-                });
-                
-                logger.debug('executeWithKBInterception: Continuing loop after KB tool', { loopCount, messageCount: messages.length });
-                continue;
+                continue; // Loop for AI's next response
             }
-            
-            // Not a KB tool call - return it for external handling
-            logger.debug('executeWithKBInterception: External tool call, returning for client handling', {
-                toolName: toolCall.name,
-                toolId: toolCall.id
-            });
-            
-            let parsedArgs = {};
-            try {
-                parsedArgs = JSON.parse(toolCall.arguments || "{}");
-            } catch (e) {
-                logger.warn("Failed to parse tool arguments", { error: e.message });
-            }
-            
-            const textContent = extractTextFromOutput(response);
-            return {
-                content: textContent || "",
-                toolCall: {
-                    ToolCallId: toolCall.id,
-                    ToolName: toolCall.name,
-                    P1: parsedArgs.p1 || "",
-                    P2: parsedArgs.p2 || "",
-                    P3: parsedArgs.p3 || "",
-                    P4: parsedArgs.p4 || "",
-                    P5: parsedArgs.p5 || ""
-                },
-                error: null
-            };
         }
         
         // No tool call - return the content
