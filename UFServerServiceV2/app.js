@@ -444,6 +444,22 @@ function Start(isElectron = false) {
     }
   }
   setTimeout(CheckIndexes, 1000);
+  
+  // Ensure KB indexes are created for all existing KBs
+  const { ensureAllKBIndexes, ensureAllEmbeddings } = require('./models/kb');
+  setTimeout(ensureAllKBIndexes, 2000);
+  
+  // Ensure all KB documents have embeddings (runs after indexes are created)
+  setTimeout(async () => {
+    try {
+      const kbController = require('./controllers/kb');
+      if (kbController.generateEmbeddings) {
+        await ensureAllEmbeddings(kbController.generateEmbeddings);
+      }
+    } catch (err) {
+      (global.logger || console).warn('[KB] Could not run embedding check on startup', { error: err.message });
+    }
+  }, 5000);
 }
 
 

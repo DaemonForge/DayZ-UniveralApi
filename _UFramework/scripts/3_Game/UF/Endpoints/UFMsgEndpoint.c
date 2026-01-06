@@ -79,10 +79,27 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 			return -1;
 		}
 		
+		// Safety check: ensure framework is ready
+		UFramework uf = U();
+		if (!uf){
+			UFLog.Err("[UFMsgEndpoint::ReadLatest] U() returned NULL - framework not ready");
+			return -1;
+		}
+		if (!UFConfig()){
+			UFLog.Err("[UFMsgEndpoint::ReadLatest] UFConfig() is NULL - config not loaded");
+			return -1;
+		}
+		
 		int cid = -1;	
 		string endpoint = "Read/" + mod + "/" + queue;
 		autoptr UMsgReadObj obj = new UMsgReadObj(limit, true);
-		Post(endpoint, obj.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
+		
+		RestCallback regCb = uf.RegisterCall(new UNestedCallBack(cb), cid);
+		if (!regCb){
+			UFLog.Err("[UFMsgEndpoint::ReadLatest] RegisterCall returned NULL");
+			return -1;
+		}
+		Post(endpoint, obj.ToJson(), regCb);
 		
 		if (cid == -1){
 			Error2("[UF] Message Queue ReadLatest", "Error registering callback");

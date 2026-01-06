@@ -74,10 +74,12 @@ function getOpenAI() {
 
 /**
  * Generate embeddings for text using text-embedding-3-large
+ * Includes retry logic for transient failures
  * @param {string|string[]} texts - Text(s) to embed
+ * @param {number} maxRetries - Maximum retry attempts (default: 3)
  * @returns {Promise<number[][]>} Array of embedding vectors
  */
-async function generateEmbeddings(texts) {
+async function generateEmbeddings(texts, maxRetries = 3) {
     const ai = getOpenAI();
     if (!ai) {
         logger.debug('generateEmbeddings: OpenAI API not configured');
@@ -85,28 +87,75 @@ async function generateEmbeddings(texts) {
     }
 
     const textsArray = Array.isArray(texts) ? texts : [texts];
-    logger.debug('generateEmbeddings: Starting embedding generation', { 
-        textCount: textsArray.length, 
-        totalChars: textsArray.reduce((sum, t) => sum + t.length, 0),
+    
+    // Validate input
+    if (textsArray.length === 0) {
+        throw new Error('No texts provided for embedding');
+    }
+    
+    // Check for empty texts
+    const validTexts = textsArray.filter(t => t && t.trim().length > 0);
+    if (validTexts.length !== textsArray.length) {
+        logger.warn('generateEmbeddings: Some texts were empty', { 
+            provided: textsArray.length, 
+            valid: validTexts.length 
+        });
+    }
+    
+    if (validTexts.length === 0) {
+        throw new Error('All provided texts were empty');
+    }
+    
+    logger.info('generateEmbeddings: Starting embedding generation', { 
+        textCount: validTexts.length, 
+        totalChars: validTexts.reduce((sum, t) => sum + t.length, 0),
         dimensions: EMBEDDING_DIMENSIONS
     });
     
-    try {
-        const response = await ai.embeddings.create({
-            model: 'text-embedding-3-large',
-            input: textsArray,
-            dimensions: EMBEDDING_DIMENSIONS
-        });
+    let lastError;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await ai.embeddings.create({
+                model: 'text-embedding-3-large',
+                input: validTexts,
+                dimensions: EMBEDDING_DIMENSIONS
+            });
 
-        logger.debug('generateEmbeddings: Embeddings generated successfully', { 
-            embeddingCount: response.data.length,
-            usage: response.usage
-        });
-        return response.data.map(d => d.embedding);
-    } catch (err) {
-        logger.error('Failed to generate embeddings', { error: err.message, stack: err.stack });
-        throw err;
+            logger.info('generateEmbeddings: Embeddings generated successfully', { 
+                embeddingCount: response.data.length,
+                usage: response.usage,
+                attempt
+            });
+            return response.data.map(d => d.embedding);
+        } catch (err) {
+            lastError = err;
+            
+            // Check if it's a retryable error (rate limit, server error, timeout)
+            const isRetryable = err.status === 429 || err.status >= 500 || 
+                                err.code === 'ETIMEDOUT' || err.code === 'ECONNRESET';
+            
+            if (isRetryable && attempt < maxRetries) {
+                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // Exponential backoff, max 10s
+                logger.warn('generateEmbeddings: Retrying after error', { 
+                    error: err.message, 
+                    attempt, 
+                    maxRetries,
+                    retryDelay: delay 
+                });
+                await new Promise(r => setTimeout(r, delay));
+            } else {
+                logger.error('generateEmbeddings: Failed to generate embeddings', { 
+                    error: err.message, 
+                    stack: err.stack,
+                    attempt,
+                    isRetryable
+                });
+                throw err;
+            }
+        }
     }
+    
+    throw lastError;
 }
 
 /**
@@ -561,7 +610,7 @@ router.post('/:kbId/search', requireServerAuth, async (req, res) => {
         const { kbId } = req.params;
         const { query, limit = 5, useShorterAnswers } = req.body;
         
-        logger.debug('KB search request received', { kbId, query, limit, useShorterAnswers });
+        logger.info('KB search request received', { kbId, query: query?.substring(0, 100), limit });
 
         if (!query) {
             logger.debug('KB search rejected: no query provided');
@@ -583,12 +632,12 @@ router.post('/:kbId/search', requireServerAuth, async (req, res) => {
             const [queryEmbedding] = await generateEmbeddings(query);
             logger.debug('Performing vector search', { kbId, embeddingLength: queryEmbedding?.length });
             results = await vectorSearch(kbId, queryEmbedding, limit);
-            logger.debug('Vector search completed', { kbId, resultCount: results.length });
+            logger.info('Vector search completed', { kbId, resultCount: results.length });
         } catch (embErr) {
             // Fallback to text search
             logger.warn('Vector search failed, using text search', { error: embErr.message });
             results = await textSearch(kbId, query, limit);
-            logger.debug('Text search fallback completed', { kbId, resultCount: results.length });
+            logger.info('Text search fallback completed', { kbId, resultCount: results.length });
         }
 
         // Apply shorter answers if enabled
@@ -627,7 +676,7 @@ router.post('/:kbId/search', requireServerAuth, async (req, res) => {
  * This bypasses auth for internal use
  */
 async function internalKBSearch(kbId, query, limit = 5) {
-    logger.debug('internalKBSearch called', { kbId, query, limit });
+    logger.info('internalKBSearch called', { kbId, query: query?.substring(0, 100), limit });
     
     const kb = await getKB(kbId);
     if (!kb) {
@@ -642,11 +691,11 @@ async function internalKBSearch(kbId, query, limit = 5) {
         const [queryEmbedding] = await generateEmbeddings(query);
         logger.debug('internalKBSearch: Embedding generated, performing vector search', { kbId, embeddingDimensions: queryEmbedding?.length });
         results = await vectorSearch(kbId, queryEmbedding, limit);
-        logger.debug('internalKBSearch: Vector search completed', { kbId, resultCount: results.length });
+        logger.info('internalKBSearch: Vector search completed', { kbId, resultCount: results.length });
     } catch (embErr) {
         logger.warn('Vector search failed, using text search', { kbId, error: embErr.message });
         results = await textSearch(kbId, query, limit);
-        logger.debug('internalKBSearch: Text search fallback completed', { kbId, resultCount: results.length });
+        logger.info('internalKBSearch: Text search fallback completed', { kbId, resultCount: results.length });
     }
 
     if (kb.shorterAnswers && results.length > 0) {
@@ -660,7 +709,7 @@ async function internalKBSearch(kbId, query, limit = 5) {
         };
     }
 
-    logger.debug('internalKBSearch: Returning raw results', { kbId, resultCount: results.length });
+    logger.info('internalKBSearch: Returning results', { kbId, resultCount: results.length, shorterAnswers: false });
     return {
         results,
         shorterAnswers: false

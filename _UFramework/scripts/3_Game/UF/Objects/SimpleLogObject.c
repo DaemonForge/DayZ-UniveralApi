@@ -1,4 +1,5 @@
 class ULogBase extends UFObject_Base {
+	string Level = "INFO";
 	string Log = "";
 	string GUID = "";
 	vector Position;
@@ -19,6 +20,7 @@ class ULogBase extends UFObject_Base {
 }
 
 class ULogMisc extends UFObject_Base {
+	string Level = "INFO";
 	string Log = "";
 	string Action = "";
 	string Item = "";
@@ -46,6 +48,7 @@ class ULogMisc extends UFObject_Base {
 }
 
 class ULogPlayerPos extends UFObject_Base {
+	string Level = "INFO";
 	string Log = "PlayerPos";
 	
 	string GUID = "";
@@ -72,7 +75,7 @@ class ULogPlayerPos extends UFObject_Base {
 
 
 class ULogKilled extends Managed {
-	
+	string Level = "INFO";
 	string Log = "PlayerKilled";
 	
 	string GUID = "";

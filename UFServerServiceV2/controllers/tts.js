@@ -362,7 +362,7 @@ async function convertToMp4(inputPath, outputPath, staticLevel, visualMode) {
   let sampleRate;
   try {
     sampleRate = await getAudioSampleRate(inputPath);
-    logger.debug("Detected sample rate", { sampleRate });
+    logger.info("TTS audio sample rate detected", { sampleRate });
   } catch (err) {
     logger.warn("Could not retrieve sample rate, defaulting to 8000 Hz", { error: err.message });
     sampleRate = "8000";

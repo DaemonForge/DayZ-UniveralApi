@@ -34,8 +34,30 @@ async function createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxH
       MaxHistory: MaxHistory || 20,
       KBId: KBId || 'none'
     });
+    
+    // Append KB-awareness instructions if KB is enabled
+    let enhancedSystemMessage = SystemMessage;
+    if (KBId) {
+      const kbInstructions = `
+
+## Knowledge Base Instructions
+You have access to a knowledge base tool called "__kb_search" that contains important information specific to this context. 
+
+**IMPORTANT:** Before answering questions, ALWAYS use the __kb_search tool to look up relevant information from the knowledge base. This ensures your responses are accurate and based on the specific information available.
+
+The knowledge base search will return relevant documents that you should use to formulate your response. Always prefer KB information over your general knowledge when answering questions.`;
+      
+      enhancedSystemMessage = SystemMessage + kbInstructions;
+      logger.debug("KB instructions appended to system message", { 
+        KBId, 
+        originalLen: SystemMessage.length, 
+        enhancedLen: enhancedSystemMessage.length 
+      });
+    }
+    
     const chatData = {
-      SystemMessage,
+      SystemMessage: enhancedSystemMessage,
+      OriginalSystemMessage: SystemMessage, // Store original for reference
       ResponseFormat,
       JsonSchema: JsonSchema || {},
       Model: Model || 'gpt-4o-mini',

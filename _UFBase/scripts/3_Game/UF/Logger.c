@@ -3,53 +3,45 @@ static const int LOG_VERBOSE = 1;
 static const int LOG_INFO = 2;
 static const int LOG_DEBUG = 3;
 
-class UFLog {
-	protected static autoptr ULoggerBaseInstance m_Instance;
-	
-	protected static ULoggerBaseInstance GetInstance(){
-		if (!m_Instance){
-			m_Instance = new ULoggerBaseInstance("UF");
+// Universal Framework's own logger - just extends ULoggerBase with type "UF"
+class UFLog extends ULoggerBase {
+	override static string getLogID(){
+		return "UF";
+	}
+	override static void CreateInstance(){
+		m_LoggerBaseInstance = new ULoggerBaseInstance(getLogID());
+	}
+	// Must override GetInstance to ensure our CreateInstance is called, not parent's
+	override static ULoggerBaseInstance GetInstance(){
+		if (!m_LoggerBaseInstance){
+			CreateInstance();
+			Init();
 		}
-		return m_Instance;
-	}
-	
-	static void Log(string text, int level = 1) {
-		GetInstance().DoLog(text, level);
-	}
-	
-	static void Info(string text){
-		GetInstance().DoLog(text, LOG_INFO);
-	}
-	
-	static void Debug(string text){
-		GetInstance().DoLog(text, LOG_DEBUG);
-	}
-
-	static void Err(string text){
-		Error2("[UF] Error", text);
-		GetInstance().DoLog(text, LOG_ERROR);
-	}
-	
-	static void SetLogLevels(int level, int apiLevel = -99){
-		if (apiLevel == -99){
-			apiLevel = level;
-		}
-		GetInstance().SetLogLevel(level);
-		GetInstance().SetApiLogLevel(apiLevel);
+		return m_LoggerBaseInstance;
 	}
 }
 
 class ULoggerBase extends Managed {
-	protected static string m_type = "";
 	protected static autoptr ULoggerBaseInstance m_LoggerBaseInstance;
 	
+	static string getLogID(){
+		return "BaseLogger";
+	}
+
 	static void CreateInstance(){
-		m_LoggerBaseInstance = new ULoggerBaseInstance(m_type);
+		m_LoggerBaseInstance = new ULoggerBaseInstance(getLogID());
 	}
 	
 	static ULoggerBaseInstance GetInstance(){
-		if (!m_LoggerBaseInstance){CreateInstance();}
+		if (!m_LoggerBaseInstance){
+			CreateInstance();
+			Init();
+		}
 		return m_LoggerBaseInstance;
+	}
+
+	static void Init(){
+		SetLogLevels(LOG_DEBUG, LOG_INFO); // Default to DEBUG locally, Info to API
 	}
 	
 	static void Log(string text, int level = 1) {
@@ -65,7 +57,7 @@ class ULoggerBase extends Managed {
 	}
 
 	static void Err(string text){
-		Error2("[" + m_type + "] Error", text);
+		Error2("[" + getLogID() + "] Error", text);
 		GetInstance().DoLog(text, LOG_ERROR);
 	}
 	
@@ -81,10 +73,10 @@ class ULoggerBase extends Managed {
 class ULoggerBaseInstance extends Managed {
 	
 	protected int				m_LogLevel	= 3;
-	protected int				m_LogToApiLevel = 3;
+	protected int				m_LogToApiLevel = 0;  // Only send ERROR level to API (0=ERROR, 2=INFO, 3=DEBUG)
 	protected bool 			m_isInit = false;
 	
-	protected static string LogDir = "$profile:UF/Logs/";
+	protected static string LogDir = "$profile:";
 	protected string m_LogType = "";
 	protected FileHandle		m_FileHandle;
 	
@@ -94,9 +86,6 @@ class ULoggerBaseInstance extends Managed {
 		if ( !g_Game.IsServer() || g_Game.IsClient() ){
 			return;	
 		}
-		// Ensure log directory exists
-		MakeDirectory("$profile:UF");
-		MakeDirectory(LogDir);
 		
 		m_FileHandle = CreateFile(LogDir + m_LogType + "_" + GetDateStampFile() + ".log");
 		if (m_FileHandle != 0){

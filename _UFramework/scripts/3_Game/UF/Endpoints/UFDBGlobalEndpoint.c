@@ -99,12 +99,29 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	int Load(string mod, Class cbInstance, string cbFunction, string jsonString = "{}") {		
+	int Load(string mod, Class cbInstance, string cbFunction, string jsonString = "{}") {
+		UFLog.Debug("[UDBGlobalEndpoint::Load] mod=" + mod + " cbFunction=" + cbFunction);
 		int cid = -1;
 		string endpoint = "Load/" + mod;
 
+		// Safety check: ensure framework is ready
+		UFramework uf = U();
+		if (!uf){
+			UFLog.Err("[UDBGlobalEndpoint::Load] U() returned NULL - framework not ready");
+			return -1;
+		}
+		if (!UFConfig()){
+			UFLog.Err("[UDBGlobalEndpoint::Load] UFConfig() is NULL - config not loaded");
+			return -1;
+		}
+
 		if (mod && jsonString){
-			Post(endpoint,jsonString,U().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, mod), cid));
+			RestCallback regCb = uf.RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, mod), cid);
+			if (!regCb){
+				UFLog.Err("[UDBGlobalEndpoint::Load] RegisterCall returned NULL");
+				return -1;
+			}
+			Post(endpoint, jsonString, regCb);
 		} else {
 			UFLog.Err("[Api] Error Loading Player Data for " + mod);
 			cid = -1;
@@ -112,12 +129,30 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	int Load(string mod, UFCallbackBase cb, string jsonString = "{}") {		
+	int Load(string mod, UFCallbackBase cb, string jsonString = "{}") {
+		UFLog.Debug("[UDBGlobalEndpoint::Load] mod=" + mod + " with UFCallbackBase");
 		int cid = -1;
 		string endpoint = "Load/" + mod;
+		
+		// Safety check: ensure framework is ready
+		UFramework uf = U();
+		if (!uf){
+			UFLog.Err("[UDBGlobalEndpoint::Load] U() returned NULL - framework not ready");
+			return -1;
+		}
+		if (!UFConfig()){
+			UFLog.Err("[UDBGlobalEndpoint::Load] UFConfig() is NULL - config not loaded");
+			return -1;
+		}
+		
 		if (mod && cb && jsonString){
 			cb.SetOID(mod); //Only sets if not set
-			Post(endpoint,jsonString, U().RegisterCall(new UNestedCallBack(cb), cid));
+			RestCallback regCb = uf.RegisterCall(new UNestedCallBack(cb), cid);
+			if (!regCb){
+				UFLog.Err("[UDBGlobalEndpoint::Load] RegisterCall returned NULL");
+				return -1;
+			}
+			Post(endpoint, jsonString, regCb);
 		} else {
 			UFLog.Err("[Api] Error Loading Player Data for " + mod);
 			cid = -1;

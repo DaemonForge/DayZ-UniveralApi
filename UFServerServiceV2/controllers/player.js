@@ -27,16 +27,14 @@ router.post('/Transaction/:GUID/:mod', requireServerAuth, runTransaction);
 async function runGet(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Received player load request for GUID ${GUID}, mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.info(`Player load request`, { GUID, mod });
     try {
-        logger.debug('About to call getPlayerModData', { GUID, mod });
         const data = await getPlayerModData(GUID, mod);
-        logger.debug('getPlayerModData returned', { data });
         if (!data) {
-            logger.info(`Player or mod data not found for GUID ${GUID} and mod ${mod}`, { GUID, mod });
+            logger.debug(`Player or mod data not found`, { GUID, mod });
             return res.status(404).json({ error: 'Player or mod data not found' });
         }
-        logger.info(`Player data loaded successfully for GUID ${GUID} and mod ${mod}`, { GUID, mod });
+        logger.debug(`Player data loaded successfully`, { GUID, mod });
         return res.status(200).json(data);
     } catch (err) {
         logger.error(`Error loading player data for GUID ${GUID} and mod ${mod}: ${err.message}`, { error: err });
@@ -51,26 +49,23 @@ async function runGet(req, res) {
 async function runSave(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Received player save request for GUID ${GUID}, mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.info(`Player save request`, { GUID, mod });
     
     try {
         const modData = req.body;
-        logger.debug('Request body received for save', { modData });
         let result;
         const playerExistsFlag = await playerExists(GUID);
-        logger.debug(`playerExists returned ${playerExistsFlag} for GUID ${GUID}`, { GUID });
         
         if (playerExistsFlag) {
-            logger.debug(`Updating existing player mod data for GUID ${GUID} and mod ${mod}`, { GUID, mod });
+            logger.debug(`Updating existing player mod data`, { GUID, mod });
             result = await updatePlayerModData(GUID, mod, modData);
         } else {
-            logger.info(`Creating new player record for GUID ${GUID} and mod ${mod}`, { GUID, mod });
+            logger.info(`Creating new player record`, { GUID, mod });
             const newDoc = { GUID, [mod]: modData };
             result = await newPlayer(GUID, newDoc);
         }
         
-        logger.info(`Player data saved successfully for GUID ${GUID} and mod ${mod} (isNewPlayer: ${!playerExistsFlag})`, { GUID, mod, isNewPlayer: !playerExistsFlag });
-        logger.debug('runSave result', { result });
+        logger.info(`Player data saved successfully`, { GUID, mod, isNewPlayer: !playerExistsFlag });
         return res.json(result);
     } catch (err) {
         logger.error(`Error saving player data for GUID ${GUID} and mod ${mod}: ${err.message}`, { error: err });
@@ -84,7 +79,7 @@ async function runSave(req, res) {
 async function runUpdate(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Received update request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.info(`Player update request`, { GUID, mod, Element, Operation });
     
     try {
         const { Element, Operation, Value } = req.body;
@@ -113,7 +108,7 @@ async function runUpdate(req, res) {
 async function runGetPublic(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Received public load request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.info(`Player public load request`, { GUID, mod });
     
     try {
         const publicMod = `Public.${mod}`;
@@ -140,7 +135,7 @@ async function runGetPublic(req, res) {
 async function runSavePublic(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Received public save request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.info(`Player public save request`, { GUID, mod });
     
     try {
         const publicMod = `Public.${mod}`;
@@ -175,7 +170,7 @@ async function runSavePublic(req, res) {
 async function runTransaction(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Received transaction request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.info(`Player transaction request`, { GUID, mod });
     
     try {
         const transactionData = req.body;
@@ -203,7 +198,7 @@ async function runTransaction(req, res) {
 async function runValidatedTx(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
     const mod = req.params.mod;
-    logger.debug(`Received validated transaction request for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
+    logger.info(`Validated transaction request`, { GUID, mod });
 
     try {
         const transactionData = req.body;

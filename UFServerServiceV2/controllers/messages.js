@@ -107,11 +107,8 @@ async function runReadMessages(req, res) {
       return res.status(400).json({ Status: "Error", Error: "Invalid mod or queue name" });
     }
     
-    logger.debug(`Parameters: Mod="${ModName}", Queue="${QueueName}"`);
-    
     const limitParam = req.body.Limit;
     let limit = parseInt(limitParam, 10);
-    logger.debug(`Parsed limit: ${limit}`);
     if (isNaN(limit)) {
       logger.debug("Invalid limit value provided");
       return res.status(400).json({ Status: "Error", Error: "Invalid limit value" });
@@ -119,19 +116,16 @@ async function runReadMessages(req, res) {
     
     // Check for SkipToLatest parameter - if true, skip older messages and return only the latest N
     const skipToLatest = req.body.SkipToLatest === 1 || req.body.SkipToLatest === true;
-    logger.debug(`SkipToLatest: ${skipToLatest}`);
     
     // Derive caller's identifier: either the player's GUID or "Server".
     let identifier = AuthPlayerGuid(req.headers["auth-key"]);
     if (!identifier) {
       identifier = req.serverId || "Server";
     }
-    logger.debug(`Caller identifier: ${identifier}`);
-    logger.debug(`"${identifier}" reading from Mod "${ModName}" Queue "${QueueName}" with limit ${limit}, skipToLatest ${skipToLatest}`);
+    logger.info(`Queue read request`, { ModName, QueueName, identifier, limit, skipToLatest });
     
     // Get the Queue meta.
     const meta = await getQueueMeta(ModName, QueueName);
-    logger.debug(`Retrieved meta: ${JSON.stringify(meta)}`);
     const sortOrder = meta.order === "LIFO" ? -1 : 1;
     logger.debug(`Using sortOrder: ${sortOrder}`);
     
@@ -238,14 +232,11 @@ async function runWriteMessage(req, res) {
       return res.status(400).json({ Status: "Error", Error: "Missing message field" });
     }
     
-    logger.debug(`Parameters: Mod="${ModName}", Queue="${QueueName}"`);
     const message = req.body.Message;
-    logger.debug(`Message received: ${typeof message === 'string' ? message.substring(0, 100) : JSON.stringify(message).substring(0, 100)}...`);
 
     // Determine if the request is from a player.
     const isServer = req.isServer || CheckServerAuth(req.headers["auth-key"]);
     let actorId = req.serverId || "Server";
-    logger.debug(`Request is from ${isServer ? "Server" : "Player"}`);
     
     if (!isServer) {
       actorId = AuthPlayerGuid(req.headers["auth-key"]);
@@ -255,16 +246,14 @@ async function runWriteMessage(req, res) {
       }
       
       const meta = await getQueueMeta(ModName, QueueName);
-      logger.debug(`Queue meta for write: ${JSON.stringify(meta)}`);
       if (!meta.allowPlayerWrites) {
         logger.warn(`Player writes are not allowed for Mod "${ModName}" Queue "${QueueName}"`);
         return res.status(403).json({ Status: "NoAuth", Error: "Player writes are not allowed for this Queue" });
       }
     }
     
-    logger.debug(`Message enQueued to Mod "${ModName}" Queue "${QueueName}" by "${actorId}"`);
+    logger.info(`Message enqueued`, { ModName, QueueName, actorId });
     await insertMessage(ModName, QueueName, actorId, message);
-    logger.debug("Message inserted successfully");
     return res.status(201).json({ Status: "Success" });
   } catch (err) {
     logger.error(`Error writing to Mod "${req.params.Mod}" Queue "${req.params.Queue}": ${err.message}`, err);
@@ -298,7 +287,7 @@ async function runResetQueue(req, res) {
       return res.status(400).json({ Status: "Error", Error: "Invalid mod or queue name" });
     }
     
-    logger.debug(`Resetting queue for Mod="${ModName}" and Queue="${QueueName}"`);
+    logger.info(`Queue reset request`, { ModName, QueueName });
     const resetTime = await resetQueue(ModName, QueueName);
     logger.debug(`Queue reset for Mod "${ModName}" Queue "${QueueName}" at ${resetTime.toISOString()}`);
     return res.status(200).json({ Status: "Success", Error: "", ResetAt: resetTime.toISOString() });
@@ -348,7 +337,7 @@ async function runPurgeQueue(req, res) {
     }
     
     const olderThan = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
-    logger.debug(`Purging messages older than ${olderThan.toISOString()} for Mod="${ModName}" Queue="${QueueName}"`);
+    logger.info(`Queue purge request`, { ModName, QueueName, olderThan: olderThan.toISOString() });
     
     const deletedCount = await purgeOldMessages(ModName, QueueName, olderThan);
     logger.info(`Purged ${deletedCount} messages for Mod "${ModName}" Queue "${QueueName}"`);

@@ -91,50 +91,164 @@ async function createKB(kbId, name, description = '', options = {}) {
 }
 
 /**
- * Create vector search index for a KB collection
+ * Create indexes for a KB collection
+ * For self-managed MongoDB, we create standard indexes to support efficient queries
+ * The actual vector similarity is computed in-application using cosine similarity
  * @param {string} kbId - The KB identifier
  */
 async function createKBVectorIndex(kbId) {
     const { client, collection, collectionName } = await getKBCollection(kbId);
     try {
-        // Create the vector search index
-        const indexDefinition = {
-            name: "vector_index",
-            type: "vectorSearch",
-            definition: {
-                fields: [
-                    {
-                        type: "vector",
-                        path: "embedding",
-                        numDimensions: EMBEDDING_DIMENSIONS,
-                        similarity: "cosine"
-                    },
-                    {
-                        type: "filter",
-                        path: "documentId"
-                    }
-                ]
-            }
-        };
-
+        // Create index on embedding field existence for efficient filtering
+        // This helps quickly find documents that have embeddings
         try {
-            await collection.createSearchIndex(indexDefinition);
-            logger.info('Vector search index created', { collectionName });
-        } catch (indexErr) {
-            // Index creation might fail if Atlas search isn't available
-            // Log warning but don't fail - we can still use the KB without vector search
-            logger.warn('Could not create vector search index - vector search may not be available', {
-                collectionName,
-                error: indexErr.message
-            });
+            await collection.createIndex(
+                { embedding: 1 },
+                { 
+                    name: "embedding_exists_idx",
+                    partialFilterExpression: { embedding: { $exists: true } }
+                }
+            );
+            logger.info('[KB] Embedding existence index created', { collectionName });
+        } catch (err) {
+            if (err.code !== 85) { // Ignore "index already exists" errors
+                logger.warn('[KB] Could not create embedding index', { collectionName, error: err.message });
+            }
         }
 
-        // Also create a standard text index as fallback
-        await collection.createIndex({ content: "text", name: "text", contextHint: "text" });
-        logger.info('Text search index created', { collectionName });
+        // Create index on documentId for efficient lookups and deduplication
+        try {
+            await collection.createIndex(
+                { documentId: 1 },
+                { name: "documentId_idx" }
+            );
+            logger.info('[KB] DocumentId index created', { collectionName });
+        } catch (err) {
+            if (err.code !== 85) {
+                logger.warn('[KB] Could not create documentId index', { collectionName, error: err.message });
+            }
+        }
+
+        // Create text index for fallback text search
+        try {
+            await collection.createIndex(
+                { content: "text", name: "text", contextHint: "text" },
+                { name: "text_search_idx" }
+            );
+            logger.info('[KB] Text search index created', { collectionName });
+        } catch (err) {
+            if (err.code !== 85) {
+                logger.warn('[KB] Could not create text index', { collectionName, error: err.message });
+            }
+        }
 
     } finally {
         await client.close();
+    }
+}
+
+/**
+ * Ensure indexes exist for all KB collections
+ * Call this on startup to ensure indexes are created for any KBs that existed before the index update
+ */
+async function ensureAllKBIndexes() {
+    try {
+        const kbs = await listKBs();
+        logger.info('[KB] Ensuring indexes for all KBs', { kbCount: kbs.length });
+        
+        for (const kb of kbs) {
+            try {
+                await createKBVectorIndex(kb.kbId);
+            } catch (err) {
+                logger.warn('[KB] Failed to ensure indexes for KB', { kbId: kb.kbId, error: err.message });
+            }
+        }
+        
+        logger.info('[KB] Index check complete for all KBs');
+    } catch (err) {
+        logger.error('[KB] Failed to ensure indexes', { error: err.message });
+    }
+}
+
+/**
+ * Ensure all documents in all KBs have embeddings
+ * Call this on startup to generate missing embeddings
+ * @param {function} generateEmbeddingsFn - Function to generate embeddings (passed from controller)
+ */
+async function ensureAllEmbeddings(generateEmbeddingsFn) {
+    try {
+        const kbs = await listKBs();
+        logger.info('[KB] Checking embeddings for all KBs', { kbCount: kbs.length });
+        
+        let totalMissing = 0;
+        let totalFixed = 0;
+        let totalFailed = 0;
+        
+        for (const kb of kbs) {
+            try {
+                const missingChunks = await getDocumentsMissingEmbeddings(kb.kbId);
+                
+                if (missingChunks.length === 0) {
+                    continue;
+                }
+                
+                // Group by documentId
+                const byDoc = {};
+                for (const chunk of missingChunks) {
+                    if (!byDoc[chunk.documentId]) byDoc[chunk.documentId] = [];
+                    byDoc[chunk.documentId].push(chunk);
+                }
+                
+                const docCount = Object.keys(byDoc).length;
+                totalMissing += docCount;
+                logger.info('[KB] Found documents missing embeddings', { 
+                    kbId: kb.kbId, 
+                    documentCount: docCount,
+                    chunkCount: missingChunks.length 
+                });
+                
+                for (const [documentId, chunks] of Object.entries(byDoc)) {
+                    try {
+                        chunks.sort((a, b) => a.chunkIndex - b.chunkIndex);
+                        const contents = chunks.map(c => c.content);
+                        const embeddings = await generateEmbeddingsFn(contents);
+                        await updateDocumentEmbeddings(kb.kbId, documentId, embeddings);
+                        totalFixed++;
+                        logger.info('[KB] Generated missing embeddings', { 
+                            kbId: kb.kbId, 
+                            documentId, 
+                            name: chunks[0]?.name,
+                            chunks: embeddings.length 
+                        });
+                    } catch (err) {
+                        totalFailed++;
+                        logger.error('[KB] Failed to generate embeddings for document', { 
+                            kbId: kb.kbId, 
+                            documentId, 
+                            name: chunks[0]?.name,
+                            error: err.message 
+                        });
+                    }
+                }
+            } catch (err) {
+                logger.error('[KB] Failed to check embeddings for KB', { kbId: kb.kbId, error: err.message });
+            }
+        }
+        
+        if (totalMissing === 0) {
+            logger.info('[KB] All documents have embeddings');
+        } else {
+            logger.info('[KB] Embedding check complete', { 
+                totalMissing, 
+                fixed: totalFixed, 
+                failed: totalFailed 
+            });
+        }
+        
+        return { totalMissing, fixed: totalFixed, failed: totalFailed };
+    } catch (err) {
+        logger.error('[KB] Failed to ensure embeddings', { error: err.message });
+        return { error: err.message };
     }
 }
 
@@ -531,45 +645,80 @@ async function deleteDocument(kbId, documentId) {
 }
 
 /**
- * Vector search for relevant documents
+ * Compute cosine similarity between two vectors
+ * @param {number[]} a - First vector
+ * @param {number[]} b - Second vector
+ * @returns {number} Cosine similarity (0 to 1)
+ */
+function cosineSimilarity(a, b) {
+    if (!a || !b || a.length !== b.length) return 0;
+    
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+    
+    for (let i = 0; i < a.length; i++) {
+        dotProduct += a[i] * b[i];
+        normA += a[i] * a[i];
+        normB += b[i] * b[i];
+    }
+    
+    const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
+    return magnitude === 0 ? 0 : dotProduct / magnitude;
+}
+
+/**
+ * Vector search for relevant documents using in-application cosine similarity
+ * Works with self-managed MongoDB without requiring Atlas Search
  * @param {string} kbId - The KB identifier
  * @param {array} queryEmbedding - The query embedding vector
  * @param {number} limit - Maximum results to return
  */
 async function vectorSearch(kbId, queryEmbedding, limit = 5) {
-    logger.debug('vectorSearch: Starting', { kbId, limit, embeddingLength: queryEmbedding?.length });
+    logger.info('[KB] Vector search starting', { kbId, limit, embeddingLength: queryEmbedding?.length });
     const { client, collection } = await getKBCollection(kbId);
     try {
-        const pipeline = [
-            {
-                $vectorSearch: {
-                    index: "vector_index",
-                    queryVector: queryEmbedding,
-                    path: "embedding",
-                    limit: limit * 2, // Get more to dedupe by document
-                    numCandidates: limit * 10
-                }
-            },
-            {
-                $project: {
+        // Fetch all documents with embeddings from this KB
+        // For large KBs, consider adding pagination or caching
+        const docs = await collection.find(
+            { embedding: { $exists: true, $ne: null } },
+            { 
+                projection: {
                     _id: 0,
                     documentId: 1,
                     name: 1,
                     content: 1,
                     contextHint: 1,
                     chunkIndex: 1,
-                    score: { $meta: "vectorSearchScore" }
+                    embedding: 1
                 }
             }
-        ];
+        ).toArray();
 
-        const results = await collection.aggregate(pipeline).toArray();
-        logger.debug('vectorSearch: Raw results received', { kbId, rawCount: results.length });
-        
+        logger.info('[KB] Fetched documents for similarity', { kbId, docCount: docs.length });
+
+        if (docs.length === 0) {
+            logger.warn('[KB] No documents with embeddings found', { kbId });
+            return [];
+        }
+
+        // Compute cosine similarity for each document
+        const scoredDocs = docs.map(doc => ({
+            documentId: doc.documentId,
+            name: doc.name,
+            content: doc.content,
+            contextHint: doc.contextHint,
+            chunkIndex: doc.chunkIndex,
+            score: cosineSimilarity(queryEmbedding, doc.embedding)
+        }));
+
+        // Sort by score descending
+        scoredDocs.sort((a, b) => b.score - a.score);
+
         // Deduplicate by documentId, keeping highest scoring chunk
         const seen = new Set();
         const deduped = [];
-        for (const result of results) {
+        for (const result of scoredDocs) {
             if (!seen.has(result.documentId)) {
                 seen.add(result.documentId);
                 deduped.push(result);
@@ -577,16 +726,15 @@ async function vectorSearch(kbId, queryEmbedding, limit = 5) {
             }
         }
 
-        logger.debug('vectorSearch: Deduped results', { 
+        logger.info('[KB] Vector search complete', { 
             kbId, 
             dedupedCount: deduped.length,
-            scores: deduped.map(r => ({ doc: r.name, score: r.score?.toFixed(4) }))
+            topScores: deduped.slice(0, 3).map(r => ({ doc: r.name, score: r.score?.toFixed(4) }))
         });
         return deduped;
     } catch (err) {
-        // Fallback to text search if vector search not available
-        logger.warn('Vector search failed, falling back to text search', { kbId, error: err.message, stack: err.stack });
-        return await textSearch(kbId, '', limit);
+        logger.error('[KB] Vector search failed', { kbId, error: err.message, stack: err.stack });
+        throw err;
     } finally {
         await client.close();
     }
@@ -599,24 +747,49 @@ async function vectorSearch(kbId, queryEmbedding, limit = 5) {
  * @param {number} limit - Maximum results
  */
 async function textSearch(kbId, query, limit = 5) {
-    logger.debug('textSearch: Starting', { kbId, query, limit });
+    logger.info('[KB] Text search starting', { kbId, query, limit });
     const { client, collection } = await getKBCollection(kbId);
     try {
-        const results = await collection
-            .find({ $text: { $search: query } })
-            .project({
-                documentId: 1,
-                name: 1,
-                content: 1,
-                contextHint: 1,
-                chunkIndex: 1,
-                score: { $meta: "textScore" }
-            })
-            .sort({ score: { $meta: "textScore" } })
-            .limit(limit * 2)
-            .toArray();
-
-        logger.debug('textSearch: Raw results received', { kbId, rawCount: results.length });
+        let results = [];
+        
+        // First try $text search (requires text index)
+        try {
+            results = await collection
+                .find({ $text: { $search: query } })
+                .project({
+                    documentId: 1,
+                    name: 1,
+                    content: 1,
+                    contextHint: 1,
+                    chunkIndex: 1,
+                    score: { $meta: "textScore" }
+                })
+                .sort({ score: { $meta: "textScore" } })
+                .limit(limit * 2)
+                .toArray();
+            logger.debug('[KB] $text search succeeded', { kbId, rawCount: results.length });
+        } catch (textErr) {
+            // Fallback to regex search if no text index
+            logger.warn('[KB] $text search failed, using regex fallback', { kbId, error: textErr.message });
+            
+            // Build regex pattern from query words
+            const words = query.split(/\s+/).filter(w => w.length > 2);
+            if (words.length > 0) {
+                const regexPattern = words.map(w => `(?=.*${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`).join('');
+                results = await collection
+                    .find({ content: { $regex: regexPattern, $options: 'i' } })
+                    .project({
+                        documentId: 1,
+                        name: 1,
+                        content: 1,
+                        contextHint: 1,
+                        chunkIndex: 1
+                    })
+                    .limit(limit * 2)
+                    .toArray();
+                logger.info('[KB] Regex search completed', { kbId, rawCount: results.length });
+            }
+        }
 
         // Deduplicate by documentId
         const seen = new Set();
@@ -629,7 +802,7 @@ async function textSearch(kbId, query, limit = 5) {
             }
         }
 
-        logger.debug('textSearch: Deduped results', { kbId, dedupedCount: deduped.length });
+        logger.info('[KB] Text search complete', { kbId, query, resultCount: deduped.length });
         return deduped;
     } finally {
         await client.close();
@@ -665,6 +838,8 @@ module.exports = {
     vectorSearch,
     textSearch,
     getDocumentsMissingEmbeddings,
+    ensureAllKBIndexes,
+    ensureAllEmbeddings,
     splitTextIntoChunks,
     EMBEDDING_DIMENSIONS,
     MAX_CHUNK_SIZE,

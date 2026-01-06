@@ -990,21 +990,41 @@ ipcMain.handle('kb:updateDocument', async (event, payload) => {
   try {
     const { kbId, documentId, name, content, contextHint } = payload || {};
     if (!kbId || !documentId) throw new Error('KB ID and Document ID are required.');
-    const { updateDocument, updateDocumentEmbeddings, splitTextIntoChunks } = getKBModel();
+    const { updateDocument, updateDocumentEmbeddings, splitTextIntoChunks, getDocument } = getKBModel();
     const kbController = getKBController();
+    
+    // Get current document to check if content changed
+    const existingDoc = await getDocument(kbId, documentId);
+    const contentChanged = content !== null && content !== undefined;
     
     const result = await updateDocument(kbId, documentId, name, content, contextHint);
     
-    // Regenerate embeddings if content changed
-    if (result.needsEmbedding && content) {
+    // Always regenerate embeddings if content was provided (changed)
+    if (contentChanged) {
       try {
+        (global.logger || console).info('[KBManager] Regenerating embeddings for updated document', { 
+          kbId, 
+          documentId, 
+          name: name || existingDoc?.chunks?.[0]?.name 
+        });
         const chunks = splitTextIntoChunks(content);
         const embeddings = await kbController.generateEmbeddings(chunks);
         await updateDocumentEmbeddings(kbId, documentId, embeddings);
         result.hasEmbedding = true;
+        result.embeddingsGenerated = embeddings.length;
+        (global.logger || console).info('[KBManager] Embeddings regenerated successfully', { 
+          kbId, 
+          documentId, 
+          chunks: embeddings.length 
+        });
       } catch (embErr) {
-        (global.logger || console).warn('[KBManager] Failed to regenerate embeddings', { error: embErr.message });
+        (global.logger || console).error('[KBManager] Failed to regenerate embeddings', { 
+          kbId, 
+          documentId, 
+          error: embErr.message 
+        });
         result.hasEmbedding = false;
+        result.embeddingError = embErr.message;
       }
     }
     

@@ -365,12 +365,34 @@ class UApiEndpoint extends UFBaseEndpoint {
 	
 	//Request a status check from the api so you can get version number and such returns a `UFStatus` object
 	int Status(Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
+		UFLog.Debug("[UApiEndpoint::Status] Called with cbFunction=" + cbFunction);
 		int cid = -1;
+		
+		// Pre-check: ensure we can actually make the call
+		UFrameworkConfig cfg = UFConfig();
+		if (!cfg){
+			UFLog.Err("[UApiEndpoint::Status] UFConfig() is NULL - cannot make API call!");
+			return -1;
+		}
+		
+		UFramework uf = U();
+		if (!uf){
+			UFLog.Err("[UApiEndpoint::Status] U() is NULL - framework not initialized!");
+			return -1;
+		}
+		
+		UFLog.Debug("[UApiEndpoint::Status] Pre-checks passed, making POST request...");
 		if (ReturnString){	
 			Post("Status", "{}", new UDBCallBack(cbInstance, cbFunction, cid, oid));
 		} else {
-			Post("Status", "{}",  U().RegisterCall(new UNestedCallBack(new UFCallback<UFStatus>(cbInstance, cbFunction, oid)), cid));
+			RestCallback cb = uf.RegisterCall(new UNestedCallBack(new UFCallback<UFStatus>(cbInstance, cbFunction, oid)), cid);
+			if (!cb){
+				UFLog.Err("[UApiEndpoint::Status] RegisterCall returned NULL!");
+				return -1;
+			}
+			Post("Status", "{}", cb);
 		}
+		UFLog.Debug("[UApiEndpoint::Status] Request sent, cid=" + cid);
 		return cid;
 	}
 }

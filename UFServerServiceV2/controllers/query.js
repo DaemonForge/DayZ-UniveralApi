@@ -16,12 +16,12 @@ router.use(GenerateLimiter(global.config.RequestLimitQuery || 400, 10));
  * 
  */
 router.post('/:mod', (req, res) => {
-    logger.debug(`Received query request for mod: ${req.params.mod}`, { params: req.params });
+    logger.info(`Query request received`, { mod: req.params.mod });
     runQuery(req, res, req.params.mod, req.headers['auth-key'], GetCollection(req.baseUrl));
 });
 
 router.post('/Update/:mod', (req, res) => {
-    logger.debug(`Received update request for mod: ${req.params.mod}`, { params: req.params });
+    logger.info(`Query update request received`, { mod: req.params.mod });
     runUpdateFromQuery(req, res, req.params.mod, req.headers['auth-key'], GetCollection(req.baseUrl));
 });
 

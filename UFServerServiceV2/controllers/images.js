@@ -256,7 +256,7 @@ router.post('/Generate', async (req, res) => {
 */
 router.post('/Download/:imageId', async (req, res) => {
      const imageId = req.params.imageId;
-     logger.debug(`/Download/${imageId}: Request received`);
+     logger.info(`Image download request`, { imageId });
      try {
           const imageRecord = await SaveImage.findById(imageId);
           if (!imageRecord) {
@@ -305,7 +305,7 @@ router.post('/Discord/:GUID', async (req, res) => {
           req.params.GUID = req.GUID;
      }
      const GUID = NormalizeToGUID(req.params.GUID);
-     logger.debug(`/Discord/${GUID}: Request received`);
+     logger.info(`Discord avatar request`, { GUID });
      try {
           const discordObj = await GetDiscordObj(GUID);
           if (!discordObj || !discordObj.avatar) {

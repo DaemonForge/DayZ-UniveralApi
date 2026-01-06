@@ -106,10 +106,9 @@ async function RemoveRole(req, res){
 
 async function GetUserAndRoles(req, res){
     let GUID = NormalizeToGUID(req.params.GUID);
-    logger.debug("GetUserAndRoles called", { GUID });
+    logger.info("GetUserAndRoles request", { GUID });
     try{
         let dsInfo = await GetDiscordObj(GUID);
-        logger.debug("Fetched Discord object", { GUID, dsInfo });
         if (dsInfo?.id  === undefined || dsInfo.id === "0" ){
             logger.info("Can't find Player in database", { GUID });
             res.status(201);

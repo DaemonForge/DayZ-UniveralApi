@@ -105,15 +105,22 @@ class UFramework extends Managed {
 		if (collection == OBJECT_DB){
 			if (!m_ObjectEndPoint){
 				m_ObjectEndPoint = new UDBEndpoint("Object");
+				if (!m_ObjectEndPoint){
+					Error2("[UF] db()", "CRITICAL: Failed to create Object endpoint!");
+				}
 			}
 			return m_ObjectEndPoint;
 		} 
 		if (collection == PLAYER_DB){
 			if (!m_PlayerEndPoint){
 				m_PlayerEndPoint = new UDBEndpoint("Player");
+				if (!m_PlayerEndPoint){
+					Error2("[UF] db()", "CRITICAL: Failed to create Player endpoint!");
+				}
 			}
 			return m_PlayerEndPoint;
 		}
+		Error2("[UF] db()", "Invalid collection type: " + collection + " - use OBJECT_DB or PLAYER_DB");
 		return NULL;
 	}
 	
@@ -152,6 +159,9 @@ class UFramework extends Managed {
 	UFMsgEndpoint Msg(){
 		if (!m_UFMsgEndpoint){
 			m_UFMsgEndpoint = new UFMsgEndpoint;
+			if (!m_UFMsgEndpoint){
+				Error2("[UF] Msg()", "CRITICAL: Failed to create Message endpoint!");
+			}
 		}
 		return m_UFMsgEndpoint;
 	}
@@ -794,7 +804,7 @@ class UFramework extends Managed {
 	
 	void Init(){
 		#ifdef NO_GUI
-			UFLog.Info("Detected Server");
+			UFLog.Info("Detected Server (NO_GUI defined)");
 			m_IsServer = true;
 		#endif
 		if (!UF_Init){
@@ -807,7 +817,17 @@ class UFramework extends Managed {
 			UFRPCHandler.Register();
 			
 			if (m_IsServer){
-				U().api().Status(this, "CBStatusCheck");
+				UFrameworkConfig cfg = UFConfig();
+				if (!cfg){
+					UFLog.Err("[Init] CRITICAL: UFConfig() returned NULL on server! Cannot make Status call.");
+				} else {
+					string baseUrl = cfg.GetBaseURL();
+					if (baseUrl == "" || baseUrl == "null"){
+						UFLog.Err("[Init] CRITICAL: BaseURL is empty or null! Check UFramework.json config file.");
+					} else {
+						U().api().Status(this, "CBStatusCheck");
+					}
+				}
 				CheckAndRenewQRandom();
 			}
 		}
@@ -873,7 +893,7 @@ class UFramework extends Managed {
 			UFLog.Info("[UAPI] Initial token received, initializing services");
 			U().api().Status(this, "CBStatusCheck");
 			U().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
-			g_Game.GameScript.CallFunction(g_Game.GetMission(), "UFrameworkReadyTokenReceived", NULL, NULL);
+			// NOTE: UFrameworkReadyTokenReceived is now fired from CBStatusCheck after we know the OpenAI/Discord status
 		} else {
 			UFLog.Info("[UAPI] Token renewed successfully");
 		}
@@ -1155,7 +1175,10 @@ class UFramework extends Managed {
 	
 	
 	RestCallback RegisterCall(UFRestCallBackBase cb, out int cid){
-		if (!cb) return null;
+		if (!cb) {
+			UFLog.Err("[UFramework] RegisterCall - callback is null!");
+			return null;
+		}
 		cid = this.CallId();
 		cb.SetId(cid);
 		m_UCallBacks.Insert(cid, UFRestCallBackBase.Cast(cb));
@@ -1216,7 +1239,16 @@ class UFramework extends Managed {
 			}
 			if (data.OpenAI == "Online"){
 				m_UOpenAIEnabled = true;
+				UFLog.Info("[UAPI] OpenAI is enabled");
 			}
+			
+			// Fire the ready event AFTER we've set the OpenAI/Discord status flags
+			// This ensures mods can use AI Chat immediately after receiving this event
+			if (!m_IsServer && m_InitialTokenReceived){
+				UFLog.Debug("[UAPI] Firing UFrameworkReadyTokenReceived event (OpenAI=" + m_UOpenAIEnabled + ", Discord=" + m_UDiscordEnabled + ")");
+				g_Game.GameScript.CallFunction(g_Game.GetMission(), "UFrameworkReadyTokenReceived", NULL, NULL);
+			}
+			
 			m_UFVersionOffset = data.CheckVersion(UF_VERSION);
 			if (m_UFVersionOffset > 2){
 				Error2("Universal Framework WebService Needs Update", "[UF] Webservice is outdated and should be updated right away | WebService Version: " + data.Version + " Mod Version: " + UF_VERSION);
@@ -1248,6 +1280,13 @@ class UFramework extends Managed {
 		} else {
 			Error2("UnviersalApi", "[UF] Error with WebService! Status: " + status + " URL: " + UFConfig().GetBaseURL());
 			m_UFOnline = false;
+		}
+		
+		// Fire ready event even on failure so mods aren't left waiting forever
+		// They can check U().IsOpenAIEnabled() to see if AI is available
+		if (!m_IsServer && m_InitialTokenReceived){
+			UFLog.Debug("[UAPI] Firing UFrameworkReadyTokenReceived event (status check failed, OpenAI=" + m_UOpenAIEnabled + ")");
+			g_Game.GameScript.CallFunction(g_Game.GetMission(), "UFrameworkReadyTokenReceived", NULL, NULL);
 		}
 	}
 	

@@ -1204,10 +1204,10 @@ class UUtil extends Managed {
 	 * @code
 	 *   // Get all cities and villages
 	 *   array<string> filters = {"City", "Village"};
-	 *   array<ref UMapLocation> towns = UUtil.GetMapLocations(filters);
+	 *   array<autoptr UMapLocation> towns = UUtil.GetMapLocations(filters);
 	 *   
 	 *   // Get all locations (no filter)
-	 *   array<ref UMapLocation> allLocations = UUtil.GetMapLocations();
+	 *   array<autoptr UMapLocation> allLocations = UUtil.GetMapLocations();
 	 *   
 	 *   foreach (UMapLocation loc : allLocations)
 	 *   {
@@ -1397,7 +1397,7 @@ class UUtil extends Managed {
 	 * @code
 	 *   vector pos = player.GetPosition();
 	 *   array<string> filters = {"City", "Village"};
-	 *   array<ref UMapLocation> nearby = UUtil.GetMapLocationsInRadius(pos, 5000, filters);
+	 *   array<autoptr UMapLocation> nearby = UUtil.GetMapLocationsInRadius(pos, 5000, filters);
 	 * @endcode
 	 */
 	static array<autoptr UMapLocation> GetMapLocationsInRadius(vector position, float radius, array<string> typeFilters = NULL)

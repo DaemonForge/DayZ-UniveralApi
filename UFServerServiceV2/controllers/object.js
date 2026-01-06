@@ -48,35 +48,27 @@ router.post('/Transaction/:ObjectId/:mod', requireServerAuth, runTransaction);
 async function loadObject(req, res) {
     let { ObjectId, mod } = req.params;
     const data = req.body;
-    logger.debug(`loadObject called with ObjectId: ${ObjectId}, mod: ${mod}, data: ${JSON.stringify(data)}`);
-    logger.debug(`Received load request. from: ${ req.isServer ? "Server": "Client"} mod: ${mod}, ObjectId: ${ObjectId}, data: ${JSON.stringify(data)}`);
+    logger.info(`Load object request`, { mod, ObjectId, isServer: req.isServer });
     try {
         const results = await getObject(ObjectId, mod);
-        logger.debug(`getObject returned: ${JSON.stringify(results)}`);
         logger.debug(`getObject returned: ${JSON.stringify(results)}`);
         if (results === null || typeof results === 'undefined') {
             if (req.isServer && !isEmpty(data)) {
                 if (ObjectId === "NewObject") {
                     ObjectId = makeObjectId();
                     data.ObjectId = ObjectId;
-                    logger.debug(`Generated new ObjectId: ${ObjectId}`);
-                    logger.debug(`Creating new object with generated id. mod: ${mod}, ObjectId: ${ObjectId}`);
+                    logger.info(`New object created with generated id`, { mod, ObjectId });
                 } else {
-                    logger.debug(`Using provided ObjectId: ${ObjectId}`);
-                    logger.debug(`Creating new object with provided id. mod: ${mod}, ObjectId: ${ObjectId}`);
+                    logger.info(`New object created with provided id`, { mod, ObjectId });
                 }
                 await newObject(ObjectId, mod, data);
-                logger.debug(`New object created, data: ${JSON.stringify(data)}`);
-                logger.debug(`New object created successfully. mod: ${mod}, ObjectId: ${ObjectId}`);
                 return res.status(201).json(data);
             } else {
-                logger.debug(`No object found and creation criteria not met, isServer: ${req.isServer}, data: ${JSON.stringify(data)}`);
-                logger.debug(`No object found and creation criteria not met. mod: ${mod}, ObjectId: ${ObjectId}`, {isServer: req.isServer, data});
+                logger.debug(`No object found and creation criteria not met`, { mod, ObjectId, isServer: req.isServer });
                 return res.status(204).json(data);
             }
         } else {
-            logger.debug(`Object found, returning existing object.`);
-            logger.debug(`Existing object loaded. mod: ${mod}, ObjectId: ${ObjectId}`);
+            logger.debug(`Existing object loaded`, { mod, ObjectId });
             return res.status(200).json(results);
         }
     } catch (err) {
@@ -91,7 +83,7 @@ async function loadObject(req, res) {
 async function saveObject(req, res) {
     let { ObjectId, mod } = req.params;
     const data = req.body;
-    logger.debug(`saveObject called with ObjectId: ${ObjectId}, mod: ${mod}, data: ${JSON.stringify(data)}`);
+    logger.info(`Save object request`, { mod, ObjectId });
     try {
         if (ObjectId === "NewObject") {
             ObjectId = makeObjectId();
@@ -100,11 +92,9 @@ async function saveObject(req, res) {
         }
         const options = { upsert: true };
         const updateDoc = { $set: { data: data, ObjectId, Mod: mod } };
-        logger.debug(`Update document prepared: ${JSON.stringify(updateDoc)}`);
         const result = await updateObject(ObjectId, mod, updateDoc, options);
-        logger.debug(`updateObject result: ${JSON.stringify(result)}`);
         if (result.matchedCount === 1 || result.upsertedCount === 1) {
-            logger.debug(`Updated object data. mod: ${mod}, ObjectId: ${ObjectId}`);
+            logger.info(`Object saved successfully`, { mod, ObjectId });
             res.status(201).json(data);
         } else {
             logger.warn(`Error updating object data for mod: ${mod}, ObjectId: ${ObjectId}`);
@@ -122,7 +112,7 @@ async function saveObject(req, res) {
 async function runUpdate(req, res) {
     let { ObjectId, mod } = req.params;
     const data = req.body;
-    logger.debug(`runUpdate called with ObjectId: ${ObjectId}, mod: ${mod}, data: ${JSON.stringify(data)}`);
+    logger.info(`Object update request`, { mod, ObjectId, element });
     try {
         const element = data.Element;
         const operation = data.Operation || "set";
@@ -149,7 +139,7 @@ async function runUpdate(req, res) {
 async function runTransaction(req, res) {
     let { ObjectId, mod } = req.params;
     const data = req.body;
-    logger.debug(`runTransaction called with ObjectId: ${ObjectId}, mod: ${mod}, data: ${JSON.stringify(data)}`);
+    logger.info(`Object transaction request`, { mod, ObjectId });
     try {
         let response;
         if (data.Min !== undefined && data.Max !== undefined && data.Min !== data.Max) {

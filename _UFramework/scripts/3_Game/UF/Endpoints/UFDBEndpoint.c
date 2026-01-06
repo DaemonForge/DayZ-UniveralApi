@@ -189,16 +189,34 @@ class UDBEndpoint extends UFBaseEndpoint {
 	
 	
 	int Query(string mod, UDBQueryBase query, UFCallbackBase cb) {
+		UFLog.Debug("[UDBEndpoint::Query] mod=" + mod);
 		if (mod == "" || !query || !cb){
 			Error2("[UF] Error on DB Query","Mod, query and callback must be valid");
 			return -1;
 		}
+		
+		// Safety check: ensure framework is ready
+		UFramework uf = U();
+		if (!uf){
+			UFLog.Err("[UDBEndpoint::Query] U() returned NULL - framework not ready");
+			return -1;
+		}
+		if (!UFConfig()){
+			UFLog.Err("[UDBEndpoint::Query] UFConfig() is NULL - config not loaded");
+			return -1;
+		}
+		
 		int cid = -1;
 		string endpoint = "Query/" + mod;
 				
 		if ( query && mod && cb){
 			cb.SetOID(mod); //Only sets if not set
-			Post(endpoint,query.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
+			RestCallback regCb = uf.RegisterCall(new UNestedCallBack(cb), cid);
+			if (!regCb){
+				UFLog.Err("[UDBEndpoint::Query] RegisterCall returned NULL");
+				return -1;
+			}
+			Post(endpoint, query.ToJson(), regCb);
 			
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Query");
@@ -211,18 +229,36 @@ class UDBEndpoint extends UFBaseEndpoint {
 	}
 	
 	int Query(string mod, UDBQueryBase query, Class cbInstance, string cbFunction) {
+		UFLog.Debug("[UDBEndpoint::Query] mod=" + mod + " cbFunction=" + cbFunction);
 		if ( mod == "" || !query ){
 			Error2("[UF] Error on DB Query","Mod and query must be valid");
 			return -1;
 		}
+		
+		// Safety check: ensure framework is ready
+		UFramework uf = U();
+		if (!uf){
+			UFLog.Err("[UDBEndpoint::Query] U() returned NULL - framework not ready");
+			return -1;
+		}
+		if (!UFConfig()){
+			UFLog.Err("[UDBEndpoint::Query] UFConfig() is NULL - config not loaded");
+			return -1;
+		}
+		
 		int cid = -1;
 		string endpoint = "Query/" + mod;
 				
-		Post(endpoint,query.ToJson(),U().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, ""),cid));
+		RestCallback regCb = uf.RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, ""), cid);
+		if (!regCb){
+			UFLog.Err("[UDBEndpoint::Query] RegisterCall returned NULL");
+			return -1;
+		}
+		Post(endpoint, query.ToJson(), regCb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "Query");
-			}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "Query");
+		}
 		return cid;
 	}
 	

@@ -242,7 +242,7 @@ async function insertMessage(Mod, Queue, Actor, Message) {
       createdAt: new Date()
     };
     const result = await messages.insertOne(doc);
-    logger.debug(`insertMessage: Inserted message for Mod: ${Mod} Queue: ${Queue} by Actor: ${Actor}`, { insertedId: result.insertedId });
+    logger.info(`insertMessage: Message inserted`, { Mod, Queue, Actor, insertedId: result.insertedId });
     return result.insertedId;
   } catch (error) {
     logger.error(`insertMessage: Error inserting message for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });
@@ -437,7 +437,7 @@ async function resetQueue(Mod, Queue) {
   const now = new Date();
   try {
     await updateQueueMeta(Mod, Queue, { resetAt: now });
-    logger.debug(`resetQueue: Reset queue for Mod: ${Mod} Queue: ${Queue} at ${now}`);
+    logger.info(`resetQueue: Queue reset`, { Mod, Queue, resetTime: now });
     return now;
   } catch (error) {
     logger.error(`resetQueue: Error resetting queue for Mod: ${Mod} Queue: ${Queue}: ${error.message}`, { error });

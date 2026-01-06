@@ -20,6 +20,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 	 */
 	void UAIChatHandler(string chatId, Class obj, string funcName, string jsonSchema = "")
 	{
+		UFLog.Debug("[UAIChatHandler<T>] Created with existing ChatId: " + chatId);
 		m_ChatId = chatId;
 		m_JsonSchema = jsonSchema;
 		Class.CastTo(m_obj, obj);
@@ -37,6 +38,8 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 	 */
 	void UAIChatHandler(string systemMessage, Class obj, string funcName, string jsonSchema, string model = "", int maxHistory = -1)
 	{
+		UFLog.Debug("[UAIChatHandler<T>] Creating new chat session, Model: " + model + ", MaxHistory: " + maxHistory);
+		
 		if (jsonSchema == "") {
 			Error("[UF] [UAIChatHandler] JSON schema is required for typed responses");
 			return;
@@ -47,8 +50,10 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 		Class.CastTo(m_obj, obj);
 		m_funcName = funcName;
 		
+		UFLog.Debug("[UAIChatHandler<T>] Calling Create endpoint, SchemaLen: " + jsonSchema.Length().ToString());
 		// Create the chat with JSON response format
 		m_LastCallId = U().AI().Create(systemMessage, "JSON", jsonSchema, model, maxHistory, new UFCallback<UAIChatCreateResponse>(this, "OnChatCreated"));
+		UFLog.Debug("[UAIChatHandler<T>] Create request sent, CID: " + m_LastCallId);
 	}
 	
 	/**
@@ -95,6 +100,8 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 	 */
 	override void OnMessageResponse(int status, UAIChatMessageResponse response, int callId = -1)
 	{
+		UFLog.Debug("[UAIChatHandler<T>] OnMessageResponse - Status: " + status + ", ChatId: " + m_ChatId);
+		
 		if (status != UF_SUCCESS) {
 			Error2("[UF] [UAIChatHandler] Message response error", "Status: " + status);
 			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
@@ -133,6 +140,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 		
 		if (response && response.Status == "Success") {
 			string jsonMessage = response.GetMessage();
+			UFLog.Debug("[UAIChatHandler<T>] Response Success - Parsing JSON, Length: " + jsonMessage.Length().ToString());
 			T typedResponse;
 			
 			// Parse JSON to the typed object
@@ -143,6 +151,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 				
 				if (!success || error != "") {
 					Error2("[UF] [UAIChatHandler] Failed to parse JSON response", error);
+					UFLog.Debug("[UAIChatHandler<T>] JSON Parse Error: " + error + ", Raw: " + jsonMessage.Substring(0, Math.Min(200, jsonMessage.Length())));
 					g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
 						new Param4<int, int, string, T>(callId, UF_JSONERROR, m_ChatId, null));
 					
@@ -152,12 +161,14 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 					ProcessMessageQueue();
 					return;
 				}
+				UFLog.Debug("[UAIChatHandler<T>] JSON parsed successfully");
 			}
 			
 			// Message completed successfully
 			m_PendingMessageId = "";
 			m_PendingMessageRetries = 0;
 			
+			UFLog.Debug("[UAIChatHandler<T>] Calling user callback: " + m_funcName);
 			// Call the callback with the parsed object
 			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
 				new Param4<int, int, string, T>(callId, ufStatus, m_ChatId, typedResponse));
@@ -166,6 +177,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 			ProcessMessageQueue();
 		} else if (response && response.Status == "Pending" && m_PollingEnabled) {
 			// Start polling for a pending message
+			UFLog.Debug("[UAIChatHandler<T>] Response Pending - Starting poll, MessageId: " + response.MessageId);
 			m_PendingMessageId = response.MessageId;
 			m_PendingMessageStartTime = g_Game.GetTime() / 1000;
 			m_PendingMessageRetries = 0;
@@ -197,6 +209,7 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 	 */
 	void UStringAIChatHandler(string chatId, Class obj, string funcName)
 	{
+		UFLog.Debug("[UStringAIChatHandler] Created with existing ChatId: " + chatId);
 		m_ChatId = chatId;
 		Class.CastTo(m_obj, obj);
 		m_funcName = funcName;
@@ -212,13 +225,16 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 	 */
 	void UStringAIChatHandler(string systemMessage, Class obj, string funcName, string model = "", int maxHistory = -1)
 	{
+		UFLog.Debug("[UStringAIChatHandler] Creating new chat session, Model: " + model + ", MaxHistory: " + maxHistory);
 		m_IsCreating = true;
 		Class.CastTo(m_obj, obj);
 		m_funcName = funcName;
 		
+		UFLog.Debug("[UStringAIChatHandler] Calling Create endpoint");
 		// Create the chat with string response format
 		m_LastCallId = U().AI().Create(systemMessage, "string", "", model, maxHistory, 
 			new UFCallback<StatusObject>(this, "OnChatCreated"));
+		UFLog.Debug("[UStringAIChatHandler] Create request sent, CID: " + m_LastCallId);
 	}
 	
 	/**
@@ -264,6 +280,8 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 	 */
 	override void OnMessageResponse(int status, UAIChatMessageResponse response, int callId = -1)
 	{
+		UFLog.Debug("[UStringAIChatHandler] OnMessageResponse - Status: " + status + ", ChatId: " + m_ChatId);
+		
 		if (status != UF_SUCCESS) {
 			Error2("[UF] [UStringAIChatHandler] Message response error", "Status: " + status);
 			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
@@ -302,6 +320,7 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 		
 		if (response && response.Status == "Pending" && m_PollingEnabled) {
 			// Start polling for a pending message
+			UFLog.Debug("[UStringAIChatHandler] Response Pending - Starting poll, MessageId: " + response.MessageId);
 			m_PendingMessageId = response.MessageId;
 			m_PendingMessageStartTime = g_Game.GetTime() / 1000;
 			m_PendingMessageRetries = 0;
@@ -310,10 +329,14 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 		}
 		
 		// Message completed successfully or failed with an error
+		if (response) {
+			UFLog.Debug("[UStringAIChatHandler] Response Status: " + response.Status + ", MsgLen: " + response.GetMessage().Length().ToString());
+		}
 		m_PendingMessageId = "";
 		m_PendingMessageRetries = 0;
 		
 		if (response && response.Status == "Success"){
+			UFLog.Debug("[UStringAIChatHandler] Success - Calling user callback: " + m_funcName);
 		// Pass the status and message string to the callback
 			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, string>(callId, ufStatus, m_ChatId, response.GetMessage() ));
 		}
@@ -411,9 +434,13 @@ class UAIChatHandlerBase extends Managed
 	 */
 	protected void ProcessMessageQueue()
 	{
+		int queueCount = 0;
+		if (m_MessageQueue) queueCount = m_MessageQueue.Count();
+		UFLog.Debug("[UAIChatHandlerBase] ProcessMessageQueue - QueueCount: " + queueCount + ", IsCreating: " + m_IsCreating + ", PendingMsgId: " + m_PendingMessageId);
 		// Skip if no queue or it's empty
 		if (!m_MessageQueue || m_MessageQueue.Count() == 0) {
 			m_IsProcessingQueue = false;
+			UFLog.Debug("[UAIChatHandlerBase] ProcessMessageQueue - Queue empty, stopping processing");
 			
 			// Stop polling if no more pending operations
 			if (m_PendingMessageId == "" && m_PendingSummaryId == "") {
@@ -478,6 +505,9 @@ class UAIChatHandlerBase extends Managed
 	 */
 	void PollPendingOperations()
 	{
+		int queueCount = 0;
+		if (m_MessageQueue) queueCount = m_MessageQueue.Count();
+		UFLog.Debug("[UAIChatHandlerBase] PollPendingOperations - PendingMsgId: " + m_PendingMessageId + ", PendingSummaryId: " + m_PendingSummaryId + ", QueueCount: " + queueCount);
 		// Check for messages that exceed the timeout limit
 		int currentTime = g_Game.GetTime() / 1000;
 		
@@ -537,6 +567,7 @@ class UAIChatHandlerBase extends Managed
 	{
 		if (m_PendingMessageId == "") return;
 		
+		UFLog.Debug("[UAIChatHandlerBase] CheckPendingMessage - MessageId: " + m_PendingMessageId + ", Elapsed: " + ((g_Game.GetTime() / 1000) - m_PendingMessageStartTime) + "s");
 		m_LastCallId = U().AI().MessageStatus(m_PendingMessageId, 
 			new UFCallback<UAIChatMessageResponse>(this, "OnMessageStatusUpdate"));
 	}
@@ -557,11 +588,14 @@ class UAIChatHandlerBase extends Managed
 	 */
 	void OnMessageStatusUpdate(int status, UAIChatMessageResponse response)
 	{
+		UFLog.Debug("[UAIChatHandlerBase] OnMessageStatusUpdate - Status: " + status + ", PendingId: " + m_PendingMessageId + ", Retries: " + m_PendingMessageRetries);
+		
 		if (status != UF_SUCCESS) {
 			Error2("[UF] [UAIChatHandlerBase] Message status error", "Status: " + status);
 			
 			// Increment retry counter
 			m_PendingMessageRetries++;
+			UFLog.Debug("[UAIChatHandlerBase] Status check failed, retry: " + m_PendingMessageRetries + "/" + UF_AI_CHAT_MAX_RETRIES);
 			
 			// If we've reached the retry limit, fail the message
 			if (m_PendingMessageRetries >= UF_AI_CHAT_MAX_RETRIES) {
@@ -705,13 +739,16 @@ class UAIChatHandlerBase extends Managed
 	 */
 	void OnChatCreated(int status, UAIChatCreateResponse response)
 	{
+		UFLog.Debug("[UAIChatHandlerBase] OnChatCreated - Status: " + status + ", ResponseStatus: " + response.Status);
 		m_IsCreating = false;
 		
 		if (status != UF_SUCCESS || response.Status != "Success") {
 			Error2("[UF] [UAIChatHandlerBase] Failed to create chat", "Status: " + status);
+			UFLog.Debug("[UAIChatHandlerBase] Chat creation failed - Status: " + status + ", ResponseStatus: " + response.Status + ", Error: " + response.Error);
 			
 			// Clear all queued messages since the chat creation failed
 			if (m_MessageQueue) {
+				UFLog.Debug("[UAIChatHandlerBase] Clearing " + m_MessageQueue.Count() + " queued messages due to creation failure");
 				m_MessageQueue.Clear();
 			}
 			

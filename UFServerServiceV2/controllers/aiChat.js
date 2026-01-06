@@ -46,34 +46,34 @@ const KB_TOOL_DEFINITION = {
  * @returns {Promise<string>} - The formatted search results
  */
 async function handleKBToolCall(kbId, query) {
-    logger.debug('handleKBToolCall: Starting KB search', { kbId, query, queryLength: query?.length });
+    logger.info('[KB] AI requesting knowledge base search', { kbId, query, queryLength: query?.length });
     try {
         const kbSearch = getKBSearch();
-        logger.debug('handleKBToolCall: Calling internalKBSearch');
         const searchResult = await kbSearch(kbId, query, 5);
         
         if (searchResult.error) {
-            logger.warn("KB search returned error", { kbId, query, error: searchResult.error });
+            logger.warn("[KB] Search returned error", { kbId, query, error: searchResult.error });
             return `Knowledge base search failed: ${searchResult.error}`;
         }
         
         // internalKBSearch returns { results, shorterAnswers, extractedContent? }
         const results = searchResult.results || [];
-        logger.debug('handleKBToolCall: Search results received', { 
+        logger.info('[KB] Search results received', { 
             kbId, 
+            query,
             resultCount: results.length, 
             shorterAnswers: searchResult.shorterAnswers,
             hasExtractedContent: !!searchResult.extractedContent
         });
         
         if (results.length === 0) {
-            logger.debug("KB search returned no results", { kbId, query });
+            logger.info("[KB] No results found", { kbId, query });
             return "No relevant information found in the knowledge base for this query.";
         }
         
         // If shorter answers is enabled and we have extracted content, use that
         if (searchResult.shorterAnswers && searchResult.extractedContent) {
-            logger.debug("KB search successful with extracted content", { 
+            logger.info("[KB] Using extracted/summarized content", { 
                 kbId, 
                 query, 
                 resultCount: results.length,
@@ -825,7 +825,6 @@ async function sendMessage(req, res){
 
         // Process the AI response asynchronously.
         (async () => {
-            logger.debug("Starting asynchronous AI processing", { ChatId, AssistantMessageId: assistantMessageId });
             try {
                 logger.info("Starting asynchronous AI processing", { ChatId, AssistantMessageId: assistantMessageId });
                 const updatedChat = await getChat(ChatId);
@@ -843,7 +842,7 @@ async function sendMessage(req, res){
                 let history = updatedChat.Messages || [];
                 if (history.length > updatedChat.MaxHistory && updatedChat.MaxHistory > 0) {
                     history = history.slice(-updatedChat.MaxHistory);
-                    logger.debug("Chat history truncated", { ChatId, MaxHistory: updatedChat.MaxHistory });
+                    logger.info("Chat history truncated", { ChatId, MaxHistory: updatedChat.MaxHistory });
                 }
                 history.forEach(msg => { // Skip the user and assistant messages
                     if (msg.MessageId === assistantMessageId || msg.MessageId === userMessageId) return;
@@ -876,7 +875,7 @@ async function sendMessage(req, res){
                 const kbId = updatedChat.KBId;
                 if (kbId) {
                     openaiTools.push(KB_TOOL_DEFINITION);
-                    logger.debug("KB tool injected for chat", { ChatId, kbId });
+                    logger.info("KB tool injected for chat", { ChatId, kbId });
                 }
                 
                 if (Tools && Array.isArray(Tools) && Tools.length > 0) {
@@ -1015,7 +1014,7 @@ async function sendMessage(req, res){
                     await updateMessageStatus(ChatId, assistantMessageId, "Error", aiResponseContent);
                     return;
                 }
-                logger.debug("AI response processing completed", { ChatId, AssistantMessageId: assistantMessageId });
+                logger.info("AI response processing completed", { ChatId, AssistantMessageId: assistantMessageId });
                 await updateMessageStatus(ChatId, assistantMessageId, "Success", aiResponseContent);
             } catch (err) {
                 logger.error("Async AI processing Error: " + err.message, { stack: err.stack, ChatId, AssistantMessageId: assistantMessageId });
@@ -1101,7 +1100,7 @@ async function runGetChatHistory(req, res){
                 Message: content
             }))
         };
-        logger.debug("Chat history retrieved", { ChatId, totalMessages: chat.Messages.length });
+        logger.info("Chat history retrieved", { ChatId, totalMessages: chat.Messages.length });
         return res.status(200).json({ Status: "Success", ...remappedChat });
     } catch (err) {
         logger.error("Error retrieving chat history: " + err.message, { stack: err.stack });

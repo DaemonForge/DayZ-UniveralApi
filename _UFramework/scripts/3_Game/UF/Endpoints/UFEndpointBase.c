@@ -3,11 +3,21 @@ class UFBaseEndpoint extends Managed {
 	protected RestContext m_Context;
 	
 	protected string EndpointBaseUrl(){
-		return UFConfig().GetBaseURL();
+		UFrameworkConfig cfg = UFConfig();
+		if (!cfg){
+			UFLog.Err("[UFBaseEndpoint] EndpointBaseUrl called but UFConfig() is null!");
+			return "";
+		}
+		return cfg.GetBaseURL();
 	}
 
 	protected string AuthToken(){
-		return U().GetAuthToken();
+		UFramework uf = U();
+		if (!uf){
+			UFLog.Err("[UFBaseEndpoint] AuthToken called but U() is null!");
+			return "";
+		}
+		return uf.GetAuthToken();
 	}
 	
 	
@@ -17,10 +27,25 @@ class UFBaseEndpoint extends Managed {
 		if (!clCore)
 		{
 			clCore = CreateRestApi();
+			if (!clCore){
+				Error2("[UF] UFBaseEndpoint::Api()", "CRITICAL: Failed to create RestApi!");
+				return null;
+			}
 			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 30);
-			clCore.EnableDebug(true);
+			clCore.EnableDebug(false);
 		}
-		m_Context = clCore.GetRestContext(EndpointBaseUrl());
+		
+		string baseUrl = EndpointBaseUrl();
+		if (baseUrl == "" || baseUrl == "null"){
+			Error2("[UF] UFBaseEndpoint::Api()", "BaseURL is empty or null - config not loaded?");
+			return null;
+		}
+		
+		m_Context = clCore.GetRestContext(baseUrl);
+		if (!m_Context){
+			Error2("[UF] UFBaseEndpoint::Api()", "GetRestContext returned null for URL: " + baseUrl);
+			return null;
+		}
 		
 		// Get fresh token and set header
 		string token = AuthToken();
@@ -33,8 +58,12 @@ class UFBaseEndpoint extends Managed {
 	
 	protected void Post(string route, string jsonString, RestCallback UCBX)
 	{
-		//Print(EndpointBaseUrl() + route);
-		Api().POST(UCBX, route, jsonString);
+		RestContext ctx = Api();
+		if (!ctx){
+			Error2("[UF] UFBaseEndpoint::Post()", "Api() returned null - cannot make request to: " + route);
+			return;
+		}
+		ctx.POST(UCBX, route, jsonString);
 	}
 	
 	void UpdateAuthToken(){

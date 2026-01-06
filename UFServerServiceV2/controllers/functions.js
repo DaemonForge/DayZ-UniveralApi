@@ -213,7 +213,7 @@ router.post('/Functions/Call/:Mod/:FunctionName', requirePlayerOrServerAuth, run
  */
 async function runFunction(req, res) {
     const { Mod, FunctionName } = req.params;
-    logger.debug('Processing function call', { mod: Mod, functionName: FunctionName });
+    logger.info('Function call received', { mod: Mod, functionName: FunctionName });
     try {
         // Retrieve the function definition from the database.
         const funcRecord = await getFunction(Mod, FunctionName);
@@ -293,7 +293,7 @@ router.post('/Functions/Delete/:Mod/:FunctionName', requireServerAuth, runDelete
  */
 async function runDeleteFunction(req, res) {
     const { Mod, FunctionName } = req.params;
-    logger.debug('Processing function deletion', { mod: Mod, functionName: FunctionName });
+    logger.info('Function deletion request', { mod: Mod, functionName: FunctionName });
     try {
         // Delete the function using the model helper.
         const deletionResult = await deleteFunction(Mod, FunctionName);

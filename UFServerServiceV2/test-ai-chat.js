@@ -5,6 +5,10 @@
  * Run with: node test-ai-chat.js
  * 
  * Requires: The service to be running (npm run start)
+ * 
+ * Special modes:
+ *   node test-ai-chat.js --test-vector-search   Direct test of vector search (no server needed)
+ *   node test-ai-chat.js --kb <kbId>            Test with Knowledge Base via API
  */
 
 const http = require('http');
@@ -17,7 +21,8 @@ const CONFIG = {
     protocol: 'https',
     // Get this from your config.json ServerAuthKeys
     serverAuthToken: 's~VxS2mgjFvHN~grJDAEQLzcQI5G~cdxLEUNGu8sr516YEBA',
-    kbId: null // Set via --kb flag
+    kbId: null, // Set via --kb flag
+    regenerateEmbeddings: false // Set via --regenerate flag
 };
 
 // Colors for console output
@@ -37,6 +42,131 @@ function log(msg, color = 'reset') {
 function logJson(label, obj) {
     console.log(`${colors.cyan}${label}:${colors.reset}`);
     console.log(colors.dim + JSON.stringify(obj, null, 2) + colors.reset);
+}
+
+/**
+ * Direct test of vector search - doesn't require the server to be running
+ * Tests the KB model's vectorSearch function directly
+ */
+async function testVectorSearchDirect(kbId = 'kb') {
+    log('\n╔══════════════════════════════════════════╗', 'cyan');
+    log('║   DIRECT VECTOR SEARCH TEST              ║', 'cyan');
+    log('║   Testing KB model without server        ║', 'cyan');
+    log('╚══════════════════════════════════════════╝', 'cyan');
+
+    try {
+        // Initialize globals needed by modules
+        if (!global.SAVEPATH) {
+            global.SAVEPATH = './';
+        }
+        
+        // Initialize logger if not already done
+        if (!global.logger) {
+            const logModule = require('./log');
+            global.logger = logModule.initializeLogger();
+        }
+        
+        // Load config
+        if (!global.config) {
+            global.config = require('./configLoader');
+        }
+        
+        // Load KB model and controller directly
+        const kbModel = require('./models/kb');
+        const kbController = require('./controllers/kb');
+        
+        log(`\nTesting KB: ${kbId}`, 'yellow');
+        
+        // Step 1: Check if KB exists
+        log('\n1. Checking if KB exists...', 'dim');
+        const kb = await kbModel.getKB(kbId);
+        if (!kb) {
+            log(`✗ KB "${kbId}" not found!`, 'red');
+            log('Available KBs:', 'yellow');
+            const kbs = await kbModel.listKBs();
+            kbs.forEach(k => log(`  - ${k.kbId}: ${k.name}`, 'dim'));
+            return false;
+        }
+        log(`✓ KB found: ${kb.name} (${kb.documentCount} documents)`, 'green');
+        
+        // Step 2: List documents
+        log('\n2. Listing documents...', 'dim');
+        const docs = await kbModel.listDocuments(kbId);
+        const docsWithEmbedding = docs.filter(d => d.hasEmbedding);
+        const docsMissing = docs.filter(d => !d.hasEmbedding);
+        
+        log(`Found ${docs.length} documents (${docsWithEmbedding.length} with embeddings, ${docsMissing.length} missing):`, 'green');
+        docs.slice(0, 5).forEach(d => {
+            log(`  - ${d.name} (${d.hasEmbedding ? '✓ has embedding' : '✗ NO embedding'})`, d.hasEmbedding ? 'green' : 'red');
+        });
+        if (docs.length > 5) log(`  ... and ${docs.length - 5} more`, 'dim');
+        
+        // Step 2b: Regenerate missing embeddings if requested
+        if (docsMissing.length > 0 && CONFIG.regenerateEmbeddings) {
+            log('\n2b. Regenerating missing embeddings...', 'yellow');
+            const missingChunks = await kbModel.getDocumentsMissingEmbeddings(kbId);
+            
+            // Group by documentId
+            const byDoc = {};
+            for (const chunk of missingChunks) {
+                if (!byDoc[chunk.documentId]) byDoc[chunk.documentId] = [];
+                byDoc[chunk.documentId].push(chunk);
+            }
+            
+            log(`Found ${missingChunks.length} chunks missing embeddings across ${Object.keys(byDoc).length} documents`, 'yellow');
+            
+            for (const [documentId, chunks] of Object.entries(byDoc)) {
+                try {
+                    chunks.sort((a, b) => a.chunkIndex - b.chunkIndex);
+                    const contents = chunks.map(c => c.content);
+                    log(`  Generating ${contents.length} embeddings for ${chunks[0].name}...`, 'dim');
+                    const embeddings = await kbController.generateEmbeddings(contents);
+                    await kbModel.updateDocumentEmbeddings(kbId, documentId, embeddings);
+                    log(`  ✓ ${chunks[0].name} - ${embeddings.length} embeddings generated`, 'green');
+                } catch (err) {
+                    log(`  ✗ ${chunks[0]?.name || documentId} - Failed: ${err.message}`, 'red');
+                }
+            }
+        } else if (docsMissing.length > 0) {
+            log(`\n⚠️  ${docsMissing.length} documents missing embeddings. Run with --regenerate to fix.`, 'yellow');
+        }
+        
+        // Step 3: Generate a test embedding
+        log('\n3. Generating test embedding...', 'dim');
+        const testQuery = 'What are the server rules?';
+        log(`Query: "${testQuery}"`, 'cyan');
+        
+        const { generateEmbeddings } = kbController;
+        const [queryEmbedding] = await generateEmbeddings(testQuery);
+        log(`✓ Embedding generated (${queryEmbedding.length} dimensions)`, 'green');
+        
+        // Step 4: Run vector search
+        log('\n4. Running vector search (cosine similarity)...', 'dim');
+        const results = await kbModel.vectorSearch(kbId, queryEmbedding, 5);
+        
+        if (results.length === 0) {
+            log('✗ No results returned from vector search!', 'red');
+            return false;
+        }
+        
+        log(`✓ Vector search returned ${results.length} results:`, 'green');
+        results.forEach((r, i) => {
+            log(`  ${i+1}. ${r.name} (score: ${r.score?.toFixed(4)})`, 'cyan');
+            // Show first 100 chars of content
+            const preview = r.content?.substring(0, 100).replace(/\n/g, ' ') + '...';
+            log(`     ${preview}`, 'dim');
+        });
+        
+        log('\n========================================', 'green');
+        log('✓ VECTOR SEARCH TEST PASSED!', 'green');
+        log('========================================', 'green');
+        return true;
+        
+    } catch (err) {
+        log(`\n✗ Vector search test failed: ${err.message}`, 'red');
+        console.error(err.stack);
+        return false;
+    }
 }
 
 /**
@@ -360,19 +490,26 @@ AI Chat API Test Script
 Usage: node test-ai-chat.js [options]
 
 Options:
-  --help          Show this help
-  --token TOKEN   Set the auth token
-  --host HOST     Set the host (default: localhost)
-  --port PORT     Set the port (default: 3000)
+  --help                    Show this help
+  --test-vector-search      Direct test of vector search (no server needed)
+  --regenerate              Regenerate missing embeddings during vector search test
+  --token TOKEN             Set the auth token
+  --host HOST               Set the host (default: localhost)
+  --port PORT               Set the port (default: 3000)
+  --kb KBID                 Test with Knowledge Base
 
 Examples:
+  node test-ai-chat.js --test-vector-search
+  node test-ai-chat.js --test-vector-search --regenerate
+  node test-ai-chat.js --test-vector-search --kb myKB --regenerate
   node test-ai-chat.js --token abc123
-  node test-ai-chat.js --host myserver.com --port 443 --token xyz
+  node test-ai-chat.js --kb kb --token xyz
 `);
     process.exit(0);
 }
 
 // Parse args
+let testVectorSearchOnly = false;
 for (let i = 0; i < args.length; i++) {
     if (args[i] === '--token' && args[i+1]) {
         CONFIG.serverAuthToken = args[++i];
@@ -382,8 +519,18 @@ for (let i = 0; i < args.length; i++) {
         CONFIG.port = parseInt(args[++i]);
     } else if (args[i] === '--kb' && args[i+1]) {
         CONFIG.kbId = args[++i];
+    } else if (args[i] === '--test-vector-search') {
+        testVectorSearchOnly = true;
+    } else if (args[i] === '--regenerate') {
+        CONFIG.regenerateEmbeddings = true;
     }
 }
 
 // Run tests
-runAllTests();
+if (testVectorSearchOnly) {
+    testVectorSearchDirect(CONFIG.kbId || 'kb').then(success => {
+        process.exit(success ? 0 : 1);
+    });
+} else {
+    runAllTests();
+}

@@ -144,7 +144,7 @@ async function createAssistant(req, res) {
   try {
     const { Mod } = req.params;
     const { AssistantId, Name, Description, Tools, Model, ResponseFormat, Functions } = req.body;
-    logger.debug(`[createAssistant] Received data: AssistantId=${AssistantId}, Mod=${Mod}, Name=${Name}`);
+    logger.info(`[createAssistant] Request received`, { AssistantId, Mod, Name });
     if (!AssistantId || !Mod || !Name || !Description) {
       logger.warn('[createAssistant] Missing required fields', { AssistantId, Mod, Name, Description });
       return res.status(400).json({ Status: "Error", Error: "AssistantId, Mod, Name, and Description are required" });
@@ -175,7 +175,7 @@ async function registerExistingAssistant(req, res) {
   try {
     const { Mod } = req.params;
     const { AssistantId, AssistantApiId, Name, Description, ResponseFormat, Functions } = req.body;
-    logger.debug(`[registerExistingAssistant] Received data for AssistantId=${AssistantId}`);
+    logger.info(`[registerExistingAssistant] Request received`, { AssistantId, Mod });
     if (!AssistantId || !AssistantApiId || !Mod || !Name || !Description) {
       logger.warn('[registerExistingAssistant] Missing required fields', { AssistantId, AssistantApiId, Mod, Name });
       return res.status(400).json({ Status: "Error", Error: "AssistantId, AssistantApiId, Mod, Name, and Description are required" });
@@ -192,7 +192,7 @@ async function registerExistingAssistant(req, res) {
 async function getAssistants(req, res) {
   try {
     const { Mod } = req.params;
-    logger.debug(`[getAssistants] Listing assistants for Mod=${Mod}`);
+    logger.info(`[getAssistants] Listing assistants`, { Mod });
     if (!Mod) {
       logger.warn('[getAssistants] Missing Mod parameter');
       return res.status(400).json({ Status: "Error", Error: "Mod is required" });
@@ -214,7 +214,7 @@ async function updateAssistant(req, res) {
   try {
     const { AssistantId, Mod } = req.params;
     const Updates = req.body;
-    logger.debug(`[updateAssistant] Updating AssistantId=${AssistantId}, Mod=${Mod}`, { Updates });
+    logger.info(`[updateAssistant] Request received`, { AssistantId, Mod });
     if (!AssistantId || !Mod || !Updates) {
       logger.warn('[updateAssistant] Missing required fields', { AssistantId, Mod, Updates });
       return res.status(400).json({ Status: "Error", Error: "AssistantId, Mod, and Updates are required" });
@@ -235,7 +235,7 @@ async function updateAssistant(req, res) {
 async function deleteAssistant(req, res) {
   try {
     const { AssistantId, Mod } = req.params;
-    logger.debug(`[deleteAssistant] Deleting AssistantId=${AssistantId}, Mod=${Mod}`);
+    logger.info(`[deleteAssistant] Request received`, { AssistantId, Mod });
     if (!AssistantId || !Mod) {
       logger.warn('[deleteAssistant] Missing AssistantId or Mod', { AssistantId, Mod });
       return res.status(400).json({ Status: "Error", Error: "AssistantId and Mod are required" });
@@ -257,7 +257,7 @@ async function createThread(req, res) {
   try {
     const { Mod, AssistantId } = req.params;
     const { GUID } = req.body;
-    logger.debug(`[createThread] Creating thread for AssistantId=${AssistantId}, Mod=${Mod}, GUID=${GUID}`);
+    logger.info(`[createThread] Request received`, { AssistantId, Mod, GUID });
     if (!AssistantId || !Mod) {
       logger.warn('[createThread] Missing AssistantId or Mod', { AssistantId, Mod });
       return res.status(400).json({ Status: "Error", Error: "AssistantId and Mod are required" });
@@ -305,7 +305,7 @@ async function sendMessageInThread(req, res) {
   try {
     const { ThreadId } = req.params;
     const { Message, Context } = req.body;
-    logger.debug('[sendMessageInThread] Received request', { ThreadId, Message });
+    logger.info('[sendMessageInThread] Request received', { ThreadId, MessageLength: Message?.length });
     if (!ThreadId || !Message) {
       logger.warn('[sendMessageInThread] Missing required fields', { ThreadId, Message });
       return res.status(400).json({ Status: "Error", Error: "ThreadId and Message are required" });
@@ -424,7 +424,7 @@ async function sendMessageInThread(req, res) {
 async function checkMessageStatus(req, res) {
   try {
     const { MessageId } = req.params;
-    logger.debug('[checkMessageStatus] Received request', { MessageId });
+    logger.info('[checkMessageStatus] Request received', { MessageId });
     if (!MessageId) {
       logger.warn('[checkMessageStatus] Missing MessageId.');
       return res.status(400).json({ Status: "Error", Error: "MessageId is required" });
@@ -485,7 +485,7 @@ async function handleFunctionReturn(req, res) {
   try {
     const { MessageId } = req.params;
     const { FunctionReturn } = req.body;
-    logger.debug('[handleFunctionReturn] Received function return', { MessageId, FunctionReturn });
+    logger.info('[handleFunctionReturn] Function return received', { MessageId });
     if (!MessageId) {
       logger.warn('[handleFunctionReturn] Missing MessageId.');
       return res.status(400).json({ Status: "Error", Error: "MessageId is required" });
@@ -590,7 +590,7 @@ async function handleFunctionReturn(req, res) {
 async function runSummarizeChat(req, res) {
   try {
     const { ThreadId } = req.params;
-    logger.debug(`[runSummarizeChat] Received request for ThreadId=${ThreadId}`);
+    logger.info(`[runSummarizeChat] Request received`, { ThreadId });
     if (!ThreadId) {
       logger.warn('[runSummarizeChat] Missing ThreadId');
       return res.status(400).json({ Status: "Error", SummaryId: "", Summary: "", Error: "ThreadId is required" });

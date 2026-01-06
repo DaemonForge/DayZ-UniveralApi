@@ -114,7 +114,7 @@ async function RenderLogin(req, res){
 
 
 async function HandleCallBack(req, res){
-    logger.debug("HandleCallBack invoked", { query: req.query });
+    logger.info("Discord OAuth callback received", { hasCode: !!req.query.code, hasState: !!req.query.state });
     if (ErrorTemplate === undefined) LoadErrorTemplate();
     if (SuccessTemplate === undefined) LoadSuccessTemplate();
     const code = req.query.code;

@@ -8,7 +8,7 @@
 
 ```enforce
 static const int LOG_ERROR = 0;
-static const int LOG_VERBOSE = 1;
+static const int LOG_VERBOSE = 1; //reserved for future use
 static const int LOG_INFO = 2;
 static const int LOG_DEBUG = 3;
 ```
@@ -51,33 +51,27 @@ Extend `ULoggerBase` for category-specific logging:
 
 ```enforce
 class MyModLog extends ULoggerBase {
-    protected static autoptr ULoggerBaseInstance m_Instance;
-    
-    override static void CreateInstance() {
-        m_type = "MyMod";
-        m_Instance = new ULoggerBaseInstance("MyMod");
-    }
-    
-    override static ULoggerBaseInstance GetInstance() {
-        if (!m_Instance) { CreateInstance(); }
-        return m_Instance;
-    }
+    // Just override the id - that's all you need!
+    	override static string getLogID(){return "MyMod";}
 }
 
 // Usage
 MyModLog.Info("Started");
-MyModLog.Err("Failed");
+MyModLog.Debug("Processing item");
+MyModLog.Err("Something failed");
 ```
 
-## ULoggerBaseInstance
+## Log Levels
 
-For direct instance control:
+For controling log levels:
 
 ```enforce
-autoptr ULoggerBaseInstance logger = new ULoggerBaseInstance("MyMod", 3);
-logger.DoLog("Message", LOG_INFO);
-logger.SetLogLevel(LOG_DEBUG);  // Set console level
-logger.SetApiLogLevel(LOG_ERROR);  // Set API logging level
+
+class MyModLog extends ULoggerBase {
+    // Just override the id - that's all you need!
+    override static string getLogID(){return "MyMod";}
+    //Set log levels
+    override static void Init(){SetLogLevels(LOG_DEBUG, LOG_INFO); }
 ```
 
 ## Output
