@@ -64,17 +64,20 @@ U().Msg().ReadLatest("MyMod", "notifications", 15, callback);
 
 ### Initialization
 
+**Constructor Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `modName` | string | Mod identifier |
+| `queueName` | string | Queue name |
+| `callbackObj` | Class | Callback instance |
+| `callbackFunc` | string | Callback function name |
+| `meta` | UQueueMeta | Queue metadata (optional, NULL for defaults) |
+| `limit` | int | Message limit (-1 = all messages) |
+| `pollFreq` | int | Poll frequency in seconds |
+
 ```enforce
 // Create a typed queue handler with auto-polling
-autoptr UQueueHandler<MyMessage> m_Queue = new UQueueHandler<MyMessage>(
-    "MyMod",           // Mod identifier
-    "notifications",   // Queue name
-    this,              // Callback instance
-    "OnMessage",       // Callback function
-    NULL,              // Queue metadata (optional)
-    -1,                // Limit (-1 = all messages)
-    3                  // Poll frequency in seconds
-);
+autoptr UQueueHandler<MyMessage> m_Queue = new UQueueHandler<MyMessage>("MyMod", "notifications", this, "OnMessage", NULL, -1, 3);
 ```
 
 ### Writing Messages
@@ -123,12 +126,7 @@ For simple string messages without typed objects.
 
 ```enforce
 // Create a string queue handler
-autoptr UStringQueueHandler m_StringQueue = new UStringQueueHandler(
-    "MyMod",
-    "chat",
-    this,
-    "OnChatMessage"
-);
+autoptr UStringQueueHandler m_StringQueue = new UStringQueueHandler("MyMod", "chat", this, "OnChatMessage");
 
 // Write a string message
 m_StringQueue.Write("Hello, world!");
@@ -152,13 +150,7 @@ meta.Order = "FIFO";           // or "LIFO"
 meta.AllowPlayerWrites = 1;    // 1 = allow, 0 = deny
 
 // Apply during handler creation (server-only)
-autoptr UQueueHandler<MyMessage> m_Queue = new UQueueHandler<MyMessage>(
-    "MyMod",
-    "feedback",
-    this,
-    "OnFeedback",
-    meta
-);
+autoptr UQueueHandler<MyMessage> m_Queue = new UQueueHandler<MyMessage>("MyMod", "feedback", this, "OnFeedback", meta);
 ```
 
 ## UFMsgEndpoint - Low-Level API
@@ -269,9 +261,7 @@ class AnnouncementServer {
         meta.Order = "FIFO";
         meta.AllowPlayerWrites = 0;  // Server only
         
-        m_Queue = new UQueueHandler<Announcement>(
-            "Announcements", "global", this, "OnDummy", meta
-        );
+        m_Queue = new UQueueHandler<Announcement>("Announcements", "global", this, "OnDummy", meta);
     }
     
     void Announce(string title, string message, int duration = 5) {
@@ -294,17 +284,13 @@ class AnnouncementClient {
     protected autoptr UQueueHandler<Announcement> m_Queue;
     
     void Init() {
-        m_Queue = new UQueueHandler<Announcement>(
-            "Announcements", "global", this, "OnAnnouncement", NULL, -1, 5
-        );
+        m_Queue = new UQueueHandler<Announcement>("Announcements", "global", this, "OnAnnouncement", NULL, -1, 5);
     }
     
     void OnAnnouncement(int cid, int status, string oid, Announcement ann) {
         if (status == UF_SUCCESS && ann) {
             // Show notification to player
-            NotificationSystem.AddNotificationExtended(
-                ann.Duration, ann.Title, ann.Message, ann.Icon
-            );
+            NotificationSystem.AddNotificationExtended(ann.Duration, ann.Title, ann.Message, ann.Icon);
         }
     }
 }
@@ -328,9 +314,7 @@ class FeedbackSystem {
         autoptr UQueueMeta meta = new UQueueMeta();
         meta.AllowPlayerWrites = 1;  // Players can write
         
-        m_Queue = new UQueueHandler<FeedbackEntry>(
-            "Feedback", "submissions", this, "OnFeedback", meta, -1, 30
-        );
+        m_Queue = new UQueueHandler<FeedbackEntry>("Feedback", "submissions", this, "OnFeedback", meta, -1, 30);
     }
     
     void SubmitFeedback(string category, string message, PlayerBase player) {
