@@ -1,8 +1,25 @@
-# Universal Framework - Utilities
+# Universal Framework - Core Utilities
 
 ## Overview
 
-`UUtil` provides static helper functions for common operations.
+`UUtil` provides static helper functions for common operations including player lookups, time handling, notifications, config access, and more.
+
+> **Utilities are split across multiple documents for easier navigation:**
+> - **This Document** - Core utilities (Player, Time, Notifications, Config)
+> - [String Utilities](UniversalFramework_Utilities_Strings.md) - Formatting, Sanitization, Regex patterns
+> - [File Utilities](UniversalFramework_Utilities_Files.md) - File operations, JSON handling
+> - [Map Utilities](UniversalFramework_Utilities_Map.md) - Map locations, nearest city/town
+
+## Table of Contents
+
+- [Player Functions](#player-functions)
+- [Time Functions](#time-functions)
+- [Random ID](#random-id)
+- [Notifications](#notifications)
+- [Status/Error Conversion](#statuserror-conversion)
+- [Config Getters](#config-getters)
+- [Framework Configuration](#framework-configuration)
+- [Common Patterns](#common-patterns)
 
 ## Player Functions
 
@@ -149,25 +166,14 @@ UUtil.SendNotification("Alert", "Airdrop incoming!", player.GetIdentity());
 UUtil.SendNotification("VIP", "Welcome!", identity, "MyMod\\icons\\vip.edds");
 ```
 
-## String Formatting
-
-```enforce
-// Format integer with commas: 1234567 -> "1,234,567"
-static string ConvertIntToNiceString(int DollarAmount);
-```
-
-### Usage
-
-```enforce
-string formatted = UUtil.ConvertIntToNiceString(1000000);  // "1,000,000"
-string negative = UUtil.ConvertIntToNiceString(-5000);     // "-5,000"
-```
+---
 
 ## Status/Error Conversion
 
 ```enforce
 // Convert UF status code to string
 static string StatusToString(int StatusCode);
+
 
 // Convert REST error code to string
 static string RestErrorToString(int ErrorCode);
@@ -183,34 +189,7 @@ void OnCallback(int cid, int status, string oid, string data) {
 }
 ```
 
-## File Operations
-
-```enforce
-// Find all files in directory
-static TStringArray FindFilesInDirectory(string directory);
-
-// Save base64 string to binary file
-static void SaveBase64ToFile(string base64String, string filePath);
-
-// Save base64 to file (deferred, less frame impact)
-static void SaveBase64ToFileSplit(string base64String, string filePath);
-
-// Decode base64 to byte array
-static void DecodeBase64(string base64String, out array<int> decodedBytes);
-
-// Save byte array to binary file
-static void SaveBytesToFile(array<int> bytes, string filePath);
-```
-
-### Usage
-
-```enforce
-// List files in directory
-TStringArray files = UUtil.FindFilesInDirectory("$profile:MyMod\\data");
-
-// Save downloaded audio (deferred to reduce frame hit)
-UUtil.SaveBase64ToFileSplit(audioData, "$saves:audio.mp4");
-```
+---
 
 ## Config Getters
 
@@ -323,163 +302,6 @@ void ShowServerInfo() {
 ```
 
 > **Note:** The `ServerID`, `ServerURL`, and non-sensitive config fields are synced to the client after authentication. The `ServerAuth` field is **never** sent to the client for security reasons - `GetAuth()` returns "ERROR" on the client.
-
-## Map Location Utilities
-
-Retrieve named locations (cities, towns, villages, etc.) from the current map's CfgWorlds configuration.
-
-### UMapLocation Class
-
-```enforce
-class UMapLocation
-{
-    string ClassName;  // Config class name
-    string Name;       // Display name (e.g., "Chernogorsk")
-    string Type;       // Location type (e.g., "City", "Village")
-    vector Position;   // 3D world position (includes terrain height)
-}
-```
-
-### Common Location Types
-
-| Type | Description |
-|------|-------------|
-| `"Capital"` | Major cities |
-| `"City"` | Large towns/cities |
-| `"Village"` | Small villages |
-| `"Local"` | Local landmarks |
-| `"Marine"` | Marine/coastal points |
-| `"Hill"` | Hills and elevated areas |
-| `"Ruin"` | Ruins and historical sites |
-| `"ViewPoint"` | Scenic viewpoints |
-
-### Functions
-
-```enforce
-// Get all map locations (optionally filtered by type)
-static array<autoptr UMapLocation> GetMapLocations(array<string> typeFilters = NULL);
-
-// Find the nearest location to a position
-static UMapLocation GetNearestMapLocation(vector position, array<string> typeFilters = NULL);
-
-// Find the nearest location name (convenience wrapper)
-static string GetNearestMapLocationName(vector position, array<string> typeFilters = NULL);
-
-// Find all locations within a radius
-static array<autoptr UMapLocation> GetMapLocationsInRadius(vector position, float radius, array<string> typeFilters = NULL);
-```
-
-### Usage Examples
-
-```enforce
-// Get all cities and villages on the map
-array<string> filters = new array<string>();
-filters.Insert("City");
-filters.Insert("Village");
-
-array<autoptr UMapLocation> towns = UUtil.GetMapLocations(filters);
-foreach (UMapLocation loc : towns)
-{
-    Print("Found: " + loc.Name + " (" + loc.Type + ") at " + loc.Position.ToString());
-}
-
-// Get ALL locations (no filter)
-array<autoptr UMapLocation> allLocations = UUtil.GetMapLocations();
-Print("Total locations on map: " + allLocations.Count());
-
-// Find the nearest city to a player
-vector playerPos = player.GetPosition();
-array<string> cityFilter = new array<string>();
-cityFilter.Insert("City");
-cityFilter.Insert("Capital");
-
-UMapLocation nearest = UUtil.GetNearestMapLocation(playerPos, cityFilter);
-if (nearest)
-{
-    float distance = vector.Distance(playerPos, nearest.Position);
-    Print("Nearest city: " + nearest.Name + " (" + distance.ToString() + "m away)");
-}
-
-// Quick way to get just the name (returns "unknown" if not found)
-string nearestName = UUtil.GetNearestMapLocationName(playerPos);
-Print("Player is near: " + nearestName);
-
-// Find all locations within 5km of a position
-array<autoptr UMapLocation> nearby = UUtil.GetMapLocationsInRadius(playerPos, 5000);
-Print("Locations within 5km: " + nearby.Count());
-```
-
-### Practical Example: Spawn Near Town
-
-```enforce
-// Spawn an item near a random village
-array<string> villageFilter = new array<string>();
-villageFilter.Insert("Village");
-
-array<autoptr UMapLocation> villages = UUtil.GetMapLocations(villageFilter);
-if (villages.Count() > 0)
-{
-    int randomIndex = Math.RandomInt(0, villages.Count());
-    UMapLocation village = villages.Get(randomIndex);
-    
-    // Offset position slightly
-    vector spawnPos = village.Position + Vector(Math.RandomFloat(-50, 50), 0, Math.RandomFloat(-50, 50));
-    spawnPos[1] = GetGame().SurfaceY(spawnPos[0], spawnPos[2]);
-    
-    GetGame().CreateObject("Barrel_Green", spawnPos, false, false, true);
-    Print("Spawned barrel near " + village.Name);
-}
-```
-
-## JSON Handler
-
-Templated JSON serialization/deserialization utility.
-
-> **Note:** Boolean values are serialized as integers (0 = false, 1 = true) in JSON output and database storage. Deserialization handles this automatically.
-
-```enforce
-class UJSONHandler<Class T> {
-    // Object to JSON string
-    static string ToString(T data);
-    
-    // Object to JSON string (with success check)
-    static bool GetString(T data, out string stringData);
-    
-    // JSON string to object
-    static bool FromString(string stringData, out T data);
-    
-    // Load object from JSON file
-    static void FromFile(string path, out T data);
-    
-    // Save object to JSON file
-    static void ToFile(string path, T data);
-}
-```
-
-### Usage
-
-```enforce
-// Serialize object to JSON
-MyData data = new MyData();
-data.Name = "Test";
-data.Value = 100;
-
-string json = UJSONHandler<MyData>.ToString(data);
-// json = "{\"Name\":\"Test\",\"Value\":100}"
-
-// Deserialize JSON to object
-MyData loaded;
-if (UJSONHandler<MyData>.FromString(json, loaded)) {
-    Print(loaded.Name);  // "Test"
-}
-
-// Save to file
-UJSONHandler<MyData>.ToFile("$profile:mydata.json", data);
-
-// Load from file
-MyData fromFile;
-UJSONHandler<MyData>.FromFile("$profile:mydata.json", fromFile);
-```
 
 ---
 

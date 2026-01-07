@@ -19,7 +19,10 @@ Universal Framework provides backend service integration for DayZ modding includ
 | `UniversalFramework_ItemStore` | Entity serialization: `UEntityStore`, `OnUFSave`/`OnUFLoad` |
 | `UniversalFramework_TextureSystem` | Dynamic skins: `RegisterTextureAndMaterial`, `SetTexture`, client overrides |
 | `UniversalFramework_PlayerMoneyHandling` | Physical currency: `UGetPlayerBalance`, `UAddMoney`, `URemoveMoney` |
-| `UniversalFramework_Utilities` | Static helpers: `UUtil`, `UJSONHandler<T>`, time, player lookup |
+| `UniversalFramework_Utilities` | Core utilities: `UUtil`, time, player lookup, config access |
+| `UniversalFramework_Utilities_Strings` | String utilities: formatting, sanitization, regex patterns |
+| `UniversalFramework_Utilities_Files` | File utilities: file operations, `UJSONHandler<T>` |
+| `UniversalFramework_Utilities_Map` | Map utilities: locations, nearest city/town |
 | `UniversalFramework_Logger` | Logging: `UFLog.Info/Debug/Err`, log levels, custom loggers |
 | `UniversalFramework_API` | External APIs: Steam queries, crypto prices, TTS, random numbers |
 | `UniversalFramework_Summary_DesignStructures` | Architecture overview, permissions matrix, documentation index |

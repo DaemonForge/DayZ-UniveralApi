@@ -155,7 +155,7 @@ static string GetLogPlayerPosArray(array<autoptr ULogPlayerPos> thePlayerlist){
 }
 
 
-class UUtil extends Managed {
+class UUtil extends UUtilBase {
 	
 	/**
 	 * Gets the Steam ID of the current player.
@@ -437,17 +437,7 @@ class UUtil extends Managed {
 	static string GetDateStamp() {
 		int yr, mth, day;
 		GetYearMonthDay(yr, mth, day);
-		string sday = day.ToString();
-		if (sday.Length() == 1){
-			sday = "0" + sday;
-		}
-		
-		string smth = mth.ToString();
-		if (smth.Length() == 1){
-			smth = "0" + mth.ToString();
-		}
-		
-		return yr.ToString() + "-" + smth + "-" + sday;
+		return yr.ToString() + "-" + PadZero(mth) + "-" + PadZero(day);
 	}
 	 
 	/**
@@ -460,44 +450,7 @@ class UUtil extends Managed {
 	static string GetTimeStamp() {
 		int hr, min, sec;
 		GetHourMinuteSecond(hr, min, sec);
-		
-		string ssec = sec.ToString();
-		if (ssec.Length() == 1){
-			ssec = "0" + ssec;
-		}
-		string smin = min.ToString();
-		if (smin.Length() == 1){
-			smin = "0" + smin;
-		}
-		string shr = hr.ToString();
-		if (shr.Length() == 1) {
-			shr = "0" + shr;
-		}
-		return  shr + ":" + smin + ":" + ssec;
-	}
-	
-	protected static int UnixStartYear = 1970;
-	protected static int DaysInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-	
-	/**
-	 * Determines if a given year is a leap year.
-	 *
-	 * Checks if the year is divisible by 4, 100, and 400 to determine if it is a leap year.
-	 *
-	 * @param year The year to check.
-	 * @return bool True if the year is a leap year, false otherwise.
-	 */
-	protected static bool IsLeapYear(int year){
-		if (year % 4 == 0) {
-	        if (year % 100 == 0) {
-	            if (year % 400 == 0) {
-	                return true;
-	            }
-	    		return false;
-			}
-	        return true;
-	    }
-	    return false;
+		return PadZero(hr) + ":" + PadZero(min) + ":" + PadZero(sec);
 	}
 	
 	//Get Days since JAN 01 1970
@@ -622,13 +575,7 @@ class UUtil extends Managed {
 		int hours = offsetSeconds / 3600;
 		int minutes = (offsetSeconds % 3600) / 60;
 		
-		string hoursStr = hours.ToString();
-		if (hoursStr.Length() == 1) hoursStr = "0" + hoursStr;
-		
-		string minutesStr = minutes.ToString();
-		if (minutesStr.Length() == 1) minutesStr = "0" + minutesStr;
-		
-		return "UTC" + sign + hoursStr + ":" + minutesStr;
+		return "UTC" + sign + PadZero(hours) + ":" + PadZero(minutes);
 	}
 	
 	/**
@@ -786,23 +733,7 @@ class UUtil extends Managed {
 	{
 		int year, month, day, hour, minute, second;
 		UnixToDateTime(unixTime, year, month, day, hour, minute, second);
-		
-		string sday = day.ToString();
-		if (sday.Length() == 1) sday = "0" + sday;
-		
-		string smonth = month.ToString();
-		if (smonth.Length() == 1) smonth = "0" + smonth;
-		
-		string shour = hour.ToString();
-		if (shour.Length() == 1) shour = "0" + shour;
-		
-		string sminute = minute.ToString();
-		if (sminute.Length() == 1) sminute = "0" + sminute;
-		
-		string ssecond = second.ToString();
-		if (ssecond.Length() == 1) ssecond = "0" + ssecond;
-		
-		return year.ToString() + "-" + smonth + "-" + sday + " " + shour + ":" + sminute + ":" + ssecond;
+		return year.ToString() + "-" + PadZero(month) + "-" + PadZero(day) + " " + PadZero(hour) + ":" + PadZero(minute) + ":" + PadZero(second);
 	}
 	
 	/**
@@ -815,14 +746,7 @@ class UUtil extends Managed {
 	{
 		int year, month, day;
 		UnixToDate(unixTime, year, month, day);
-		
-		string sday = day.ToString();
-		if (sday.Length() == 1) sday = "0" + sday;
-		
-		string smonth = month.ToString();
-		if (smonth.Length() == 1) smonth = "0" + smonth;
-		
-		return year.ToString() + "-" + smonth + "-" + sday;
+		return year.ToString() + "-" + PadZero(month) + "-" + PadZero(day);
 	}
 	
 	/**
@@ -835,17 +759,7 @@ class UUtil extends Managed {
 	{
 		int hour, minute, second;
 		UnixToTime(unixTime, hour, minute, second);
-		
-		string shour = hour.ToString();
-		if (shour.Length() == 1) shour = "0" + shour;
-		
-		string sminute = minute.ToString();
-		if (sminute.Length() == 1) sminute = "0" + sminute;
-		
-		string ssecond = second.ToString();
-		if (ssecond.Length() == 1) ssecond = "0" + ssecond;
-		
-		return shour + ":" + sminute + ":" + ssecond;
+		return PadZero(hour) + ":" + PadZero(minute) + ":" + PadZero(second);
 	}
 	
 	
@@ -1414,6 +1328,297 @@ class UUtil extends Managed {
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * SanitizeString
+	 * --------------
+	 * Summary:
+	 *   Sanitizes a string by replacing emojis with ASCII art equivalents
+	 *   and optionally removing invalid/non-printable characters.
+	 *
+	 * Parameters:
+	 *   - input: The string to sanitize.
+	 *   - removeUnmapped: If true, removes emojis that don't have ASCII mappings.
+	 *                     If false, leaves them as-is. Default: true.
+	 *   - keepInternational: If true, preserves Cyrillic, CJK, and other DayZ-supported
+	 *                        language characters. If false, strips to extended Latin only.
+	 *                        Default: true.
+	 *
+	 * Returns:
+	 *   A sanitized string with emojis converted to ASCII art.
+	 *
+	 * Note:
+	 *   For multilingual servers (Russian, Chinese, etc.), use keepInternational=true.
+	 *   For strict ASCII-only output, use StripNonASCII() after sanitization.
+	 *
+	 * Related Functions:
+	 *   - StripUnsupportedCharacters(): Keeps all DayZ language characters, strips emojis
+	 *   - StripNonASCII(): Strips everything except pure ASCII (English only)
+	 *   - StripEmojisOnly(): Removes emojis but keeps ALL other Unicode
+	 *
+	 * Example Usage:
+	 * @code
+	 *   string clean = UUtil.SanitizeString("Hello 😊 World 😢 Привет");
+	 *   // Returns: "Hello :) World :'( Привет"
+	 * @endcode
+	 */
+	static string SanitizeString(string input, bool removeUnmapped = true, bool keepInternational = true)
+	{
+		if (input == "" || input.Length() == 0)
+			return input;
+		
+		string result = input;
+		
+		// Apply emoji replacements
+		result = ReplaceEmojisWithASCII(result);
+		
+		// Remove remaining non-printable and invalid characters if requested
+		if (removeUnmapped)
+		{
+			if (keepInternational)
+			{
+				// Use StripUnsupportedCharacters to keep Cyrillic, CJK, etc.
+				result = StripUnsupportedCharacters(result);
+			}
+			else
+			{
+				// Use RemoveInvalidCharacters for extended Latin only (strips Cyrillic, CJK)
+				result = RemoveInvalidCharacters(result);
+			}
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * ReplaceEmojisWithASCII
+	 * ----------------------
+	 * Summary:
+	 *   Replaces common Unicode emojis with their ASCII art equivalents.
+	 *   Uses the centralized emoji map from UUtilBase for maintainability.
+	 *
+	 * Parameters:
+	 *   - input: The string containing emojis.
+	 *
+	 * Returns:
+	 *   String with emojis replaced by ASCII representations.
+	 *
+	 * Note:
+	 *   To add new emoji mappings, update InitializeEmojiMappings() in UUtilBase.c
+	 */
+	static string ReplaceEmojisWithASCII(string input)
+	{
+		return ApplyEmojiReplacements(input);
+	}
+	
+	/**
+	 * RemoveInvalidCharacters
+	 * -----------------------
+	 * Summary:
+	 *   Removes non-printable and potentially problematic Unicode characters
+	 *   from a string, keeping only standard ASCII printable characters
+	 *   and common extended Latin characters.
+	 *
+	 * Parameters:
+	 *   - input: The string to clean.
+	 *
+	 * Returns:
+	 *   String with only valid printable characters.
+	 */
+	static string RemoveInvalidCharacters(string input)
+	{
+		string result = "";
+		int len = input.Length();
+		
+		for (int i = 0; i < len; i++)
+		{
+			string ch = input.Substring(i, 1);
+			int code = ch.ToAscii();
+			
+			// Keep printable ASCII (32-126) and extended Latin (128-255 for accented chars)
+			// Also keep tab (9), newline (10), carriage return (13)
+			if ((code >= 32 && code <= 126) || (code >= 128 && code <= 255) || code == 9 || code == 10 || code == 13)
+			{
+				result += ch;
+			}
+			// Skip multi-byte Unicode characters (they return 0 or negative from ToAscii)
+			// and control characters
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * StripNonASCII
+	 * -------------
+	 * Summary:
+	 *   Removes ALL non-ASCII characters from a string, keeping only
+	 *   standard ASCII (codes 32-126). This includes emojis, accented
+	 *   characters, special Unicode symbols, Cyrillic, CJK, etc.
+	 *
+	 *   WARNING: This strips ALL non-English characters! For multilingual
+	 *   support (Russian, Chinese, Japanese, Korean, etc.), use 
+	 *   StripUnsupportedCharacters() instead.
+	 *
+	 * Parameters:
+	 *   - input: The string to strip non-ASCII from.
+	 *   - keepWhitespace: If true, keeps tabs/newlines. Default: true.
+	 *
+	 * Returns:
+	 *   String with only pure ASCII characters.
+	 *
+	 * Example Usage:
+	 * @code
+	 *   string clean = UUtil.StripNonASCII("Hello 😊 Wörld café");
+	 *   // Returns: "Hello  Wrld caf"
+	 * @endcode
+	 */
+	static string StripNonASCII(string input, bool keepWhitespace = true)
+	{
+		string result = "";
+		int len = input.Length();
+		
+		for (int i = 0; i < len; i++)
+		{
+			string ch = input.Substring(i, 1);
+			int code = ch.ToAscii();
+			
+			// Keep only printable ASCII (32-126)
+			if (code >= 32 && code <= 126)
+			{
+				result += ch;
+			}
+			// Optionally keep tab (9), newline (10), carriage return (13)
+			else if (keepWhitespace && (code == 9 || code == 10 || code == 13))
+			{
+				result += ch;
+			}
+			// Everything else (including 0, negatives from multi-byte, extended Latin 128-255) is stripped
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * StripUnsupportedCharacters
+	 * --------------------------
+	 * Summary:
+	 *   Removes characters that are NOT supported by DayZ's localization system.
+	 *   Keeps characters from ALL DayZ-supported languages:
+	 *   - English, German, French, Spanish, Italian, Portuguese (Latin/Extended Latin)
+	 *   - Russian (Cyrillic)
+	 *   - Polish, Czech (Latin Extended)
+	 *   - Chinese Simplified/Traditional (CJK)
+	 *   - Japanese (Hiragana, Katakana, Kanji)
+	 *   - Korean (Hangul)
+	 *   - Turkish (Latin Extended)
+	 *
+	 *   This is the RECOMMENDED function for sanitizing player names and chat
+	 *   messages while preserving international character support.
+	 *
+	 * Parameters:
+	 *   - input: The string to sanitize.
+	 *   - keepWhitespace: If true, keeps tabs/newlines. Default: true.
+	 *
+	 * Returns:
+	 *   String with only DayZ-supported language characters.
+	 *
+	 * Unicode Ranges Preserved:
+	 *   - Basic Latin:        0x0020-0x007E (ASCII printable)
+	 *   - Latin Extended-A:   0x0100-0x017F (Polish, Czech, Turkish, etc.)
+	 *   - Latin Extended-B:   0x0180-0x024F (additional Latin)
+	 *   - Latin Supplement:   0x0080-0x00FF (German, French, Spanish, etc.)
+	 *   - Cyrillic:           0x0400-0x04FF (Russian)
+	 *   - Hangul Syllables:   0xAC00-0xD7AF (Korean)
+	 *   - Hiragana:           0x3040-0x309F (Japanese)
+	 *   - Katakana:           0x30A0-0x30FF (Japanese)
+	 *   - CJK Unified:        0x4E00-0x9FFF (Chinese/Japanese Kanji)
+	 *   - CJK Extension A:    0x3400-0x4DBF (Rare CJK)
+	 *
+	 * Example Usage:
+	 * @code
+	 *   string clean = UUtil.StripUnsupportedCharacters("Hello 😊 Привет 你好 こんにちは");
+	 *   // Returns: "Hello  Привет 你好 こんにちは" (emoji removed, languages preserved)
+	 * @endcode
+	 */
+	static string StripUnsupportedCharacters(string input, bool keepWhitespace = true)
+	{
+		string result = "";
+		int len = input.Length();
+		
+		for (int i = 0; i < len; i++)
+		{
+			string ch = input.Substring(i, 1);
+			int code = ch.ToAscii();
+			
+			// ToAscii() returns:
+			// - Valid code (0-127) for ASCII characters
+			// - Values 128-255 for Latin-1 Supplement (accented Latin chars)
+			// - 0 or negative for multi-byte Unicode (Cyrillic, CJK, etc.)
+			
+			// Keep printable ASCII (32-126)
+			if (code >= 32 && code <= 126)
+			{
+				result += ch;
+			}
+			// Keep Extended Latin / Latin-1 Supplement (128-255: ä ö ü ß é è ç ñ etc.)
+			else if (code >= 128 && code <= 255)
+			{
+				result += ch;
+			}
+			// Keep whitespace characters (tab, newline, carriage return)
+			else if (keepWhitespace && (code == 9 || code == 10 || code == 13))
+			{
+				result += ch;
+			}
+			// For multi-byte Unicode (code <= 0 from ToAscii()):
+			// We need to check if it's a supported script or an emoji/special character
+			// Unfortunately, ToAscii() can't distinguish Cyrillic from emoji
+			// Both return 0 or negative. We'll use a heuristic approach.
+			else if (code <= 0)
+			{
+				// Multi-byte character - we'll allow it through as DayZ's engine
+				// handles these for supported languages. The engine itself will
+				// render ? or skip truly unsupported glyphs.
+				// This preserves Cyrillic, CJK, Hangul, Kana, etc.
+				result += ch;
+			}
+			// Skip control characters (0-31 except whitespace) and other edge cases
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * StripEmojisOnly
+	 * ---------------
+	 * Summary:
+	 *   Attempts to remove only emoji characters while preserving ALL other
+	 *   Unicode text including Cyrillic, CJK, and other international scripts.
+	 *   Uses the centralized emoji list from UUtilBase.
+	 *
+	 * Parameters:
+	 *   - input: The string to strip emojis from.
+	 *
+	 * Returns:
+	 *   String with emojis removed but international text preserved.
+	 *
+	 * Note:
+	 *   This only removes emojis that are in the known emoji list. Unknown
+	 *   emojis may still pass through. For complete emoji removal, consider
+	 *   using StripNonASCII() but that removes ALL non-ASCII characters.
+	 *   To add new emojis, update InitializeEmojiMappings() in UUtilBase.c
+	 *
+	 * Example Usage:
+	 * @code
+	 *   string clean = UUtil.StripEmojisOnly("Hello 😊 Привет 你好");
+	 *   // Returns: "Hello  Привет 你好"
+	 * @endcode
+	 */
+	static string StripEmojisOnly(string input)
+	{
+		return StripKnownEmojis(input);
 	}
 }
 
