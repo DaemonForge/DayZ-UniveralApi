@@ -108,10 +108,13 @@ app.on('ready', () => {
   tray = new Tray(traySource);
   tray.setToolTip('Universal Framework');
 
+  // Set initial "Starting Up" menu immediately so users can interact with tray
+  setInitialTrayMenu();
+
   // Load your main service (if required)
   const ufService = require('./app');
   createLoggerStream();
-  // Build initial context menu.
+  // Build context menu with actual status.
   updateTrayMenu();
   setTimeout(updateTrayMenu, 2500);
   setTimeout(updateTrayMenu, 6000);
@@ -269,6 +272,99 @@ function fetchAPIStatus(callback) {
     callback(err);
   });
   req.end();
+}
+
+
+/**
+ * Sets an initial tray menu while the service is loading.
+ * This allows users to interact with the tray immediately.
+ */
+function setInitialTrayMenu() {
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'UF API Service',
+      sublabel: 'Status: Starting Up ⏳',
+      enabled: false,
+      icon: trayMenuIcon || undefined
+    },
+    {
+      label: 'Discord: Loading...',
+      sublabel: 'OpenAI: Loading...',
+      enabled: false
+    },
+    { type: 'separator' },
+    {
+      label: '🖥️ Console',
+      click: () => {
+        OpenConsoleWindow();
+      }
+    },
+    {
+      label: '🧾 Log Viewer',
+      click: () => {
+        openLogsWindow();
+      }
+    },
+    {
+      label: '🔄 Restart',
+      click: () => {
+        if (settingsWindow) {
+          settingsWindow.removeAllListeners('close');
+          settingsWindow.close();
+        }
+        app.relaunch();
+        app.exit();
+      }
+    },
+    { type: 'separator' },
+    { label: "❤️ Donate", click: () => { shell.openExternal('https://github.com/sponsors/DaemonF0rge'); } },
+    {
+      label: '⚙️ Options',
+      submenu: [
+        {
+          label: '⚙️ Settings',
+          click: () => {
+            openSettingsWindow();
+          }
+        },
+        {
+          label: '📝Globals Editor',
+          click: () => {
+            openGlobalsWindow();
+          }
+        },
+        {
+          label: '📚 KB Manager',
+          click: () => {
+            openKBWindow();
+          }
+        },
+        {
+          label: '📁 Logs',
+          click: () => {
+            shell.openPath(path.join(global.SAVEPATH,'logs'));
+          }
+        },
+        {
+          label: '📁 Discord Templates',
+          click: () => {
+            shell.openPath(path.join(global.SAVEPATH,'templates'));
+          }
+        },
+        {
+          label: '🛑 Stop',
+          click: () => {
+            if (settingsWindow) {
+              settingsWindow.removeAllListeners('close');
+              settingsWindow.close();
+            }
+            app.quit();
+          }
+        }
+      ]
+    }
+  ]);
+  tray.setContextMenu(contextMenu);
 }
 
 

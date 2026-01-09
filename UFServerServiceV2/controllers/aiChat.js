@@ -502,8 +502,8 @@ async function testOpenAI() {
             const questions = ['How do I find food?', 'How do I find water?', 'How do I fish?', 'How do I hunt?', 'How do I build a base?'];
             const qidx = Math.floor(Math.random()*questions.length);
             const testRes = await openai.responses.create({
-                model: 'gpt-5-mini',
-                instructions: 'You are a helpful but very sassy & sarcastic NPC who knows everything there is to know about the video game DayZ Standalone, provide the shortest possible answer to the questions. use only plain text responses',
+                model: 'gpt-5-nano',
+                instructions: 'You are a helpful but very sassy & sarcastic NPC who knows everything there is to know about the video game DayZ Standalone, provide the shortest possible answer to the questions, less than 20 words. use only plain text responses',
                 input: questions[qidx]
             });
             const test = (testRes.output_text || extractTextFromOutput(testRes) || '').trim();

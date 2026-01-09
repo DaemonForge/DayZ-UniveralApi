@@ -1,8 +1,12 @@
 const { Router } = require('express');
+const https = require('https');
 const { GenerateLimiter, createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'random');
 const { requirePlayerOrServerAuth } = require("../auth/utils");
 const cluster = require('cluster');
+
+// HTTPS agent that ignores TLS errors (ANU's cert is expired)
+const insecureAgent = new https.Agent({ rejectUnauthorized: false });
 
 // Quantum source parameters and fallbacks.
 const FETCH_TIMEOUT_MS = 10_000; // Avoid hanging fetches
@@ -181,7 +185,10 @@ async function fetchQuantum(length, bitsize) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
-        const res = await fetch(`https://qrng.anu.edu.au/API/jsonI.php?length=${length}&type=hex16&size=${bitsize}` , { signal: controller.signal });
+        const res = await fetch(`https://qrng.anu.edu.au/API/jsonI.php?length=${length}&type=hex16&size=${bitsize}`, {
+            signal: controller.signal,
+            agent: insecureAgent // ANU's SSL cert is expired
+        });
         if (!res.ok) {
             throw new Error(`HTTP ${res.status}`);
         }

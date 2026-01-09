@@ -8,16 +8,42 @@ class UFLog extends ULoggerBase {
 	override static string getLogID(){
 		return "UF";
 	}
-	override static void CreateInstance(){
-		m_LoggerBaseInstance = new ULoggerBaseInstance(getLogID());
-	}
-	// Must override GetInstance to ensure our CreateInstance is called, not parent's
+
 	override static ULoggerBaseInstance GetInstance(){
 		if (!m_LoggerBaseInstance){
 			CreateInstance();
 			Init();
 		}
 		return m_LoggerBaseInstance;
+	}
+	
+	override static void CreateInstance(){
+		m_LoggerBaseInstance = new ULoggerBaseInstance(getLogID());
+	}
+
+	override static void Log(string text, int level = 1) {
+		GetInstance().DoLog(text,level);
+	}
+	
+	override static void Info(string text){
+		GetInstance().DoLog(text, LOG_INFO);
+	}
+	
+	override static void Debug(string text){
+		GetInstance().DoLog(text, LOG_DEBUG);
+	}
+
+	override static void Err(string text){
+		Error2("[" + getLogID() + "] Error", text);
+		GetInstance().DoLog(text, LOG_ERROR);
+	}
+
+	override static void SetLogLevels(int level, int apiLevel = -99){
+		if (apiLevel == -99){
+			apiLevel = level;
+		}
+		GetInstance().SetLogLevel(level);
+		GetInstance().SetApiLogLevel(apiLevel);
 	}
 }
 

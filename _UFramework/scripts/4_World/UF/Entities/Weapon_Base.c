@@ -8,10 +8,10 @@ modded class Weapon_Base extends Weapon {
 	override void OnUFLoad(UEntityStore data){
 		int i;
 		super.OnUFLoad(data);
-		UFLog.Info("===========================================================================================================");
-		UFLog.Info("===========================================================================================================");
-		UFLog.Info("[INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
-		UFLog.Info("-----------------------------------------------------------------------------------------------------------");
+		Print("===========================================================================================================");
+		Print("===========================================================================================================");
+		Print("[UF] [INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
+		Print("-----------------------------------------------------------------------------------------------------------");
 			ValidateAndRepair();
 			int dummy_version = int.MAX;
 			PlayerBase parentPlayer = PlayerBase.Cast(GetHierarchyRootPlayer());
@@ -35,8 +35,8 @@ modded class Weapon_Base extends Weapon {
 			SetStepZeroing(GetCurrentMuzzle(), data.GetInt("m_Zeroing"));
 			SetZoom(data.GetFloat("m_Zoom"));
 			DryFire(GetCurrentMuzzle());
-		UFLog.Info("===========================================================================================================");
-		UFLog.Info("===========================================================================================================");
+		Print("===========================================================================================================");
+		Print("===========================================================================================================");
 			if (data.GetInt("m_IsJammed") == 1){
 				UFLog.Debug("Setting SetJammed");
 				SetJammed(true);
@@ -94,10 +94,10 @@ modded class Weapon_Base extends Weapon {
 		int i;
 		//if (!data){return;}
 		if (!g_Game.IsMultiplayer() || g_Game.IsServer()){return;}
-		UFLog.Info("===========================================================================================================");
-		UFLog.Info("===========================================================================================================");
-		UFLog.Info("[INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
-		UFLog.Info("-----------------------------------------------------------------------------------------------------------");
+		Print("===========================================================================================================");
+		Print("===========================================================================================================");
+		Print("[UF] [INFO] Validating and Repairing the Weapon Unless this is just before a crash this was not the cause");
+		Print("-----------------------------------------------------------------------------------------------------------");
 			ValidateAndRepair();
 			/*int dummy_version = int.MAX;
 			PlayerBase parentPlayer = PlayerBase.Cast(GetHierarchyRootPlayer());
