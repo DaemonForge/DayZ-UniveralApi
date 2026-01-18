@@ -108,10 +108,18 @@ async function getCollection() {
 async function getObject(ObjectId, Mod) {
   const collection = await getCollection();
   try {
+    logger.debug(`[DB][GET] Looking up object`, { ObjectId, Mod });
     const object = await collection.findOne({ ObjectId, Mod });
+    
+    if (object) {
+      logger.debug(`[DB][GET][${Mod}] Object FOUND in database`, { ObjectId, Mod, hasData: !!object.data });
+    } else {
+      logger.debug(`[DB][GET][${Mod}] Object NOT FOUND in database`, { ObjectId, Mod });
+    }
+    
     return object ? object.data : undefined;
   } catch (err) {
-    logger.error(`Error in getObject: ${err.message}`, { error: err, ObjectId, Mod });
+    logger.error(`[DB][GET] Error in getObject: ${err.message}`, { error: err, ObjectId, Mod });
     return undefined;
   }
 }
@@ -143,14 +151,36 @@ async function objectExist(ObjectId, Mod) {
 async function newObject(ObjectId, Mod, doc) {
   const collection = await getCollection();
   try {
+    // Check if already exists BEFORE inserting
+    const existingCount = await collection.countDocuments({ ObjectId, Mod });
+    if (existingCount > 0) {
+      logger.error(`[DB][NEW][${Mod}] CRITICAL: Attempted to insert DUPLICATE object!`, {
+        ObjectId,
+        Mod,
+        existingCount,
+        doc: JSON.stringify(doc)
+      });
+      throw new Error(`Object ${ObjectId} for mod ${Mod} already exists! Refusing to create duplicate.`);
+    }
+    
+    logger.info(`[DB][NEW][${Mod}] Inserting NEW object`, { ObjectId, Mod, timestamp: new Date().toISOString() });
+    
     const result = await collection.insertOne({
       ObjectId,
       Mod,
       data: doc
     });
+    
+    logger.info(`[DB][NEW][${Mod}] Object INSERTED successfully`, {
+      ObjectId,
+      Mod,
+      insertedId: result.insertedId,
+      timestamp: new Date().toISOString()
+    });
+    
     return result;
   } catch (err) {
-    logger.warn(`Error in newObject: ${err.message}`, { error: err, ObjectId, Mod });
+    logger.error(`[DB][NEW][${Mod}] Error in newObject: ${err.message}`, { error: err, ObjectId, Mod, stack: err.stack });
     throw err;
   }
 }
@@ -166,10 +196,43 @@ async function newObject(ObjectId, Mod, doc) {
 async function updateObject(ObjectId, Mod, updateDoc, options = {}) {
   const collection = await getCollection();
   try {
+    // Check what exists before updating
+    const existingCount = await collection.countDocuments({ ObjectId, Mod });
+    const isUpsert = options.upsert === true;
+    
+    logger.info(`[DB][UPDATE][${Mod}] Updating object`, {
+      ObjectId,
+      Mod,
+      existingCount,
+      isUpsert,
+      willCreate: isUpsert && existingCount === 0,
+      timestamp: new Date().toISOString()
+    });
+    
+    if (existingCount > 1) {
+      logger.error(`[DB][UPDATE][${Mod}] CRITICAL: MULTIPLE DUPLICATES DETECTED in database!`, {
+        ObjectId,
+        Mod,
+        duplicateCount: existingCount
+      });
+    }
+    
     const result = await collection.updateOne({ ObjectId, Mod }, updateDoc, options);
+    
+    logger.info(`[DB][UPDATE][${Mod}] Update completed`, {
+      ObjectId,
+      Mod,
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+      upsertedCount: result.upsertedCount,
+      wasCreated: result.upsertedCount === 1,
+      wasUpdated: result.matchedCount === 1,
+      timestamp: new Date().toISOString()
+    });
+    
     return result;
   } catch (err) {
-    logger.warn(`Error in updateObject: ${err.message}`, { error: err, ObjectId, Mod });
+    logger.error(`[DB][UPDATE][${Mod}] Error in updateObject: ${err.message}`, { error: err, ObjectId, Mod, stack: err.stack });
     throw err;
   }
 }
@@ -332,6 +395,45 @@ function isArray(value) {
   return Array.isArray(value);
 }
 
+/**
+ * Deletes an object from the Objects collection
+ * 
+ * @async
+ * @function deleteObject
+ * @param {string} ObjectId - The object's unique identifier
+ * @param {string} mod - The mod namespace
+ * @returns {Promise<Object>} Result of deletion operation
+ */
+async function deleteObject(ObjectId, mod) {
+  try {
+    const collection = await getCollection();
+    
+    logger.info('[DB][DELETE] Deleting object', { ObjectId, mod });
+    
+    const result = await collection.deleteOne({ ObjectId, mod });
+    
+    if (result.deletedCount === 0) {
+      logger.warn('[DB][DELETE] Object not found for deletion', { ObjectId, mod });
+      return { success: false, deleted: false, deletedCount: 0 };
+    }
+    
+    logger.info('[DB][DELETE] Object deleted successfully', { 
+      ObjectId, 
+      mod, 
+      deletedCount: result.deletedCount 
+    });
+    
+    return { success: true, deleted: true, deletedCount: result.deletedCount };
+  } catch (err) {
+    logger.error('[DB][DELETE] Error deleting object', { 
+      ObjectId, 
+      mod, 
+      error: err.message 
+    });
+    throw err;
+  }
+}
+
 module.exports = {
   getClientAndCollection,
   getObject,
@@ -340,5 +442,6 @@ module.exports = {
   updateObject,
   updateObjectField,
   runObjectTransaction,
-  runValidatedObjectTransaction
+  runValidatedObjectTransaction,
+  deleteObject
 };

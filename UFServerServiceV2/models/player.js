@@ -358,6 +358,59 @@ async function saveAuthToken(GUID, auth) {
     }
 }
 
+/**
+ * Deletes a mod's data from a player document
+ * 
+ * @async
+ * @function deletePlayerModData
+ * @param {string} GUID - The player's GUID
+ * @param {string} mod - The mod namespace to delete
+ * @returns {Promise<Object>} Result of deletion operation
+ */
+async function deletePlayerModData(GUID, mod) {
+  try {
+    const collection = await getCollection();
+    
+    logger.info('[DB][DELETE] Deleting player mod data', { GUID, mod });
+    
+    // Use $unset to remove the mod field from the player document
+    const result = await collection.updateOne(
+      { GUID },
+      { $unset: { [mod]: "" } }
+    );
+    
+    if (result.matchedCount === 0) {
+      logger.warn('[DB][DELETE] Player not found for mod deletion', { GUID, mod });
+      return { success: false, deleted: false, matchedCount: 0, modifiedCount: 0 };
+    }
+    
+    if (result.modifiedCount === 0) {
+      logger.warn('[DB][DELETE] Mod data did not exist on player', { GUID, mod });
+      return { success: false, deleted: false, matchedCount: result.matchedCount, modifiedCount: 0 };
+    }
+    
+    logger.info('[DB][DELETE] Player mod data deleted successfully', { 
+      GUID, 
+      mod, 
+      modifiedCount: result.modifiedCount 
+    });
+    
+    return { 
+      success: true, 
+      deleted: true, 
+      matchedCount: result.matchedCount, 
+      modifiedCount: result.modifiedCount 
+    };
+  } catch (err) {
+    logger.error('[DB][DELETE] Error deleting player mod data', { 
+      GUID, 
+      mod, 
+      error: err.message 
+    });
+    throw err;
+  }
+}
+
 module.exports = {
     getClientAndCollection,
     getPlayer,
@@ -369,5 +422,6 @@ module.exports = {
     updatePlayerField,
     runPlayerTransaction,
     runValidatedPlayerTransaction,
-    saveAuthToken
+    saveAuthToken,
+    deletePlayerModData
 };

@@ -433,7 +433,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	
 	
 	int ChannelSendEmbed(string id, UDiscordEmbed message, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
-		if (id == "" || message != NULL){
+		if (id == "" || message == NULL){
 			Error2("[UF] Error Sending Embed to channel","Both Channel ID and message must be valid");
 			return -1;
 		}

@@ -503,6 +503,66 @@ class UDBEndpoint extends UFBaseEndpoint {
 	}
 	
 	
+	/**
+	 * Deletes an object or player mod data from the database
+	 * 
+	 * @param mod The mod namespace
+	 * @param oid The object ID or player GUID
+	 * @param cb Callback instance (UFCallbackBase)
+	 * @return Callback ID or -1 on error
+	 */
+	int Delete(string mod, string oid, UFCallbackBase cb) {
+		if (!mod || !oid || !cb) {
+			UFLog.Err("[Delete] Invalid parameters - mod, oid, and callback are required");
+			return -1;
+		}
+		
+		int cid = -1;
+		string endpoint = "Delete/" + oid + "/" + mod;
+		
+		cb.SetOID(oid);
+		
+		Post(endpoint, "{}", U().RegisterCall(new UNestedCallBack(cb), cid));
+		if (cid == -1) {
+			Error2("[UF] Error failed to register callback with UF", "Delete");
+		}
+		
+		return cid;
+	}
+	
+	/**
+	 * Deletes an object or player mod data from the database
+	 * 
+	 * @param mod The mod namespace
+	 * @param oid The object ID or player GUID
+	 * @param cbInstance Callback instance
+	 * @param cbFunction Callback function name
+	 * @return Callback ID or -1 on error
+	 */
+	int Delete(string mod, string oid, Class cbInstance, string cbFunction) {
+		if (!mod || !oid) {
+			UFLog.Err("[Delete] Invalid parameters - mod and oid are required");
+			return -1;
+		}
+		
+		int cid = -1;
+		string endpoint = "Delete/" + oid + "/" + mod;
+		
+		autoptr UFRestCallBackBase DBCBX;
+		if (cbInstance && cbFunction != "") {
+			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else {
+			DBCBX = new USilentCallBack();
+		}
+		
+		Post(endpoint, "{}", U().RegisterCall(DBCBX, cid));
+		if (cid == -1) {
+			Error2("[UF] Error failed to register callback with UF", "Delete");
+		}
+		
+		return cid;
+	}
+	
 	//Only Works on Player Data	
 	int PublicSave(string mod, string oid, string jsonString, Class cbInstance = NULL, string cbFunction = "") {	
 		if (m_Collection != "Player") return -1;
