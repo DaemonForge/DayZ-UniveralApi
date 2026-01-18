@@ -26,7 +26,7 @@ body {
 .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   padding: 16px;
 }
 
@@ -34,6 +34,23 @@ body {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
+}
+
+.btn-icon {
+  background: transparent;
+  border: 1px solid #3a3a3a;
+  color: #888;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  background-color: #3a3d41;
+  color: #fff;
+  border-color: #4a4d51;
 }
 
 .search {

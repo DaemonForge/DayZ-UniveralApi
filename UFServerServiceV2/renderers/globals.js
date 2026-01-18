@@ -17,10 +17,11 @@ const headerModEl = document.getElementById('currentModLabel');
 const saveBtn = document.getElementById('saveBtn');
 const reloadBtn = document.getElementById('reloadBtn');
 const deleteBtn = document.getElementById('deleteBtn');
+const refreshListBtn = document.getElementById('refreshListBtn');
 
 const HIDDEN_MODULES = new Set(['universalapistatus']);
 
-if (!modListEl || !searchInputEl || !statusEl || !headerModEl || !saveBtn || !reloadBtn || !deleteBtn) {
+if (!modListEl || !searchInputEl || !statusEl || !headerModEl || !saveBtn || !reloadBtn || !deleteBtn || !refreshListBtn) {
   console.error(LOG_PREFIX, 'One or more required DOM elements are missing', {
     hasModList: !!modListEl,
     hasSearch: !!searchInputEl,
@@ -28,7 +29,8 @@ if (!modListEl || !searchInputEl || !statusEl || !headerModEl || !saveBtn || !re
     hasHeader: !!headerModEl,
     hasSave: !!saveBtn,
     hasReload: !!reloadBtn,
-    hasDelete: !!deleteBtn
+    hasDelete: !!deleteBtn,
+    hasRefreshList: !!refreshListBtn
   });
 }
 
@@ -434,6 +436,10 @@ searchInputEl.addEventListener('input', () => {
 saveBtn.addEventListener('click', saveCurrentModule);
 reloadBtn.addEventListener('click', reloadCurrentModule);
 deleteBtn.addEventListener('click', deleteCurrentModule);
+refreshListBtn.addEventListener('click', async () => {
+  setStatus('info', 'Refreshing list...');
+  await loadModuleList(currentMod);
+});
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', bootstrap);
