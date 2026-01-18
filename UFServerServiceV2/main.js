@@ -5,6 +5,7 @@ const { pathToFileURL } = require('url');
 const { exec } = require('child_process');
 const { Writable } = require('stream');
 const { readFileSync, writeFileSync, existsSync, mkdirSync } = require('fs');
+const net = require('net');
 
 // Global variables
 global.SAVEPATH = `${app.getPath('userData')}/`;
@@ -17,8 +18,13 @@ let logsWindow = null;
 let settingsWindow = null;
 let globalsWindow = null;
 let kbWindow = null;
+let modManagerWindow = null;
+let indexOptimizerWindow = null;
+let indexOptimizerOpening = false;
 let cachedGlobalModel = null;
 let cachedKBModel = null;
+let cachedModDataModel = null;
+let cachedIndexManager = null;
 
 function getGlobalModel() {
   if (!cachedGlobalModel) {
@@ -32,6 +38,20 @@ function getKBModel() {
     cachedKBModel = require('./models/kb');
   }
   return cachedKBModel;
+}
+
+function getModDataModel() {
+  if (!cachedModDataModel) {
+    cachedModDataModel = require('./models/modData');
+  }
+  return cachedModDataModel;
+}
+
+function getIndexManager() {
+  if (!cachedIndexManager) {
+    cachedIndexManager = require('./models/indexManager');
+  }
+  return cachedIndexManager;
 }
 
 function getKBController() {
@@ -132,36 +152,97 @@ function createLoggerStream(){
 }
 
 function checkAndInstallMongoDB() {
-  exec('winget list MongoDB.Server', (error, stdout, stderr) => {
-    if (error || stdout.indexOf('MongoDB') === -1) {
-      dialog.showMessageBox({
-        type: 'info',
-        buttons: ['Install Server only', 'Install Server & Compass', 'Cancel'],
-        title: 'Universal Framework Service',
-        message: 'MongoDB is not installed. Would you like to install it now?'
-      }).then(result => {
-        if (result.response === 0) {
-          exec('winget install --id MongoDB.Server', (err, out, errOut) => {
-            if (err) {
-              console.error('Error installing MongoDB:', err);
-            } else {
-              console.log('MongoDB installation initiated:', out);
+  // 0. Check config for remote DB connection
+  // If the user has configured a remote DB, we don't need to check for local installation.
+  try {
+    const configPath = path.join(global.SAVEPATH, 'config.json');
+    if (existsSync(configPath)) {
+      const configData = JSON.parse(readFileSync(configPath, 'utf8'));
+      if (configData.DBServer) {
+        // Check if DBServer is NOT localhost/127.0.0.1
+        const isLocal = configData.DBServer.includes('localhost') || configData.DBServer.includes('127.0.0.1');
+        if (!isLocal) {
+          console.log('[Setup] Remote MongoDB configuration detected. Skipping local installation check.');
+          return;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[Setup] Failed to read config for MongoDB check:', err.message);
+    // Proceed with check if config read fails (safe default)
+  }
+
+  // 1. First fast check: Is the default MongoDB port open?
+  const socket = new net.Socket();
+  const cleanup = () => {
+    if (socket) socket.destroy();
+  };
+
+  socket.setTimeout(500); // Fast timeout
+  
+  socket.on('connect', () => {
+    console.log('[Setup] MongoDB detected running on port 27017.');
+    cleanup();
+    // It's running, so it's guaranteed installed. No further action needed.
+    return;
+  });
+
+  socket.on('timeout', () => {
+    cleanup();
+    checkServiceAndWinget();
+  });
+
+  socket.on('error', (err) => {
+    cleanup();
+    checkServiceAndWinget();
+  });
+
+  socket.connect(27017, '127.0.0.1');
+
+  function checkServiceAndWinget() {
+    // 2. Second fast check: Does the Windows Service exist?
+    // "sc query" is much faster than winget
+    exec('sc query "MongoDB"', (err, stdout, stderr) => {
+      // If "STATE" is present in output, service exists (even if stopped)
+      if (!err && stdout && stdout.includes('STATE')) {
+        console.log('[Setup] MongoDB service detected (may be stopped).');
+        return;
+      }
+
+      // 3. Fallback: Slow winget check (only if port and service checks failed)
+      console.log('[Setup] Converting to deep check for MongoDB (winget)...');
+      exec('winget list MongoDB.Server', (error, stdout, stderr) => {
+        if (error || stdout.indexOf('MongoDB') === -1) {
+          dialog.showMessageBox({
+            type: 'info',
+            buttons: ['Install Server only', 'Install Server & Compass', 'Cancel'],
+            title: 'Universal Framework Service',
+            message: 'MongoDB is not installed or configured. Would you like to install it now?'
+          }).then(result => {
+            if (result.response === 0) {
+              exec('winget install --id MongoDB.Server', (err, out, errOut) => {
+                if (err) {
+                  console.error('Error installing MongoDB:', err);
+                } else {
+                  console.log('MongoDB installation initiated:', out);
+                }
+              });
+            } else if (result.response === 1) {
+              exec('winget install -e --id MongoDB.Server;winget install -e --id MongoDB.Compass.Community', (err, out, errOut) => {
+                if (err) {
+                  console.error('Error installing MongoDB:', err);
+                } else {
+                  console.log('MongoDB installation initiated:', out);
+                }
+              });
             }
           });
-        } else if (result.response === 1) {
-          exec('winget install -e --id MongoDB.Server;winget install -e --id MongoDB.Compass.Community', (err, out, errOut) => {
-            if (err) {
-              console.error('Error installing MongoDB:', err);
-            } else {
-              console.log('MongoDB installation initiated:', out);
-            }
-          });
+        } else {
+          console.log('[Setup] MongoDB detected via winget (installed but likely stopped).');
         }
       });
-    } else {
-      console.log('MongoDB is already installed.');
-    }
-  });
+    });
+  }
 }
 
 app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
@@ -284,8 +365,7 @@ function setInitialTrayMenu() {
     {
       label: 'UF API Service',
       sublabel: 'Status: Starting Up ⏳',
-      enabled: false,
-      icon: trayMenuIcon || undefined
+      enabled: false
     },
     {
       label: 'Discord: Loading...',
@@ -337,6 +417,12 @@ function setInitialTrayMenu() {
           label: '📚 KB Manager',
           click: () => {
             openKBWindow();
+          }
+        },
+        {
+          label: '🗄️ Data Manager',
+          click: () => {
+            openModManagerWindow();
           }
         },
         {
@@ -435,8 +521,7 @@ function updateTrayMenu() {
       {
         label: `UF API Service ${apiStatusSubLabel}`,
         sublabel: apiStatusLabel,
-        enabled: false,
-        icon: trayMenuIcon || undefined
+        enabled: false
       },
       {
         label: discordStatusLabel,
@@ -488,6 +573,12 @@ function updateTrayMenu() {
             label: '📚 KB Manager',
             click: () => {
               openKBWindow();
+            }
+          },
+          {
+            label: '🗄️ Data Manager',
+            click: () => {
+              openModManagerWindow();
             }
           },
           {
@@ -576,6 +667,76 @@ function openKBWindow() {
   kbWindow.loadURL(kbUrl.toString());
   kbWindow.on('closed', () => {
     kbWindow = null;
+  });
+}
+
+function openModManagerWindow() {
+  if (modManagerWindow) {
+    modManagerWindow.restore();
+    modManagerWindow.focus();
+    return;
+  }
+
+  modManagerWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    title: 'Data Manager',
+    icon: windowIconImage || resolveAssetPath('public', 'icon.ico'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+      preload: path.join(__dirname, 'preload', 'modmanager.js')
+    }
+  });
+
+  modManagerWindow.setMenu(null);
+  const modManagerPath = path.join(__dirname, 'views', 'modmanager.html');
+  const modManagerUrl = pathToFileURL(modManagerPath);
+  modManagerUrl.searchParams.set('ts', Date.now().toString());
+  modManagerWindow.loadURL(modManagerUrl.toString());
+  modManagerWindow.on('closed', () => {
+    modManagerWindow = null;
+  });
+}
+
+function openIndexOptimizerWindow() {
+  if (indexOptimizerWindow) {
+    indexOptimizerWindow.restore();
+    indexOptimizerWindow.focus();
+    return;
+  }
+  
+  // Prevent double-creation if user clicks menu twice quickly
+  if (indexOptimizerOpening) return;
+  indexOptimizerOpening = true;
+
+  indexOptimizerWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    title: 'Index Optimizer - Universal Framework Service',
+    icon: windowIconImage || resolveAssetPath('public', 'icon.ico'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+      preload: path.join(__dirname, 'preload', 'indexOptimizer.js')
+    }
+  });
+
+  indexOptimizerWindow.setMenu(null);
+  const indexOptimizerPath = path.join(__dirname, 'views', 'indexOptimizer.html');
+  const indexOptimizerUrl = pathToFileURL(indexOptimizerPath);
+  indexOptimizerUrl.searchParams.set('ts', Date.now().toString());
+  indexOptimizerWindow.loadURL(indexOptimizerUrl.toString());
+  
+  indexOptimizerWindow.on('ready-to-show', () => {
+    indexOptimizerOpening = false;
+  });
+  
+  indexOptimizerWindow.on('closed', () => {
+    indexOptimizerOpening = false;
+    indexOptimizerWindow = null;
   });
 }
 
@@ -671,11 +832,39 @@ ipcMain.on('force-close', () => {
     kbWindow.removeAllListeners('close');
     kbWindow.close();
   }
+  if (modManagerWindow) {
+    modManagerWindow.removeAllListeners('close');
+    modManagerWindow.close();
+  }
+  if (indexOptimizerWindow) {
+    indexOptimizerWindow.removeAllListeners('close');
+    indexOptimizerWindow.close();
+  }
 });
 ipcMain.on('restart-app', () => {
   if (settingsWindow) {
     settingsWindow.removeAllListeners('close');
     settingsWindow.close();
+  }
+  if (ConsoleWindow) {
+    ConsoleWindow.removeAllListeners('close');
+    ConsoleWindow.close();
+  }
+  if (globalsWindow) {
+    globalsWindow.removeAllListeners('close');
+    globalsWindow.close();
+  }
+  if (kbWindow) {
+    kbWindow.removeAllListeners('close');
+    kbWindow.close();
+  }
+  if (modManagerWindow) {
+    modManagerWindow.removeAllListeners('close');
+    modManagerWindow.close();
+  }
+  if (indexOptimizerWindow) {
+    indexOptimizerWindow.removeAllListeners('close');
+    indexOptimizerWindow.close();
   }
   if (ConsoleWindow) {
     ConsoleWindow.removeAllListeners('close');
@@ -829,6 +1018,11 @@ ipcMain.handle('logs:query', async (event, filters = {}) => {
       query.ClientType = filters.clientType;
     }
 
+    // Log Type filter
+    if (filters.logType) {
+      query.Type = filters.logType;
+    }
+
     // Date range filter
     if (filters.dateFrom || filters.dateTo) {
       query.LoggedDateTime = {};
@@ -878,6 +1072,17 @@ ipcMain.handle('logs:getServers', async () => {
     return servers.filter(s => s); // Filter out null/undefined
   } catch (err) {
     (global.logger || console).error('[LogViewer] Failed to get servers', { error: err.message });
+    return [];
+  }
+});
+
+ipcMain.handle('logs:getTypes', async () => {
+  try {
+    const collection = await getLogsCollection();
+    const types = await collection.distinct('Type');
+    return types.filter(t => t); // Filter out null/undefined
+  } catch (err) {
+    (global.logger || console).error('[LogViewer] Failed to get types', { error: err.message });
     return [];
   }
 });
@@ -1196,9 +1401,103 @@ ipcMain.handle('kb:listModels', async () => {
   }
 });
 
+// Mod Data Manager IPC Handlers
+ipcMain.handle('modmanager:list', async () => {
+  try {
+    const { scanInstalledMods } = getModDataModel();
+    const data = await scanInstalledMods();
+    (global.logger || console).info('[ModManager] List request processed', { count: Array.isArray(data) ? data.length : 'n/a' });
+    return { success: true, data };
+  } catch (err) {
+    const errorMessage = err?.message || String(err);
+    const errorStack = err?.stack || '';
+    (global.logger || console).error('[ModManager] Failed to list mods', { 
+      error: errorMessage,
+      stack: errorStack
+    });
+    return { success: false, error: errorMessage };
+  }
+});
+
+ipcMain.handle('modmanager:delete', async (event, modName) => {
+  try {
+    if (!modName || typeof modName !== 'string') {
+      throw new Error('Mod name is required and must be a string');
+    }
+    const { deleteModData } = getModDataModel();
+    const data = await deleteModData(modName);
+    (global.logger || console).info('[ModManager] Delete request processed', { modName, deleted: data.totalDeleted });
+    return { success: true, data };
+  } catch (err) {
+    (global.logger || console).error('[ModManager] Failed to delete mod data', { modName, error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+// Index Optimizer IPC Handlers
+ipcMain.handle('indexOptimizer:getRecommendations', async () => {
+  try {
+    const indexManager = getIndexManager();
+    const recommendations = await indexManager.getRecommendations();
+    (global.logger || console).info('[IndexOptimizer] Recommendations retrieved');
+    return recommendations;
+  } catch (err) {
+    (global.logger || console).error('[IndexOptimizer] Failed to get recommendations', { error: err.message });
+    throw err;
+  }
+});
+
+ipcMain.handle('indexOptimizer:getCurrentIndexes', async () => {
+  try {
+    const indexManager = getIndexManager();
+    const indexes = await indexManager.getAllIndexes();
+    (global.logger || console).info('[IndexOptimizer] Current indexes retrieved');
+    return indexes;
+  } catch (err) {
+    (global.logger || console).error('[IndexOptimizer] Failed to get current indexes', { error: err.message });
+    throw err;
+  }
+});
+
+ipcMain.handle('indexOptimizer:createIndex', async (event, indexRequest) => {
+  try {
+    const indexManager = getIndexManager();
+    const result = await indexManager.createIndex(
+      indexRequest.collection,
+      indexRequest.indexSpec,
+      indexRequest.options || {}
+    );
+    (global.logger || console).info('[IndexOptimizer] Index created', {
+      collection: indexRequest.collection,
+      indexName: result.indexName
+    });
+    return result;
+  } catch (err) {
+    (global.logger || console).error('[IndexOptimizer] Failed to create index', {
+      collection: indexRequest.collection,
+      error: err.message
+    });
+    throw err;
+  }
+});
+
 app.on('window-all-closed', (e) => {
   e.preventDefault();
 });
+
+// Cleanup on app exit
+app.on('will-quit', async () => {
+  // Close MongoDB connection from index manager
+  try {
+    const indexManager = getIndexManager();
+    if (indexManager && indexManager.closeConnection) {
+      await indexManager.closeConnection();
+    }
+  } catch (err) {
+    (global.logger || console).warn('Error closing IndexManager connection on exit', { error: err.message });
+  }
+});
+
 /**
  * Register an IPC handler for "get-proxy-domains" and return the available domains
  * from the hard-coded Cloudflare Worker endpoint.

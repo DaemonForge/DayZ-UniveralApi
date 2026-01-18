@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index Optimizer - Universal Framework Service</title>
+    <link rel="stylesheet" href="styles/indexOptimizer.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ Database Index Optimizer</h1>
+            <p class="subtitle">Analyze query patterns and optimize database performance</p>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-label">Uptime</span>
+                <span class="stat-value" id="uptimeValue">-</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Queries Tracked</span>
+                <span class="stat-value" id="queriesValue">-</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Recommendations</span>
+                <span class="stat-value" id="recommendationsValue">-</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Collections</span>
+                <span class="stat-value" id="collectionsValue">-</span>
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <button id="refreshBtn" class="btn btn-primary">
+                <span class="btn-icon">🔄</span>
+                Refresh Analysis
+            </button>
+            <button id="optimizeBtn" class="btn btn-success" disabled>
+                <span class="btn-icon">⚡</span>
+                Create Recommended Indexes
+            </button>
+            <button id="viewCurrentBtn" class="btn btn-secondary">
+                <span class="btn-icon">📋</span>
+                View Current Indexes
+            </button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="recommendations">
+                Recommendations
+            </button>
+            <button class="tab-btn" data-tab="current">
+                Current Indexes
+            </button>
+        </div>
+
+        <div class="tab-content active" id="recommendations-tab">
+            <div id="recommendationsContainer">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading recommendations...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="current-tab">
+            <div id="currentIndexesContainer">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading current indexes...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Create Recommended Indexes?</h2>
+            <div id="confirmContent"></div>
+            <div class="modal-actions">
+                <button id="confirmCreate" class="btn btn-success">Create Indexes</button>
+                <button id="confirmCancel" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div id="progressModal" class="modal">
+        <div class="modal-content">
+            <h2>Creating Indexes...</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="progressText">Preparing...</p>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="resultsModal" class="modal">
+        <div class="modal-content">
+            <h2>Index Creation Results</h2>
+            <div id="resultsContent"></div>
+            <div class="modal-actions">
+                <button id="resultsClose" class="btn btn-primary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../renderers/indexOptimizer.js"></script>
+</body>
+</html>

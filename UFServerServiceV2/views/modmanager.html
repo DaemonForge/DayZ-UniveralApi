@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #1e1e1e;">
+<head>
+  <meta charset="UTF-8">
+  <title>Mod Data Manager</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data:;">
+  <link rel="stylesheet" href="styles/modmanager.css">
+  <link rel="stylesheet" href="styles/indexOptimizer.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>🗂️ Mod Data Manager</h1>
+      <p class="subtitle">View and manage data for all installed mods</p>
+      <div class="header-buttons">
+        <button id="refreshBtn" class="btn-icon" title="Refresh mod list">🔄 Refresh</button>
+        <button id="indexOptimizerBtn" class="btn-icon" title="Optimize database indexes">⚡ Index Optimizer</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="search-bar">
+        <input type="search" id="searchInput" class="search" placeholder="Search mods..." autocomplete="off">
+        <div id="statusMessage" class="status" data-type="info">Loading mods...</div>
+      </div>
+
+      <div class="mod-grid" id="modGrid">
+        <!-- Mod cards will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⚠️ Confirm Deletion</h2>
+      </div>
+      <div class="modal-body">
+        <p class="warning-text">
+          You are about to <strong>permanently delete</strong> all data for:
+        </p>
+        <div class="mod-name-display" id="confirmModName"></div>
+        
+        <div class="data-summary" id="confirmDataSummary">
+          <!-- Data counts will be inserted here -->
+        </div>
+
+        <p class="warning-text">
+          <strong>⚠️ This action cannot be undone!</strong>
+        </p>
+
+        <p class="info-text">
+          <strong>Note:</strong> For Players, only the mod's subdocument will be removed, not the entire player record.
+        </p>
+
+        <div class="confirmation-input">
+          <label for="confirmInput">Type the mod name to confirm:</label>
+          <input type="text" id="confirmInput" class="confirm-input" placeholder="Enter mod name..." autocomplete="off">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelBtn" class="btn">Cancel</button>
+        <button id="confirmDeleteBtn" class="btn danger" disabled>Delete All Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Modal -->
+  <div id="progressModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🗑️ Deleting Mod Data...</h2>
+      </div>
+      <div class="modal-body">
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+        <p id="progressText" class="progress-text">Preparing deletion...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Modal -->
+  <div id="resultsModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="resultsTitle">✅ Deletion Complete</h2>
+      </div>
+      <div class="modal-body">
+        <div id="resultsContent"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="closeResultsBtn" class="btn primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Index Optimizer Modal -->
+  <div id="indexOptimizerModal" class="modal" style="display: none;">
+    <div class="modal-content index-optimizer-modal">
+      <div class="modal-header">
+        <h2>⚡ Index Optimizer</h2>
+        <button id="closeIndexOptimizerBtn" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="indexOptimizerContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../renderers/modmanager.js" defer></script>
+  <script src="../renderers/indexOptimizerEmbed.js" defer></script>
+</body>
+</html>
