@@ -13,6 +13,7 @@ let refreshInterval = null;
 const elements = {
   searchInput: null,
   serverFilter: null,
+  typeFilter: null,
   levelInfo: null,
   levelWarn: null,
   levelError: null,
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initElements();
   initEventListeners();
   loadServers();
+  loadTypes();
   loadLogs();
   startLiveUpdates();
 });
@@ -56,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function initElements() {
   elements.searchInput = document.getElementById('searchInput');
   elements.serverFilter = document.getElementById('serverFilter');
+  elements.typeFilter = document.getElementById('typeFilter');
   elements.levelInfo = document.getElementById('levelInfo');
   elements.levelWarn = document.getElementById('levelWarn');
   elements.levelError = document.getElementById('levelError');
@@ -100,6 +103,11 @@ function initEventListeners() {
 
   // Filters
   elements.serverFilter.addEventListener('change', () => {
+    currentPage = 1;
+    loadLogs();
+  });
+
+  elements.typeFilter.addEventListener('change', () => {
     currentPage = 1;
     loadLogs();
   });
@@ -259,6 +267,12 @@ function buildFilters() {
     filters.serverId = server;
   }
 
+  // Log Type (e.g., UF, MapLink, etc.)
+  const logType = elements.typeFilter.value;
+  if (logType) {
+    filters.logType = logType;
+  }
+
   // Levels - include both uppercase (DayZ mod) and lowercase (service logger) variants
   const levels = [];
   if (elements.levelInfo.checked) levels.push('info', 'INFO', 'VERBOSE');
@@ -304,6 +318,21 @@ async function loadServers() {
   }
 }
 
+async function loadTypes() {
+  try {
+    const types = await window.logsApi.getTypes();
+    elements.typeFilter.innerHTML = '<option value="">All Types</option>';
+    types.forEach(type => {
+      const option = document.createElement('option');
+      option.value = type;
+      option.textContent = type;
+      elements.typeFilter.appendChild(option);
+    });
+  } catch (error) {
+    console.error('Failed to load types:', error);
+  }
+}
+
 async function loadLogs() {
   showLoading();
   
@@ -329,7 +358,7 @@ function renderLogs(logs) {
   if (!logs || logs.length === 0) {
     elements.logTableBody.innerHTML = `
       <tr>
-        <td colspan="6">
+        <td colspan="7">
           <div class="empty-state">
             <div class="empty-state-icon">📋</div>
             <div class="empty-state-text">No logs found</div>
@@ -348,6 +377,7 @@ function renderLogs(logs) {
     const level = (log.Level || log.level || 'info').toLowerCase();
     const serverId = log.ServerId || '-';
     const clientType = log.ClientType || '-';
+    const logType = log.Type || 'Unknown';
     // Support both service logs (Message) and DayZ mod logs (Log field + context)
     const message = log.Message || log.message || formatDayZLog(log);
     // Convert ObjectId to string - handles both string and ObjectId object formats
@@ -363,7 +393,8 @@ function renderLogs(logs) {
         <td class="timestamp">${timestamp}</td>
         <td><span class="level-badge ${level}">${level}</span></td>
         <td class="server-id">${escapeHtml(serverId)}</td>
-        <td><span class="type-badge ${clientType.toLowerCase()}">${clientType}</span></td>
+        <td><span class="source-badge ${clientType.toLowerCase()}">${clientType}</span></td>
+        <td><span class="type-badge">${escapeHtml(logType)}</span></td>
         <td class="message-cell" title="${escapeHtml(message)}">${displayMessage}</td>
         <td>
           <button class="details-btn">View</button>
@@ -383,6 +414,7 @@ function prependLog(log) {
   const level = (log.Level || log.level || 'info').toLowerCase();
   const serverId = log.ServerId || '-';
   const clientType = log.ClientType || '-';
+  const logType = log.Type || 'Unknown';
   // Support both service logs (Message) and DayZ mod logs (Log field + context)
   const message = log.Message || log.message || formatDayZLog(log);
   // Convert ObjectId to string - handles both string and ObjectId object formats
@@ -394,7 +426,8 @@ function prependLog(log) {
     <td class="timestamp">${timestamp}</td>
     <td><span class="level-badge ${level}">${level}</span></td>
     <td class="server-id">${escapeHtml(serverId)}</td>
-    <td><span class="type-badge ${clientType.toLowerCase()}">${clientType}</span></td>
+    <td><span class="source-badge ${clientType.toLowerCase()}">${clientType}</span></td>
+    <td><span class="type-badge">${escapeHtml(logType)}</span></td>
     <td class="message-cell" title="${escapeHtml(message)}">${escapeHtml(message)}</td>
     <td>
       <button class="details-btn">View</button>
@@ -454,6 +487,7 @@ function updatePagination() {
 function clearFilters() {
   elements.searchInput.value = '';
   elements.serverFilter.value = '';
+  elements.typeFilter.value = '';
   elements.levelInfo.checked = true;
   elements.levelWarn.checked = true;
   elements.levelError.checked = true;
@@ -474,31 +508,24 @@ function clearFilters() {
 let logCache = {};
 
 window.showLogDetails = async function(logId) {
-  console.log('[showLogDetails] Called with logId:', logId, 'type:', typeof logId);
   let logData = null;
   
   // Try to get from current query results
   try {
-    console.log('[showLogDetails] Querying for _id:', logId);
     const result = await window.logsApi.query({ _id: logId });
-    console.log('[showLogDetails] Query result:', result);
     if (result.logs && result.logs.length > 0) {
       logData = result.logs[0];
     } else if (result.error) {
       console.error('[showLogDetails] Query error:', result.error);
-    } else {
-      console.warn('[showLogDetails] No logs returned for ID:', logId);
     }
   } catch (e) {
     console.error('[showLogDetails] Failed to fetch log details:', e);
   }
   
   if (logData) {
-    console.log('[showLogDetails] Showing modal with data');
     elements.logDetailContent.textContent = JSON.stringify(logData, null, 2);
     elements.detailModal.classList.remove('hidden');
   } else {
-    console.error('[showLogDetails] No log data found for ID:', logId);
     alert('Failed to load log details. ID: ' + logId);
   }
 };

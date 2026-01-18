@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld('logsApi', {
   // Get list of unique server IDs
   getServers: () => ipcRenderer.invoke('logs:getServers'),
   
+  // Get list of unique log types
+  getTypes: () => ipcRenderer.invoke('logs:getTypes'),
+  
   // Get stats (counts by level)
   getStats: (filters) => ipcRenderer.invoke('logs:getStats', filters),
   

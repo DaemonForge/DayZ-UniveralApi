@@ -341,7 +341,8 @@ body {
 .col-time { width: 150px; }
 .col-level { width: 80px; }
 .col-server { width: 120px; }
-.col-type { width: 70px; }
+.col-source { width: 70px; }
+.col-type { width: 90px; }
 .col-message { min-width: 200px; }
 .col-details { width: 80px; }
 
@@ -375,22 +376,32 @@ body {
   color: #2196f3;
 }
 
-/* Type badges */
-.type-badge {
+/* Source badges (client/server) */
+.source-badge {
   display: inline-block;
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 11px;
 }
 
-.type-badge.server {
+.source-badge.server {
   background-color: rgba(156, 39, 176, 0.2);
   color: #ce93d8;
 }
 
-.type-badge.client {
+.source-badge.client {
   background-color: rgba(0, 188, 212, 0.2);
   color: #80deea;
+}
+
+/* Type badges (log type) */
+.type-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  background-color: rgba(158, 158, 158, 0.2);
+  color: #9e9e9e;
 }
 
 /* Message cell */
