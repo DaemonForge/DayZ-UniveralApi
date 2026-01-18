@@ -9,10 +9,11 @@ const cluster = require('cluster');
 const insecureAgent = new https.Agent({ rejectUnauthorized: false });
 
 // Quantum source parameters and fallbacks.
-const FETCH_TIMEOUT_MS = 10_000; // Avoid hanging fetches
-const FAILURE_COOLDOWN_MS = 10 * 60 * 1000; // Pause quantum fetches after repeated failures
+const FETCH_TIMEOUT_MS = 12 * 60 * 1000; // 12 minutes - ANU API is very slow
+const FAILURE_COOLDOWN_MS = 15 * 60 * 1000; // Pause quantum fetches after repeated failures
 const MAX_POOL_SIZE = 100_000; // Safety cap for the shared pool
 const FALLBACK_BATCH_COUNT = 1024; // How many JS numbers to add when quantum fetch fails
+const QUANTUM_BATCH_SIZE = 1024; // Keep at 1024 to avoid rate limits (ANU limits requests, not size)
 
 const router = Router();
 
@@ -182,20 +183,35 @@ function fillWithJsRandom(targetArray, count) {
 }
 
 async function fetchQuantum(length, bitsize) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    try {
-        const res = await fetch(`https://qrng.anu.edu.au/API/jsonI.php?length=${length}&type=hex16&size=${bitsize}`, {
-            signal: controller.signal,
-            agent: insecureAgent // ANU's SSL cert is expired
+    return new Promise((resolve, reject) => {
+        const url = `https://qrng.anu.edu.au/API/jsonI.php?length=${length}&type=hex16&size=${bitsize}`;
+        const timeout = setTimeout(() => {
+            req.destroy();
+            reject(new Error('Request timeout'));
+        }, FETCH_TIMEOUT_MS);
+        
+        const req = https.get(url, { agent: insecureAgent }, (res) => {
+            let data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+                clearTimeout(timeout);
+                try {
+                    if (res.statusCode !== 200) {
+                        reject(new Error(`HTTP ${res.statusCode}`));
+                        return;
+                    }
+                    resolve(JSON.parse(data));
+                } catch (e) {
+                    reject(e);
+                }
+            });
         });
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-        }
-        return await res.json();
-    } finally {
-        clearTimeout(timeout);
-    }
+        
+        req.on('error', (err) => {
+            clearTimeout(timeout);
+            reject(err);
+        });
+    });
 }
 
 async function FillRandomNumbers(bitsize) {
@@ -214,7 +230,7 @@ async function FillRandomNumbers(bitsize) {
     data.success = false;
     
     try {
-        data = await fetchQuantum(1024, bitsize);
+        data = await fetchQuantum(QUANTUM_BATCH_SIZE, bitsize);
         if (!data || !data.data || !Array.isArray(data.data)) {
             throw new Error('Quantum source returned invalid payload');
         }

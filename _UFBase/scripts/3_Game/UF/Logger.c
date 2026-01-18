@@ -8,17 +8,18 @@ class UFLog extends ULoggerBase {
 	override static string getLogID(){
 		return "UF";
 	}
+	static protected ref ULoggerBaseInstance m_LoggerBaseInstanceUF;
 
 	override static ULoggerBaseInstance GetInstance(){
-		if (!m_LoggerBaseInstance){
+		if (!m_LoggerBaseInstanceUF){
 			CreateInstance();
 			Init();
 		}
-		return m_LoggerBaseInstance;
+		return m_LoggerBaseInstanceUF;
 	}
 	
 	override static void CreateInstance(){
-		m_LoggerBaseInstance = new ULoggerBaseInstance(getLogID());
+		m_LoggerBaseInstanceUF = new ULoggerBaseInstance(getLogID());
 	}
 
 	override static void Log(string text, int level = 1) {
@@ -49,42 +50,43 @@ class UFLog extends ULoggerBase {
 
 class ULoggerBase extends Managed {
 	protected static autoptr ULoggerBaseInstance m_LoggerBaseInstance;
-	
+	//Everything commented out to prevent base logger from working you must override everything see example above!
 	static string getLogID(){
 		return "BaseLogger";
 	}
 
 	static void CreateInstance(){
-		m_LoggerBaseInstance = new ULoggerBaseInstance(getLogID());
+		//m_LoggerBaseInstance = new ULoggerBaseInstance(getLogID());
 	}
 	
 	static ULoggerBaseInstance GetInstance(){
+		/* So we don't create instances of Base Logger
 		if (!m_LoggerBaseInstance){
 			CreateInstance();
 			Init();
-		}
-		return m_LoggerBaseInstance;
+		}*/
+		return m_LoggerBaseInstance; 
 	}
 
 	static void Init(){
-		SetLogLevels(LOG_DEBUG, LOG_INFO); // Default to DEBUG locally, Info to API
+		//SetLogLevels(LOG_DEBUG, LOG_INFO); // Default to DEBUG locally, Info to API
 	}
 	
 	static void Log(string text, int level = 1) {
-		GetInstance().DoLog(text,level);
+		//GetInstance().DoLog(text,level);
 	}
 	
 	static void Info(string text){
-		GetInstance().DoLog(text, LOG_INFO);
+		//GetInstance().DoLog(text, LOG_INFO);
 	}
 	
 	static void Debug(string text){
-		GetInstance().DoLog(text, LOG_DEBUG);
+		//GetInstance().DoLog(text, LOG_DEBUG);
 	}
 
 	static void Err(string text){
-		Error2("[" + getLogID() + "] Error", text);
-		GetInstance().DoLog(text, LOG_ERROR);
+		//Error2("[" + getLogID() + "] Error", text);
+		//GetInstance().DoLog(text, LOG_ERROR);
 	}
 	
 	static void SetLogLevels(int level, int apiLevel = -99){

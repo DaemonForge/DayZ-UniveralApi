@@ -28,9 +28,11 @@ if (global.SAVEPATH === undefined) {
 // Initialize logger
 const logger = require('./log').initializeLogger();
 global.logger = logger;
+logger.debug('[App] Logger initialized, loading config...'); // ADDED LOG
 
 // Load configuration
 global.config = require('./configLoader');
+logger.debug('[App] Config loaded, importing dependencies...'); // ADDED LOG
 
 // Import dependencies
 const express = require('express');
@@ -62,6 +64,7 @@ if (typeof global.fetch !== 'function') {
 const totalCPUs = Math.max(1, global.config.cpuCount || os.cpus().length);
 
 // Import route handlers
+logger.debug('[App] Importing route handlers...');
 const RouterItem = require('./controllers/object');
 const RouterPlayer = require('./controllers/player');
 const RouterGlobals = require('./controllers/global');
@@ -403,8 +406,9 @@ function startWebServer() {
  * @param {boolean} isElectron - Whether the app is running in Electron environment
  */
 function Start(isElectron = false) {
+  logger.debug('[App] Start() called');
   logger.info(`[App] Starting Universal Framework Service v${global.APIVERSION}`, { 
-    savePath: global.SAVEPATH, 
+    savePath: global.SAVEPATH,  
     isElectron,
     nodeVersion: process.version,
     platform: process.platform

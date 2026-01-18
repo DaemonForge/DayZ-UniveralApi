@@ -381,6 +381,8 @@ class UUtil extends UUtilBase {
 				return "EREST_ERROR_TIMEOUT";
 			case ERestResultState.EREST_ERROR_NOTIMPLEMENTED:
 				return "EREST_ERROR_NOTIMPLEMENTED";
+			case 401:
+				return "EREST_ERROR_UNAUTHORIZED";
 			case ERestResultState.EREST_ERROR_UNKNOWN:
 				return "EREST_ERROR_UNKNOWN";
 		}

@@ -62,9 +62,9 @@ async function runSave(req, res) {
     if (!exists) {
       const newData = await newGlobal(mod, rawData);
       if (newData !== null) {
-        res.status(201).json(rawData);
+        res.status(200).json(rawData);
       } else {
-        res.status(203).json(rawData);
+        res.status(200).json(rawData);
       }
     } else {
       // Update each key in the rawData object.

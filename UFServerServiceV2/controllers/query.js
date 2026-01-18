@@ -3,6 +3,7 @@ const { MongoClient } = require("mongodb");
 
 const { isArray, isObject, CleanRegEx, GenerateLimiter, createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'DB.query');
+const { getAnalyzer } = require('../models/queryAnalyzer');
 
 const { CheckAuth, CheckServerAuth } = require("../auth/utils");
 
@@ -37,6 +38,15 @@ function GetCollection(URL) {
 async function runQuery(req, res, mod, auth, COLL) {
     if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && COLL === "Objects")) {
         var RawData = req.body;
+        
+        // Enhanced logging for territory duplication debugging
+        logger.info(`[QUERY] Query request started`, {
+            mod,
+            collection: COLL,
+            queryPreview: RawData.Query ? RawData.Query.substring(0, 200) : 'empty',
+            timestamp: new Date().toISOString()
+        });
+        
         const client = new MongoClient(global.config.DBServer);
         try {
 
@@ -77,11 +87,35 @@ async function runQuery(req, res, mod, auth, COLL) {
             if (COLL == "Objects" && (query.Mod === undefined || query.Mod === null)) {
                 query.Mod = mod;
             }
+            
+            // Log final query for territory debugging
+            if (mod === 'FactionTerritories' || mod === 'Factions') {
+                logger.info(`[QUERY][${mod}] Executing query`, {
+                    mod,
+                    finalQuery: JSON.stringify(query),
+                    orderBy: JSON.stringify(orderBy),
+                    maxResults: RawData.MaxResults
+                });
+            }
+            
             let results = collection.find(query).sort(orderBy);
             if (RawData.MaxResults >= 1) {
                 results.limit(RawData.MaxResults);
             }
+            
+            const queryStartTime = Date.now();
             let theData = await results.toArray();
+            const queryExecutionTime = Date.now() - queryStartTime;
+            
+            // Track query for index recommendations
+            try {
+                const analyzer = getAnalyzer();
+                analyzer.recordQuery(COLL, query, orderBy, queryExecutionTime);
+            } catch (analyzerErr) {
+                // Don't fail the query if analyzer fails
+                logger.debug('Failed to record query pattern', { error: analyzerErr.message });
+            }
+            
             let ReturnData = [];
             let count = 0;
             for (let result of theData) {
@@ -99,17 +133,41 @@ async function runQuery(req, res, mod, auth, COLL) {
             }
             if (ReturnData) {
                 if (count == 0) {
-                    logger.info(`Query executed but got no results. Query: ${JSON.stringify(query)}`, {
+                    logger.info(`[QUERY][${mod}] Query returned NO RESULTS`, {
+                        mod,
                         collection: COLL,
+                        query: JSON.stringify(query),
                         returnColumn: ReturnCol
                     });
                     res.json({ Status: "Empty", Count: 0, Results: [] });
                 } else {
-                    logger.info(`Query executed successfully. ${count} results returned. Query: ${JSON.stringify(query)}`, {
+                    logger.info(`[QUERY][${mod}] Query returned ${count} results`, {
+                        mod,
                         collection: COLL,
                         returnColumn: ReturnCol,
                         resultCount: count
                     });
+                    
+                    // For territories, log IDs to track duplicates
+                    if (mod === 'FactionTerritories') {
+                        const territoryIds = ReturnData.map(t => {
+                            if (t && t.ObjectId) return t.ObjectId;
+                            if (t && t.flagId1) return `${t.flagId1}-${t.flagId2}-${t.flagId3}`;
+                            return 'unknown';
+                        });
+                        logger.warn(`[QUERY][FactionTerritories] Territory IDs returned: ${JSON.stringify(territoryIds)}`);
+                        
+                        // Check for duplicates
+                        const uniqueIds = new Set(territoryIds);
+                        if (uniqueIds.size !== territoryIds.length) {
+                            logger.error(`[QUERY][FactionTerritories] DUPLICATE TERRITORIES DETECTED IN QUERY RESULTS!`, {
+                                totalReturned: territoryIds.length,
+                                uniqueCount: uniqueIds.size,
+                                ids: territoryIds
+                            });
+                        }
+                    }
+                    
                     res.json({ Status: "Success", Count: count, Results: ReturnData });
                 }
             }

@@ -259,7 +259,7 @@ router.get('/Status/:TTSId', async (req, res) => {
   try {
     const { TTSId } = req.params;
     const job = await AudioModel.getJob(TTSId);
-    if (!job) return res.status(204).json({ Status: "NotFound" });
+    if (!job) return res.status(200).json({ Status: "NotFound" });
     res.json({ Status: job.status });
   } catch (error) {
     res.status(200).json({ Status: "Error" });

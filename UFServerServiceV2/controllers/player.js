@@ -6,7 +6,7 @@ const logger = createLogger(global.logger, 'c.player');
 const { requireServerAuth, requirePlayerOrServerAuth } = require('../auth/utils')
 
 // Import your player model functions
-const { getPlayerModData, playerExists, newPlayer, updatePlayerModData, updatePlayerField, runPlayerTransaction, runValidatedPlayerTransaction } = require('../models/player');
+const { getPlayerModData, playerExists, newPlayer, updatePlayerModData, updatePlayerField, runPlayerTransaction, runValidatedPlayerTransaction, deletePlayerModData } = require('../models/player');
 
 // ----- Endpoint Handlers -----
 const queryHandler = require("./query");
@@ -23,6 +23,7 @@ router.post('/Update/:GUID/:mod', requireServerAuth, runUpdate);
 router.post('/PublicLoad/:GUID/:mod', runGetPublic);
 router.post('/PublicSave/:GUID/:mod', requireServerAuth, runSavePublic);
 router.post('/Transaction/:GUID/:mod', requireServerAuth, runTransaction);
+router.post('/Delete/:GUID/:mod', requireServerAuth, runDelete);
 
 async function runGet(req, res) {
     const GUID = NormalizeToGUID(req.params.GUID);
@@ -235,6 +236,43 @@ async function Transaction(req, res) {
     } else {
         logger.debug('Routing to normal transaction');
         runTransaction(req, res);
+    }
+}
+
+/**
+ * Deletes a mod's data from a player document
+ */
+async function runDelete(req, res) {
+    const GUID = NormalizeToGUID(req.params.GUID);
+    const mod = req.params.mod;
+    
+    logger.info(`Player delete request`, { GUID, mod });
+    
+    try {
+        const result = await deletePlayerModData(GUID, mod);
+        
+        if (!result.success || !result.deleted) {
+            logger.warn(`Player mod data not found or not deleted`, { GUID, mod, result });
+            return res.status(404).json({ 
+                error: 'Player or mod data not found',
+                deleted: false
+            });
+        }
+        
+        logger.info(`Player mod data deleted successfully`, { 
+            GUID, 
+            mod, 
+            modifiedCount: result.modifiedCount
+        });
+        
+        return res.status(200).json({
+            success: true,
+            deleted: true,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (err) {
+        logger.error(`Error deleting player mod data for GUID ${GUID} and mod ${mod}: ${err.message}`, { error: err });
+        return res.status(500).json({ error: err.message });
     }
 }
 

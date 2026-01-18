@@ -745,7 +745,7 @@ async function runCreateChat(req, res){
         });
         const result = await createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory, KBId);
         logger.info("Chat created successfully", { ChatId: result.ChatId, KBId: KBId || 'none' });
-        return res.status(201).json({ Status: "Success", ChatId: result.ChatId });
+        return res.status(200).json({ Status: "Success", ChatId: result.ChatId });
     } catch (err) {
         logger.error("Error creating chat: " + err.message, { stack: err.stack });
         return res.status(500).json({ Status: "Error", Error: "Failed to create chat" });

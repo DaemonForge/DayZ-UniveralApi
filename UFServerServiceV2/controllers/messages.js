@@ -254,7 +254,7 @@ async function runWriteMessage(req, res) {
     
     logger.info(`Message enqueued`, { ModName, QueueName, actorId });
     await insertMessage(ModName, QueueName, actorId, message);
-    return res.status(201).json({ Status: "Success" });
+    return res.status(200).json({ Status: "Success" });
   } catch (err) {
     logger.error(`Error writing to Mod "${req.params.Mod}" Queue "${req.params.Queue}": ${err.message}`, err);
     return res.status(500).json({ Status: "Error", Error: "Internal Server Error" });
