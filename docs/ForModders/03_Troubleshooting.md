@@ -40,12 +40,16 @@ override void UFrameworkReady()
 You call `U().db().Load(...)`, but your function `OnLoaded` is never executed.
 
 **Likely Causes:**
-1.  **Garbage Collections**: Did you use a class instance that was deleted?
+1.  **Static Function Used**: Callbacks CANNOT be static methods.
+    *   **WRONG:** `static void OnLoaded(...) { }`
+    *   **CORRECT:** `void OnLoaded(...) { }` (instance method)
+    *   *Fix*: Remove `static` keyword and pass `this` as the callback instance.
+2.  **Garbage Collections**: Did you use a class instance that was deleted?
     *   *Fix*: Ensure the class passing `this` stays alive (e.g., `MissionServer` is safe, a temporary funtion variable is not).
-2.  **Function Name Typo**: The string name must match EXACTLY.
+3.  **Function Name Typo**: The string name must match EXACTLY.
     *   `U().db().Load(..., this, "OnLoaded")` vs `void OnLoad(...)`.
-3.  **Signature Mismatch**: The callback MUST have `int cid, int status, string oid, T data`.
-4.  **Runtime Error in Callback**: If your callback crashes DayZ (null pointer), the log usually truncates before printing the error.
+4.  **Signature Mismatch**: The callback MUST have `int cid, int status, string oid, T data`.
+5.  **Runtime Error in Callback**: If your callback crashes DayZ (null pointer), the log usually truncates before printing the error.
     *   *Fix*: Add `Print("Callback started");` at the very top of your callback.
 
 ### "I get UF_UNAUTHORIZED (401)"

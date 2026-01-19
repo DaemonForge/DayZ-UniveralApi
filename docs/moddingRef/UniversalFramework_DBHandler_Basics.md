@@ -67,6 +67,101 @@ static autoptr UDBHandler<MyPlayerData> g_PlayerHandler = new UDBHandler<MyPlaye
 
 ## Best Practices
 
+### ⚠️ CRITICAL: Always Use Class.CastTo() in Callbacks
+
+When receiving typed data from `UDBHandler<T>` callbacks, **always use `Class.CastTo()`** to safely extract the data:
+
+❌ **WRONG - Can crash:**
+```enforce
+void OnPlayerLoaded(int cid, int status, string oid, MyPlayerData data) {
+    m_PlayerData = data;  // Direct assignment - DANGEROUS!
+    m_PlayerData.Level++;  // Can crash if data is null/wrong type
+}
+```
+
+✅ **CORRECT - Use Class.CastTo():**
+```enforce
+void OnPlayerLoaded(int cid, int status, string oid, MyPlayerData data) {
+    if (status == UF_SUCCESS) {
+        Class.CastTo(m_PlayerData, data);  // Safe extraction
+        if (m_PlayerData) {
+            m_PlayerData.Level++;  // Now safe
+        }
+    }
+}
+```
+
+**Why this matters:** The callback system passes data through generic interfaces. Direct assignment can fail or crash when the framework passes unexpected types or null values. `Class.CastTo()` performs runtime type resolution and prevents crashes.
+
+### Query Results Require Class.CastTo()
+
+❌ **WRONG:**
+```enforce
+void OnQuery(int cid, int status, string oid, UDBQueryResult<MyData> result) {
+    array<autoptr MyData> items = result.GetResults();  // Fails!
+}
+```
+
+✅ **CORRECT:**
+```enforce
+typedef UDBQueryResult<MyData> UDBQueryResultMyData;  // In 3_Game layer
+
+void OnQuery(int cid, int status, string oid, UDBQueryResultMyData result) {
+    if (status == UF_SUCCESS) {
+        array<autoptr MyData> items;
+        Class.CastTo(items, result.GetResults());  // Always use CastTo!
+    }
+}
+```
+
+### Boolean Queries Use Integers
+
+DayZ serializes booleans as `0`/`1`, not `true`/`false`. MongoDB queries must use integers:
+
+❌ **WRONG:**
+```enforce
+UDBQuery query = new UDBQuery("{ \"IsVIP\": true }");
+```
+
+✅ **CORRECT:**
+```enforce
+UDBQuery query = new UDBQuery("{ \"IsVIP\": 1 }");
+```
+
+### ⚠️ Callback Functions Must Be Instance Methods
+
+**Problem:** Static functions cannot be used as callbacks.
+
+❌ **WRONG:**
+```enforce
+class DataManager {
+    static void OnLoaded(int cid, int status, string oid, MyData data) {
+        // Won't work!
+    }
+    
+    void LoadData() {
+        // ERROR: Cannot pass static method
+        U().db().Load("MyMod", "key", DataManager, "OnLoaded");
+    }
+}
+```
+
+✅ **CORRECT - Use instance method:**
+```enforce
+class DataManager {
+    void OnLoaded(int cid, int status, string oid, MyData data) {
+        // Instance method works!
+    }
+    
+    void LoadData() {
+        // Pass 'this' instance
+        U().db().Load("MyMod", "key", this, "OnLoaded");
+    }
+}
+```
+
+**Why:** Callbacks use `instance.Call(methodName, params)` which requires an object instance.
+
 ### Data Transfer Objects (DTOs)
 Keep your data classes simple. They should only contain variables, not game logic.
 ```enforce

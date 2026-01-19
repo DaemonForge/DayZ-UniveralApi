@@ -78,6 +78,67 @@ db.Load(playerUID, this, "OnStatsLoaded");
 db.Save(playerUID); // Uses internal m_Data automatically
 ```
 
+### ⚠️ CRITICAL: Always Use Class.CastTo() in Callbacks
+
+When receiving typed data from callbacks, **never use direct assignment**. Always use `Class.CastTo()`:
+
+❌ **WRONG - Can crash:**
+```enforce
+void OnStatsLoaded(int cid, int status, string oid, MyPlayerData data) {
+    m_PlayerData = data;  // DANGEROUS!
+}
+```
+
+✅ **CORRECT:**
+```enforce
+void OnStatsLoaded(int cid, int status, string oid, MyPlayerData data) {
+    if (status == UF_SUCCESS) {
+        Class.CastTo(m_PlayerData, data);  // Safe extraction
+        if (m_PlayerData) {
+            // Now safe to use
+        }
+    }
+}
+```
+
+**For query results, also use Class.CastTo():**
+```enforce
+typedef UDBQueryResult<MyPlayerData> UDBQueryResultMyPlayerData;
+
+void OnQuery(int cid, int status, string oid, UDBQueryResultMyPlayerData result) {
+    if (status == UF_SUCCESS) {
+        array<autoptr MyPlayerData> items;
+        Class.CastTo(items, result.GetResults());  // Required!
+    }
+}
+```
+
+### ⚠️ CRITICAL: Callbacks Must Be Instance Methods (Not Static)
+
+**Static functions cannot be used as callbacks:**
+
+❌ **WRONG:**
+```enforce
+class MyManager {
+    static void OnLoaded(int cid, int status, string oid, string data) {
+        // Won't work!
+    }
+}
+```
+
+✅ **CORRECT:**
+```enforce
+class MyManager {
+    void OnLoaded(int cid, int status, string oid, string data) {
+        // Instance method - works!
+    }
+    
+    void DoLoad() {
+        U().db().Load("MyMod", "key", this, "OnLoaded");  // Pass 'this'
+    }
+}
+```
+
 ---
 
 ## 3. Server vs Client Context

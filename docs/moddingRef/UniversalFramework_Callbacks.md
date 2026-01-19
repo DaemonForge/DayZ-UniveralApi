@@ -310,6 +310,152 @@ The `UNestedCallBack`:
 
 ---
 
+## Critical Quirks & Patterns
+
+### ⚠️ Always Use Class.CastTo() for Typed Callbacks
+
+**Problem:** Directly assigning typed callback parameters can cause crashes when the framework passes unexpected types or null values.
+
+❌ **WRONG - Can crash:**
+```enforce
+void OnDataLoaded(int cid, int status, string oid, MyPlayerData data) {
+    m_PlayerData = data;  // Direct assignment - can crash!
+    m_PlayerData.SomeMethod();  // Crash on null or wrong type
+}
+```
+
+✅ **CORRECT - Use Class.CastTo():**
+```enforce
+void OnDataLoaded(int cid, int status, string oid, MyPlayerData data) {
+    if (status == UF_SUCCESS) {
+        Class.CastTo(m_PlayerData, data);  // Safe extraction
+        if (m_PlayerData) {
+            m_PlayerData.SomeMethod();  // Now safe
+        }
+    }
+}
+```
+
+**Why this matters:** The callback system passes data through generic interfaces. `Class.CastTo()` performs runtime type resolution that direct assignment cannot, preventing crashes from type mismatches or null values.
+
+### ⚠️ Query Results Require Class.CastTo()
+
+**Problem:** Getting results from `UDBQueryResult<T>.GetResults()` with direct assignment fails.
+
+❌ **WRONG:**
+```enforce
+void OnQueryComplete(int cid, int status, string oid, UDBQueryResult<MyData> result) {
+    array<autoptr MyData> items = result.GetResults();  // Doesn't work!
+}
+```
+
+✅ **CORRECT:**
+```enforce
+void OnQueryComplete(int cid, int status, string oid, UDBQueryResult<MyData> result) {
+    if (status == UF_SUCCESS) {
+        array<autoptr MyData> items;
+        Class.CastTo(items, result.GetResults());  // Always use CastTo!
+        // Now items is populated
+    }
+}
+```
+
+### ⚠️ UDBQueryResult<T> Requires Typedef
+
+**Problem:** Using `UDBQueryResult<T>` directly in callback signatures causes "Undefined function" errors.
+
+❌ **WRONG:**
+```enforce
+void OnQuery(int cid, int status, string oid, UDBQueryResult<MyClass> result) {
+    // ERROR: result.GetResults() shows "Undefined function"
+}
+```
+
+✅ **CORRECT - Create typedef in 3_Game:**
+```enforce
+// In scripts/3_Game/TypeDefs.c (or similar)
+typedef UDBQueryResult<MyClass> UDBQueryResultMyClass;
+
+// In callback - use typedef
+void OnQuery(int cid, int status, string oid, UDBQueryResultMyClass result) {
+    array<autoptr MyClass> items;
+    Class.CastTo(items, result.GetResults());  // Now works!
+}
+```
+
+**Why:** Enforce Script's compiler cannot resolve generic templates in callback parameters without typedef. The typedef provides early type resolution in the 3_Game module layer.
+
+### ⚠️ Boolean Values Are Stored as Integers
+
+**Problem:** DayZ JSON serialization saves booleans as `0`/`1`, not `true`/`false`.
+
+❌ **WRONG - MongoDB query:**
+```enforce
+UDBQuery query = new UDBQuery("{ \"isActive\": { \"$ne\": true } }");
+```
+
+✅ **CORRECT - Use integers:**
+```enforce
+UDBQuery query = new UDBQuery("{ \"isActive\": { \"$ne\": 1 } }");
+```
+
+**Affects:**
+- All MongoDB queries with boolean fields
+- Query filter comparisons
+- Update operations on boolean properties
+
+### ⚠️ Static Functions Cannot Be Used as Callbacks
+
+**Problem:** Callback functions must be instance methods, not static functions. The framework needs an object instance to call the method on.
+
+❌ **WRONG - Static method:**
+```enforce
+class MyManager {
+    static void OnDataLoaded(int cid, int status, string oid, string data) {
+        // This will NOT work!
+    }
+    
+    void LoadData() {
+        // ERROR: Cannot use static method as callback
+        U().db().Load("MyMod", "key", MyManager, "OnDataLoaded");
+    }
+}
+```
+
+✅ **CORRECT - Instance method:**
+```enforce
+class MyManager {
+    void OnDataLoaded(int cid, int status, string oid, string data) {
+        // Instance method - works!
+        Print("Data loaded: " + data);
+    }
+    
+    void LoadData() {
+        // Pass 'this' for the instance
+        U().db().Load("MyMod", "key", this, "OnDataLoaded");
+    }
+}
+```
+
+**Why:** Universal Framework callbacks use the pattern `callbackInstance.Call(callbackFunction, params)`. Static functions don't belong to an instance, so they cannot be invoked this way.
+
+**Workaround for utility callbacks:**
+```enforce
+// Create a singleton instance instead of using static
+class DataLoadHelper {
+    static autoptr DataLoadHelper s_Instance = new DataLoadHelper();
+    
+    void OnLoaded(int cid, int status, string oid, string data) {
+        // Handle callback
+    }
+}
+
+// Use the singleton instance
+DataLoadHelper.s_Instance.LoadSomething();
+```
+
+---
+
 ## Best Practices
 
 ### 1. Always Check Status Before Using Data
