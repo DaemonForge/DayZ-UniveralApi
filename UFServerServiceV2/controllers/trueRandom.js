@@ -1,19 +1,27 @@
 const { Router } = require('express');
-const https = require('https');
+const { Agent, setGlobalDispatcher } = require('undici');
 const { GenerateLimiter, createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'random');
 const { requirePlayerOrServerAuth } = require("../auth/utils");
 const cluster = require('cluster');
 
-// HTTPS agent that ignores TLS errors (ANU's cert is expired)
-const insecureAgent = new https.Agent({ rejectUnauthorized: false });
+// Agent for fetch() that ignores SSL errors (ANU's cert is expired)
+const insecureAgent = new Agent({
+    connect: {
+        rejectUnauthorized: false
+    }
+});
+
+// Set this as the global dispatcher for all fetch calls in this module
+// This makes all fetch() calls use the insecure agent
+setGlobalDispatcher(insecureAgent);
 
 // Quantum source parameters and fallbacks.
-const FETCH_TIMEOUT_MS = 12 * 60 * 1000; // 12 minutes - ANU API is very slow
+const FETCH_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
 const FAILURE_COOLDOWN_MS = 15 * 60 * 1000; // Pause quantum fetches after repeated failures
 const MAX_POOL_SIZE = 100_000; // Safety cap for the shared pool
 const FALLBACK_BATCH_COUNT = 1024; // How many JS numbers to add when quantum fetch fails
-const QUANTUM_BATCH_SIZE = 1024; // Keep at 1024 to avoid rate limits (ANU limits requests, not size)
+const QUANTUM_BATCH_SIZE = 512; // Reduced batch size for quantum fetches
 
 const router = Router();
 
@@ -149,7 +157,7 @@ async function getRandom(req, res) {
                 const randomInt = Math.floor(Math.random() * 4294967295) - 2147483647;
                 numbers.push(randomInt);
             }
-            logger.info(`Fallback: Generated ${remainingCount} numbers using Math.random`, { requested: count });
+            logger.debug(`Fallback: Generated ${remainingCount} numbers using Math.random`, { requested: count });
         }
         
         logger.debug("Request completed for random numbers", { requested: count });
@@ -183,41 +191,54 @@ function fillWithJsRandom(targetArray, count) {
 }
 
 async function fetchQuantum(length, bitsize) {
-    return new Promise((resolve, reject) => {
-        const url = `https://qrng.anu.edu.au/API/jsonI.php?length=${length}&type=hex16&size=${bitsize}`;
-        const timeout = setTimeout(() => {
-            req.destroy();
-            reject(new Error('Request timeout'));
-        }, FETCH_TIMEOUT_MS);
+    const url = `https://qrng.anu.edu.au/API/jsonI.php?length=${length}&type=hex16&size=${bitsize}`;
+    logger.debug(`Starting quantum fetch`, { length, bitsize, url, timeoutMinutes: FETCH_TIMEOUT_MS / 60000 });
+    
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    
+    try {
+        const response = await fetch(url, {
+            signal: controller.signal
+        });
         
-        const req = https.get(url, { agent: insecureAgent }, (res) => {
-            let data = '';
-            res.on('data', chunk => { data += chunk; });
-            res.on('end', () => {
-                clearTimeout(timeout);
-                try {
-                    if (res.statusCode !== 200) {
-                        reject(new Error(`HTTP ${res.statusCode}`));
-                        return;
-                    }
-                    resolve(JSON.parse(data));
-                } catch (e) {
-                    reject(e);
+        clearTimeout(timeout);
+        
+        if (!response.ok) {
+            // Read the response body to get the actual error message
+            let errorMsg = `HTTP ${response.status}`;
+            try {
+                const errorText = await response.text();
+                if (errorText) {
+                    errorMsg += `: ${errorText}`;
                 }
-            });
-        });
+            } catch (e) {
+                // Ignore if we can't read the body
+            }
+            throw new Error(errorMsg);
+        }
         
-        req.on('error', (err) => {
-            clearTimeout(timeout);
-            reject(err);
-        });
-    });
+        const data = await response.json();
+        logger.debug('Quantum fetch successful', { dataSize: data.data ? data.data.length : 0 });
+        return data;
+        
+    } catch (error) {
+        clearTimeout(timeout);
+        
+        if (error.name === 'AbortError') {
+            logger.error(`Quantum fetch timeout after ${FETCH_TIMEOUT_MS}ms`, { url });
+            throw new Error(`Request timeout after ${FETCH_TIMEOUT_MS}ms`);
+        }
+        
+        logger.error(`Quantum fetch error: ${error.message}`, { error: error.code || error.name, url });
+        throw error;
+    }
 }
 
 async function FillRandomNumbers(bitsize) {
     const now = Date.now();
     if (now < circuitOpenUntil) {
-        logger.warn('Quantum source in cooldown; skipping fetch', { nextRetryInMs: circuitOpenUntil - now });
+        logger.debug('Quantum source in cooldown; skipping fetch', { nextRetryInMs: circuitOpenUntil - now });
         return;
     }
 
@@ -225,7 +246,7 @@ async function FillRandomNumbers(bitsize) {
         return;
     }
 
-    logger.info("Starting to fill the quantum random number pool", { currentPoolSize: randomNumbers.length, bitsize });
+    logger.debug("Starting to fill the quantum random number pool", { currentPoolSize: randomNumbers.length, bitsize });
     let data = {};
     data.success = false;
     
@@ -258,7 +279,7 @@ async function FillRandomNumbers(bitsize) {
 
         // Ensure we still have some entropy available even if quantum source is down.
         fillWithJsRandom(randomNumbers, FALLBACK_BATCH_COUNT);
-        logger.info('Filled pool with JS fallback numbers after quantum fetch failure', { newPoolSize: randomNumbers.length });
+        logger.debug('Filled pool with JS fallback numbers after quantum fetch failure', { newPoolSize: randomNumbers.length });
         return;
     }
     if (data.success) {
