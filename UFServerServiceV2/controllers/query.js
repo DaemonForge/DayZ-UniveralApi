@@ -155,7 +155,7 @@ async function runQuery(req, res, mod, auth, COLL) {
                             if (t && t.flagId1) return `${t.flagId1}-${t.flagId2}-${t.flagId3}`;
                             return 'unknown';
                         });
-                        logger.warn(`[QUERY][FactionTerritories] Territory IDs returned: ${JSON.stringify(territoryIds)}`);
+                        logger.debug(`[QUERY][FactionTerritories] Territory IDs returned: ${JSON.stringify(territoryIds)}`);
                         
                         // Check for duplicates
                         const uniqueIds = new Set(territoryIds);

@@ -109,7 +109,7 @@ async function createKBVectorIndex(kbId) {
                     partialFilterExpression: { embedding: { $exists: true } }
                 }
             );
-            logger.info('[KB] Embedding existence index created', { collectionName });
+            logger.debug('[KB] Embedding existence index created', { collectionName });
         } catch (err) {
             if (err.code !== 85) { // Ignore "index already exists" errors
                 logger.warn('[KB] Could not create embedding index', { collectionName, error: err.message });
@@ -122,7 +122,7 @@ async function createKBVectorIndex(kbId) {
                 { documentId: 1 },
                 { name: "documentId_idx" }
             );
-            logger.info('[KB] DocumentId index created', { collectionName });
+            logger.debug('[KB] DocumentId index created', { collectionName });
         } catch (err) {
             if (err.code !== 85) {
                 logger.warn('[KB] Could not create documentId index', { collectionName, error: err.message });
@@ -154,7 +154,7 @@ async function createKBVectorIndex(kbId) {
 async function ensureAllKBIndexes() {
     try {
         const kbs = await listKBs();
-        logger.info('[KB] Ensuring indexes for all KBs', { kbCount: kbs.length });
+        logger.debug('[KB] Ensuring indexes for all KBs', { kbCount: kbs.length });
         
         for (const kb of kbs) {
             try {
@@ -178,7 +178,7 @@ async function ensureAllKBIndexes() {
 async function ensureAllEmbeddings(generateEmbeddingsFn) {
     try {
         const kbs = await listKBs();
-        logger.info('[KB] Checking embeddings for all KBs', { kbCount: kbs.length });
+        logger.debug('[KB] Checking embeddings for all KBs', { kbCount: kbs.length });
         
         let totalMissing = 0;
         let totalFixed = 0;
