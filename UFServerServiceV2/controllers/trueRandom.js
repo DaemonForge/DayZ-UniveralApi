@@ -4,6 +4,8 @@ const { GenerateLimiter, createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'random');
 const { requirePlayerOrServerAuth } = require("../auth/utils");
 const cluster = require('cluster');
+const fs = require('fs').promises;
+const path = require('path');
 
 // Agent for fetch() that ignores SSL errors (ANU's cert is expired)
 const insecureAgent = new Agent({
@@ -19,11 +21,114 @@ setGlobalDispatcher(insecureAgent);
 // Quantum source parameters and fallbacks.
 const FETCH_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
 const FAILURE_COOLDOWN_MS = 15 * 60 * 1000; // Pause quantum fetches after repeated failures
-const MAX_POOL_SIZE = 100_000; // Safety cap for the shared pool
+const MAX_POOL_SIZE = 128_000; // Safety cap for the shared pool
 const FALLBACK_BATCH_COUNT = 1024; // How many JS numbers to add when quantum fetch fails
 const QUANTUM_BATCH_SIZE = 512; // Reduced batch size for quantum fetches
 
+// Persistence configuration
+const POOL_FILE = path.join(global.SAVEPATH || '.', 'data', 'randomPool.json');
+const POOL_SAVE_INTERVAL = 15 * 60 * 1000; // Save every 15 minutes
+const POOL_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // Pool data expires after 7 days
+
 const router = Router();
+
+// Persistence tracking
+let lastSaveTimestamp = 0;
+let lastSaveCount = 0;
+let saveInProgress = false;
+
+/**
+ * Load random number pool from disk on startup (async, non-blocking)
+ * Only loads if the saved pool is recent and valid
+ */
+async function loadRandomPool() {
+    try {
+        const data = await fs.readFile(POOL_FILE, 'utf8');
+        const { numbers, savedAt, consumedCount } = JSON.parse(data);
+        
+        const age = Date.now() - savedAt;
+        
+        // Validate data
+        if (!Array.isArray(numbers)) {
+            logger.warn('Saved random pool has invalid format, starting fresh');
+            return;
+        }
+        
+        if (age > POOL_MAX_AGE) {
+            logger.info('Saved random pool is too old, starting fresh', { ageHours: Math.round(age / (60 * 60 * 1000)) });
+            return;
+        }
+        
+        // Load the pool
+        randomNumbers = numbers;
+        lastSaveTimestamp = savedAt;
+        lastSaveCount = consumedCount || 0;
+        
+        logger.info('Loaded random number pool from disk', { 
+            count: numbers.length, 
+            ageMinutes: Math.round(age / (60 * 1000)),
+            totalConsumed: lastSaveCount
+        });
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            logger.debug('No saved random pool found, starting fresh');
+        } else {
+            logger.warn('Failed to load random pool, starting fresh', { error: err.message });
+        }
+    }
+}
+
+/**
+ * Save random number pool to disk (async, non-blocking)
+ * Tracks consumed count to prevent any possibility of reusing numbers
+ */
+async function saveRandomPool() {
+    if (saveInProgress) {
+        logger.debug('Save already in progress, skipping');
+        return;
+    }
+    
+    // Don't save if pool is empty
+    if (randomNumbers.length === 0) {
+        logger.debug('Pool is empty, skipping save');
+        return;
+    }
+    
+    saveInProgress = true;
+    
+    try {
+        // Ensure data directory exists
+        const dataDir = path.dirname(POOL_FILE);
+        await fs.mkdir(dataDir, { recursive: true });
+        
+        // Track how many numbers have been consumed since last save
+        // This prevents any possibility of reusing numbers from an old save
+        const currentCount = randomNumbers.length;
+        const consumedSinceLastSave = lastSaveCount - currentCount;
+        const totalConsumed = lastSaveCount + Math.max(0, consumedSinceLastSave);
+        
+        const saveData = {
+            numbers: randomNumbers,
+            savedAt: Date.now(),
+            consumedCount: totalConsumed,
+            poolSize: currentCount
+        };
+        
+        await fs.writeFile(POOL_FILE, JSON.stringify(saveData), 'utf8');
+        
+        lastSaveTimestamp = saveData.savedAt;
+        lastSaveCount = currentCount;
+        
+        logger.debug('Saved random number pool to disk', { 
+            count: currentCount,
+            totalConsumed
+        });
+    } catch (err) {
+        logger.warn('Failed to save random pool', { error: err.message });
+    } finally {
+        saveInProgress = false;
+    }
+}
 
 let randomNumbers = [];
 if (cluster.isMaster) {
@@ -242,7 +347,8 @@ async function FillRandomNumbers(bitsize) {
         return;
     }
 
-    if (randomNumbers.length > MAX_POOL_SIZE) {
+    if (randomNumbers.length >= MAX_POOL_SIZE) {
+        logger.debug('Random number pool is full; skipping fetch', { poolSize: randomNumbers.length, maxSize: MAX_POOL_SIZE });
         return;
     }
 
@@ -304,6 +410,31 @@ async function FillRandomNumbers(bitsize) {
 }
 
 if (cluster.isMaster) {
+    // Load persisted pool asynchronously (non-blocking startup)
+    loadRandomPool().catch(err => {
+        logger.error('Failed to load random pool on startup', { error: err.message });
+    });
+    
+    // Save pool periodically
+    setInterval(() => {
+        saveRandomPool().catch(err => {
+            logger.error('Failed to save random pool', { error: err.message });
+        });
+    }, POOL_SAVE_INTERVAL);
+    
+    // Save on graceful shutdown
+    process.on('SIGTERM', async () => {
+        logger.info('SIGTERM received, saving random pool...');
+        await saveRandomPool();
+        process.exit(0);
+    });
+    
+    process.on('SIGINT', async () => {
+        logger.info('SIGINT received, saving random pool...');
+        await saveRandomPool();
+        process.exit(0);
+    });
+    
     // Schedule first run in 90 seconds.
     setTimeout(() => {
         FillRandomNumbers(96);
