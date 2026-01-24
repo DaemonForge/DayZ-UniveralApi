@@ -1,4 +1,4 @@
-# Universal Framework - File Utilities
+﻿# Universal Framework - File Utilities
 
 ## Overview
 

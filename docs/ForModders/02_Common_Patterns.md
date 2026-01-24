@@ -1,4 +1,4 @@
-# Universal Framework - Common Patterns & Tips
+﻿# Universal Framework - Common Patterns & Tips
 
 ## Overview
 This document outlines standard patterns for error handling, data management, and code organization when using UFramework.
@@ -8,13 +8,13 @@ This document outlines standard patterns for error handling, data management, an
 ## 1. The Callback Pattern
 All API calls are **asynchronous**. Never assume data is available immediately after a call.
 
-### ❌ WRONG: Blocking/Synchronous Thinking
+### âŒ WRONG: Blocking/Synchronous Thinking
 ```enforce
 string data = U().db().Load("MyMod", "id"); // ERROR: Load returns void or call ID
 Print(data); // Will be empty/null
 ```
 
-### ✅ RIGHT: Async Callback
+### âœ… RIGHT: Async Callback
 ```enforce
 // 1. Initiate Request
 U().db().Load("MyMod", "id", this, "OnLoaded");
@@ -78,18 +78,18 @@ db.Load(playerUID, this, "OnStatsLoaded");
 db.Save(playerUID); // Uses internal m_Data automatically
 ```
 
-### ⚠️ CRITICAL: Always Use Class.CastTo() in Callbacks
+### âš ï¸ CRITICAL: Always Use Class.CastTo() in Callbacks
 
 When receiving typed data from callbacks, **never use direct assignment**. Always use `Class.CastTo()`:
 
-❌ **WRONG - Can crash:**
+âŒ **WRONG - Can crash:**
 ```enforce
 void OnStatsLoaded(int cid, int status, string oid, MyPlayerData data) {
     m_PlayerData = data;  // DANGEROUS!
 }
 ```
 
-✅ **CORRECT:**
+âœ… **CORRECT:**
 ```enforce
 void OnStatsLoaded(int cid, int status, string oid, MyPlayerData data) {
     if (status == UF_SUCCESS) {
@@ -113,11 +113,11 @@ void OnQuery(int cid, int status, string oid, UDBQueryResultMyPlayerData result)
 }
 ```
 
-### ⚠️ CRITICAL: Callbacks Must Be Instance Methods (Not Static)
+### âš ï¸ CRITICAL: Callbacks Must Be Instance Methods (Not Static)
 
 **Static functions cannot be used as callbacks:**
 
-❌ **WRONG:**
+âŒ **WRONG:**
 ```enforce
 class MyManager {
     static void OnLoaded(int cid, int status, string oid, string data) {
@@ -126,7 +126,7 @@ class MyManager {
 }
 ```
 
-✅ **CORRECT:**
+âœ… **CORRECT:**
 ```enforce
 class MyManager {
     void OnLoaded(int cid, int status, string oid, string data) {
@@ -146,9 +146,9 @@ DayZ scripts run on both client and server. UFramework handles authentication au
 
 | Operation | Server | Client | Note |
 |-----------|--------|--------|------|
-| `OBJECT_DB.Save()` | ✅ OK | ❌ Fail | Only servers can write object/global data. |
-| `PLAYER_DB.Load()` | ✅ Any | ✅ Self | Clients can only load their *own* data. |
-| `Discord.AddRole()` | ✅ OK | ❌ Fail | Admin actions are server-only. |
+| `OBJECT_DB.Save()` | âœ… OK | âŒ Fail | Only servers can write object/global data. |
+| `PLAYER_DB.Load()` | âœ… Any | âœ… Self | Clients can only load their *own* data. |
+| `Discord.AddRole()` | âœ… OK | âŒ Fail | Admin actions are server-only. |
 
 Use `GetGame().IsServer()` to guard logic:
 

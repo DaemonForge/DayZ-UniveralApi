@@ -1,4 +1,4 @@
-# API Endpoints - Discord
+﻿# API Endpoints - Discord
 
 All endpoints share the base URL: `http://<ServerIP>:<Port>/Discord`
 

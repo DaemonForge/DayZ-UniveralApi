@@ -1,4 +1,4 @@
-# AI Features & API Reference
+﻿# AI Features & API Reference
 
 This document provides a comprehensive reference for AI-powered features: AI Chat, Assistants, Text-to-Speech (TTS), Image Generation, and Knowledge Bases.
 

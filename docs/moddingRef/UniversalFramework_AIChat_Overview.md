@@ -1,4 +1,4 @@
-# Universal Framework - AI Chat Overview
+﻿# Universal Framework - AI Chat Overview
 
 ## Introduction
 
@@ -16,13 +16,13 @@ The AI Chat system integrates OpenAI's GPT models into DayZ, enabling intelligen
 
 ```
 Your Mod Code
-     ↓
+     â†“
 UFAIChatAgent / UAIChatAgent<T>  (High-level agents)
-     ↓
+     â†“
 UFAIChatEndpoint                  (Low-level API)
-     ↓
+     â†“
 UFServerService                   (Node.js REST API)
-     ↓
+     â†“
 OpenAI API                        (GPT models)
 ```
 
@@ -37,13 +37,13 @@ OpenAI API                        (GPT models)
 
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
-| Create session | ✅ | ❌ |
-| Send message | ✅ | ✅ |
-| Check message status | ✅ | ✅ |
-| Read history | ✅ | ✅ |
-| Reset chat | ✅ | ✅ |
-| Summarize | ✅ | ✅ |
-| Delete session | ✅ | ❌ |
+| Create session | âœ… | âŒ |
+| Send message | âœ… | âœ… |
+| Check message status | âœ… | âœ… |
+| Read history | âœ… | âœ… |
+| Reset chat | âœ… | âœ… |
+| Summarize | âœ… | âœ… |
+| Delete session | âœ… | âŒ |
 
 > **Note:** The server must create chat sessions. Once created, both server and players can send messages.
 

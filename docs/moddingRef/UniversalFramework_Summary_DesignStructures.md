@@ -1,4 +1,4 @@
-# Universal Framework - Summary & Design Structures
+﻿# Universal Framework - Summary & Design Structures
 
 ## Overview
 A summary of Universal API and it's uses and what other context's exsist
@@ -38,42 +38,42 @@ Players receive a JWT token issued by the server on connect. Limited access - pr
 | Feature | Server | Player | Notes |
 |---------|--------|--------|-------|
 | **Object DB** ||||
-| Load | ✅ Read + Create | ✅ Read only | Server can create if not exists |
-| Save | ✅ | ❌ | |
-| Update/Transaction | ✅ | ❌ | |
-| Query | ✅ | ✅ | Both can query |
+| Load | âœ… Read + Create | âœ… Read only | Server can create if not exists |
+| Save | âœ… | âŒ | |
+| Update/Transaction | âœ… | âŒ | |
+| Query | âœ… | âœ… | Both can query |
 | **Player DB** ||||
-| Load | ✅ Any player | ✅ Own GUID only | Player token restricts to own data |
-| Save | ✅ | ❌ | |
-| Update/Transaction | ✅ | ❌ | |
-| Query | ✅ | ❌ | Server only |
-| PublicLoad | ✅ | ✅ (no auth) | Anyone can read `Public.{mod}` data |
-| PublicSave | ✅ | ❌ | |
+| Load | âœ… Any player | âœ… Own GUID only | Player token restricts to own data |
+| Save | âœ… | âŒ | |
+| Update/Transaction | âœ… | âŒ | |
+| Query | âœ… | âŒ | Server only |
+| PublicLoad | âœ… | âœ… (no auth) | Anyone can read `Public.{mod}` data |
+| PublicSave | âœ… | âŒ | |
 | **Globals** ||||
-| Load | ✅ | ✅ | Both can read |
-| Save/Update/Transaction | ✅ | ❌ | |
+| Load | âœ… | âœ… | Both can read |
+| Save/Update/Transaction | âœ… | âŒ | |
 | **Discord** ||||
-| Get / GetChannel | ✅ | ✅ Own GUID | Player can check own Discord |
-| AddRole / RemoveRole | ✅ | ❌ | |
-| Mute / Kick / Move | ✅ | ❌ | |
-| Send (DM) / SetNickname | ✅ | ❌ | |
-| Check / CheckRole | ✅ (no auth) | ✅ (no auth) | Public endpoints |
-| Channel Create/Delete/Edit | ✅ | ❌ | |
-| Channel Send/Messages | ✅ | ✅ | Both can interact |
+| Get / GetChannel | âœ… | âœ… Own GUID | Player can check own Discord |
+| AddRole / RemoveRole | âœ… | âŒ | |
+| Mute / Kick / Move | âœ… | âŒ | |
+| Send (DM) / SetNickname | âœ… | âŒ | |
+| Check / CheckRole | âœ… (no auth) | âœ… (no auth) | Public endpoints |
+| Channel Create/Delete/Edit | âœ… | âŒ | |
+| Channel Send/Messages | âœ… | âœ… | Both can interact |
 | **AI Chat** ||||
-| Create | ✅ | ❌ | Server creates sessions |
-| Send / Read / Reset | ✅ | ✅ | Both can use existing chats |
-| MessageStatus / Summarize | ✅ | ✅ | |
-| Delete | ✅ | ❌ | |
+| Create | âœ… | âŒ | Server creates sessions |
+| Send / Read / Reset | âœ… | âœ… | Both can use existing chats |
+| MessageStatus / Summarize | âœ… | âœ… | |
+| Delete | âœ… | âŒ | |
 | **Message Queues** ||||
-| Read | ✅ | ✅ | Per-reader pointers |
-| Write | ✅ | ✅* | *Controlled by queue `AllowPlayerWrites` setting |
-| Meta / Reset / Purge | ✅ | ❌ | |
+| Read | âœ… | âœ… | Per-reader pointers |
+| Write | âœ… | âœ…* | *Controlled by queue `AllowPlayerWrites` setting |
+| Meta / Reset / Purge | âœ… | âŒ | |
 | **External APIs** ||||
-| TTS Generate/Status/Download | ✅ | ✅ | Rate limited |
-| ServerQuery | ✅ | ✅ | |
-| Crypto prices | ✅ | ✅ | |
-| Random numbers | ✅ | ✅ | |
+| TTS Generate/Status/Download | âœ… | âœ… | Rate limited |
+| ServerQuery | âœ… | âœ… | |
+| Crypto prices | âœ… | âœ… | |
+| Random numbers | âœ… | âœ… | |
 
 ### Key Rules
 

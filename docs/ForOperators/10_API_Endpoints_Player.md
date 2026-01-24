@@ -1,4 +1,4 @@
-# API Endpoints Reference - Player Database
+﻿# API Endpoints Reference - Player Database
 
 This document covers all REST API endpoints for Player database operations.
 

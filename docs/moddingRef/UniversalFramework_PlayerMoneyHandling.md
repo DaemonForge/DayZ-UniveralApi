@@ -1,4 +1,4 @@
-# Universal Framework - Player Money Handling
+﻿# Universal Framework - Player Money Handling
 
 ## Overview
 

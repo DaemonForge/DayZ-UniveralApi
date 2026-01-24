@@ -1,4 +1,4 @@
-# API Endpoints Reference - Object Database
+﻿# API Endpoints Reference - Object Database
 
 This document covers all REST API endpoints for the Object database operations.
 

@@ -1,4 +1,4 @@
-# Logging & Monitoring Guide
+﻿# Logging & Monitoring Guide
 
 This document covers logging configuration, log locations, log analysis, and monitoring recommendations.
 

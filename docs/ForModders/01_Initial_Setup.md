@@ -1,4 +1,4 @@
-# Universal Framework - Mod Initial Setup
+﻿# Universal Framework - Mod Initial Setup
 
 ## Overview
 This guide covers how to set up your development environment and integrate the **Universal Framework** into your DayZ mod.

@@ -1,4 +1,4 @@
-# API Endpoints Reference - Messages Queue
+﻿# API Endpoints Reference - Messages Queue
 
 This document covers the Message Queue API endpoints for asynchronous communication between server and clients.
 

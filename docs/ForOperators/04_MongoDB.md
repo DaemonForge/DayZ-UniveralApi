@@ -1,4 +1,4 @@
-# Universal Framework - MongoDB Guide
+﻿# Universal Framework - MongoDB Guide
 
 This document covers MongoDB installation, configuration, and maintenance for Universal Framework.
 

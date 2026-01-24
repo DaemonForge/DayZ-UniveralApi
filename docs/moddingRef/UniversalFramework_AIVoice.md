@@ -1,4 +1,4 @@
-# Universal Framework - AI Voice (TTS)
+﻿# Universal Framework - AI Voice (TTS)
 
 ## Overview
 
@@ -143,7 +143,7 @@ UTTSVoice.VERSE
 ## Best Practices
 
 ### Cache by Message Hash
-If the exact same message is used often (e.g., “Airdrop inbound”), hash the text and reuse the existing audio ID instead of regenerating it.
+If the exact same message is used often (e.g., â€œAirdrop inboundâ€), hash the text and reuse the existing audio ID instead of regenerating it.
 
 ### Keep Messages Short
 In-game voice should be brief. Long paragraphs are harder to understand while playing and take longer to generate.
@@ -154,7 +154,7 @@ In-game voice should be brief. Long paragraphs are harder to understand while pl
 Use TTS to announce events like airdrops, PvP zones, or wipe countdowns.
 
 ### NPC Voice Lines
-Generate short lines for NPCs or quests (“Bring me 3 batteries”). Cache per NPC type.
+Generate short lines for NPCs or quests (â€œBring me 3 batteriesâ€). Cache per NPC type.
 
 ## Tags
 `tts`, `voice`, `audio`, `announcements`, `npc`, `openai`, `how-to`, `reference`, `doc-usage`, `modder`

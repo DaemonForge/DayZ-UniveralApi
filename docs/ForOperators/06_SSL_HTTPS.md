@@ -1,4 +1,4 @@
-# Universal Framework - SSL/HTTPS Configuration
+﻿# Universal Framework - SSL/HTTPS Configuration
 
 This document covers SSL/TLS certificate configuration for the UF Server Service.
 
@@ -225,16 +225,16 @@ Certificates and Greenlock data are stored in:
 
 ```
 greenlock/
-├── greenlock.d/
-│   └── config.json
-├── accounts/
-│   └── (Let's Encrypt account data)
-└── live/
-    └── yourdomain.com/
-        ├── cert.pem
-        ├── chain.pem
-        ├── fullchain.pem
-        └── privkey.pem
+â”œâ”€â”€ greenlock.d/
+â”‚   â””â”€â”€ config.json
+â”œâ”€â”€ accounts/
+â”‚   â””â”€â”€ (Let's Encrypt account data)
+â””â”€â”€ live/
+    â””â”€â”€ yourdomain.com/
+        â”œâ”€â”€ cert.pem
+        â”œâ”€â”€ chain.pem
+        â”œâ”€â”€ fullchain.pem
+        â””â”€â”€ privkey.pem
 ```
 
 ### First-Time Setup

@@ -1,4 +1,4 @@
-# Knowledge Base Manager UI
+﻿# Knowledge Base Manager UI
 
 The Knowledge Base (KB) Manager provides a graphical interface for creating and managing document collections that power AI-assisted responses. Knowledge Bases enable your AI agents to answer questions based on your own documents, lore, rules, or any text content.
 
@@ -7,7 +7,7 @@ The Knowledge Base (KB) Manager provides a graphical interface for creating and 
 ## Accessing KB Manager
 
 1. Right-click the **UF Service** system tray icon
-2. Select **Options → KB Manager**
+2. Select **Options â†’ KB Manager**
 
 ---
 
@@ -30,11 +30,11 @@ The KB Manager has a two-panel layout:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| **KB ID** | ✅ | Unique identifier used in code (letters, numbers, underscores only) |
-| **Name** | ✅ | Human-readable name |
-| **Description** | ❌ | Optional description of the KB's purpose |
-| **Enable Shorter Answers** | ❌ | Uses AI to extract only relevant excerpts instead of full chunks |
-| **Extract Model** | ❌ | AI model for extraction (default: `gpt-5-mini`) |
+| **KB ID** | âœ… | Unique identifier used in code (letters, numbers, underscores only) |
+| **Name** | âœ… | Human-readable name |
+| **Description** | âŒ | Optional description of the KB's purpose |
+| **Enable Shorter Answers** | âŒ | Uses AI to extract only relevant excerpts instead of full chunks |
+| **Extract Model** | âŒ | AI model for extraction (default: `gpt-5-mini`) |
 
 3. Click **Create**
 
@@ -53,7 +53,7 @@ custom_items
 
 ## Knowledge Base Settings
 
-After selecting a KB, click **⚙️ Settings** to modify:
+After selecting a KB, click **âš™ï¸ Settings** to modify:
 
 - **Name**: Display name
 - **Description**: Purpose description
@@ -67,7 +67,7 @@ After selecting a KB, click **⚙️ Settings** to modify:
 ### Uploading Documents
 
 1. Select a Knowledge Base from the sidebar
-2. Click **📤 Upload Document**
+2. Click **ðŸ“¤ Upload Document**
 3. Configure the upload:
 
 | Field | Description |
@@ -94,7 +94,7 @@ The document will be processed, chunked, and embedded for vector search.
 
 For smaller content or manual entry:
 
-1. Click **📝 New Text Document**
+1. Click **ðŸ“ New Text Document**
 2. Enter document details:
 
 | Field | Description |
@@ -103,7 +103,7 @@ For smaller content or manual entry:
 | **Context Hint** | Optional context description |
 | **Content** | The actual text content |
 
-3. Click **💾 Save**
+3. Click **ðŸ’¾ Save**
 
 ---
 
@@ -116,18 +116,18 @@ For smaller content or manual entry:
    - **Content Editor** (syntax-highlighted)
 
 3. Make your changes
-4. Click **💾 Save**
+4. Click **ðŸ’¾ Save**
 
 **Size Warnings:**
-- ⚠️ **Yellow warning** at ~16,000 characters: Large document, consider splitting
-- 🔴 **Red warning** at ~22,000 characters: Document may be too large
+- âš ï¸ **Yellow warning** at ~16,000 characters: Large document, consider splitting
+- ðŸ”´ **Red warning** at ~22,000 characters: Document may be too large
 
 ---
 
 ### Deleting Documents
 
 1. Hover over a document in the list
-2. Click the **🗑️** delete icon
+2. Click the **ðŸ—‘ï¸** delete icon
 3. Confirm deletion
 
 > **Warning**: Deleted documents cannot be recovered.
@@ -168,7 +168,7 @@ Context hints help the AI understand how to use document content. Good context h
 ## Deleting a Knowledge Base
 
 1. Select the KB from the sidebar
-2. Click **🗑️ Delete**
+2. Click **ðŸ—‘ï¸ Delete**
 3. Confirm deletion
 
 > **Warning**: This permanently deletes the KB and ALL its documents. This action cannot be undone.
@@ -222,11 +222,11 @@ When **Enable Shorter Answers** is turned on:
 4. Results in more focused, concise responses
 
 **When to Use:**
-- ✅ Documents with mixed content (some relevant, some not)
-- ✅ Large documents where only snippets are needed
-- ✅ FAQ-style content
-- ❌ Small, focused documents
-- ❌ When full context is always needed
+- âœ… Documents with mixed content (some relevant, some not)
+- âœ… Large documents where only snippets are needed
+- âœ… FAQ-style content
+- âŒ Small, focused documents
+- âŒ When full context is always needed
 
 **Extract Model Options:**
 - `gpt-5-mini` - Fast and cost-effective (default)

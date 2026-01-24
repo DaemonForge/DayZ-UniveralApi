@@ -1,4 +1,4 @@
-# Configuration Editor (Settings UI)
+﻿# Configuration Editor (Settings UI)
 
 The Windows Electron application includes a graphical configuration editor that provides an intuitive interface for managing all service settings without manually editing JSON files.
 
@@ -7,7 +7,7 @@ The Windows Electron application includes a graphical configuration editor that 
 ## Accessing the Settings UI
 
 1. Right-click the **UF Service** system tray icon
-2. Select **Options → Settings**
+2. Select **Options â†’ Settings**
 
 The Settings window will open with collapsible sections for each configuration category.
 
@@ -203,7 +203,7 @@ This reloads the configuration from disk, reverting any unsaved modifications.
 - Ensure the service has write access to the app data folder
 
 ### Service Doesn't Restart
-- Check the Console (right-click tray → Console) for error messages
+- Check the Console (right-click tray â†’ Console) for error messages
 - Review logs in View Logs for detailed errors
 
 ### Database Connection Failed

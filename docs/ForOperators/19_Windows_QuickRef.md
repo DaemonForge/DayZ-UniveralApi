@@ -1,4 +1,4 @@
-# Universal Framework - Windows Quick Reference
+﻿# Universal Framework - Windows Quick Reference
 
 This is a quick reference for running UF Server Service on Windows. For detailed instructions, see [Installation Guide](01_Installation.md).
 
@@ -36,9 +36,9 @@ Windows uses the Electron application, which provides a graphical system tray in
 | Audio cache (TTS) | `%APPDATA%\ufserverservice\audioCache\` |
 
 **Quick Access:**
-- Right-click tray icon → "Open Data Directory"
-- Right-click tray icon → "View Logs"
-- Right-click tray icon → "📁 Discord Templates"
+- Right-click tray icon â†’ "Open Data Directory"
+- Right-click tray icon â†’ "View Logs"
+- Right-click tray icon â†’ "ðŸ“ Discord Templates"
 
 ---
 
@@ -47,8 +47,8 @@ Windows uses the Electron application, which provides a graphical system tray in
 ### Start/Stop Service
 
 - **Start**: Launch from Start Menu or shortcut
-- **Stop**: Right-click tray icon → "Exit"
-- **Restart**: Right-click tray icon → "Restart Service"
+- **Stop**: Right-click tray icon â†’ "Exit"
+- **Restart**: Right-click tray icon â†’ "Restart Service"
 
 ### View Logs
 
@@ -74,7 +74,7 @@ Get-Content "$env:APPDATA\ufserverservice\logs\UF-*.log" -Wait -Tail 50
 1. Right-click tray icon
 2. Click "Edit Config" (opens in default editor)
 3. Save changes
-4. Right-click tray icon → "Restart Service"
+4. Right-click tray icon â†’ "Restart Service"
 
 **PowerShell:**
 ```powershell
@@ -85,7 +85,7 @@ notepad "$env:APPDATA\ufserverservice\config.json"
 
 **Tray Menu:**
 1. Right-click tray icon
-2. Click "📁 Discord Templates"
+2. Click "ðŸ“ Discord Templates"
 
 **PowerShell:**
 ```powershell
@@ -108,8 +108,8 @@ Get-NetFirewallRule -DisplayName "UF Service*"
 
 **Or via GUI:**
 1. Open Windows Defender Firewall
-2. Advanced Settings → Inbound Rules → New Rule
-3. Port → TCP → 443 → Allow → Name: "UF Service HTTPS"
+2. Advanced Settings â†’ Inbound Rules â†’ New Rule
+3. Port â†’ TCP â†’ 443 â†’ Allow â†’ Name: "UF Service HTTPS"
 
 ---
 
@@ -172,11 +172,11 @@ The service uses a bundled self-signed certificate by default. For custom certif
 
 | Component | Required | Installation |
 |-----------|----------|--------------|
-| MongoDB 4.4+ | ✅ Yes | `winget install MongoDB.Server` |
-| .NET Runtime | ❌ No | - |
-| Visual C++ Redist | ⚠️ Maybe | [Download](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
-| FFmpeg | ⚠️ For TTS | Bundled with Electron app |
-| ImageMagick | ⚠️ For DDS | [Download](https://imagemagick.org/script/download.php) |
+| MongoDB 4.4+ | âœ… Yes | `winget install MongoDB.Server` |
+| .NET Runtime | âŒ No | - |
+| Visual C++ Redist | âš ï¸ Maybe | [Download](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
+| FFmpeg | âš ï¸ For TTS | Bundled with Electron app |
+| ImageMagick | âš ï¸ For DDS | [Download](https://imagemagick.org/script/download.php) |
 
 ---
 

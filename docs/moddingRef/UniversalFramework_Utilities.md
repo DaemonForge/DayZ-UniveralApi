@@ -1,4 +1,4 @@
-# Universal Framework - Core Utilities
+﻿# Universal Framework - Core Utilities
 
 ## Overview
 

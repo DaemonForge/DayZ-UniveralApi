@@ -1,4 +1,4 @@
-# Universal Framework - Database Handler (Advanced)
+﻿# Universal Framework - Database Handler (Advanced)
 
 ## Overview
 

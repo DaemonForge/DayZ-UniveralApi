@@ -1,4 +1,4 @@
-# Universal Framework - Frequently Asked Questions
+﻿# Universal Framework - Frequently Asked Questions
 
 A comprehensive FAQ for server operators using Universal Framework.
 

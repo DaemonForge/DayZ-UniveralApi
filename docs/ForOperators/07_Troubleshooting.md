@@ -1,4 +1,4 @@
-# Universal Framework - Troubleshooting Guide
+﻿# Universal Framework - Troubleshooting Guide
 
 This document provides solutions for common issues with Universal Framework.
 

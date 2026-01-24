@@ -1,4 +1,4 @@
-# Universal Framework - DayZ Mod Configuration
+﻿# Universal Framework - DayZ Mod Configuration
 
 This document covers the configuration of the Universal Framework mod (`@UFramework`) on the DayZ server.
 
@@ -67,9 +67,9 @@ Where `$profile` is your DayZ server's profile directory (typically specified wi
 
 **Invalid Examples:**
 ```
-"http://192.168.1.100:443/"    ❌ Must use https
-"https://192.168.1.100:443"    ❌ Missing trailing slash
-"192.168.1.100:443/"           ❌ Missing https://
+"http://192.168.1.100:443/"    âŒ Must use https
+"https://192.168.1.100:443"    âŒ Missing trailing slash
+"192.168.1.100:443/"           âŒ Missing https://
 ```
 
 **Important:**
@@ -308,10 +308,10 @@ When mods use Universal Framework, they make asynchronous REST API calls. Unders
 
 ### How Callbacks Work
 
-1. **Mod makes request** → Framework sends HTTP request to UF Service
-2. **UF Service processes** → Database operation, Discord call, etc.
-3. **Response received** → Framework calls the mod's callback function
-4. **Mod handles result** → Updates game state, sends response to player
+1. **Mod makes request** â†’ Framework sends HTTP request to UF Service
+2. **UF Service processes** â†’ Database operation, Discord call, etc.
+3. **Response received** â†’ Framework calls the mod's callback function
+4. **Mod handles result** â†’ Updates game state, sends response to player
 
 ### Callback Status Codes
 
@@ -347,9 +347,9 @@ If mods report callback failures:
    - Connection errors
 
 3. **Common patterns:**
-   - All callbacks return `0` → Network connectivity issue
-   - All callbacks return `204` → Authentication mismatch
-   - Occasional `429` → Rate limiting (increase limits or whitelist IP)
+   - All callbacks return `0` â†’ Network connectivity issue
+   - All callbacks return `204` â†’ Authentication mismatch
+   - Occasional `429` â†’ Rate limiting (increase limits or whitelist IP)
 
 ---
 
@@ -407,31 +407,31 @@ The mod communicates with these UF Service endpoints:
 ## Data Flow Diagram
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                        DayZ Server                               │
-│  ┌────────────┐     ┌──────────────┐     ┌────────────────┐     │
-│  │ Custom Mod │ ──► │ UFramework   │ ──► │ RestApi        │     │
-│  │ (uses UF)  │ ◄── │ (callbacks)  │ ◄── │ (HTTP client)  │     │
-│  └────────────┘     └──────────────┘     └───────┬────────┘     │
-└──────────────────────────────────────────────────┼───────────────┘
-                                                   │ HTTPS
-                                                   ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      UF Server Service                           │
-│  ┌────────────────────────────────────────────────────────┐     │
-│  │                    Express.js Routes                   │     │
-│  │  /Object  /Player  /Discord  /AI/Chat  /Messages       │     │
-│  └────────────────────────┬───────────────────────────────┘     │
-│                           │                                      │
-│  ┌────────────────────────┼───────────────────────────────┐     │
-│  │        Controllers / Business Logic                    │     │
-│  └────────────────────────┬───────────────────────────────┘     │
-│                           │                                      │
-│  ┌──────────┐  ┌──────────┼─────────┐  ┌─────────────────┐      │
-│  │ MongoDB  │  │  Discord │ OpenAI  │  │  Other Services │      │
-│  │ (data)   │  │   API    │  API    │  │  (FFmpeg, etc)  │      │
-│  └──────────┘  └──────────┴─────────┘  └─────────────────┘      │
-└──────────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                        DayZ Server                               â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”‚
+â”‚  â”‚ Custom Mod â”‚ â”€â”€â–º â”‚ UFramework   â”‚ â”€â”€â–º â”‚ RestApi        â”‚     â”‚
+â”‚  â”‚ (uses UF)  â”‚ â—„â”€â”€ â”‚ (callbacks)  â”‚ â—„â”€â”€ â”‚ (HTTP client)  â”‚     â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                                   â”‚ HTTPS
+                                                   â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                      UF Server Service                           â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”‚
+â”‚  â”‚                    Express.js Routes                   â”‚     â”‚
+â”‚  â”‚  /Object  /Player  /Discord  /AI/Chat  /Messages       â”‚     â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â”‚
+â”‚                           â”‚                                      â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”‚
+â”‚  â”‚        Controllers / Business Logic                    â”‚     â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â”‚
+â”‚                           â”‚                                      â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      â”‚
+â”‚  â”‚ MongoDB  â”‚  â”‚  Discord â”‚ OpenAI  â”‚  â”‚  Other Services â”‚      â”‚
+â”‚  â”‚ (data)   â”‚  â”‚   API    â”‚  API    â”‚  â”‚  (FFmpeg, etc)  â”‚      â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜      â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---

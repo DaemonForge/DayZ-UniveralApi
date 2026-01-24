@@ -1,4 +1,4 @@
-# Globals Editor UI
+﻿# Globals Editor UI
 
 The Globals Editor provides a graphical interface for viewing and editing global state variables stored in the database. Globals are key-value stores that persist data shared across server sessions.
 
@@ -7,7 +7,7 @@ The Globals Editor provides a graphical interface for viewing and editing global
 ## Accessing Globals Editor
 
 1. Right-click the **UF Service** system tray icon
-2. Select **Options → Globals Editor**
+2. Select **Options â†’ Globals Editor**
 
 ---
 
@@ -86,7 +86,7 @@ Some system modules (like `universalapistatus`) are hidden by default as they're
 
 | Button | Description |
 |--------|-------------|
-| **🔄 Refresh** | Reload the module list |
+| **ðŸ”„ Refresh** | Reload the module list |
 | **Reload** | Discard changes, reload from database |
 | **Delete** | Delete the entire module's global data |
 | **Save** | Save changes to the database |
@@ -200,7 +200,7 @@ curl -X POST https://your-server:3000/Globals/MyMod \
 ## Troubleshooting
 
 ### Module Not Appearing
-- Click **🔄 Refresh** to reload the list
+- Click **ðŸ”„ Refresh** to reload the list
 - Ensure the mod has saved globals at least once
 - Check that MongoDB is running
 

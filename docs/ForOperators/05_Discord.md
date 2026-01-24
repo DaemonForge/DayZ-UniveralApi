@@ -1,4 +1,4 @@
-# Universal Framework - Discord Setup Guide
+﻿# Universal Framework - Discord Setup Guide
 
 This document covers the complete setup of Discord integration for Universal Framework.
 
@@ -249,7 +249,7 @@ The Discord linking pages (login, success, error) can be fully customized using 
 | Linux (systemd install) | `/var/lib/ufserverservice/templates/` |
 | Linux (manual) | `./templates/` or set via `UF_SAVE_PATH` |
 
-**Quick Access (Windows):** Right-click tray icon → "📁 Discord Templates"
+**Quick Access (Windows):** Right-click tray icon â†’ "ðŸ“ Discord Templates"
 
 For complete template customization documentation including variables, EJS syntax, and examples, see **[Discord Template Customization](21_Discord_Templates.md)**.
 

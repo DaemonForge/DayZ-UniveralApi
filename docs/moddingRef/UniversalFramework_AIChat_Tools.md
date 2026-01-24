@@ -1,4 +1,4 @@
-# Universal Framework - AI Chat Tool Calling
+﻿# Universal Framework - AI Chat Tool Calling
 
 ## Overview
 
@@ -10,7 +10,7 @@ Tool calling allows the AI to invoke functions on your agent class to gather inf
 1. You register tools with RegisterTools()
 2. You define methods matching the tool names
 3. AI receives your tools as available functions
-4. AI decides to call a tool → returns tool call request
+4. AI decides to call a tool â†’ returns tool call request
 5. Framework automatically invokes your method
 6. Your method's return value is sent back to AI
 7. AI continues (may call more tools) or gives final answer

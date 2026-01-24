@@ -1,4 +1,4 @@
-# Universal Framework - Texture System
+﻿# Universal Framework - Texture System
 
 ## Overview
 

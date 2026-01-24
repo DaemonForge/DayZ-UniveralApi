@@ -1,4 +1,4 @@
-# Universal Framework - Best Practices
+﻿# Universal Framework - Best Practices
 
 This guide covers recommended patterns, initialization sequences, and performance optimization strategies for Universal Framework.
 
@@ -85,8 +85,8 @@ One of the most powerful optimization strategies is **letting clients make their
 ### The Problem: Server as Bottleneck
 
 ```enforce
-// ❌ BAD: Server fetches data for every player request
-// Server handles 100 players × 10 requests each = 1000 requests through server
+// âŒ BAD: Server fetches data for every player request
+// Server handles 100 players Ã— 10 requests each = 1000 requests through server
 
 modded class MissionServer 
 {
@@ -101,7 +101,7 @@ modded class MissionServer
 ### The Solution: Direct Client Database Access
 
 ```enforce
-// ✅ GOOD: Each client fetches their own data directly
+// âœ… GOOD: Each client fetches their own data directly
 // Server handles 0 requests - clients talk directly to API
 
 modded class MissionGameplay
@@ -125,9 +125,9 @@ modded class MissionGameplay
 
 | Database | Client Can Read | Client Can Write | Notes |
 |----------|-----------------|------------------|-------|
-| `OBJECT_DB` | ✅ All data | ❌ No | Public data store |
-| `PLAYER_DB` | ✅ Own data only | ❌ No | Player-specific data |
-| `globals()` | ✅ All data | ❌ No | Server config/state |
+| `OBJECT_DB` | âœ… All data | âŒ No | Public data store |
+| `PLAYER_DB` | âœ… Own data only | âŒ No | Player-specific data |
+| `globals()` | âœ… All data | âŒ No | Server config/state |
 
 ### When to Use Client-Side Calls
 
@@ -362,11 +362,11 @@ if (g_Game.IsServer()){
 ### Use autoptr for Handlers
 
 ```enforce
-// ✅ GOOD: autoptr automatically cleans up
+// âœ… GOOD: autoptr automatically cleans up
 autoptr MyHandler handler = new MyHandler();
 handler.Load();
 
-// ❌ BAD: Memory leak - no cleanup
+// âŒ BAD: Memory leak - no cleanup
 MyHandler handler = new MyHandler();
 handler.Load();
 ```
@@ -391,15 +391,15 @@ API calls return a **callback ID (cid)** that you can use to track and cancel pe
 
 ### Why Track Callback IDs?
 
-If an object is deleted while an API call is pending, the callback will try to invoke a method on a deleted object → **crash**.
+If an object is deleted while an API call is pending, the callback will try to invoke a method on a deleted object â†’ **crash**.
 
 ```enforce
-// ❌ DANGEROUS: Object deleted before callback returns
+// âŒ DANGEROUS: Object deleted before callback returns
 class MyTemporaryUI {
     void LoadData(){
         U().db().Load("MyMod", "data", this, "OnLoaded"); // Pending...
     }
-    // If UI is closed/deleted before OnLoaded fires → CRASH
+    // If UI is closed/deleted before OnLoaded fires â†’ CRASH
 }
 ```
 
@@ -493,7 +493,7 @@ modded class ItemBase {
 
 ## Cron Cleanup for Entities & Objects
 
-When an entity or object is deleted, you **must** remove any cron jobs registered to it. Otherwise the CronManager will try to call methods on deleted objects → **crash**.
+When an entity or object is deleted, you **must** remove any cron jobs registered to it. Otherwise the CronManager will try to call methods on deleted objects â†’ **crash**.
 
 ### Entity Cron Cleanup Pattern
 
@@ -763,59 +763,59 @@ if (status != UF_SUCCESS){
 ## Common Mistakes to Avoid
 
 ```enforce
-// ❌ Making API calls before UFrameworkReady
+// âŒ Making API calls before UFrameworkReady
 void MissionBase(){
     U().db().Load(...); // Auth not ready yet!
 }
 
-// ❌ Forgetting super call
+// âŒ Forgetting super call
 override void UFrameworkReady(){
     // Missing super.UFrameworkReady()!
     DoStuff();
 }
 
-// ❌ Client trying to write
+// âŒ Client trying to write
 if (GetGame().IsClient()){
     U().db().Save(...); // Will fail - clients can't write
 }
 
-// ❌ Not checking status codes
+// âŒ Not checking status codes
 void OnLoaded(int cid, int status, string oid, string data){
     MyData d = UJSONHandler<MyData>.FromString(data); // Crashes if status != SUCCESS
 }
 
-// ❌ Memory leaks with handlers
+// âŒ Memory leaks with handlers
 MyHandler h = new MyHandler(); // No autoptr = leak
 
-// ❌ Deleting object with pending API calls - CRASH!
+// âŒ Deleting object with pending API calls - CRASH!
 class BadExample {
     void LoadData(){
         U().db().Load("Mod", "id", this, "OnLoaded"); // Pending...
     }
-    // Object deleted before callback → crash when callback tries to fire
+    // Object deleted before callback â†’ crash when callback tries to fire
 }
 
-// ❌ Deleting object with active cron jobs - CRASH!
+// âŒ Deleting object with active cron jobs - CRASH!
 class AnotherBadExample {
     void Start(){
         U().Cron().runEndless(10, this, "Update", NULL);
     }
-    // Object deleted but cron still tries to call Update() → crash
+    // Object deleted but cron still tries to call Update() â†’ crash
 }
 
-// ❌ Not removing cron in EEDelete
+// âŒ Not removing cron in EEDelete
 modded class ItemBase {
     void StartSync(){
         U().Cron().runEndless(30, this, "Sync", NULL);
     }
-    // Missing cleanup in EEDelete → crash when item is deleted
+    // Missing cleanup in EEDelete â†’ crash when item is deleted
 }
 ```
 
 ### The Fix for Cleanup Issues
 
 ```enforce
-// ✅ CORRECT: Track and cancel pending calls
+// âœ… CORRECT: Track and cancel pending calls
 class GoodExample {
     protected ref array<int> m_Pending = new array<int>;
     protected bool m_HasCron = false;
@@ -842,7 +842,7 @@ class GoodExample {
     }
 }
 
-// ✅ CORRECT: Entity cleanup in EEDelete
+// âœ… CORRECT: Entity cleanup in EEDelete
 modded class ItemBase {
     protected bool m_HasCron = false;
     

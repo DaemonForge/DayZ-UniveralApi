@@ -1,4 +1,4 @@
-# Universal Framework - Discord Objects
+﻿# Universal Framework - Discord Objects
 
 ## Overview
 
@@ -276,7 +276,7 @@ class UDiscordNickname extends UFObject_Base {
 ```enforce
 void SendKillFeed(string killer, string victim, string weapon) {
     UDiscordEmbed embed = new UDiscordEmbed();
-    embed.title = "☠️ Kill Feed";
+    embed.title = "â˜ ï¸ Kill Feed";
     embed.color = 0xCC0000;
     
     embed.author = new UDiscordAuthor();

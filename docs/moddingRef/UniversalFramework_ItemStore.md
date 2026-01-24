@@ -1,4 +1,4 @@
-# Universal Framework - Item Store
+﻿# Universal Framework - Item Store
 
 ## Overview
 

@@ -1,4 +1,4 @@
-# Universal Framework - Callback System
+﻿# Universal Framework - Callback System
 
 ## Overview
 
@@ -312,11 +312,11 @@ The `UNestedCallBack`:
 
 ## Critical Quirks & Patterns
 
-### ⚠️ Always Use Class.CastTo() for Typed Callbacks
+### âš ï¸ Always Use Class.CastTo() for Typed Callbacks
 
 **Problem:** Directly assigning typed callback parameters can cause crashes when the framework passes unexpected types or null values.
 
-❌ **WRONG - Can crash:**
+âŒ **WRONG - Can crash:**
 ```enforce
 void OnDataLoaded(int cid, int status, string oid, MyPlayerData data) {
     m_PlayerData = data;  // Direct assignment - can crash!
@@ -324,7 +324,7 @@ void OnDataLoaded(int cid, int status, string oid, MyPlayerData data) {
 }
 ```
 
-✅ **CORRECT - Use Class.CastTo():**
+âœ… **CORRECT - Use Class.CastTo():**
 ```enforce
 void OnDataLoaded(int cid, int status, string oid, MyPlayerData data) {
     if (status == UF_SUCCESS) {
@@ -338,18 +338,18 @@ void OnDataLoaded(int cid, int status, string oid, MyPlayerData data) {
 
 **Why this matters:** The callback system passes data through generic interfaces. `Class.CastTo()` performs runtime type resolution that direct assignment cannot, preventing crashes from type mismatches or null values.
 
-### ⚠️ Query Results Require Class.CastTo()
+### âš ï¸ Query Results Require Class.CastTo()
 
 **Problem:** Getting results from `UDBQueryResult<T>.GetResults()` with direct assignment fails.
 
-❌ **WRONG:**
+âŒ **WRONG:**
 ```enforce
 void OnQueryComplete(int cid, int status, string oid, UDBQueryResult<MyData> result) {
     array<autoptr MyData> items = result.GetResults();  // Doesn't work!
 }
 ```
 
-✅ **CORRECT:**
+âœ… **CORRECT:**
 ```enforce
 void OnQueryComplete(int cid, int status, string oid, UDBQueryResult<MyData> result) {
     if (status == UF_SUCCESS) {
@@ -360,18 +360,18 @@ void OnQueryComplete(int cid, int status, string oid, UDBQueryResult<MyData> res
 }
 ```
 
-### ⚠️ UDBQueryResult<T> Requires Typedef
+### âš ï¸ UDBQueryResult<T> Requires Typedef
 
 **Problem:** Using `UDBQueryResult<T>` directly in callback signatures causes "Undefined function" errors.
 
-❌ **WRONG:**
+âŒ **WRONG:**
 ```enforce
 void OnQuery(int cid, int status, string oid, UDBQueryResult<MyClass> result) {
     // ERROR: result.GetResults() shows "Undefined function"
 }
 ```
 
-✅ **CORRECT - Create typedef in 3_Game:**
+âœ… **CORRECT - Create typedef in 3_Game:**
 ```enforce
 // In scripts/3_Game/TypeDefs.c (or similar)
 typedef UDBQueryResult<MyClass> UDBQueryResultMyClass;
@@ -385,16 +385,16 @@ void OnQuery(int cid, int status, string oid, UDBQueryResultMyClass result) {
 
 **Why:** Enforce Script's compiler cannot resolve generic templates in callback parameters without typedef. The typedef provides early type resolution in the 3_Game module layer.
 
-### ⚠️ Boolean Values Are Stored as Integers
+### âš ï¸ Boolean Values Are Stored as Integers
 
 **Problem:** DayZ JSON serialization saves booleans as `0`/`1`, not `true`/`false`.
 
-❌ **WRONG - MongoDB query:**
+âŒ **WRONG - MongoDB query:**
 ```enforce
 UDBQuery query = new UDBQuery("{ \"isActive\": { \"$ne\": true } }");
 ```
 
-✅ **CORRECT - Use integers:**
+âœ… **CORRECT - Use integers:**
 ```enforce
 UDBQuery query = new UDBQuery("{ \"isActive\": { \"$ne\": 1 } }");
 ```
@@ -404,11 +404,11 @@ UDBQuery query = new UDBQuery("{ \"isActive\": { \"$ne\": 1 } }");
 - Query filter comparisons
 - Update operations on boolean properties
 
-### ⚠️ Static Functions Cannot Be Used as Callbacks
+### âš ï¸ Static Functions Cannot Be Used as Callbacks
 
 **Problem:** Callback functions must be instance methods, not static functions. The framework needs an object instance to call the method on.
 
-❌ **WRONG - Static method:**
+âŒ **WRONG - Static method:**
 ```enforce
 class MyManager {
     static void OnDataLoaded(int cid, int status, string oid, string data) {
@@ -422,7 +422,7 @@ class MyManager {
 }
 ```
 
-✅ **CORRECT - Instance method:**
+âœ… **CORRECT - Instance method:**
 ```enforce
 class MyManager {
     void OnDataLoaded(int cid, int status, string oid, string data) {

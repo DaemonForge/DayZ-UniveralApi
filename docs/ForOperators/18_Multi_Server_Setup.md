@@ -1,4 +1,4 @@
-# Multi-Server Setup Guide
+﻿# Multi-Server Setup Guide
 
 This document covers running multiple DayZ servers with a single UF Server Service instance.
 

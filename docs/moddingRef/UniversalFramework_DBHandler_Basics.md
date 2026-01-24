@@ -1,4 +1,4 @@
-# Universal Framework - Database Handler (Basics)
+﻿# Universal Framework - Database Handler (Basics)
 
 ## Overview
 
@@ -16,17 +16,17 @@
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
 | **OBJECT_DB** |||
-| Load | ✅ Read + Create | ✅ Read only |
-| Save | ✅ | ❌ |
-| Update/Transaction | ✅ | ❌ |
-| Query | ✅ | ✅ |
+| Load | âœ… Read + Create | âœ… Read only |
+| Save | âœ… | âŒ |
+| Update/Transaction | âœ… | âŒ |
+| Query | âœ… | âœ… |
 | **PLAYER_DB** |||
-| Load | ✅ Any player | ✅ Own GUID only |
-| Save | ✅ | ❌ |
-| Update/Transaction | ✅ | ❌ |
-| Query | ✅ | ❌ |
-| PublicLoad | ✅ | ✅ (no auth) |
-| PublicSave | ✅ | ❌ |
+| Load | âœ… Any player | âœ… Own GUID only |
+| Save | âœ… | âŒ |
+| Update/Transaction | âœ… | âŒ |
+| Query | âœ… | âŒ |
+| PublicLoad | âœ… | âœ… (no auth) |
+| PublicSave | âœ… | âŒ |
 
 > **Note:** Player auth tokens are GUID-specific. A player can only load their own data from `PLAYER_DB`. The server can access any player's data.
 
@@ -67,11 +67,11 @@ static autoptr UDBHandler<MyPlayerData> g_PlayerHandler = new UDBHandler<MyPlaye
 
 ## Best Practices
 
-### ⚠️ CRITICAL: Always Use Class.CastTo() in Callbacks
+### âš ï¸ CRITICAL: Always Use Class.CastTo() in Callbacks
 
 When receiving typed data from `UDBHandler<T>` callbacks, **always use `Class.CastTo()`** to safely extract the data:
 
-❌ **WRONG - Can crash:**
+âŒ **WRONG - Can crash:**
 ```enforce
 void OnPlayerLoaded(int cid, int status, string oid, MyPlayerData data) {
     m_PlayerData = data;  // Direct assignment - DANGEROUS!
@@ -79,7 +79,7 @@ void OnPlayerLoaded(int cid, int status, string oid, MyPlayerData data) {
 }
 ```
 
-✅ **CORRECT - Use Class.CastTo():**
+âœ… **CORRECT - Use Class.CastTo():**
 ```enforce
 void OnPlayerLoaded(int cid, int status, string oid, MyPlayerData data) {
     if (status == UF_SUCCESS) {
@@ -95,14 +95,14 @@ void OnPlayerLoaded(int cid, int status, string oid, MyPlayerData data) {
 
 ### Query Results Require Class.CastTo()
 
-❌ **WRONG:**
+âŒ **WRONG:**
 ```enforce
 void OnQuery(int cid, int status, string oid, UDBQueryResult<MyData> result) {
     array<autoptr MyData> items = result.GetResults();  // Fails!
 }
 ```
 
-✅ **CORRECT:**
+âœ… **CORRECT:**
 ```enforce
 typedef UDBQueryResult<MyData> UDBQueryResultMyData;  // In 3_Game layer
 
@@ -118,21 +118,21 @@ void OnQuery(int cid, int status, string oid, UDBQueryResultMyData result) {
 
 DayZ serializes booleans as `0`/`1`, not `true`/`false`. MongoDB queries must use integers:
 
-❌ **WRONG:**
+âŒ **WRONG:**
 ```enforce
 UDBQuery query = new UDBQuery("{ \"IsVIP\": true }");
 ```
 
-✅ **CORRECT:**
+âœ… **CORRECT:**
 ```enforce
 UDBQuery query = new UDBQuery("{ \"IsVIP\": 1 }");
 ```
 
-### ⚠️ Callback Functions Must Be Instance Methods
+### âš ï¸ Callback Functions Must Be Instance Methods
 
 **Problem:** Static functions cannot be used as callbacks.
 
-❌ **WRONG:**
+âŒ **WRONG:**
 ```enforce
 class DataManager {
     static void OnLoaded(int cid, int status, string oid, MyData data) {
@@ -146,7 +146,7 @@ class DataManager {
 }
 ```
 
-✅ **CORRECT - Use instance method:**
+âœ… **CORRECT - Use instance method:**
 ```enforce
 class DataManager {
     void OnLoaded(int cid, int status, string oid, MyData data) {

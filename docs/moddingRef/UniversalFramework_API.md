@@ -1,4 +1,4 @@
-# Universal Framework - API Utilities
+﻿# Universal Framework - API Utilities
 
 ## Overview
 
@@ -16,10 +16,10 @@ All external API endpoints allow both server and player access:
 
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
-| SteamQuery | ✅ | ✅ |
-| CryptoPrice / CryptoConvert / Crypto | ✅ | ✅ |
-| RandomNumbers | ✅ | ✅ |
-| TTS Generate / Status / Download | ✅ | ✅ |
+| SteamQuery | âœ… | âœ… |
+| CryptoPrice / CryptoConvert / Crypto | âœ… | âœ… |
+| RandomNumbers | âœ… | âœ… |
+| TTS Generate / Status / Download | âœ… | âœ… |
 
 > **Note:** These endpoints are rate-limited to prevent abuse.
 

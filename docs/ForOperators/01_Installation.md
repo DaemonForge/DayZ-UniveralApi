@@ -1,4 +1,4 @@
-# Universal Framework - Installation Guide
+﻿# Universal Framework - Installation Guide
 
 ## Table of Contents
 
@@ -260,10 +260,10 @@ If you prefer not to use the installation script:
 
 ```
 @UFramework/
-├── Addons/
-│   └── UFramework.pbo
-└── Keys/
-    └── UFramework.bikey
+â”œâ”€â”€ Addons/
+â”‚   â””â”€â”€ UFramework.pbo
+â””â”€â”€ Keys/
+    â””â”€â”€ UFramework.bikey
 ```
 
 ### Key Installation
@@ -389,8 +389,8 @@ New-NetFirewallRule -DisplayName "UF Service HTTPS" -Direction Inbound -LocalPor
 Or via GUI:
 1. Open Windows Defender Firewall
 2. Click "Advanced settings"
-3. Click "Inbound Rules" → "New Rule"
-4. Select "Port" → TCP → 443
+3. Click "Inbound Rules" â†’ "New Rule"
+4. Select "Port" â†’ TCP â†’ 443
 5. Allow the connection
 6. Name the rule "UF Service HTTPS"
 
@@ -438,7 +438,7 @@ If your UF Service is behind a NAT router, you need to forward the port:
 ### Amazon Web Services (AWS)
 
 **Security Group Configuration:**
-1. Navigate to EC2 → Security Groups
+1. Navigate to EC2 â†’ Security Groups
 2. Select your instance's security group
 3. Add Inbound Rule:
    - Type: HTTPS (or Custom TCP)
@@ -465,7 +465,7 @@ gcloud compute firewall-rules create uf-service-https \
 
 ### DigitalOcean
 
-1. Navigate to Networking → Firewalls
+1. Navigate to Networking â†’ Firewalls
 2. Create or edit firewall
 3. Add Inbound Rule:
    - Type: HTTPS
@@ -506,7 +506,7 @@ This returns `"Error": "Ok"` instead of `"NoAuth"` when authentication succeeds.
 ### Windows
 
 1. Download the new installer
-2. Close the running service (right-click tray icon → Exit)
+2. Close the running service (right-click tray icon â†’ Exit)
 3. Run the new installer (it will update in place)
 4. Existing configuration is preserved
 
@@ -536,7 +536,7 @@ This returns `"Error": "Ok"` instead of `"NoAuth"` when authentication succeeds.
 
 ### Windows
 
-1. Exit the service (right-click tray icon → Exit)
+1. Exit the service (right-click tray icon â†’ Exit)
 2. Run the uninstaller from Programs and Features or:
    ```powershell
    & "$env:LOCALAPPDATA\Programs\ufserverservice\Uninstall ufserverservice.exe"

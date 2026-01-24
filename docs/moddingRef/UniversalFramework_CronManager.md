@@ -1,4 +1,4 @@
-# Universal Framework - Cron Manager
+﻿# Universal Framework - Cron Manager
 
 ## Overview
 

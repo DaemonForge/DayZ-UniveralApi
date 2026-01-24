@@ -1,4 +1,4 @@
-# Universal Framework - Discord Template Customization
+﻿# Universal Framework - Discord Template Customization
 
 This document provides complete reference for customizing the Discord linking pages that players see when connecting their Steam and Discord accounts.
 
@@ -37,7 +37,7 @@ These pages are rendered using EJS (Embedded JavaScript) templates, which you ca
 
 **Windows (Electron App):**
 1. Right-click the UF Service tray icon
-2. Click "📁 Discord Templates"
+2. Click "ðŸ“ Discord Templates"
 3. The templates folder will open in Explorer
 
 **Or via PowerShell:**
@@ -236,7 +236,7 @@ You can use any JavaScript within `<% %>` tags:
 
 ### Common Mistakes and Fixes
 
-| ❌ Wrong | ✅ Correct | Reason |
+| âŒ Wrong | âœ… Correct | Reason |
 |----------|-----------|--------|
 | `<% SteamId %>` | `<%= SteamId %>` | Need `=` to output the value |
 | `<% if (x) { }` | `<% if (x) { %> ... <% } %>` | Must close bracket with `%>` |
@@ -292,7 +292,7 @@ If your template has syntax errors:
 - The service will fall back to the default template
 - An error will be logged: `ERROR IN [TEMPLATE_NAME] TEMPLATE`
 
-**Windows:** Right-click tray icon → "📁 Logs"
+**Windows:** Right-click tray icon â†’ "ðŸ“ Logs"
 **Linux:** `journalctl -u ufserverservice -f`
 
 ---
@@ -417,9 +417,9 @@ The following sections contain the **complete default templates** that ship with
 
     <!--
       Passed Variables:
-      • SteamId     - The Steam ID of the user.
-      • Login_URL   - The URL for Discord connection/login.
-      • Connected   - Boolean; true if the Steam account is already linked.
+      â€¢ SteamId     - The Steam ID of the user.
+      â€¢ Login_URL   - The URL for Discord connection/login.
+      â€¢ Connected   - Boolean; true if the Steam account is already linked.
     -->
     <title>Universal Framework - Connect to Discord</title>
 
@@ -701,11 +701,11 @@ The following sections contain the **complete default templates** that ship with
 
     <!--
       Passed Variables:
-      • SteamId          - The Steam ID of the user.
-      • DiscordId        - The Discord Id.
-      • DiscordUsername  - The Discord Username.
-      • DiscordName      - The DisplayName for the Discord user.
-      • DiscordAvatar    - The URL to the Discord avatar.
+      â€¢ SteamId          - The Steam ID of the user.
+      â€¢ DiscordId        - The Discord Id.
+      â€¢ DiscordUsername  - The Discord Username.
+      â€¢ DiscordName      - The DisplayName for the Discord user.
+      â€¢ DiscordAvatar    - The URL to the Discord avatar.
     -->
     <title>Account Linked Successfully</title>
     
@@ -933,7 +933,7 @@ These are served at:
    Test-Path "$env:APPDATA\ufserverservice\templates\discordLogin.ejs"
    ```
 2. Ensure file extension is `.ejs` (not `.ejs.txt`)
-3. Check logs: Right-click tray icon → "📁 Logs"
+3. Check logs: Right-click tray icon â†’ "ðŸ“ Logs"
 
 **Linux:**
 1. Check file permissions:
@@ -964,9 +964,9 @@ If your template has EJS syntax errors:
 
 - Ensure you're using `<%= variable %>` not `<% variable %>`
 - Check variable spelling - they are case-sensitive:
-  - ✅ `<%= SteamId %>`
-  - ❌ `<%= steamid %>`
-  - ❌ `<%= steamId %>`
+  - âœ… `<%= SteamId %>`
+  - âŒ `<%= steamid %>`
+  - âŒ `<%= steamId %>`
 - Verify you're editing the correct template file
 
 ### Testing Templates

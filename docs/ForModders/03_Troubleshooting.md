@@ -1,4 +1,4 @@
-# Universal Framework - Troubleshooting & Debugging
+﻿# Universal Framework - Troubleshooting & Debugging
 
 ## Overview
 This guide focuses on troubleshooting issues from the **DayZ Mod implementation** perspective. If you are a server admin looking for service errors (e.g., MongoDB crash), see the Operator Troubleshooting guide.

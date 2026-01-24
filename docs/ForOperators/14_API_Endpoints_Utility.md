@@ -1,4 +1,4 @@
-# API Endpoints - Utility Endpoints
+﻿# API Endpoints - Utility Endpoints
 
 This document covers utility endpoints: Logger, Server Query, Random Numbers, Cryptocurrency, and Authentication.
 

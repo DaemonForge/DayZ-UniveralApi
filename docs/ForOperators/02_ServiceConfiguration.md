@@ -1,8 +1,8 @@
-# Universal Framework - Service Configuration
+﻿# Universal Framework - Service Configuration
 
 This document details all configuration options in the UF Server Service `config.json` file.
 
-> **⚠️ Windows Users:**
+> **âš ï¸ Windows Users:**
 > Do NOT edit `config.json` manually unless necessary.
 > Use the **Settings** menu in the System Tray application:
 > **Right-click Tray Icon -> Options -> Settings**

@@ -1,4 +1,4 @@
-# Universal Framework - Linux Quick Reference
+﻿# Universal Framework - Linux Quick Reference
 
 This is a quick reference for running UF Server Service on Linux. For detailed instructions, see [Installation Guide](01_Installation.md).
 

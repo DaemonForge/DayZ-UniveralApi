@@ -1,4 +1,4 @@
-# Universal Framework - String Utilities
+﻿# Universal Framework - String Utilities
 
 ## Overview
 
@@ -77,46 +77,46 @@ These functions correctly handle all DayZ-supported language character sets:
 | Language | Script/Characters |
 |----------|-------------------|
 | English | Basic Latin (ASCII) |
-| German | Latin + umlauts (ä ö ü ß) |
-| French | Latin + accents (é è ê à ç ô) |
-| Spanish | Latin + (ñ á é í ó ú ü ¿ ¡) |
-| Russian | **Cyrillic** (А-Яа-я) |
-| Polish | Latin + (ą ć ę ł ń ó ś ź ż) |
-| Czech | Latin + (á č ď é ě í ň ó ř š ť ú ů ý ž) |
-| Italian | Latin + (à è é ì ò ù) |
-| Portuguese | Latin + (ã õ á é ç â ê ô) |
+| German | Latin + umlauts (Ã¤ Ã¶ Ã¼ ÃŸ) |
+| French | Latin + accents (Ã© Ã¨ Ãª Ã  Ã§ Ã´) |
+| Spanish | Latin + (Ã± Ã¡ Ã© Ã­ Ã³ Ãº Ã¼ Â¿ Â¡) |
+| Russian | **Cyrillic** (Ð-Ð¯Ð°-Ñ) |
+| Polish | Latin + (Ä… Ä‡ Ä™ Å‚ Å„ Ã³ Å› Åº Å¼) |
+| Czech | Latin + (Ã¡ Ä Ä Ã© Ä› Ã­ Åˆ Ã³ Å™ Å¡ Å¥ Ãº Å¯ Ã½ Å¾) |
+| Italian | Latin + (Ã  Ã¨ Ã© Ã¬ Ã² Ã¹) |
+| Portuguese | Latin + (Ã£ Ãµ Ã¡ Ã© Ã§ Ã¢ Ãª Ã´) |
 | Chinese (Simplified) | **CJK Characters** |
 | Chinese (Traditional) | **CJK Characters** |
 | Japanese | **Hiragana, Katakana, Kanji** |
 | Korean | **Hangul** |
-| Turkish | Latin + (ç ğ ı ö ş ü İ) |
+| Turkish | Latin + (Ã§ ÄŸ Ä± Ã¶ ÅŸ Ã¼ Ä°) |
 
 ### Usage Examples
 
 ```enforce
 // For multilingual servers (keeps Russian, Chinese, Japanese, Korean, etc.)
-string clean = UUtil.SanitizeString("Hello 😊 Привет 你好 こんにちは");
-// Returns: "Hello :) Привет 你好 こんにちは"
+string clean = UUtil.SanitizeString("Hello ðŸ˜Š ÐŸÑ€Ð¸Ð²ÐµÑ‚ ä½ å¥½ ã“ã‚“ã«ã¡ã¯");
+// Returns: "Hello :) ÐŸÑ€Ð¸Ð²ÐµÑ‚ ä½ å¥½ ã“ã‚“ã«ã¡ã¯"
 
 // Recommended for player names/chat - preserves all languages, removes emojis
-string safeName = UUtil.StripUnsupportedCharacters("Player😈名前Игрок");
-// Returns: "Player名前Игрок"
+string safeName = UUtil.StripUnsupportedCharacters("PlayerðŸ˜ˆåå‰Ð˜Ð³Ñ€Ð¾Ðº");
+// Returns: "Playeråå‰Ð˜Ð³Ñ€Ð¾Ðº"
 
 // Just remove emojis, keep everything else
-string noEmoji = UUtil.StripEmojisOnly("Hello 😊 World 🎉 Привет");
-// Returns: "Hello  World  Привет"
+string noEmoji = UUtil.StripEmojisOnly("Hello ðŸ˜Š World ðŸŽ‰ ÐŸÑ€Ð¸Ð²ÐµÑ‚");
+// Returns: "Hello  World  ÐŸÑ€Ð¸Ð²ÐµÑ‚"
 
 // Convert emojis to ASCII art (without removing unmapped)
-string asAscii = UUtil.ReplaceEmojisWithASCII("Hello 😊 you're 😎 cool");
+string asAscii = UUtil.ReplaceEmojisWithASCII("Hello ðŸ˜Š you're ðŸ˜Ž cool");
 // Returns: "Hello :) you're B) cool"
 
 // Strict ASCII-only (English servers only!)
-string asciiOnly = UUtil.StripNonASCII("Hello Wörld Привет 你好");
+string asciiOnly = UUtil.StripNonASCII("Hello WÃ¶rld ÐŸÑ€Ð¸Ð²ÐµÑ‚ ä½ å¥½");
 // Returns: "Hello Wrld "  (WARNING: removes ALL non-English!)
 
 // Extended Latin only (removes Cyrillic/CJK but keeps accented chars)
-string latinOnly = UUtil.RemoveInvalidCharacters("Café Привет 你好");
-// Returns: "Café "
+string latinOnly = UUtil.RemoveInvalidCharacters("CafÃ© ÐŸÑ€Ð¸Ð²ÐµÑ‚ ä½ å¥½");
+// Returns: "CafÃ© "
 ```
 
 ### Emoji to ASCII Art Mappings
@@ -125,32 +125,32 @@ The `ReplaceEmojisWithASCII()` and `SanitizeString()` functions convert 150+ emo
 
 | Emoji | ASCII | Category |
 |-------|-------|----------|
-| 😀 😃 😄 | `:D` | Happy |
-| 🙂 😊 ☺️ | `:)` | Smile |
-| 😉 | `;)` | Wink |
-| 😢 😥 | `:'(` | Sad |
-| 😭 | `T_T` | Crying |
-| 😂 🤣 😆 | `XD` | Laughing |
-| 😍 | `<3_<3` | Love eyes |
-| 😎 | `B)` | Cool |
-| 😛 😋 | `:P` | Tongue |
-| 😜 | `;P` | Wink tongue |
-| 🤔 | `:-?` | Thinking |
-| 😐 😑 | `:-\|` | Neutral |
-| 😮 😯 | `:O` | Surprised |
-| 😱 | `D:` | Shocked |
-| 😡 😠 | `>:(` | Angry |
-| ❤️ 💕 💖 | `<3` | Hearts |
-| 👍 | `+1` | Thumbs up |
-| 👎 | `-1` | Thumbs down |
-| 👋 ✋ | `o/` | Wave |
-| 👌 | `OK` | OK hand |
-| ✌️ | `V` | Peace |
-| 🤘 🤟 | `\m/` | Rock on |
-| 🔥 | `*fire*` | Fire |
-| ⭐ 🌟 | `*` | Stars |
-| ✅ ✔️ | `check` | Checkmark |
-| ❌ ✗ | `X` | X mark |
+| ðŸ˜€ ðŸ˜ƒ ðŸ˜„ | `:D` | Happy |
+| ðŸ™‚ ðŸ˜Š â˜ºï¸ | `:)` | Smile |
+| ðŸ˜‰ | `;)` | Wink |
+| ðŸ˜¢ ðŸ˜¥ | `:'(` | Sad |
+| ðŸ˜­ | `T_T` | Crying |
+| ðŸ˜‚ ðŸ¤£ ðŸ˜† | `XD` | Laughing |
+| ðŸ˜ | `<3_<3` | Love eyes |
+| ðŸ˜Ž | `B)` | Cool |
+| ðŸ˜› ðŸ˜‹ | `:P` | Tongue |
+| ðŸ˜œ | `;P` | Wink tongue |
+| ðŸ¤” | `:-?` | Thinking |
+| ðŸ˜ ðŸ˜‘ | `:-\|` | Neutral |
+| ðŸ˜® ðŸ˜¯ | `:O` | Surprised |
+| ðŸ˜± | `D:` | Shocked |
+| ðŸ˜¡ ðŸ˜  | `>:(` | Angry |
+| â¤ï¸ ðŸ’• ðŸ’– | `<3` | Hearts |
+| ðŸ‘ | `+1` | Thumbs up |
+| ðŸ‘Ž | `-1` | Thumbs down |
+| ðŸ‘‹ âœ‹ | `o/` | Wave |
+| ðŸ‘Œ | `OK` | OK hand |
+| âœŒï¸ | `V` | Peace |
+| ðŸ¤˜ ðŸ¤Ÿ | `\m/` | Rock on |
+| ðŸ”¥ | `*fire*` | Fire |
+| â­ ðŸŒŸ | `*` | Stars |
+| âœ… âœ”ï¸ | `check` | Checkmark |
+| âŒ âœ— | `X` | X mark |
 
 ### Practical Examples
 

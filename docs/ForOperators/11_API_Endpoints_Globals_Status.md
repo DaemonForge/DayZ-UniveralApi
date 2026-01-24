@@ -1,4 +1,4 @@
-# API Endpoints Reference - Globals & Status
+﻿# API Endpoints Reference - Globals & Status
 
 This document covers the Globals database endpoints and Status endpoint.
 

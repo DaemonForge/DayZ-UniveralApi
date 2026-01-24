@@ -1,4 +1,4 @@
-# Universal Framework - Status Codes & Constants
+﻿# Universal Framework - Status Codes & Constants
 
 ## Overview
 
@@ -79,7 +79,7 @@ if (status != UF_SUCCESS) { ... }
 ## Best Practices
 
 ### Treat `UF_EMPTY` as Normal
-`UF_EMPTY` is not an error. It means “no record exists yet.” Create defaults instead of logging as failures.
+`UF_EMPTY` is not an error. It means â€œno record exists yet.â€ Create defaults instead of logging as failures.
 
 ### Retry on `UF_TIMEOUT`
 If you see timeouts, retry once (with a short delay). Do not spam retries.

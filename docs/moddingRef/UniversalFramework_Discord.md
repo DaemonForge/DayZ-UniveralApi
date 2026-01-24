@@ -1,4 +1,4 @@
-# Universal Framework - Discord Integration
+﻿# Universal Framework - Discord Integration
 
 ## Overview
 
@@ -20,13 +20,13 @@ UniversalDSEndpoint discord = U().ds();
 
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
-| Get / GetChannel | ✅ | ✅ Own GUID only |
-| AddRole / RemoveRole | ✅ | ❌ |
-| Mute / Kick / Move | ✅ | ❌ |
-| Send (DM) / SetNickname | ✅ | ❌ |
-| Check / CheckRole | ✅ (no auth) | ✅ (no auth) |
-| Channel Create/Delete/Edit | ✅ | ❌ |
-| Channel Send/Messages | ✅ | ✅ |
+| Get / GetChannel | âœ… | âœ… Own GUID only |
+| AddRole / RemoveRole | âœ… | âŒ |
+| Mute / Kick / Move | âœ… | âŒ |
+| Send (DM) / SetNickname | âœ… | âŒ |
+| Check / CheckRole | âœ… (no auth) | âœ… (no auth) |
+| Channel Create/Delete/Edit | âœ… | âŒ |
+| Channel Send/Messages | âœ… | âœ… |
 
 > **Note:** Players can only query their own Discord info. Role modifications, DMs, and voice controls are server-only.
 
@@ -297,7 +297,7 @@ class DiscordKillFeed {
         string weapon = GetWeaponName(killer);
         
         autoptr UDiscordEmbed embed = new UDiscordEmbed();
-        embed.Title = "☠️ Kill";
+        embed.Title = "â˜ ï¸ Kill";
         embed.Color = 0xFF0000;  // Red
         embed.Description = "**" + killerName + "** killed **" + victimName + "**";
         

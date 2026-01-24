@@ -1,4 +1,4 @@
-# Universal Framework - AI Chat Typed Agents
+﻿# Universal Framework - AI Chat Typed Agents
 
 ## Overview
 

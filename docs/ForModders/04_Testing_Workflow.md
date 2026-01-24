@@ -1,4 +1,4 @@
-# Universal Framework - Testing Workflow
+﻿# Universal Framework - Testing Workflow
 
 ## Overview
 Effective testing of UFramework mods requires understanding how to simulate the Client/Server architecture locally.

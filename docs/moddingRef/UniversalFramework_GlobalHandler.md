@@ -1,4 +1,4 @@
-# Universal Framework - Global Handler
+﻿# Universal Framework - Global Handler
 
 ## Overview
 
@@ -22,10 +22,10 @@ UDBGlobalEndpoint globals = U().globals();
 
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
-| Load | ✅ | ✅ |
-| Save | ✅ | ❌ |
-| Update | ✅ | ❌ |
-| Transaction | ✅ | ❌ |
+| Load | âœ… | âœ… |
+| Save | âœ… | âŒ |
+| Update | âœ… | âŒ |
+| Transaction | âœ… | âŒ |
 
 > **Note:** Players can read global state but cannot modify it. All writes are server-only.
 

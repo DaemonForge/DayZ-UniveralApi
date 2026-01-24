@@ -1,4 +1,4 @@
-# Backup & Recovery Guide
+﻿# Backup & Recovery Guide
 
 This document covers backup strategies, disaster recovery procedures, and data migration for UF Server Service.
 

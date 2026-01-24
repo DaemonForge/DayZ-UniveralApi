@@ -1,4 +1,4 @@
-# Universal Framework - AI Chat Knowledge Base
+﻿# Universal Framework - AI Chat Knowledge Base
 
 ## Overview
 
@@ -15,14 +15,14 @@ The Knowledge Base (KB) system enhances AI Chat agents with contextual document 
 ## Architecture
 
 ```
-Your Agent → SetKBId("my_kb") → AI Chat Session Created with KB
-                                        ↓
-                User asks question → AI decides to search KB
-                                        ↓
+Your Agent â†’ SetKBId("my_kb") â†’ AI Chat Session Created with KB
+                                        â†“
+                User asks question â†’ AI decides to search KB
+                                        â†“
                         AI calls __kb_search tool internally
-                                        ↓
-            Service generates embedding → Vector search → Results returned
-                                        ↓
+                                        â†“
+            Service generates embedding â†’ Vector search â†’ Results returned
+                                        â†“
                     AI uses results to formulate response
 ```
 

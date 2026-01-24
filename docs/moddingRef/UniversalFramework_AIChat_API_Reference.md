@@ -1,4 +1,4 @@
-﻿# Universal Framework - AI Chat API Reference
+﻿ï»¿# Universal Framework - AI Chat API Reference
 
 ## UFAIChatEndpoint - Low-Level API
 
@@ -302,33 +302,33 @@ class EfficientNPC extends UFAIChatAgent {
 
 | Operation | Server | Client | Notes |
 |-----------|--------|--------|-------|
-| Create session | âœ… | âŒ | Use Agent or Handler with systemMessage |
-| Send messages | âœ… | âœ… | Need ChatId |
-| Delete session | âœ… | âŒ | Only server can clean up |
-| Use Agents | âœ… | âŒ | Agents create sessions on first Chat() |
-| Use Handlers | âœ… | âœ… | Use chatId constructor on client |
+| Create session | â€¦ | 'ÂÅ’ | Use Agent or Handler with systemMessage |
+| Send messages | â€¦ | â€¦ | Need ChatId |
+| Delete session | â€¦ | 'ÂÅ’ | Only server can clean up |
+| Use Agents | â€¦ | 'ÂÅ’ | Agents create sessions on first Chat() |
+| Use Handlers | â€¦ | â€¦ | Use chatId constructor on client |
 
 ### Common Mistakes
 
 ```enforce
-// âŒ WRONG: Assuming callback fires on creation
+// 'ÂÅ’ WRONG: Assuming callback fires on creation
 autoptr UStringAIChatHandler h = new UStringAIChatHandler("System prompt", this, "OnCreated", "gpt-4o-mini");  // OnCreated is for MESSAGES!
-// âœ… CORRECT: Use NotifyOnCreated for creation callback
+// â€¦ CORRECT: Use NotifyOnCreated for creation callback
 h.NotifyOnCreated("OnChatCreated");
 
-// âŒ WRONG: Using Agent on client
+// 'ÂÅ’ WRONG: Using Agent on client
 autoptr MyAgent agent = new MyAgent();  // Creates session - clients can't!
 agent.Chat("Hello", this, "OnReply");
-// âœ… CORRECT: Client uses Handler with ChatId from server
+// â€¦ CORRECT: Client uses Handler with ChatId from server
 autoptr UStringAIChatHandler h = new UStringAIChatHandler(chatIdFromRPC, this, "OnReply");
 
-// âŒ WRONG: Not checking if chat is ready before getting ID
+// 'ÂÅ’ WRONG: Not checking if chat is ready before getting ID
 void CreateChat() {
     m_Handler = new UStringAIChatHandler("System prompt", this, "OnMsg");
     string chatId = m_Handler.GetChatId();  // Empty! Creation is async
     SendToClient(chatId);
 }
-// âœ… CORRECT: Wait for creation callback
+// â€¦ CORRECT: Wait for creation callback
 void CreateChat() {
     m_Handler = new UStringAIChatHandler("System prompt", this, "OnMsg");
     m_Handler.NotifyOnCreated("OnReady");
@@ -361,12 +361,12 @@ h.SendMessage("World");  // Queued
 If you have an existing mod that extends `UFAIChatAgent` or `UAIChatAgent<T>` and defines a `GetModel()` method, you must add the `override` keyword:
 
 ```enforce
-// âŒ OLD (will cause compile error)
+// 'ÂÅ’ OLD (will cause compile error)
 class MyAgent extends UFAIChatAgent {
     string GetModel() { return "gpt-4o"; }
 }
 
-// âœ… NEW (correct)
+// â€¦ NEW (correct)
 class MyAgent extends UFAIChatAgent {
     override string GetModel() { return "gpt-4o"; }
 }

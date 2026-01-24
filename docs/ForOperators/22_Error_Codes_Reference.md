@@ -1,10 +1,10 @@
-# Error Codes & Messages Reference
+﻿# Error Codes & Messages Reference
 
 This document provides a comprehensive reference for error messages you may encounter in the UF Server Service logs and DayZ server logs (RPT).
 
 ---
 
-## 🖥️ UF Server Service Errors (Node.js)
+## ðŸ–¥ï¸ UF Server Service Errors (Node.js)
 
 These errors appear in the service logs (`%APPDATA%\ufserverservice\logs\` or `/var/lib/ufserverservice/logs/`) or the console.
 
@@ -42,7 +42,7 @@ These errors appear in the service logs (`%APPDATA%\ufserverservice\logs\` or `/
 
 ---
 
-## 🎮 Mod / SDK Errors (DayZ Server RPT)
+## ðŸŽ® Mod / SDK Errors (DayZ Server RPT)
 
 These errors appear in your DayZ server's `.RPT` log file or script log, prefixed with `[UF]`.
 
@@ -78,7 +78,7 @@ These errors appear in your DayZ server's `.RPT` log file or script log, prefixe
 
 ---
 
-## 🔌 HTTP Status Codes
+## ðŸ”Œ HTTP Status Codes
 
 When using the REST API directly:
 

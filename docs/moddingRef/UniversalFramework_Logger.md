@@ -1,4 +1,4 @@
-# Universal Framework - Logger
+﻿# Universal Framework - Logger
 
 ## Overview
 
@@ -136,7 +136,7 @@ Format: `[LEVEL] HH:MM:SS | message`
 Prefix messages with a system name or context. Example: `Inventory/Save`, `Clan/Invite`.
 
 ### Avoid Spamming
-Don’t log inside tight loops or per-frame callbacks unless you gate it behind `LOG_DEBUG`.
+Donâ€™t log inside tight loops or per-frame callbacks unless you gate it behind `LOG_DEBUG`.
 
 ## Common Use Cases
 
