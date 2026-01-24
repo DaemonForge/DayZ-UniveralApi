@@ -50,7 +50,7 @@
     "@yao-pkg/pkg": "^6.10.1",
     "dotenv-cli": "^11.0.0",
     "electron": "^35.0.0",
-    "electron-builder": "^26.0.12",
+    "electron-builder": "^26.4.0",
     "nodemon": "^3.1.9"
   },
   "bin": "bin.js",
