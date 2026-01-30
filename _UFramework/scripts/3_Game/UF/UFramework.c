@@ -98,9 +98,19 @@ class UFramework extends Managed {
 	 * - Returns the cron manager instance.
 	 * - If m_UCronManager has not been initialized, a new instance is created and its Init() function is called.
 	 */
-	//Getter function for the Database Endpoint using either OBJECT_DB or PLAYER_DB
-	// "PLAYER_DB" is only accessable on client for the player info being requested 
-	// "OBJECT_DB" all clients can access all data.
+	/**
+	 * Gets the database endpoint for object or player data operations.
+	 * 
+	 * @param collection OBJECT_DB (default) for shared data, PLAYER_DB for player-specific data
+	 * @return UDBEndpoint instance for database operations, NULL if invalid collection type
+	 * 
+	 * @usage Object Database (accessible to all):
+	 * U().db().Save("MyMod", "config", jsonData, this, "OnSaved");
+	 * U().db().Load("MyMod", "playerData_" + guid, this, "OnLoaded");
+	 * 
+	 * @usage Player Database (client-only, own data):
+	 * U().db(PLAYER_DB).Save("MyMod", "settings", jsonData, this, "OnSaved");
+	 */
 	UDBEndpoint db(int collection = OBJECT_DB){
 		if (collection == OBJECT_DB){
 			if (!m_ObjectEndPoint){
@@ -124,7 +134,16 @@ class UFramework extends Managed {
 		return NULL;
 	}
 	
-	//Getter function for the Discord Endpoint
+	/**
+	 * Gets the Discord integration endpoint.
+	 * 
+	 * @return UniversalDSEndpoint for Discord operations (roles, DMs, channels, voice)
+	 * 
+	 * @usage
+	 * U().ds().AddRole(playerGUID, "RoleID", this, "OnRoleDone");
+	 * U().ds().UserSend(playerGUID, "Welcome message!", this, "OnSent");
+	 * string linkUrl = U().ds().Link();  // Get Discord OAuth link
+	 */
 	UniversalDSEndpoint ds(){
 		if (!m_UniversalDSEndpoint){
 			m_UniversalDSEndpoint = new UniversalDSEndpoint;
@@ -132,7 +151,16 @@ class UFramework extends Managed {
 		return m_UniversalDSEndpoint;
 	}
 	
-	//Getter function for the Globals Endpoint
+	/**
+	 * Gets the global database endpoint for mod-wide shared data.
+	 * 
+	 * @return UDBGlobalEndpoint for global mod data (no object ID, shared across all instances)
+	 * 
+	 * @usage
+	 * U().globals().Save("MyMod", jsonData, this, "OnSaved");
+	 * U().globals().Increment("MyMod", "playerCount", 1);  // Atomic increment
+	 * U().globals().Update("MyMod", "serverStatus", "\"online\"");  // Must quote strings
+	 */
 	UDBGlobalEndpoint globals(){
 		if (!m_UDBGlobalEndpoint){
 			m_UDBGlobalEndpoint = new UDBGlobalEndpoint;
@@ -140,7 +168,16 @@ class UFramework extends Managed {
 		return m_UDBGlobalEndpoint;
 	}
 	
-	//Getter function for the API Endpoint
+	/**
+	 * Gets the API utilities endpoint for server queries, crypto prices, random numbers, etc.
+	 * 
+	 * @return UApiEndpoint for utility operations
+	 * 
+	 * @usage
+	 * U().api().Status(this, "OnStatusCheck");  // Check API status
+	 * U().api().RandomNumbers(1000, this, "OnRandoms");  // Get random numbers
+	 * U().api().SteamQuery(ip, port, this, "OnServerStatus");  // Query game server
+	 */
 	UApiEndpoint api(){
 		if (!m_UApiEndpoint){
 			m_UApiEndpoint = new UApiEndpoint;
@@ -148,6 +185,16 @@ class UFramework extends Managed {
 		return m_UApiEndpoint;
 	}
 	
+	/**
+	 * Gets the CRON manager for scheduling recurring tasks.
+	 * 
+	 * @return UCronManager for task scheduling
+	 * 
+	 * @usage
+	 * U().Cron().runEndless(60, this, "OnEveryMinute", NULL);  // Every 60 seconds
+	 * U().Cron().runEndCount(10, 5, this, "OnFiveTimes", NULL);  // 5 times, 10s apart
+	 * U().Cron().Remove(this, "OnEveryMinute");  // Cancel scheduled task
+	 */
 	UCronManager Cron(){
 		if (!m_UCronManager){
 			m_UCronManager = new UCronManager;
@@ -156,6 +203,16 @@ class UFramework extends Managed {
 		return m_UCronManager;
 	}
 
+	/**
+	 * Gets the message queue endpoint for async messaging between players/server.
+	 * 
+	 * @return UFMsgEndpoint for message queue operations
+	 * 
+	 * @usage
+	 * U().Msg().Write("MyMod", "notifications", msgObject, callback);
+	 * U().Msg().Read("MyMod", "notifications", callback);  // Read all unread
+	 * U().Msg().ReadLatest("MyMod", "notifications", 10, callback);  // Latest 10
+	 */
 	UFMsgEndpoint Msg(){
 		if (!m_UFMsgEndpoint){
 			m_UFMsgEndpoint = new UFMsgEndpoint;
@@ -166,6 +223,18 @@ class UFramework extends Managed {
 		return m_UFMsgEndpoint;
 	}
 	
+	/**
+	 * Gets the AI Chat endpoint for OpenAI integration.
+	 * 
+	 * @return UFAIChatEndpoint for AI chat session operations
+	 * 
+	 * @usage
+	 * U().AI().Create(systemPrompt, "string", "", "", -1, callback);
+	 * U().AI().Send(chatId, userMessage, callback);
+	 * U().AI().History(chatId, callback);  // Get chat history
+	 * 
+	 * @note Check U().IsOpenAIEnabled() before using
+	 */
 	UFAIChatEndpoint AI(){
 		if (!m_UFAIChatEndpoint){
 			m_UFAIChatEndpoint = new UFAIChatEndpoint;
@@ -173,156 +242,22 @@ class UFramework extends Managed {
 		return m_UFAIChatEndpoint;
 	}
 	/**
-	 * RequestCallCancel
-	 * -----------------
-	 * Requests the cancellation of an active call by inserting the provided call ID (cid) into a cancellation list.
-	 *
-	 * @param cid The call identifier to be canceled.
+	 * Requests cancellation of an active REST callback by its call ID.
+	 * 
+	 * @param cid Call identifier to cancel
 	 */
-
-	/**
-	 * Post (overload 1)
-	 * -----------------
-	 * Sends a POST HTTP request to the specified URL using default parameters.
-	 * The content type is set to "application/json", and a silent callback is used.
-	 *
-	 * @param url The endpoint URL for the POST request.
-	 * @return An integer status value (typically 0).
-	 */
-
-	/**
-	 * Post (overload 2)
-	 * -----------------
-	 * Sends a POST HTTP request to the specified URL with a provided JSON string.
-	 * If no custom RestCallback is provided, a default silent callback is used.
-	 *
-	 * @param url The endpoint URL for the POST request.
-	 * @param jsonString The JSON formatted string to be sent in the request body.
-	 * @param UCBX (Optional) A custom RestCallback to handle the response.
-	 * @param contentType (Optional) The MIME type for the content header; defaults to "application/json".
-	 * @return An integer status value (typically 0).
-	 */
-
-	/**
-	 * Post (overload 3)
-	 * -----------------
-	 * Sends a POST HTTP request to the specified URL with a provided JSON string.
-	 * A user-defined callback derived from UFCallbackBase is registered to process the response.
-	 *
-	 * @param url The endpoint URL for the POST request.
-	 * @param jsonString The JSON formatted string to be sent in the request body.
-	 * @param cb A user-defined callback of type UFCallbackBase used to handle the response.
-	 * @param contentType (Optional) The MIME type for the content header; defaults to "application/json".
-	 * @return An integer call identifier if the callback is provided; otherwise, -1.
-	 */
-
-	/**
-	 * Get (overload 1)
-	 * ----------------
-	 * Sends a GET HTTP request to the specified URL using a default silent callback.
-	 *
-	 * @param url The endpoint URL for the GET request.
-	 * @return An integer status value (typically 0).
-	 */
-
-	/**
-	 * Get (overload 2)
-	 * ----------------
-	 * Sends a GET HTTP request to the specified URL with a provided RestCallback.
-	 *
-	 * @param url The endpoint URL for the GET request.
-	 * @param UCBX The RestCallback to handle the response.
-	 * @return An integer status value (typically 0).
-	 */
-
-	/**
-	 * Get (overload 3)
-	 * ----------------
-	 * Sends a GET HTTP request to the specified URL with a user-defined callback derived from UFCallbackBase.
-	 *
-	 * @param url The endpoint URL for the GET request.
-	 * @param cb A user-defined callback of type UFCallbackBase used to handle the response.
-	 * @return An integer call identifier if the callback is provided; otherwise, -1.
-	 */
-
-	/**
-	 * IsDiscordEnabled
-	 * ----------------
-	 * Checks whether the Discord endpoint is configured.
-	 *
-	 * @return True if the Discord endpoint is enabled; otherwise, false.
-	 */
-
-	/**
-	 * IsOnline
-	 * --------
-	 * Determines if the mod has successfully completed its operational status check.
-	 *
-	 * @return True if the mod is online and operational; otherwise, false.
-	 */
-
-	/**
-	 * VersionOffset
-	 * -------------
-	 * Returns the version offset to indicate compatibility:
-	 *  - 0: Versions match exactly.
-	 *  - ±1: Off by a patch version; minor issues.
-	 *  - ±2: Off by a minor version; some endpoints or features might be missing.
-	 *  - ±3: Off by a major version; mod functionality may be severely impacted.
-	 *
-	 * @return An integer representing the version offset.
-	 */
-
-	/**
-	 * CheckAndRenewQRandom
-	 * --------------------
-	 * Monitors the remaining pool of QRandom numbers and triggers a renewal process if the available
-	 * random numbers fall below 2000.
-	 */
-
-	/**
-	 * GetVersion
-	 * ----------
-	 * Retrieves the current version of the mod.
-	 *
-	 * @return A string representing the mod's version as defined by UF_VERSION.
-	 */
-
-	/**
-	 * FindPlayer
-	 * ----------
-	 * Searches for a player on the server by their Global Unique Identifier (GUID).
-	 *
-	 * @param GUID The unique identifier of the player.
-	 * @return A DayZPlayer object if a matching player is found; otherwise, null.
-	 */
-
-	/**
-	 * FindPlayerByIdentity
-	 * --------------------
-	 * Searches for a player using their PlayerIdentity object.
-	 *
-	 * @param identity The PlayerIdentity object associated with the player.
-	 * @return A DayZPlayer object if a matching player is found; otherwise, null.
-	 */
-
-	/**
-	 * Global Initialization Control (m_isInit, isGlobalInit, setGlobalInit)
-	 * ---------------------------------------------------------------------
-	 * m_isInit: A protected static boolean flag that indicates whether the framework has been globally initialized.
-	 *
-	 * isGlobalInit:
-	 * - A static function that returns the current global initialization state.
-	 *
-	 * setGlobalInit:
-	 * - A static function that sets the global initialization flag to true.
-	 */
-	//Request a call to be canceled
 	void RequestCallCancel(int cid){
 		m_CanceledCalls.Insert(cid);
 	}
 	
-	//A super simple Post Interface to help people
+	/**
+	 * Sends a POST request with empty body (fire-and-forget).
+	 * 
+	 * @param url Target endpoint URL
+	 * @return Always returns 0
+	 * 
+	 * @usage U().Post("https://api.example.com/log");
+	 */
 	static int Post(string url)
 	{
 		RestContext ctx = RestCore().GetRestContext(url);
@@ -331,7 +266,17 @@ class UFramework extends Managed {
 		return 0;
 	}
 	
-	//A super simple Post Interface to help people
+	/**
+	 * Sends a POST request with JSON body and optional callback.
+	 * 
+	 * @param url Target endpoint URL
+	 * @param jsonString JSON data to send
+	 * @param UCBX RestCallback to handle response (uses silent callback if NULL)
+	 * @param contentType MIME type for Content-Type header (default: "application/json")
+	 * @return Always returns 0
+	 * 
+	 * @usage U().Post("https://api.example.com/data", jsonString, new MyCallback());
+	 */
 	static int Post(string url, string jsonString, RestCallback UCBX = NULL, string contentType = "application/json")
 	{
 		autoptr RestCallback vUCBX = UCBX;
@@ -344,7 +289,19 @@ class UFramework extends Managed {
 		return 0;
 	}
 	
-	//A super simple Post Interface to help people
+	/**
+	 * Sends a POST request with UFCallbackBase callback for response handling.
+	 * 
+	 * @param url Target endpoint URL
+	 * @param jsonString JSON data to send
+	 * @param cb UFCallbackBase-derived callback (required)
+	 * @param contentType MIME type for Content-Type header (default: "application/json")
+	 * @return Call ID for tracking/cancellation, or -1 if cb is NULL
+	 * 
+	 * @usage
+	 * int callId = U().Post("https://api.example.com/save", jsonData, new MySaveCallback());
+	 * // Later: U().RequestCallCancel(callId);
+	 */
 	static int Post(string url, string jsonString, UFCallbackBase cb, string contentType = "application/json")
 	{
 		int cid = -1;
@@ -357,14 +314,29 @@ class UFramework extends Managed {
 		return -1;
 	}
 	
-	//A super simple Get Interface to help people
+	/**
+	 * Sends a GET request (fire-and-forget).
+	 * 
+	 * @param url Target endpoint URL
+	 * @return Always returns 0
+	 * 
+	 * @usage U().Get("https://api.example.com/status");
+	 */
 	static int Get(string url)
 	{
 		RestContext ctx =  RestCore().GetRestContext(url);
 		ctx.GET(new USilentCallBack, "");
 		return 0;
 	}
-	//A super simple Get Interface to help people
+	/**
+	 * Sends a GET request with RestCallback for response handling.
+	 * 
+	 * @param url Target endpoint URL
+	 * @param UCBX RestCallback to handle response (uses silent callback if NULL)
+	 * @return Always returns 0
+	 * 
+	 * @usage U().Get("https://api.example.com/data", new MyDataCallback());
+	 */
 	static int Get(string url, RestCallback UCBX)
 	{
 		autoptr RestCallback vUCBX = UCBX;
@@ -375,7 +347,16 @@ class UFramework extends Managed {
 		ctx.GET(vUCBX , "");
 		return 0;
 	}
-	//A super simple Get Interface to help people
+	/**
+	 * Sends a GET request with UFCallbackBase callback for response handling.
+	 * 
+	 * @param url Target endpoint URL
+	 * @param cb UFCallbackBase-derived callback (required)
+	 * @return Call ID for tracking/cancellation, or -1 if cb is NULL
+	 * 
+	 * @usage
+	 * int callId = U().Get("https://api.example.com/config", new MyConfigCallback());
+	 */
 	static int Get(string url, UFCallbackBase cb)
 	{
 		int cid = -1;
@@ -387,22 +368,42 @@ class UFramework extends Managed {
 		return -1;
 	}
 	
-	//Will return true if the discord endpoint is configured (this doesn't mean its configured correctly though :p)
+	/**
+	 * Checks if Discord integration is configured.
+	 * 
+	 * @return True if Discord endpoint exists in config (not necessarily valid)
+	 * 
+	 * @note This only checks config presence, not if credentials are correct
+	 */
 	bool IsDiscordEnabled(){
 		return m_UDiscordEnabled;
 	}
 
-	//Returns true if the OpenAI service is reported online
+	/**
+	 * Checks if OpenAI integration is available and operational.
+	 * 
+	 * @return True if OpenAI service is online and configured
+	 */
 	bool IsOpenAIEnabled(){
 		return m_UOpenAIEnabled;
 	}
 	
-	//Returns True if the status check has come back and everything is okay
+	/**
+	 * Checks if the framework has completed initial status check successfully.
+	 * 
+	 * @return True if mod is fully initialized and service is operational
+	 * 
+	 * @usage if (!U().IsOnline()) { Print("API not ready yet"); return; }
+	 */
 	bool IsOnline(){
 		return m_UFOnline;
 	}
 	
-	//Returns the Server ID from the config (available on both client and server after auth)
+	/**
+	 * Gets the server ID from configuration.
+	 * 
+	 * @return Server identifier string (available on both client and server after auth)
+	 */
 	string GetServerID(){
 		if (UFConfig()){
 			return UFConfig().GetServerID();
@@ -410,27 +411,50 @@ class UFramework extends Managed {
 		return "";
 	}
 	
-	//Returns current Version Offset 0 Version Matches exactly
-	// -1 or 1 off by a patch this is not a problem and won't cause any major issues
-	// -2 or 2 off by a Minor Version this may cause some endpoints to not work or features to be missing
-	// -3 or 3 off by a Major Version most likely the mod will not work at all!
+	/**
+	 * Gets version compatibility offset between mod and service.
+	 * 
+	 * @return Version offset:
+	 *  - 0: Perfect match
+	 *  - ±1: Patch difference (minor issues possible)
+	 *  - ±2: Minor version difference (some features may be missing)
+	 *  - ±3: Major version difference (mod likely broken)
+	 * 
+	 * @usage if (U().VersionOffset() >= 2) { Error("Version mismatch!"); }
+	 */
 	int VersionOffset(){
 		return m_UFVersionOffset;
 	}
 	
-	//Checks to see if the Random Numbers are below half and add's more
+	/**
+	 * Checks QRandom pool and requests more numbers if below threshold.
+	 * 
+	 * @note Automatically triggered when random pool drops below 2000 numbers
+	 */
 	void CheckAndRenewQRandom(){
 		if (Math.QRandomRemaining() <= 2000){
 			GetQRandomNumbers();
 		}
 	}
 	
-	//Returns Current Version of the Mod
+	/**
+	 * Gets the current framework version.
+	 * 
+	 * @return Version string (e.g., "2.0.0")
+	 */
 	static string GetVersion(){
 		return UF_VERSION;
 	}
 	
-	//Simple function for finding a player based on their GUID
+	/**
+	 * Finds a player by their GUID (server-side only).
+	 * 
+	 * @param GUID Player's unique identifier
+	 * @return DayZPlayer if found, NULL otherwise
+	 * 
+	 * @note Only works on server (returns NULL on client)
+	 * @usage DayZPlayer player = U().FindPlayer(identity.GetId());
+	 */
 	static DayZPlayer FindPlayer(string GUID){
 		if (g_Game.IsServer()){
 			autoptr array<Man> players = new array<Man>;
@@ -445,7 +469,14 @@ class UFramework extends Managed {
 		return NULL;
 	}
 	
-	//Simple function for finding a player based on their identity
+	/**
+	 * Finds a player by their PlayerIdentity (server-side only).
+	 * 
+	 * @param identity PlayerIdentity object
+	 * @return DayZPlayer if found, NULL if identity is NULL or player not found
+	 * 
+	 * @note Uses network ID lookup for faster retrieval than FindPlayer()
+	 */
 	static DayZPlayer FindPlayerByIdentity(PlayerIdentity identity) {
 		if (!identity)
 			return NULL;
@@ -456,14 +487,21 @@ class UFramework extends Managed {
 		return DayZPlayer.Cast(g_Game.GetObjectByNetworkId(lowBits, highBits));
 	}
 	
-	
-	
-	
 	protected static bool m_isInit = false;
 	
+	/**
+	 * Checks if framework has been globally initialized.
+	 * 
+	 * @return True if setGlobalInit() has been called
+	 */
 	static bool isGlobalInit(){
 		return m_isInit;
 	}
+	/**
+	 * Marks framework as globally initialized.
+	 * 
+	 * @note Internal use only - called during framework startup
+	 */
 	static void setGlobalInit(){
 		m_isInit = true;
 	}
@@ -731,6 +769,14 @@ class UFramework extends Managed {
 		return clCore;
 	}
 	
+	/**
+	 * Gets the authentication token for API requests.
+	 * 
+	 * @return Auth token string. On client: JWT token (or "" if expired). On server: ServerAuth from config.
+	 * 
+	 * @note Client automatically renews tokens when expiring (<4 min left)
+	 * @note Returns "" if client token is expired to prevent using stale credentials
+	 */
 	string GetAuthToken(){
 		if (m_UFauthToken && !g_Game.IsServer()){
 			if (m_UFauthToken.IsExpired()) {
@@ -753,30 +799,55 @@ class UFramework extends Managed {
 		return "null";
 	}
 	
+	/**
+	 * Checks if framework has a valid, non-expired auth token.
+	 * 
+	 * @return True if token exists and is valid (not expired, not error state)
+	 * 
+	 * @usage if (!U().HasValidAuth()) { Error("Cannot make API call - no auth"); return; }
+	 */
 	bool HasValidAuth(){
 		if (!m_UFauthToken) return false;
 		return (!m_UFauthToken.IsExpired() && GetAuthToken() != "null" && GetAuthToken() != "error" && GetAuthToken() != "ERROR" && GetAuthToken() != "" );
 	}
 	
-	// Check if token will expire within the given buffer seconds
+	/**
+	 * Checks if auth token will expire soon.
+	 * 
+	 * @param bufferSeconds Time threshold in seconds (default: 120 = 2 minutes)
+	 * @return True if token expires within bufferSeconds (client only, always false on server)
+	 */
 	bool IsTokenExpiringSoon(int bufferSeconds = 120){
 		if (!m_UFauthToken || g_Game.IsServer()) return false;
 		return m_UFauthToken.IsExpiringSoon(bufferSeconds);
 	}
 	
-	// Get seconds remaining until token expires (for logging)
+	/**
+	 * Gets seconds remaining until token expiration.
+	 * 
+	 * @return Seconds until expiry, or -1 if no token exists
+	 */
 	int GetTokenSecondsRemaining(){
 		if (!m_UFauthToken) return -1;
 		return m_UFauthToken.GetSecondsUntilExpiry();
 	}
 	
-	// Get token suffix for logging (last 8 chars - safe to log)
+	/**
+	 * Gets last 8 characters of token for safe logging.
+	 * 
+	 * @return Token suffix or "NO_TOKEN" if no token exists
+	 * @note Safe to log - doesn't expose full token
+	 */
 	string GetTokenSuffix(){
 		if (!m_UFauthToken) return "NO_TOKEN";
 		return m_UFauthToken.GetTokenSuffix();
 	}
 	
-	// Debug dump current token state
+	/**
+	 * Outputs detailed token state to debug logs.
+	 * 
+	 * @note For debugging auth issues - logs token status, expiry, etc.
+	 */
 	void DebugTokenState(){
 		if (!m_UFauthToken){
 			UFLog.Debug("[Auth] DebugTokenState: No token exists");
@@ -785,8 +856,12 @@ class UFramework extends Managed {
 		m_UFauthToken.DoDebug();
 	}
 	
-	
-	//OLD RestCallBack Endpoints use if you want to use RestCallBack Classes instead of Function Based
+	/**
+	 * Gets UniversalRest endpoint (legacy RestCallback interface).
+	 * 
+	 * @return UniversalRest for callback-based REST operations
+	 * @deprecated Use db(), ds(), api(), etc. with UFCallbackBase instead
+	 */
 	UniversalRest Rest(){
 		if (!m_UniversalRest){
 			m_UniversalRest = new UniversalRest;
@@ -972,7 +1047,13 @@ class UFramework extends Managed {
 			}
 		}
 	}
-	
+	/**
+	 * Requests a fresh auth token from web service for a player (server-side only).
+	 * 
+	 * @param guid Player GUID
+	 * @note Prevents duplicate requests if one is already pending
+	 * @note Internal use - called by OnRPC_RequestAuthToken
+	 */
 	void PreparePlayerAuth(string guid){
 		// Check if request is already pending to avoid duplicates
 		if (m_PendingAuthRequests && m_PendingAuthRequests.Find(guid) != -1){
@@ -988,6 +1069,13 @@ class UFramework extends Managed {
 		this.Rest().GetAuth(guid);
 	}
 	
+	/**
+	 * Caches player auth token and sends it to the player (server-side only).
+	 * 
+	 * @param guid Player GUID
+	 * @param auth JWT auth token
+	 * @note Automatically sends token via RPC if player is connected
+	 */
 	void AddPlayerAuth(string guid, string auth){
 		if (!PlayerAuths){PlayerAuths = new map<string, string>;}
 		
@@ -1006,6 +1094,13 @@ class UFramework extends Managed {
 		}
 	}
 	
+	/**
+	 * Retrieves cached auth token for a player (server-side only).
+	 * 
+	 * @param guid Player GUID
+	 * @param auth Out parameter to receive auth token
+	 * @return True if token found in cache, false otherwise
+	 */
 	bool GetPlayerAuth(string guid, out string auth){
 		if (PlayerAuths && PlayerAuths.Contains(guid)){
 			auth = PlayerAuths.Get(guid);
@@ -1139,7 +1234,12 @@ class UFramework extends Managed {
 		Post(webhookUrl, discordObject.ToJson());
 	} 
 	
-	
+	/**
+	 * Converts REST API error code to human-readable string.
+	 * 
+	 * @param ErrorCode ERestResultState error code
+	 * @return Error description string
+	 */
 	static string ErrorToString(int ErrorCode){
 		switch ( ErrorCode )
 		{
@@ -1169,11 +1269,26 @@ class UFramework extends Managed {
 		return "UNDEFINED_ERROR";
 	}
 	
+	/**
+	 * Generates unique call ID for REST callbacks.
+	 * 
+	 * @return Unique integer call identifier
+	 * @note Internal use - auto-incremented counter
+	 */
 	int CallId(){
 		return ++m_CallId;
 	}
 	
-	
+	/**
+	 * Registers a UFCallbackBase-derived callback for a REST call.
+	 * 
+	 * @param cb Callback instance to register
+	 * @param cid Out parameter to receive assigned call ID
+	 * @return RestCallback wrapper for the registered callback
+	 * 
+	 * @note Internal use - called by endpoint methods
+	 * @note Callbacks are auto-cleared when they execute
+	 */
 	RestCallback RegisterCall(UFRestCallBackBase cb, out int cid){
 		if (!cb) {
 			UFLog.Err("[UFramework] RegisterCall - callback is null!");
@@ -1185,6 +1300,15 @@ class UFramework extends Managed {
 		return UFRestCallBackBase.Cast(cb);
 	}
 			
+	/**
+	 * Clears a registered callback by its call ID.
+	 * 
+	 * @param cid Call ID to clear
+	 * @param traceDebug Debug trace string for error logging
+	 * 
+	 * @note Logs error if callback not found
+	 * @note Internal use - called after callback execution or cancellation
+	 */
 	void ClearCallback(int cid, string traceDebug){
 		if (!m_UCallBacks) return;
 		if (cid == -1) return;
@@ -1197,12 +1321,21 @@ class UFramework extends Managed {
 		}
 	}
 	
+	/**
+	 * Checks if a call has been canceled via RequestCallCancel().
+	 * 
+	 * @param cid Call ID to check
+	 * @return True if call was canceled
+	 * 
+	 * @usage Used internally by callbacks to skip execution if canceled
+	 */
 	bool IsCallCanceled(int cid){
 		return (m_CanceledCalls.Find(cid) != -1);
 	}
 	
 	protected void GetQRandomNumbers(){
-		if (LastRandomNumberRequestCall != -1){
+		if ( LastRandomNumberRequestCall != -1 )
+		{
 			return;
 		}
 		LastRandomNumberRequestCall = api().RandomNumbers(-1, this, "CBRandomNumber");

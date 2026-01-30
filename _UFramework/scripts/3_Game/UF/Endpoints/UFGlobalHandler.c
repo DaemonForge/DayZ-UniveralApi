@@ -102,6 +102,26 @@
 	
 */
 
+/**
+ * UDBGlobalHandler<T>
+ * Template-based handler for managing global mod data in MongoDB.
+ * Provides type-safe Save/Load operations with automatic JSON serialization.
+ * 
+ * @tparam T The data class type to manage
+ * 
+ * @code
+ * class MyModData { int score; string name; }
+ * static autoptr UDBGlobalHandler<MyModData> m_Handler = new UDBGlobalHandler<MyModData>("MyMod");
+ * 
+ * // Save
+ * autoptr MyModData data = new MyModData();
+ * data.score = 100;
+ * m_Handler.Save(data, this, "OnSaved");
+ * 
+ * // Load
+ * m_Handler.Load(this, "OnLoaded");
+ * @endcode
+ */
 class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 
 	/*
@@ -114,6 +134,11 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 		}
 	}*/
 		
+	/**
+	 * Saves an object to the global database for this mod
+	 * @param object The object to save (must be of type T)
+	 * @return int Call ID, or -1 on error
+	 */
 	override int Save(Class object) {
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
@@ -123,6 +148,14 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 		Error2("[UF] DB HANDLER Save", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
 	}
+	
+	/**
+	 * Saves an object to the global database with a callback
+	 * @param object The object to save (must be of type T)
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function name: void OnCallback(int cid, int status, string mod, T data)
+	 * @return int Call ID, or -1 on error
+	 */
 	override int Save(Class object, Class cbInstance, string cbFunction) {
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
@@ -135,12 +168,34 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 	
 	
 	
+	/**
+	 * Loads the global mod data from database
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function name: void OnCallback(int cid, int status, string mod, T data)
+	 * @return int Call ID
+	 */
 	override int Load(Class cbInstance, string cbFunction) {
 		return U().globals().Load(Mod,new UFCallback<T>(cbInstance, cbFunction), "{}");
 	}
+	
+	/**
+	 * Loads the global mod data from database with a default JSON fallback
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function name
+	 * @param defaultJson Default JSON string to use if no data exists
+	 * @return int Call ID
+	 */
 	override int Load(Class cbInstance, string cbFunction, string defaultJson) {
 		return U().globals().Load(Mod,new UFCallback<T>(cbInstance, cbFunction), defaultJson);
 	}
+	
+	/**
+	 * Loads data into an existing object instance
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function name
+	 * @param inObject The object to load data into (must be of type T)
+	 * @return int Call ID, or -1 on error
+	 */
 	override int Load(Class cbInstance, string cbFunction, Class inObject) {
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
@@ -152,6 +207,14 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 		Error2("[UF] DB HANDLER Load", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
 	}
+	
+	/**
+	 * Loads data into the callback instance itself (cbInstance must be of type T)
+	 * Useful when a class wants to load its own data from the database
+	 * @param cbInstance The instance to load data into (must be type T)
+	 * @param cbFunction Optional callback function name (can be empty string)
+	 * @return int Call ID, or -1 on error
+	 */
 	override int LoadSelf(Class cbInstance, string cbFunction = "") {
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
@@ -166,11 +229,21 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 }
 
 
-//just to be able to manage them in like an array or map?
+/**
+ * UDBGlobalHandlerBase
+ * Base class for global database handlers. Should not be used directly.
+ * Use UDBGlobalHandler<T> instead for type-safe operations.
+ * 
+ * Provides base implementations for Save/Load/Update/Transaction operations.
+ */
 class UDBGlobalHandlerBase extends Managed {
 	
 	string Mod = "";
 	
+	/**
+	 * Constructor
+	 * @param mod The mod identifier used as the database key
+	 */
 	void UDBGlobalHandlerBase(string mod){
 		Mod = mod;
 	}
@@ -220,10 +293,25 @@ class UDBGlobalHandlerBase extends Managed {
 			}
 		}
 	*/
+	
+	/**
+	 * Loads global mod data as raw JSON string (no automatic deserialization)
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string mod, string jsonData)
+	 * @param defaultJson Default JSON to return if no data exists (default: "{}")
+	 * @return int Call ID
+	 */
 	int LoadJson(Class cbInstance, string cbFunction, string defaultJson = "{}") {
 		return U().globals().Load(Mod, cbInstance, cbFunction, defaultJson);
 	}
 	
+	/**
+	 * Increments a numeric field in the stored object
+	 * Shorthand for Transaction(element, value)
+	 * @param element The field path (supports dot notation for nested objects)
+	 * @param value Amount to increment by (default: 1)
+	 * @return int Call ID
+	 */
 	int Increment(string element, float value = 1){
 		return Transaction(element, value);
 	}
@@ -231,14 +319,30 @@ class UDBGlobalHandlerBase extends Managed {
 	/*
 		Transactions
 	
-	
 		Updates a sub value inside the object in the database then returns the new value only works with floats or ints
 		Sub objects can be used with dot notation aka MySubObject.SubObjectVar
 		Will return status of UF_SUCCESS if operations was successful
 	*/
+	
+	/**
+	 * Atomically increments/decrements a numeric field and returns the new value
+	 * Only works with numeric fields (int/float)
+	 * @param element The field path (supports dot notation: "stats.kills")
+	 * @param value Amount to add (can be negative for decrement)
+	 * @return int Call ID
+	 */
 	int Transaction(string element, float value) {
 		return U().globals().Transaction(Mod,element,value);
 	}
+	
+	/**
+	 * Atomically increments/decrements a numeric field with callback
+	 * @param element The field path
+	 * @param value Amount to add
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string mod, UDBTransactionResponse data)
+	 * @return int Call ID
+	 */
 	int Transaction(string element, float value, Class cbInstance, string cbFunction) {
 		return U().globals().Transaction(Mod, element, value, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
 	}
@@ -258,9 +362,28 @@ class UDBGlobalHandlerBase extends Managed {
 		Sub objects can be used with dot notation aka MySubObject.SubObjectVar
 		will return status of UF_SUCCESS if operations was successful
 	*/
+	
+	/**
+	 * Updates a specific field in the stored object
+	 * @param element The field path (supports dot notation: "player.inventory")
+	 * @param value The new value as JSON string
+	 * @param operation The update operation (SET, PUSH, PULL, etc. - see UpdateOpts in Constants.c)
+	 * @return int Call ID
+	 * @see UpdateOpts
+	 */
 	int Update(string element, string value, string operation = UpdateOpts.SET) {
 		return U().globals().Update(Mod, element, value, operation);
 	}
+	
+	/**
+	 * Updates a specific field with callback
+	 * @param element The field path
+	 * @param value The new value as JSON string
+	 * @param operation The update operation
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string mod, UDBUpdateResponse data)
+	 * @return int Call ID
+	 */
 	int Update(string element, string value, string operation, Class cbInstance, string cbFunction) {	
 		return U().globals().Update(Mod, element, value, operation, new UFCallback<UDBUpdateResponse>(cbInstance, cbFunction) );
 	}
@@ -271,6 +394,12 @@ class UDBGlobalHandlerBase extends Managed {
 		
 		This allows you to cancel a call back to prevent access violations 
 	*/
+	
+	/**
+	 * Cancels a pending callback to prevent access violations
+	 * Useful when the callback instance is being destroyed
+	 * @param cid The call ID to cancel
+	 */
 	static void Cancel(int cid){
 		U().RequestCallCancel(cid);
 	}

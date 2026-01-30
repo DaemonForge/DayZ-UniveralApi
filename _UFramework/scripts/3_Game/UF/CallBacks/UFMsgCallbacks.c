@@ -4,6 +4,11 @@
  */
 class UFMsgStringCallback extends UFCallbackBase{
 	
+	/**
+	 * Called when message read request fails
+	 * @param errorCode The error code from REST API
+	 * @param cid The call ID
+	 */
 	override void OnError(int errorCode, int cid) {
 		if (GetInstance() && Function != "") {
 			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, TStringArray>(cid, errorCode, OID, NULL));
@@ -44,12 +49,23 @@ class UFMsgStringCallback extends UFCallbackBase{
  */
 class UFMsgCallback<Class T> extends UFCallbackBase{
 	
+	/**
+	 * Called when message read request fails
+	 * @param errorCode The error code from REST API
+	 * @param cid The call ID
+	 */
 	override void OnError(int errorCode, int cid) {
 		if (GetInstance() && Function != "") {
 			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, array<autoptr T>>(cid, errorCode, OID, NULL));
 		}
 	}
 	
+	/**
+	 * Called when message read request succeeds
+	 * Deserializes JSON and extracts typed messages array
+	 * @param jsonData The JSON response string
+	 * @param cid The call ID
+	 */
 	override void OnSuccess(string jsonData, int cid) {
 		if (!GetInstance() || Function == ""){
 			return;
@@ -78,8 +94,11 @@ class UFMsgCallback<Class T> extends UFCallbackBase{
 }
 
 /**
- * Helper function to parse status code from response object
- * Centralized to avoid code duplication
+ * ParseStatusCode
+ * Helper function to parse status code from response object.
+ * Centralized to avoid code duplication between callback types.
+ * @param sobj The status object from the API response
+ * @return int The UF status code (UF_SUCCESS, UF_ERROR, etc.)
  */
 static int ParseStatusCode(StatusObject sobj){
 	if (!sobj){

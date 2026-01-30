@@ -103,6 +103,16 @@ class UDBEndpoint extends UFBaseEndpoint {
 		return UFConfig().GetBaseURL() + m_Collection + "/";
 	}
 	
+	/**
+	 * Saves data to database (fire-and-forget, no callback).
+	 * 
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID (unique identifier for this data)
+	 * @param jsonString JSON data to save
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().db().Save("MyMod", "config", configData.ToJson());
+	 */
 	int Save(string mod, string oid, string jsonString) {	
 		if (mod == "" || oid == "" || jsonString == ""){
 			Error2("[UF] Error on DB Save","OID, jsonString and Mod must be valid strings");
@@ -119,9 +129,33 @@ class UDBEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
+	/**
+	 * Saves data with callback notification.
+	 * 
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID
+	 * @param jsonString JSON data to save
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().db().Save("MyMod", "player_" + guid, playerData, this, "OnSaved");
+	 * @note Callback signature: void OnSaved(int cid, int status, string oid, string data)
+	 */
 	int Save(string mod, string oid, string jsonString, Class cbInstance, string cbFunction) {	
 		if (mod == "" || oid == "" || jsonString == ""){
 			Error2("[UF] Error on DB Save","OID, jsonString and Mod must be valid strings");
+	/**
+	 * Saves data with UFCallbackBase callback.
+	 * 
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID
+	 * @param jsonString JSON data to save
+	 * @param cb UFCallbackBase-derived callback
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().db().Save("MyMod", "stats", jsonData, new MySaveCallback());
+	 */
 			return -1;
 		}
 		int cid = -1;	
@@ -129,6 +163,18 @@ class UDBEndpoint extends UFBaseEndpoint {
 
 		Post(endpoint,jsonString, U().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
 		
+	/**
+	 * Loads data from database with UFCallbackBase callback.
+	 * 
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID to load
+	 * @param cb UFCallbackBase-derived callback
+	 * @param jsonString Optional query parameters (default: "{}")
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().db().Load("MyMod", "config", new MyLoadCallback());
+	 * @note Callback receives parsed object as typed parameter if using UFCallback<T>
+	 */
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Save");
 		}
@@ -148,6 +194,19 @@ class UDBEndpoint extends UFBaseEndpoint {
 		Post(endpoint,jsonString, U().RegisterCall(new UNestedCallBack(cb), cid));
 		
 		if (cid == -1){
+	/**
+	 * Loads data with callback notification.
+	 * 
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID to load
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @param jsonString Optional query parameters (default: "{}")
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().db().Load("MyMod", "player_" + guid, this, "OnLoaded");
+	 * @note Callback signature: void OnLoaded(int cid, int status, string oid, string data)
+	 */
 			Error2("[UF] Error failed to register callback with UF", "Save");
 		}
 		return cid;
@@ -237,9 +296,46 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		// Safety check: ensure framework is ready
 		UFramework uf = U();
+	/**
+	 * Atomically increments a numeric field (convenience wrapper for Transaction).
+	 * 
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID
+	 * @param element Field name to increment
+	 * @param value Amount to add (default: 1)
+	 * @return Call ID or -1 on error
+	/**
+	 * Atomically modifies a numeric field (fire-and-forget).
+	 * 
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID
+	 * @param element Field name
+	 * @param value Amount to add/subtract
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().db().Transaction("MyMod", "bank_" + guid, "balance", -50.0); // Deduct
+	 * @note Atomic operation - safe for concurrent modifications
+	 */
+	 * 
+	 * @usage U().db().Increment("MyMod", "stats", "killCount", 1);
+	 * @note Thread-safe atomic operation - no race conditions
+	 */
 		if (!uf){
 			UFLog.Err("[UDBEndpoint::Query] U() returned NULL - framework not ready");
 			return -1;
+	/**
+	 * Atomically modifies a numeric field with callback.
+	 * 
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID
+	 * @param element Field name
+	 * @param value Amount to add/subtract
+	 * @param cb UFCallbackBase callback to receive updated value
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().db().Transaction("MyMod", "player", "coins", 100, new MyCoinCallback());
+	 * @note Callback receives the NEW value after transaction
+	 */
 		}
 		if (!UFConfig()){
 			UFLog.Err("[UDBEndpoint::Query] UFConfig() is NULL - config not loaded");
@@ -260,6 +356,21 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error failed to register callback with UF", "Query");
 		}
 		return cid;
+	/**
+	 * Atomically modifies a numeric field with min/max bounds and callback.
+	 * 
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID
+	 * @param element Field name
+	 * @param value Amount to add/subtract
+	 * @param min Minimum allowed value (clamps result)
+	 * @param max Maximum allowed value (clamps result)
+	 * @param cb UFCallbackBase callback
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage Keep health 0-100:
+	 * U().db().Transaction(\"MyMod\", \"player\", \"health\", -10, 0, 100, callback);
+	 */
 	}
 	
 	int Increment(string mod, string oid, string element, float value = 1){
@@ -307,6 +418,19 @@ class UDBEndpoint extends UFBaseEndpoint {
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Transaction");
 			}
+	/**
+	 * Updates a single field in the database (fire-and-forget).
+	 * 
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID
+	 * @param element Field name
+	 * @param value New value (JSON-encoded string)
+	 * @param operation Update operation (default: UpdateOpts.SET)
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().db().Update(\"MyMod\", \"config\", \"enabled\", \"true\");
+	 * @note For strings, must quote: Update(mod, oid, \"name\", \"\\\"John\\\"\");
+	 */
 		return cid;
 	}
 	

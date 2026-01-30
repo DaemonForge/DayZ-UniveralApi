@@ -1,7 +1,20 @@
+/**
+ * Modded DayZGame for Universal Framework Discord integration and CRON updates.
+ * 
+ * @note Handles Discord avatar caching, UI updates, and CRON system ticks
+ */
 modded class DayZGame extends CGame
 {
 	protected autoptr UDiscordUser m_discordUser;
 	
+	/**
+	 * Gets cached Discord user info (client-side only).
+	 * 
+	 * @return UDiscordUser with Discord profile data, or NULL on server
+	 * 
+	 * @note Client-only - server must query Discord API directly
+	 * @usage UDiscordUser discord = GetDayZGame().DiscordUser();
+	 */
 	UDiscordUser DiscordUser(){
 		if (!IsClient()){
 			Error2("[UF] DiscordInfo", "Can't get discord info from server you must request it from the api directly only client caches");
@@ -52,7 +65,13 @@ modded class DayZGame extends CGame
 		}
 	}
 	
-	//Client side function to get the steam id
+	/**
+	 * Gets the current player's Steam ID (client-side).
+	 * 
+	 * @return Steam ID string or "" if unavailable
+	 * 
+	 * @note Tries UserManager first, then PlayerIdentity as fallback
+	 */
 	string GetSteamId(){
 		DayZPlayer player;
 		if (GetUserManager() && GetUserManager().GetTitleInitiator()){

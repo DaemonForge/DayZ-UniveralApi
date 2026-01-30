@@ -1,10 +1,37 @@
+/**
+ * Modded MissionBase providing Universal Framework initialization.
+ * Base class for both server and client missions.
+ * 
+ * Initializes the framework singleton (U()) and provides UFrameworkReady hook.
+ */
 modded class MissionBase extends MissionBaseWorld
 {
+	/**
+	 * Constructor - initializes Universal Framework singleton.
+	 * Calling U() ensures framework is ready for use.
+	 */
 	void MissionBase()
 	{
 		U();
 	}
 	
+	/**
+	 * Called when the Universal Framework is fully initialized and ready.
+	 * Override this in your mod to perform initialization that requires framework services.
+	 * 
+	 * Server: Called immediately after framework init
+	 * Client: Called after auth token is received from server
+	 * 
+	 * @usage
+	 * override void UFrameworkReady() {
+	 *     super.UFrameworkReady();
+	 *     // Load mod data from database
+	 *     U().db().Load("MyMod", "config", this, "OnConfigLoaded");
+	 * }
+	 * 
+	 * @note ALWAYS call super.UFrameworkReady() first
+	 * @note This is the earliest safe point to make API calls requiring authentication
+	 */
 	override void UFrameworkReady(){
 		super.UFrameworkReady();
 			UFLog.Info("MissionBase UFrameworkReady");

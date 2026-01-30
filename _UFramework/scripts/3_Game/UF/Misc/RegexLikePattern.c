@@ -1,41 +1,42 @@
-// File: Scripts/3_Game/UF/Misc/RegexLikePattern.c
-//
-// Robust regex-like pattern matcher for DayZ Enforce Script.
-// Optimized to use Enforce Script's native string methods where possible.
-//
-// Usage example:
-//
-//     void TestRegex()
-//     {
-//         URegexLikePattern rx = new URegexLikePattern("^Admin_[A-Za-z0-9_]+$");
-//         if (rx.IsValid() && rx.Match("Admin_John42"))
-//             Print("Match!");
-//         
-//         // Case-insensitive matching
-//         URegexLikePattern rx2 = new URegexLikePattern("hello", true);
-//         if (rx2.Match("HELLO WORLD"))
-//             Print("Found hello!");
-//     }
-//
-// Supported pattern features:
-//   ^                anchor at start of string
-//   $                anchor at end of string
-//   .                any single character
-//   \x               escape meta-char x (.,*,+,?,[,],^,$,\)
-//   \d               digit [0-9]
-//   \D               non-digit [^0-9]
-//   \w               word char [A-Za-z0-9_]
-//   \W               non-word char [^A-Za-z0-9_]
-//   \s               whitespace [ \t\n\r]
-//   \S               non-whitespace [^ \t\n\r]
-//   [abc]            char class (a or b or c)
-//   [a-z]            range in class
-//   [^a-z0-9]        negated class
-//   X*               zero or more of previous token (greedy)
-//   X+               one or more of previous token (greedy)
-//   X?               zero or one of previous token
-//
-// No groups ( ), no alternation (|).
+/**
+ * @file RegexLikePattern.c
+ * @brief Regex-like pattern matcher optimized for DayZ Enforce Script.
+ * 
+ * Provides regex-style pattern matching without requiring external libraries.
+ * Optimized to use Enforce Script's native string methods where possible.
+ * 
+ * @usage
+ * void TestRegex() {
+ *     URegexLikePattern rx = new URegexLikePattern("^Admin_[A-Za-z0-9_]+$");
+ *     if (rx.IsValid() && rx.Match("Admin_John42"))
+ *         Print("Match!");
+ *     
+ *     // Case-insensitive matching
+ *     URegexLikePattern rx2 = new URegexLikePattern("hello", true);
+ *     if (rx2.Match("HELLO WORLD"))
+ *         Print("Found hello!");
+ * }
+ * 
+ * @note Supported pattern features:
+ *   ^                anchor at start of string
+ *   $                anchor at end of string
+ *   .                any single character
+ *   \x               escape meta-char x (.,*,+,?,[,],^,$,\)
+ *   \d               digit [0-9]
+ *   \D               non-digit [^0-9]
+ *   \w               word char [A-Za-z0-9_]
+ *   \W               non-word char [^A-Za-z0-9_]
+ *   \s               whitespace [ \t\n\r]
+ *   \S               non-whitespace [^ \t\n\r]
+ *   [abc]            char class (a or b or c)
+ *   [a-z]            range in class
+ *   [^a-z0-9]        negated class
+ *   X*               zero or more of previous token (greedy)
+ *   X+               one or more of previous token (greedy)
+ *   X?               zero or one of previous token
+ * 
+ * @note NOT supported: groups ( ), alternation |, backreferences
+ */
 
 enum EUTokenType
 {
@@ -46,6 +47,19 @@ enum EUTokenType
     ANCHOR_END,    // $
 }
 
+/**
+ * @class URegexLikePattern
+ * @brief Regex-like pattern matcher for DayZ Enforce Script.
+ * 
+ * Provides regex-style matching with common features:
+ * - Anchors (^, $), wildcards (.), character classes ([abc], [a-z], [^0-9])
+ * - Escape sequences (\d, \w, \s, \D, \W, \S)
+ * - Quantifiers (*, +, ?)
+ * 
+ * @note Does NOT support: groups (), alternation |, backreferences
+ * @note Optimized for literal prefix matching and simple patterns
+ * @note Case-insensitive mode available via constructor
+ */
 class URegexLikePattern
 {
     private const int REPEAT_ONCE     = 0;

@@ -132,8 +132,21 @@
  *   An integer callback id (cid). Returns -1 if there is an error.
  */
 class UApiEndpoint extends UFBaseEndpoint {
-		
-	//Replacing ServerQuery Runs a Steam Query for a server returning a `UFServerStatus` object
+	
+	/**
+	 * Queries a game server via Steam query protocol.
+	 * 
+	 * @param ip Server IP address
+	 * @param queryPort Server query port
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @param oid Optional object ID for callback context
+	 * @param ReturnString If true, returns raw string instead of UFServerStatus object
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().api().SteamQuery("127.0.0.1", "27016", this, "OnServerStatus");
+	 * @note Callback signature: void OnServerStatus(int cid, int status, string oid, UFServerStatus data)
+	 */
 	int SteamQuery(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = -1;
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
@@ -191,7 +204,19 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	//Get a array of random numbers from  returns `URandomNumberResponse`
+	/**
+	 * Requests quantum random numbers from the API.
+	 * 
+	 * @param count Number of random numbers (1-4096, or -1 for default 4096)
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @param oid Optional object ID for callback context
+	 * @param ReturnString If true, returns raw string instead of URandomNumberResponse
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().api().RandomNumbers(1000, this, "OnRandoms");
+	 * @note Callback signature: void OnRandoms(int cid, int status, string oid, URandomNumberResponse data)
+	 */
 	int RandomNumbers(int count, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = -1;
 		string endpoint = "Random";
@@ -363,7 +388,19 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return TTSDownload(ttsId, GetUFVideoPlayer(), "UCBHandlePlay");
 	}
 	
-	//Request a status check from the api so you can get version number and such returns a `UFStatus` object
+	/**
+	 * Gets API service status, version, and capabilities.
+	 * 
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @param oid Optional object ID for callback context
+	 * @param ReturnString If true, returns raw string instead of UFStatus object
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().api().Status(this, "OnStatus");
+	 * @note Callback signature: void OnStatus(int cid, int status, string oid, UFStatus data)
+	 * @note UFStatus contains version, Discord/OpenAI availability, error status
+	 */
 	int Status(Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		UFLog.Debug("[UApiEndpoint::Status] Called with cbFunction=" + cbFunction);
 		int cid = -1;

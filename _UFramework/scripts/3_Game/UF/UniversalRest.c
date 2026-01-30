@@ -106,10 +106,23 @@ class UniversalRest extends Managed
 		ctx.GET(vUCBX , "");
 	}
 	
+	/**
+	 * Gets base API URL from configuration.
+	 * 
+	 * @return Base URL string from UFConfig().ServerURL
+	 */
 	protected static string BaseUrl(){
 		return UFConfig().ServerURL;
 	}
 	
+	/**
+	 * Requests authentication token for a player (server-side only).
+	 * 
+	 * @param guid Player GUID to request auth for
+	 * 
+	 * @note Internal use - called by UFramework.PreparePlayerAuth()
+	 * @note Uses UAuthCallBack to handle response
+	 */
 	static void GetAuth( string guid ){
 		string url = BaseUrl() + "GetAuth/" + guid;
 		
@@ -121,6 +134,15 @@ class UniversalRest extends Managed
 		}
 	}
 	
+	/**
+	 * Saves global data (legacy method - prefer U().globals().Save()).
+	 * 
+	 * @param mod Mod identifier
+	 * @param jsonString JSON data to save
+	 * @param UCBX Optional RestCallback
+	 * 
+	 * @deprecated Use U().globals().Save() instead for better callback support
+	 */
 	static void GlobalsSave(string mod, string jsonString, UFRestCallBackBase UCBX = NULL) {
 
 		string url = BaseUrl() + "Globals/Save/" + mod;
@@ -136,6 +158,15 @@ class UniversalRest extends Managed
 		}
 	}
 	
+	/**
+	 * Loads global data (legacy method - prefer U().globals().Load()).
+	 * 
+	 * @param mod Mod identifier
+	 * @param UCBX RestCallback for response
+	 * @param jsonString Optional query parameters
+	 * 
+	 * @deprecated Use U().globals().Load() instead for better callback support
+	 */
 	static void GlobalsLoad(string mod, UFRestCallBackBase UCBX, string jsonString = "{}") {
 
 		string url = BaseUrl() + "Globals/Load/" + mod;
@@ -151,11 +182,29 @@ class UniversalRest extends Managed
 		}
 	}
 	
-	
+	/**
+	 * Increments global field (legacy - prefer U().globals().Increment()).
+	 * 
+	 * @param mod Mod identifier
+	 * @param element Field name
+	 * @param value Amount to add
+	 * 
+	 * @deprecated Use U().globals().Increment() instead
+	 */
 	static void GlobalsIncrement(string mod, string element, float value = 1){
 		GlobalsTransaction(mod, element, value, NULL);
 	}
 	
+	/**
+	 * Global transaction (legacy - prefer U().globals().Transaction()).
+	 * 
+	 * @param mod Mod identifier
+	 * @param element Field name
+	 * @param value Amount to add/subtract
+	 * @param UCBX Optional RestCallback
+	 * 
+	 * @deprecated Use U().globals().Transaction() instead
+	 */
 	static void GlobalsTransaction(string mod, string element, float value = 1, UFRestCallBackBase UCBX = NULL) {
 		
 		autoptr UFRestCallBackBase vUCBX = UCBX;

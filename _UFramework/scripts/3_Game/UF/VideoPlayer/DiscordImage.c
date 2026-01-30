@@ -1,5 +1,10 @@
 ref DiscordLoggedInWidget m_DiscordLoggedInWidget;
 
+/**
+ * Gets global Discord status widget instance.
+ * 
+ * @return DiscordLoggedInWidget singleton or null
+ */
 DiscordLoggedInWidget GetDiscordLoggedInWidget(){
 	if (m_DiscordLoggedInWidget){
 		return m_DiscordLoggedInWidget;
@@ -7,6 +12,15 @@ DiscordLoggedInWidget GetDiscordLoggedInWidget(){
 	return null;
 }
 
+/**
+ * UI widget for displaying Discord login status with avatar.
+ * 
+ * @note Shows Discord username and avatar in-game
+ * @note Client-side only
+ * 
+ * @usage GetDiscordLoggedInWidget().UpdateData("Username", "path/to/avatar.edds");
+ * @usage GetDiscordLoggedInWidget().ShowAvatar();
+ */
 class DiscordLoggedInWidget extends ScriptedWidgetEventHandler
 {
     protected ImageWidget m_Avatar;

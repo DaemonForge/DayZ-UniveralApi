@@ -91,6 +91,27 @@ Notes:
 	
 */
 
+/**
+ * UDBHandler<T>
+ * Template-based database handler for managing mod-specific player or object data.
+ * Provides type-safe CRUD operations with automatic JSON serialization.
+ * 
+ * @tparam T The data class type to manage
+ * 
+ * @code
+ * class PlayerData { int kills; int deaths; }
+ * static autoptr UDBHandler<PlayerData> m_Handler = new UDBHandler<PlayerData>("MyMod", PLAYER_DB);
+ * 
+ * // Save
+ * m_Handler.Save(playerGUID, playerData, this, "OnSaved");
+ * 
+ * // Load
+ * m_Handler.Load(playerGUID, this, "OnLoaded");
+ * 
+ * // Query
+ * m_Handler.Query("{\"kills\": {\"$gte\": 10}}", this, "OnQueryResults");
+ * @endcode
+ */
 class UDBHandler<Class T> extends UDBHandlerBase{
 
 	/*
@@ -104,6 +125,12 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 	}*/
 	
 	
+	/**
+	 * Saves an object to the database
+	 * @param oid Object identifier (e.g., player GUID, object ID)
+	 * @param object The object to save (must be of type T)
+	 * @return int Call ID, or -1 on error
+	 */
 	override int Save(string oid, Class object) {
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
@@ -113,6 +140,15 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 		Error2("[UF] DB HANDLER Save", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
 	}
+	
+	/**
+	 * Saves an object to the database with callback notification
+	 * @param oid Object identifier
+	 * @param object The object to save (must be of type T)
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string oid, T data)
+	 * @return int Call ID, or -1 on error
+	 */
 	override int Save(string oid, Class object, Class cbInstance, string cbFunction) {
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
@@ -126,12 +162,37 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 	
 	
 	
+	/**
+	 * Loads an object from the database
+	 * @param oid Object identifier
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string oid, T data)
+	 * @return int Call ID
+	 */
 	override int Load(string oid, Class cbInstance, string cbFunction) {
 		return U().db(Database).Load(Mod,oid, new UFCallback<T>(cbInstance, cbFunction), "{}");
 	}
+	
+	/**
+	 * Loads an object from the database with default JSON fallback
+	 * @param oid Object identifier
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function
+	 * @param defaultJson Default JSON to use if object doesn't exist
+	 * @return int Call ID
+	 */
 	override int Load(string oid, Class cbInstance, string cbFunction, string defaultJson) {
 		return U().db(Database).Load(Mod,oid, new UFCallback<T>(cbInstance, cbFunction), defaultJson);
 	}
+	
+	/**
+	 * Loads data into an existing object instance
+	 * @param oid Object identifier
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function
+	 * @param inObject The object to load data into (must be of type T)
+	 * @return int Call ID, or -1 on error
+	 */
 	override int Load(string oid, Class cbInstance, string cbFunction, Class inObject) {
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
@@ -170,9 +231,25 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 	
 	
 	*/
+	
+	/**
+	 * Executes a database query using a UDBQueryBase object
+	 * @param query The query object with filters and options
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string oid, UDBQueryResult<T> results)
+	 * @return int Call ID
+	 */
 	override int Query(UDBQueryBase query, Class cbInstance, string cbFunction) {
 		return U().db(Database).Query(Mod,query,new UFCallback<UDBQueryResult<T>>(cbInstance, cbFunction));
 	}
+	
+	/**
+	 * Executes a database query using a JSON query string
+	 * @param query JSON query string (e.g., "{\"kills\": {\"$gte\": 10}}")
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string oid, UDBQueryResult<T> results)
+	 * @return int Call ID
+	 */
 	override int Query(string query, Class cbInstance, string cbFunction) {
 		return U().db(Database).Query(Mod, new UDBQuery(query),new UFCallback<UDBQueryResult<T>>(cbInstance, cbFunction));
 	}
@@ -193,30 +270,48 @@ class UDBHandlerBase extends Managed {
 		Database = database;
 	}
 	
+	/**
+	 * Destructor - cancels last pending call
+	 */
 	void ~UDBHandlerBase(){
 		if (m_lastCall > 0) Cancel(m_lastCall);
 	}
 	
+	/**
+	 * Stub method - must be overridden by UDBHandler<T>
+	 */
 	int Save(string oid, Class object) {
 		Error2("[UF] UDBHandlerBase SAVE","Incorrect Ussage class is not type of UDBHandler<T>");
 		return -1;
 	}
 	
+	/**
+	 * Stub method - must be overridden by UDBHandler<T>
+	 */
 	int Save(string oid, Class object, Class cbInstance, string cbFunction) {
 		Error2("[UF] UDBHandlerBase SAVE","Incorrect Ussage class is not type of UDBHandler<T>");
 		return -1;
 	}
 	
+	/**
+	 * Stub method - must be overridden by UDBHandler<T>
+	 */
 	int Load(string oid, Class cbInstance, string cbFunction) {
 		Error2("[UF] UDBHandlerBase LOAD","Incorrect Ussage class is not type of UDBHandler<T>");
 		return -1;
 	}
 	
+	/**
+	 * Stub method - must be overridden by UDBHandler<T>
+	 */
 	int Load(string oid, Class cbInstance, string cbFunction, string defaultJson) {
 		Error2("[UF] UDBHandlerBase LOAD","Incorrect Ussage class is not type of UDBHandler<T>");
 		return -1;
 	}
 	
+	/**
+	 * Stub method - must be overridden by UDBHandler<T>
+	 */
 	int Load(string oid, Class cbInstance, string cbFunction, Class inObject){
 		Error2("[UF] UDBHandlerBase LOAD","Incorrect Ussage class is not type of UDBHandler<T>");
 		return -1;
@@ -238,10 +333,27 @@ class UDBHandlerBase extends Managed {
 			}
 		}
 	*/
+	
+	/**
+	 * Loads raw JSON from database without automatic deserialization
+	 * @param oid Object identifier
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string oid, string jsonData)
+	 * @param defaultJson Default JSON if object doesn't exist
+	 * @return int Call ID
+	 */
 	int LoadJson(string oid, Class cbInstance, string cbFunction, string defaultJson = "{}") {
 		return U().db(Database).Load(Mod, oid, cbInstance, cbFunction, defaultJson);
 	}
 	
+	/**
+	 * Increments a numeric field by a value
+	 * Shorthand for Transaction(oid, element, value)
+	 * @param oid Object identifier
+	 * @param element Field path (supports dot notation)
+	 * @param value Amount to increment by (default: 1)
+	 * @return int Call ID
+	 */
 	int Increment(string oid, string element, float value = 1){
 		return Transaction(oid, element, value);
 	}
@@ -254,12 +366,42 @@ class UDBHandlerBase extends Managed {
 		Sub objects can be used with dot notation aka MySubObject.SubObjectVar
 		Will return status of UF_SUCCESS if operations was successful
 	*/
+	
+	/**
+	 * Atomically increments/decrements a numeric field
+	 * @param oid Object identifier
+	 * @param element Field path (supports dot notation: "stats.kills")
+	 * @param value Amount to add (can be negative)
+	 * @return int Call ID
+	 */
 	int Transaction(string oid, string element, float value) {
 		return U().db(Database).Transaction(Mod,oid,element,value);
 	}
+	
+	/**
+	 * Atomically increments/decrements a numeric field with callback
+	 * @param oid Object identifier
+	 * @param element Field path
+	 * @param value Amount to add
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string oid, UDBTransactionResponse data)
+	 * @return int Call ID
+	 */
 	int Transaction(string oid, string element, float value, Class cbInstance, string cbFunction) {
 		return U().db(Database).Transaction(Mod, oid, element, value, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
 	}
+	
+	/**
+	 * Atomically increments/decrements with min/max bounds
+	 * @param oid Object identifier
+	 * @param element Field path
+	 * @param value Amount to add
+	 * @param min Minimum allowed value
+	 * @param max Maximum allowed value
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function
+	 * @return int Call ID
+	 */
 	int Transaction(string oid, string element, float value, float min, float max, Class cbInstance, string cbFunction) {
 		return U().db(Database).Transaction(Mod, oid, element, value, min, max, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
 	}
@@ -276,26 +418,73 @@ class UDBHandlerBase extends Managed {
 		Sub objects can be used with dot notation aka MySubObject.SubObjectVar
 		will return status of UF_SUCCESS if operations was successful
 	*/
+	
+	/**
+	 * Updates a specific field in the stored object
+	 * @param oid Object identifier
+	 * @param element Field path (supports dot notation)
+	 * @param value The new value as JSON string
+	 * @param operation The update operation (SET, PUSH, PULL, etc. - see UpdateOpts in Constants.c)
+	 * @return int Call ID
+	 * @see UpdateOpts
+	 */
 	int Update(string oid, string element, string value, string operation = UpdateOpts.SET) {
 		return U().db(Database).Update(Mod, oid, element, value, operation);
 	}
+	
+	/**
+	 * Updates a specific field with callback
+	 * @param oid Object identifier
+	 * @param element Field path
+	 * @param value The new value as JSON string
+	 * @param operation The update operation
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string oid, UDBUpdateResponse data)
+	 * @return int Call ID
+	 */
 	int Update(string oid, string element, string value, string operation, Class cbInstance, string cbFunction) {	
 		return U().db(Database).Update(Mod, oid, element, value, operation, new UFCallback<UDBUpdateResponse>(cbInstance, cbFunction) );
 	}
 	
 	
+	/**
+	 * Updates a field across all objects matching a query
+	 * @param query The query to match objects
+	 * @param element Field path to update
+	 * @param value The new value as JSON string
+	 * @param operation The update operation (default: SET)
+	 * @return int Call ID
+	 */
 	int QueryUpdate(UDBQueryBase query, string element, string value, string operation = UpdateOpts.SET) {
 		return U().db(Database).QueryUpdate(query, Mod, element, value, operation);
 	}
+	
+	/**
+	 * Updates a field across all objects matching a query with callback
+	 * @param query The query to match objects
+	 * @param element Field path to update
+	 * @param value The new value as JSON string
+	 * @param operation The update operation
+	 * @param cbInstance The callback instance
+	 * @param cbFunction The callback function: void OnCallback(int cid, int status, string oid, UDBQueryUpdateResponse data)
+	 * @return int Call ID
+	 */
 	int QueryUpdate(UDBQueryBase query, string element, string value, string operation, Class cbInstance, string cbFunction) {	
 		return U().db(Database).QueryUpdate(query, Mod, element, value, operation, new UFCallback<UDBQueryUpdateResponse>(cbInstance, cbFunction) );
 	}
 	
 	
+	/**
+	 * Stub method - must be overridden by UDBHandler<T>
+	 */
 	int Query(UDBQueryBase query, Class cbInstance, string cbFunction) {
 		Error2("[UF] UDBHandlerBase QUERY","Incorrect Ussage class is not type of UDBHandler<T>");
 		return -1;
 	}
+	
+	/**
+	 * Stub method - must be overridden by UDBHandler<T>
+	 */
 	int Query(string query, Class cbInstance, string cbFunction) {
 		Error2("[UF] UDBHandlerBase QUERY","Incorrect Ussage class is not type of UDBHandler<T>");
 		return -1;
@@ -307,6 +496,11 @@ class UDBHandlerBase extends Managed {
 		
 		This allows you to cancel a call back to prevent access violations 
 	*/
+	
+	/**
+	 * Cancels a pending callback to prevent access violations
+	 * @param cid The call ID to cancel
+	 */
 	void Cancel(int cid){
 		U().RequestCallCancel(cid);
 	}

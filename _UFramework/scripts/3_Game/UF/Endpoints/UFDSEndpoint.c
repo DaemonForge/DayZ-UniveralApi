@@ -107,12 +107,19 @@
 class UniversalDSEndpoint extends UFBaseEndpoint
 {	
 	
-
+	/**
+	 * Returns the base URL for Discord API endpoints
+	 * @return string The base URL with "Discord/" appended
+	 */
 	override protected string EndpointBaseUrl(){
 		return UFConfig().GetBaseURL() + "Discord/";
 	}
 	
-	//Returns a link for the player based on the players steam id so they can connect there discord to there steam account
+	/**
+	 * Generates a linking URL for players to connect their Discord account
+	 * @param PlainId Player's Steam ID (uses local player's ID if empty and on client)
+	 * @return string The Discord linking URL
+	 */
 	string Link(string PlainId = ""){
 		if (PlainId == "" && g_Game.IsClient()){
 			return EndpointBaseUrl() + GetDayZGame().GetSteamId();
@@ -120,7 +127,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return EndpointBaseUrl() + PlainId;
 	}
 		
-	//Add's a role to a user's connected discord
+	/**
+	 * Adds a Discord role to a user's connected account
+	 * @param GUID Player's unique identifier
+	 * @param RoleId Discord role ID to add
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int AddRole(string GUID, string RoleId, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
 		if (GUID == "" || RoleId == ""){
 			Error2("[UF] Error Adding Role from User","GUID and RoleId must be valid strings");
@@ -146,7 +161,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;
 	}
 	
-	//Removes a role from a user's connected discord
+	/**
+	 * Removes a Discord role from a user's connected account
+	 * @param GUID Player's unique identifier
+	 * @param RoleId Discord role ID to remove
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int RemoveRole(string GUID, string RoleId, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
 		if (GUID == "" || RoleId == ""){
 			Error2("[UF] Error Removing Role from User","GUID and RoleId must be valid strings");
@@ -171,7 +194,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;
 	}
 	
-	//Sends a DM to a user's discord retuns `StatusObject`
+	/**
+	 * Sends a direct message (DM) to a user's Discord account
+	 * @param GUID Player's unique identifier
+	 * @param message The message text to send
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int UserSend(string GUID, string message,  Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		if (GUID == "" || message == ""){
 			Error2("[UF] Error Sending DM to User","GUID must be valid string");
@@ -195,7 +226,14 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;	
 	}
 
-	//Return's a User's `UDiscordUser` Object 
+	/**
+	 * Retrieves a user's Discord account information
+	 * @param GUID Player's unique identifier
+	 * @param cbInstance Callback instance (required)
+	 * @param cbFunction Callback function name (required)
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int GetUser(string GUID, Class cbInstance, string cbFunction, bool ReturnString = false) {
 		if (GUID == ""){
 			Error2("[UF] Error Getting Users Object","GUID must be valid string");
@@ -217,7 +255,14 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;
 	}	
 	
-	//Return's a User's currently connected channel `UDiscordStatusObject` Object 
+	/**
+	 * Retrieves the Discord voice/text channel a user is currently in
+	 * @param GUID Player's unique identifier
+	 * @param cbInstance Callback instance (required)
+	 * @param cbFunction Callback function name (required)
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int GetUsersChannel(string GUID, Class cbInstance, string cbFunction, bool ReturnString = false) {
 		if (GUID == ""){
 			Error2("[UF] Error Getting Users Channel","GUID must be valid string");
@@ -239,6 +284,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;
 	}	
 	
+	/**
+	 * Moves a user to a different Discord voice channel
+	 * @param GUID Player's unique identifier
+	 * @param ChannelId Target Discord channel ID
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int MoveTo(string GUID, string ChannelId, Class cbInstance = NULL , string cbFunction = "", bool ReturnString = false) {
 		if (GUID == "" || ChannelId == ""){
 			Error2("[UF] Error moving user","GUID and ChannelId must be valid strings");
@@ -260,6 +314,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;
 	}
 	
+	/**
+	 * Kicks a user from Discord voice channel
+	 * @param GUID Player's unique identifier
+	 * @param Reason Optional reason for the kick
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int KickUser(string GUID, string Reason = "", Class cbInstance = NULL , string cbFunction = "", bool ReturnString = false) {
 		if (GUID == ""){
 			Error2("[UF] Error kicking user","GUID must be valid string");
@@ -282,6 +345,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;
 	}
 	
+	/**
+	 * Mutes or unmutes a user in Discord voice channel
+	 * @param GUID Player's unique identifier
+	 * @param ToMute True to mute, false to unmute
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int MuteUser(string GUID, bool ToMute, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
 		if (GUID == ""){
 			Error2("[UF] Error Muteing user","GUID must be valid string");
@@ -306,6 +378,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;
 	}		
 	
+	/**
+	 * Sets a user's Discord server nickname
+	 * @param GUID Player's unique identifier
+	 * @param Nickname The new nickname to set
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int SetNickname(string GUID, string Nickname, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
 		if (GUID == "" || Nickname == ""){
 			Error2("[UF] Error Setting Nickname","GUID and Nickname must be valid strings");
@@ -330,6 +411,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;
 	}	
 	
+	/**
+	 * Creates a new Discord channel
+	 * @param Name The name of the channel to create
+	 * @param Options Optional channel creation options (type, parent, permissions, etc.)
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int ChannelCreate(string Name, UChannelOptions Options = NULL, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false) {
 		if ( Name == "" ){
 			Error2("[UF] Error Creating channel","Channel ID must be valid string");
@@ -356,6 +446,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	}
 	
 	
+	/**
+	 * Deletes an existing Discord channel
+	 * @param id The Discord channel ID to delete
+	 * @param reason Reason for deletion (required for audit log)
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int ChannelDelete(string id, string reason, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		if (id == "" || reason == ""){
 			Error2("[UF] Error Deleting channel","Both Channel ID and reason must be valid strings");
@@ -381,6 +480,16 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;	
 	}
 	
+	/**
+	 * Edits an existing Discord channel's properties
+	 * @param id The Discord channel ID to edit
+	 * @param reason Reason for the edit (for audit log)
+	 * @param options Update options (name, topic, position, permissions, etc.)
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int ChannelEdit(string id, string reason, UChannelUpdateOptions options, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		if (id == "" || reason == ""){
 			Error2("[UF] Error Editing channel","Both Channel ID and reason must be valid strings");
@@ -406,6 +515,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;		
 	}
 	
+	/**
+	 * Sends a text message to a Discord channel
+	 * @param id The Discord channel ID
+	 * @param message The message text to send
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int ChannelSend(string id, string message, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		if (id == "" || message == ""){
 			Error2("[UF] Error Sending message to channel","Both Channel ID and message must be valid strings");
@@ -432,6 +550,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	}
 	
 	
+	/**
+	 * Sends an embedded message (rich content) to a Discord channel
+	 * @param id The Discord channel ID
+	 * @param message The embed object containing title, description, fields, colors, etc.
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback function name
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int ChannelSendEmbed(string id, UDiscordEmbed message, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		if (id == "" || message == NULL){
 			Error2("[UF] Error Sending Embed to channel","Both Channel ID and message must be valid");
@@ -456,6 +583,15 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	}
 	
 	
+	/**
+	 * Retrieves messages from a Discord channel
+	 * @param id The Discord channel ID
+	 * @param cbInstance Callback instance (required)
+	 * @param cbFunction Callback function name (required)
+	 * @param filter Optional filter for message retrieval (limit, before, after, around)
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID, or -1 on error
+	 */
 	int ChannelMessages(string id,  Class cbInstance, string cbFunction, UDiscordChannelFilter filter = NULL, bool ReturnString = false){
 		if (id == ""){
 			Error2("[UF] Error Getting messages from channel","Channel ID must be valid");
@@ -483,7 +619,17 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;	
 	}
 	
-	//A way to check if a player's discord is set up before they connect to the server and get an authkey
+	/**
+	 * Checks if a player's Discord account is linked AND has a specific role
+	 * Useful for server authentication before allowing connection
+	 * @param PlainId Player's Steam ID (plain, not GUID)
+	 * @param RoleId The Discord role ID to check for
+	 * @param cbInstance Callback instance (required)
+	 * @param cbFunction Callback function name (required)
+	 * @param baseUrl Optional base URL override (uses config default if empty)
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID
+	 */
 	int CheckRoleDiscord(string PlainId, string RoleId, Class cbInstance, string cbFunction,  string baseUrl = "", bool ReturnString = false){		
 		int cid = -1;
 		if (baseUrl == ""){
@@ -506,7 +652,16 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		return cid;
 	}
 	
-	//A way to check if a player's discord is set up before they connect to the server and get an authkey
+	/**
+	 * Checks if a player's Discord account is properly linked
+	 * Useful for server authentication validation
+	 * @param PlainId Player's Steam ID (plain, not GUID)
+	 * @param cbInstance Callback instance (required)
+	 * @param cbFunction Callback function name (required)
+	 * @param baseUrl Optional base URL override (uses config default if empty)
+	 * @param ReturnString If true, returns raw JSON string in callback
+	 * @return int Call ID
+	 */
 	int CheckDiscord(string PlainId, Class cbInstance, string cbFunction,  string baseUrl = "", bool ReturnString = false){		
 		int cid = -1;
 		if (baseUrl == ""){
@@ -530,6 +685,12 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	}
 	
 	
+	/**
+	 * Downloads a user's Discord avatar image
+	 * @param guid Player's GUID
+	 * @param filename Base filename to save as (without extension, default: "discordme")
+	 * @return int Call ID, or -1 on error
+	 */
 	int DownloadAvatar(string guid, string filename = "discordme"){
 		int cid = -1;		
 		string url = UFConfig().GetBaseURL() + "Images/Discord/" + guid;

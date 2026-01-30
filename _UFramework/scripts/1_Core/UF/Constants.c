@@ -1,25 +1,49 @@
+/**
+ * Universal Framework Constants
+ *
+ * Defines all constant values used throughout the Universal Framework including:
+ * - Version information
+ * - API status codes
+ * - Database type identifiers
+ * - Message queue types
+ * - Update operation types
+ * - Discord permissions
+ * - TTS voice names and settings
+ */
+
+/**
+ * Framework Version
+ * Current version of the Universal Framework mod
+ */
 static const string UF_VERSION = "2.0.0";
 
-static const int UF_SUCCESS = 200;
-static const int UF_EMPTY = 204; //Means response was empty or query result returned no results
-static const int UF_NOTSETUP = 424; //Used for discord requests only right now.
-static const int UF_TIMEOUT = 408;
-static const int UF_CLIENTERROR = 400;
-static const int UF_SERVERERROR = 500;
-static const int UF_ERROR = 418;
-static const int UF_JSONERROR = 406;
-static const int UF_NOTFOUND = 404;
-static const int UF_TOOEARLY = 425;
-static const int UF_UNAUTHORIZED = 401;
+/**
+ * API Response Status Codes
+ * These status codes are returned in callbacks to indicate the result of API operations
+ */
+static const int UF_SUCCESS = 200;          // Request succeeded
+static const int UF_EMPTY = 204;            // Response was empty or query returned no results
+static const int UF_NOTSETUP = 424;         // Discord account not linked (Discord requests only)
+static const int UF_TIMEOUT = 408;          // Request timed out
+static const int UF_CLIENTERROR = 400;      // Client-side error (bad request)
+static const int UF_SERVERERROR = 500;      // Server-side error
+static const int UF_ERROR = 418;            // Generic error
+static const int UF_JSONERROR = 406;        // JSON parsing/conversion error
+static const int UF_NOTFOUND = 404;         // Resource not found
+static const int UF_TOOEARLY = 425;         // Request made too early (e.g., before initialization)
+static const int UF_UNAUTHORIZED = 401;     // Authentication failed or expired
 
 // AI Chat Handler Constants
 static const int UF_AI_CHAT_MAX_POLL_TIME = 300; // Maximum polling duration in seconds (5 minutes)
 static const int UF_AI_CHAT_MAX_RETRIES = 3;     // Maximum number of failed status check retries
 
 // AI Chat Status Codes
-static const int UF_AI_PENDING = 202;    // AI processing is in progress
-static const int UF_AI_PROCESSING = 102;  // AI request is still being processed
+static const int UF_AI_PENDING = 202;       // AI processing is in progress
+static const int UF_AI_PROCESSING = 102;    // AI request is still being processed
 
+/**
+ * Legacy Database Status Codes (deprecated - use UF_ versions)
+ */
 static const int UF_DBSUCCESS = 200;
 static const int UF_DBEMPTY = 204;
 static const int UF_DBTIMEOUT = 408;
@@ -31,12 +55,40 @@ static const int UF_DBERROR = 418;
 static const int UF_DBTOOEARLY = 425;
 
 
-static const int PLAYER_DB = 100;
-static const int OBJECT_DB = 101;
+/**
+ * Database Type Identifiers
+ * Used to specify which database collection to access via U().db(type)
+ */
+static const int PLAYER_DB = 100;   // Player-specific data (client can only access their own data)
+static const int OBJECT_DB = 101;   // Object/global data (accessible by all clients)
 
-static const string UF_QUEUE_FIFO = "FIFO";
-static const string UF_QUEUE_LIFO = "LIFO";
+/**
+ * Message Queue Types
+ * Defines the order in which messages are processed from a queue
+ */
+static const string UF_QUEUE_FIFO = "FIFO";  // First In, First Out
+static const string UF_QUEUE_LIFO = "LIFO";  // Last In, First Out
 
+/**
+ * UpdateOpts Class
+ *
+ * Defines the available database update operations for U().db().Update() calls.
+ * These operations modify specific fields within a database document without
+ * replacing the entire object.
+ *
+ * Operations:
+ *   - SET: Sets the value of a field
+ *   - PULL: Removes a specific value from an array
+ *   - PUSH: Adds a value to an array
+ *   - UNSET: Removes a field from the document
+ *   - MUL: Multiplies a numeric field by the given value
+ *   - RENAME: Renames a field
+ *   - PULLALL: Empties an entire array
+ *
+ * Example:
+ *   U().db().Update("MyMod", "player123", "coins", "100", UpdateOpts.SET);
+ *   U().db().Update("MyMod", "player123", "items", "\"sword\"", UpdateOpts.PUSH);
+ */
 class UpdateOpts {
 	static string SET = "set"; // `set` to set the value of an element
 	static string PULL = "pull"; // `pull` to pull a value out of an array
@@ -48,6 +100,31 @@ class UpdateOpts {
 }
 
 
+/**
+ * DSPerms Class
+ *
+ * Defines Discord permission constants used for channel permission overwrites
+ * when creating or editing Discord channels via U().ds().ChannelCreate() and
+ * U().ds().ChannelEdit().
+ *
+ * Common Permissions:
+ *   - VIEW_CHANNEL: Can see the channel
+ *   - SEND_MESSAGES: Can send messages in text channels
+ *   - CONNECT: Can join voice channels
+ *   - SPEAK: Can speak in voice channels
+ *   - ADD_REACTIONS: Can add reactions to messages
+ *
+ * Administrative Permissions (most require bot owner/admin):
+ *   - ADMINISTRATOR: Has all permissions
+ *   - MANAGE_CHANNELS: Can edit/delete channels
+ *   - KICK_MEMBERS, BAN_MEMBERS: Moderation actions
+ *   - MANAGE_ROLES: Can assign/remove roles
+ *
+ * Usage Example:
+ *   autoptr UChannelOptions opts = new UChannelOptions();
+ *   opts.AddPermission("roleId", DSPerms.VIEW_CHANNEL);
+ *   opts.AddPermission("roleId", DSPerms.SEND_MESSAGES);
+ */
 class DSPerms {
 	
 	static string ADD_REACTIONS = "ADD_REACTIONS"; // (add new reactions to messages)
@@ -87,6 +164,27 @@ class DSPerms {
 }
 
 
+/**
+ * UTTSVoice Class
+ *
+ * Defines available voice names for Text-to-Speech (TTS) generation using OpenAI.
+ * Each voice has distinct characteristics suitable for different use cases.
+ *
+ * Available Voices:
+ *   - ALLOY: Neutral and balanced
+ *   - ASH: Clear and articulate
+ *   - BALLAD: Warm and expressive
+ *   - CORAL: Friendly and engaging
+ *   - ECHO: Deep and resonant
+ *   - FABLE: Narrative and storytelling
+ *   - ONYX: Deep and authoritative
+ *   - NOVA: Bright and energetic
+ *   - SAGE: Calm and wise
+ *   - SHIMMER: Light and pleasant
+ *
+ * Usage Example:
+ *   U().api().GenerateTTS("Hello world", UTTSVoice.ALLOY, this, "OnTTSGenerated");
+ */
 class UTTSVoice {
 	static const string ALLOY = "alloy";
 	static const string ASH = "ash";
@@ -101,12 +199,35 @@ class UTTSVoice {
 	static const string VERSE = "verse";
 }
 
+/**
+ * UTTSVisual Class
+ *
+ * Defines visual effects for TTS audio playback in-game.
+ *
+ * Options:
+ *   - LINE: Display waveform visualization
+ *   - NONE: No visual effects
+ */
 class UTTSVisual {
 	static const string LINE = "line";
 	static const string NONE = "none";
 }
 
 
+/**
+ * UTTSPersonality Class
+ *
+ * Defines pre-configured personality/accent styles for Text-to-Speech generation.
+ * Each personality includes specific delivery instructions for the TTS engine
+ * to create immersive character voices.
+ *
+ * Available Personalities:
+ *   - RAGED_SURVIVOR: Frenzied Russian-accented survivor with urgent delivery
+ *   - (Add more as defined below...)
+ *
+ * Usage Example:
+ *   U().api().GenerateTTSWithPersonality("Get out of here!", UTTSPersonality.RAGED_SURVIVOR, UTTSVoice.ONYX, this, "OnTTS");
+ */
 class UTTSPersonality {
     static const string RAGED_SURVIVOR = "IMPORTANT: STRONG RUSSIAN ACCENT\nVoice: Ragged and explosive, each word a desperate cry.  \nTone: Frenzied and urgent.  \nDelivery: Rapid bursts with heavy static.  \nPhrasing: Abrupt commands.  \nFeatures: Intense static and a collapsing wasteland vibe."; // RAGED_SURVIVOR: Explosive urgency with a harsh Russian edge.
 

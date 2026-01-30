@@ -9,10 +9,19 @@
  */
 class UQueueHandler<Class T> extends UQueueHandlerBase 
 {
+	/**
+	 * Reads unread messages from the queue
+	 * @return int Call ID
+	 */
 	override int Read(){
 		return U().Msg().Read(m_mod, m_queue, new UFMsgCallback<T>(this, "readCB", m_queue));
 	}
 	
+	/**
+	 * Reads up to N unread messages from the queue
+	 * @param limit Maximum number of messages to read
+	 * @return int Call ID
+	 */
 	int Read(int limit){
 		return U().Msg().Read(m_mod, m_queue, limit, new UFMsgCallback<T>(this, "readCB", m_queue));
 	}
@@ -75,10 +84,19 @@ class UQueueHandler<Class T> extends UQueueHandlerBase
  */
 class UStringQueueHandler extends UQueueHandlerBase 
 {
+	/**
+	 * Reads unread string messages from the queue
+	 * @return int Call ID
+	 */
 	override int Read(){
 		return U().Msg().Read(m_mod, m_queue, new UFMsgStringCallback(this, "readCB", m_queue));
 	}
 	
+	/**
+	 * Reads up to N unread string messages from the queue
+	 * @param limit Maximum number of messages to read
+	 * @return int Call ID
+	 */
 	int Read(int limit){
 		return U().Msg().Read(m_mod, m_queue, limit, new UFMsgStringCallback(this, "readCB", m_queue));
 	}
@@ -198,6 +216,9 @@ class UQueueHandlerBase extends Managed
 		}
 	}
 
+	/**
+	 * Destructor - cleans up cron job and pending callbacks
+	 */
     void ~UQueueHandlerBase()
     {
 		m_IsDestroying = true;
@@ -277,18 +298,34 @@ class UQueueHandlerBase extends Managed
 		U().RequestCallCancel(cid);
 	}
  
+	/**
+	 * Returns the callback instance
+	 * @return Class The instance receiving callbacks
+	 */
 	Class GetInstance(){
 		return m_obj;
 	}
 	
+	/**
+	 * Returns the callback function name
+	 * @return string The function name
+	 */
 	string GetFuncName(){
 		return m_funcName;
 	}
 	
+	/**
+	 * Returns the mod identifier
+	 * @return string The mod ID
+	 */
 	string GetMod(){
 		return m_mod;
 	}
 	
+	/**
+	 * Returns the queue identifier
+	 * @return string The queue ID
+	 */
 	string GetQueue(){
 		return m_queue;
 	}

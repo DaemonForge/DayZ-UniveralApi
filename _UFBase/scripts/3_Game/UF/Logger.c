@@ -3,7 +3,14 @@ static const int LOG_VERBOSE = 1;
 static const int LOG_INFO = 2;
 static const int LOG_DEBUG = 3;
 
-// Universal Framework's own logger - just extends ULoggerBase with type "UF"
+/**
+ * Universal Framework logger - logs with "UF" prefix.
+ * 
+ * @usage UFLog.Info("Server started");
+ * @usage UFLog.Debug("Player position: " + pos.ToString());
+ * @usage UFLog.Err("Failed to load config");
+ * @usage UFLog.SetLogLevels(LOG_DEBUG, LOG_INFO); // Local=DEBUG, API=INFO
+ */
 class UFLog extends ULoggerBase {
 	override static string getLogID(){
 		return "UF";
@@ -48,6 +55,20 @@ class UFLog extends ULoggerBase {
 	}
 }
 
+/**
+ * Base logger class for creating custom loggers with different prefixes.
+ * 
+ * @note This is abstract - override in subclasses (see UFLog for example)
+ * @note All methods intentionally commented out to prevent direct use
+ * 
+ * @usage Create custom logger:
+ * class MyModLog extends ULoggerBase {
+ *     override static string getLogID() { return "MyMod"; }
+ *     static protected ref ULoggerBaseInstance m_LoggerBaseInstanceMyMod;
+ *     override static ULoggerBaseInstance GetInstance() { ... }
+ *     override static void CreateInstance() { ... }
+ * }
+ */
 class ULoggerBase extends Managed {
 	protected static autoptr ULoggerBaseInstance m_LoggerBaseInstance;
 	//Everything commented out to prevent base logger from working you must override everything see example above!

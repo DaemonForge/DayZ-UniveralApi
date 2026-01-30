@@ -1,5 +1,10 @@
 ref UFVideoPlayer m_UFVideoPlayer;
 
+/**
+ * Gets global video player instance.
+ * 
+ * @return UFVideoPlayer singleton or null
+ */
 UFVideoPlayer GetUFVideoPlayer(){
 	if (m_UFVideoPlayer){
 		return m_UFVideoPlayer;
@@ -7,6 +12,16 @@ UFVideoPlayer GetUFVideoPlayer(){
 	return null;
 }
 
+/**
+ * Video player for TTS audio playback with queue support.
+ * 
+ * @note Automatically downloads and plays TTS audio files
+ * @note Supports queuing multiple audio files
+ * @note Client-side only - no-op on dedicated server
+ * 
+ * @usage GetUFVideoPlayer().LoadAndPlay("ttsId", true);
+ * @usage GetUFVideoPlayer().AddToQueue("ttsId");
+ */
 class UFVideoPlayer extends ScriptedWidgetEventHandler {
 	static string m_LayoutPath = "_UFramework/data/layouts/videoplayer.layout";
 
@@ -129,6 +144,13 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 		}
 	}
 	
+	/**
+	 * Adds TTS audio to playback queue.
+	 * 
+	 * @param oid TTS ID to queue
+	 * 
+	 * @note Plays immediately if nothing playing, otherwise queues
+	 */
 	void AddToQueue(string oid){
 		if (!isAudioPlaying()){
 			LoadAndPlay(oid, true);

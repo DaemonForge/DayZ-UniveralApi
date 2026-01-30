@@ -1,14 +1,39 @@
+/**
+ * Modded MissionGameplay providing client-side authentication and Discord integration.
+ * 
+ * Implements:
+ * - Multi-layer JWT token renewal system (CRON, proactive, failure recovery)
+ * - Aggressive startup retry for initial connection issues
+ * - Discord link detection and avatar display
+ * - CTRL+L hotkey for Discord integration (tap=link, hold=toggle avatar)
+ */
 modded class MissionGameplay extends MissionBase
 {
-	protected bool m_UFFirstRequest = true;
-	protected int m_StartupAuthRetries = 0;
+	protected bool m_UFFirstRequest = true;  // Tracks if this is first auth request
+	protected int m_StartupAuthRetries = 0;  // Counter for startup retry attempts
 	
 	// Variables used to track the state and hold time of the hotkey.
     private bool m_DiscordKeyDown = false;
     private float m_DiscordKeyDownTime = 0;
-    private const float m_DiscordHoldThreshold = 650.0;
+    private const float m_DiscordHoldThreshold = 650.0;  // ms to hold before triggering hide
     private bool m_HoldActionTriggered = false;
 	
+	/**
+	 * Called when mission starts on client.
+	 * Initializes 3-layer token renewal system and sets up Discord integration.
+	 * 
+	 * Token Renewal Strategy:
+	 * 1. CRON: Primary renewal every 10 min (600s) - token expires at 15 min, giving 5 min buffer
+	 * 2. PROACTIVE: GetAuthToken() checks if <4 min remaining, triggers renewal (catches cron failures)
+	 * 3. FAILURE RECOVERY: OnAuthFailure() triggers renewal when API returns auth errors
+	 * All renewal requests are rate-limited to 30s to prevent spam.
+	 * 
+	 * Startup Retries:
+	 * - 5s, 15s, 30s, 60s retry schedule
+	 * - Handles initial connection packet loss or timing issues
+	 * 
+	 * @note Initializes UFVideoPlayer and DiscordLoggedInWidget (client only)
+	 */
 	override void OnMissionStart(){
 		UFLog.Info("MissionGameplay OnMissionStart");
 		super.OnMissionStart();
@@ -43,6 +68,10 @@ modded class MissionGameplay extends MissionBase
 		#endif
 	}
 	
+	/**
+	 * Called when mission ends on client.
+	 * Cleans up CRON jobs and video player.
+	 */
 	override void OnMissionFinish(){
 		UFLog.Info("MissionGameplay OnMissionFinish");
 		super.OnMissionFinish();
@@ -54,6 +83,12 @@ modded class MissionGameplay extends MissionBase
 	}
 
 	
+	/**
+	 * Called when framework is ready on client (after receiving auth token).
+	 * Safe point to make authenticated API calls.
+	 * 
+	 * @note Dumps CRON jobs for debugging
+	 */
 	override void UFrameworkReady(){
 		super.UFrameworkReady();
 		UFLog.Info("MissionGameplay UFrameworkReady");
@@ -61,6 +96,14 @@ modded class MissionGameplay extends MissionBase
 		U().Cron().DebugDump();
 	}
 	
+	/**
+	 * CRON job - requests new auth token every 10 minutes.
+	 * Primary token renewal mechanism (Layer 1 of 3).
+	 * 
+	 * @note Only runs on client (!IsServer)
+	 * @note Logs current token status before renewal for debugging
+	 * @note Called automatically by CRON system
+	 */
 	void RequestNewAuthToken(){
 		if (!g_Game.IsServer()){
 			// Log current token status before renewal attempt
@@ -76,7 +119,17 @@ modded class MissionGameplay extends MissionBase
 		}
 	}
 	
-	// DEBUG: Log token status every 60 seconds to monitor token age over time
+	/**
+	 * DEBUG CRON job - logs token status every 60 seconds.
+	 * Helps monitor token age and detect issues early.
+	 * 
+	 * Status levels:
+	 * - OK: >300 seconds remaining
+	 * - LOW: 240-300 seconds remaining
+	 * - EXPIRING_SOON: 60-240 seconds remaining
+	 * - CRITICAL: <60 seconds remaining
+	 * - NO_VALID_TOKEN: No token or expired
+	 */
 	void LogTokenStatus(){
 		if (!g_Game.IsServer()){
 			if (U().HasValidAuth()){
@@ -92,6 +145,14 @@ modded class MissionGameplay extends MissionBase
 		}
 	}
 	
+	/**
+	 * Startup failsafe - retries auth request if no valid token received.
+	 * Scheduled at 5s, 15s, 30s, and 60s after mission start.
+	 * 
+	 * @note Handles initial connection packet loss or server timing issues
+	 * @note Skips retry if valid token already received
+	 * @note Uses forceFresh=true to bypass rate limiting during startup
+	 */
 	void StartupAuthRetry(){
 		if (!g_Game.IsServer()){
 			m_StartupAuthRetries++;
@@ -106,6 +167,18 @@ modded class MissionGameplay extends MissionBase
 		}
 	}
     
+	/**
+	 * Called every frame to handle Discord integration hotkey (CTRL+L).
+	 * 
+	 * Hotkey Behavior:
+	 * - TAP (press < 650ms): Opens Discord link URL for account linking
+	 * - HOLD (press >= 650ms): Toggles Discord avatar visibility in UI
+	 * 
+	 * @param timeslice Time in seconds since last update
+	 * 
+	 * @note Only functions if U().IsDiscordEnabled() returns true
+	 * @note After link tap, schedules ReCheckDiscord CRON job (20 iterations, 30s interval)
+	 */
     override void OnUpdate(float timeslice)
     {
         super.OnUpdate(timeslice);
@@ -156,6 +229,15 @@ modded class MissionGameplay extends MissionBase
         }
     }
 	
+	/**
+	 * CRON job - rechecks if player has linked their Discord account.
+	 * Called periodically after player opens Discord link.
+	 * 
+	 * @note Scheduled by OnUpdate after CTRL+L tap
+	 * @note Runs 20 times at 30-second intervals (total 10 minutes)
+	 * @note Auto-stops if Discord user is detected
+	 * @note Queries API for updated Discord info via U().ds().GetUser()
+	 */
 	void ReCheckDiscord(){
 		if (GetDayZGame().DiscordUser()) return;
 		U().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");

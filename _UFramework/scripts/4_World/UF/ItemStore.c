@@ -1,5 +1,43 @@
+/**
+ * Modded UEntityStore implementation providing full entity persistence functionality.
+ * Extends base UEntityStore with complete serialization and deserialization logic.
+ * 
+ * Handles persistence for:
+ * - Item properties (health, quantity, temperature, wetness, energy, cleanliness)
+ * - Inventory positions (slot, cargo coordinates, flip state, quickbar, in-hands)
+ * - Cargo contents (recursive item serialization)
+ * - Magazines (ammo count, cartridge damage/type per round)
+ * - Weapons (chambered rounds, fire modes, muzzle state, zeroing, zoom)
+ * - Vehicles (custom vehicle data via OnUFSave/OnUFLoad)
+ * - Damage zones (per-zone health values)
+ * - Liquids and contamination agents
+ * 
+ * @see UEntityStore base class for data structure and metadata methods
+ */
 modded class UEntityStore extends UFObject_Base {
 	
+	/**
+	 * Serializes a complete EntityAI into this store, capturing all state.
+	 * 
+	 * @param item Entity to serialize (must not be NULL)
+	 * @param recursive If true, serializes all cargo/attachments recursively
+	 * 
+	 * @usage Save Player's Full Inventory:
+	 * PlayerBase player = GetGame().GetPlayer();
+	 * UEntityStore playerStore = new UEntityStore();
+	 * playerStore.SaveEntity(player, true);  // Saves player + all inventory
+	 * string json = playerStore.ToJson();
+	 * // Save json to database
+	 * 
+	 * @usage Save Single Item (No Cargo):
+	 * ItemBase rifle = ItemBase.Cast(player.GetItemInHands());
+	 * UEntityStore rifleStore = new UEntityStore();
+	 * rifleStore.SaveEntity(rifle, false);  // Just the rifle, no attachments
+	 * 
+	 * @note Calls item.OnUFSave(this) to allow custom data storage
+	 * @note Recursively saves cargo/attachments when recursive=true
+	 * @note Saves damage zones, ammo, weapon state, vehicle state automatically
+	 */
 	override void SaveEntity(notnull EntityAI item, bool recursive = true ){
 		m_Type = item.GetType();
 		item.GetPersistentID(m_pid1, m_pid2, m_pid3, m_pid4); //Just for testing but maybe someone will find this usefull
@@ -114,6 +152,30 @@ modded class UEntityStore extends UFObject_Base {
 		}
 	}
 	
+	/**
+	 * Creates and restores an entity from this store.
+	 * Attempts placement based on stored inventory location.
+	 * 
+	 * @param parent Parent entity to create within (NULL = spawn at world origin)
+	 * @param RestoreOrginalLocation Currently unused parameter (for future expansion)
+	 * @return Created EntityAI with all properties restored, or NULL on failure
+	 * 
+	 * @usage Restore Item to Player Inventory:
+	 * UEntityStore itemStore;  // Loaded from database
+	 * PlayerBase player = GetGame().GetPlayer();
+	 * EntityAI restoredItem = itemStore.Create(player);
+	 * if (restoredItem) {
+	 *     Print("Item restored to inventory at original slot");
+	 * }
+	 * 
+	 * @note Placement priority:
+	 * 1. If m_IsInHands=true, creates in player hands
+	 * 2. If m_Slot!=-1, creates in attachment slot
+	 * 3. If m_Slot==-1, creates in cargo at stored coordinates
+	 * 4. If all fail, spawns at parent position on ground
+	 * @note Restores quickbar slot if m_QuickBarSlot >= 0
+	 * @note Recursively creates all cargo items from m_Cargo array
+	 */
 	override EntityAI Create(EntityAI parent = NULL, bool RestoreOrginalLocation = true){
 		EntityAI item;
 		if (parent == NULL){
@@ -141,6 +203,32 @@ modded class UEntityStore extends UFObject_Base {
 		return item;
 	}
 	
+	/**
+	 * Creates and restores an entity at a specific world position.
+	 * Useful for spawning stored items at custom locations.
+	 * 
+	 * @param Pos World position vector
+	 * @param Ori Orientation vector (default: "0 0 0")
+	 * @return Created EntityAI with all properties restored, or NULL on failure
+	 * 
+	 * @usage Spawn Stash at Map Coordinates:
+	 * UEntityStore stashStore;  // Loaded from database
+	 * vector stashPos = "1234.5 0 6789.2";
+	 * EntityAI stash = stashStore.CreateAtPos(stashPos);
+	 * if (stash) {
+	 *     Print("Stash spawned at " + stashPos);
+	 * }
+	 * 
+	 * @usage Spawn Vehicle with Rotation:
+	 * UEntityStore carStore;
+	 * vector carPos = "5000 0 5000";
+	 * vector carOri = "0 45 0";  // Facing 45 degrees
+	 * EntityAI car = carStore.CreateAtPos(carPos, carOri);
+	 * 
+	 * @note Sets position and orientation after creation
+	 * @note Restores all properties via LoadEntity()
+	 * @note Recursively creates all cargo items
+	 */
 	override EntityAI CreateAtPos(vector Pos, vector Ori = "0 0 0"){
 		EntityAI item;
 		item = EntityAI.Cast(g_Game.CreateObject(m_Type, Pos));
@@ -154,6 +242,29 @@ modded class UEntityStore extends UFObject_Base {
 		return item;
 	}
 	
+	/**
+	 * Loads all stored properties into an existing entity.
+	 * Called automatically by Create() and CreateAtPos().
+	 * 
+	 * @param item Entity to load properties into
+	 * 
+	 * @usage Manual Property Restoration:
+	 * UEntityStore backupStore;  // Previously saved state
+	 * ItemBase existingItem = ItemBase.Cast(GetGame().CreateObject("AK74", playerPos));
+	 * backupStore.LoadEntity(existingItem);  // Restore saved state to new item
+	 * 
+	 * @note Restores:
+	 * - Health (global and per-zone)
+	 * - Quantity/ammo count
+	 * - Physical properties (wet, temperature, energy, cleanness)
+	 * - Liquid type and contamination agents
+	 * - Magazine ammo (per-cartridge damage and type)
+	 * - Weapon state (chambered round, fire modes, muzzle, zeroing, zoom)
+	 * - Quickbar slot assignment
+	 * - Recursively creates cargo items
+	 * - Calls item.OnUFLoad(this) for custom restoration
+	 * - Calls vehicle.OnUFLoad(this) for vehicles
+	 */
 	override void LoadEntity(EntityAI item){
 		int i;
 		item.SetHealth("", "", m_Health);

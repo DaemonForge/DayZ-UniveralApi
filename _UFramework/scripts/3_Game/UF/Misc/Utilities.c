@@ -1,154 +1,26 @@
 /**
- * Utility Functions Documentation
- *
- * GetLogPlayerPosArray
- * --------------------
- * Summary:
- *   Converts an array of ULogPlayerPos objects into a JSON string representation.
- *
- * Parameters:
- *   - thePlayerlist: An array of autoptr ULogPlayerPos objects.
- *
- * Returns:
- *   A string containing the JSON representation of the provided array.
- *
- *
- * UUtil Class
- * -----------
- * A collection of static utility functions designed to help with various operations such as:
- * - Retrieving player-related information (Steam ID, finding players by GUID or identity)
- * - File system operations (finding files in a directory)
- * - String manipulation (generating random IDs, formatting integers)
- * - Time and date operations (obtaining date stamps, time stamps and Unix timestamps)
- * - Configuration retrieval for different asset types (magazines, weapons, vehicles)
- *
- *
- * Functions Within UUtil:
- *
- * 1. GetSteamId
- *    -----------
- *    Summary:
- *      Retrieves the Steam ID for the current client player.
- *    Logic:
- *      - Checks for a valid title initiator from the UserManager.
- *      - If not available, attempts to cast the current player as DayZPlayer and retrieves the plain ID.
- *    Returns:
- *      A string with the Steam ID, or an empty string if not available.
- *
- * 2. FindFilesInDirectory
- *    ----------------------
- *    Summary:
- *      Scans the specified directory and returns a list of file names contained within.
- *    Parameters:
- *      - directory: A string with the path of the target directory.
- *    Returns:
- *      A TStringArray containing the names of the found files.
- *
- * 3. GetRandomId
- *    ------------
- *    Summary:
- *      Generates a random alphanumeric string of a specified length.
- *    Parameters:
- *      - number: The desired length of the generated ID.
- *    Returns:
- *      A random string composed of upper and lower case letters and digits.
- *    Note:
- *      Utilizes a random number generator (ensuring it is checked and renewed) for index selection.
- *
- * 4. FindPlayer
- *    ----------
- *    Summary:
- *      Searches for a player on the server by comparing each player's identity GUID.
- *    Parameters:
- *      - GUID: A string representing the player's unique identifier.
- *    Returns:
- *      The matched DayZPlayer object if found; otherwise, NULL.
- *
- * 5. FindPlayerByIdentity
- *    ----------------------
- *    Summary:
- *      Locates a player based on their PlayerIdentity object by using the network ID.
- *    Parameters:
- *      - identity: A PlayerIdentity reference for detecting the player.
- *    Returns:
- *      The DayZPlayer associated with the supplied identity; returns NULL if not found or if identity is invalid.
- *
- * 6. SendNotificationEx & SendNotification
- *    ----------------------------------------
- *    Summary:
- *      Sends an in-game notification to a specified player identity.
- *    Parameters (for both functions):
- *      - Header: A string representing the notification header.
- *      - Text: The main message of the notification.
- *      - player: The recipient's PlayerIdentity.
- *      - Icon: (Optional) A path string to the icon image used in the notification; defaults to info icon.
- *    Modes:
- *      - Dedicated Server: Uses NotificationSystem.SendNotificationToPlayerIdentityExtended.
- *      - Client: Uses NotificationSystem.AddNotificationExtended.
- *
- * 7. ConvertIntToNiceString
- *    ------------------------
- *    Summary:
- *      Transforms an integer value representing a dollar amount into a formatted string with commas.
- *    Parameters:
- *      - DollarAmount: The integer value to format.
- *    Behavior:
- *      Handles negative values by prefixing with a minus sign.
- *    Returns:
- *      A string formatted with comma separations (e.g., "1,234,567").
- *
- * 8. RestErrorToString
- *    -------------------
- *    Summary:
- *      Maps REST error codes to their corresponding string representations.
- *    Parameters:
- *      - ErrorCode: An integer representing the REST error state.
- *    Returns:
- *      A string describing the error state (e.g., "EREST_SUCCESS", "EREST_ERROR_TIMEOUT").
- *
- * 9. GetDateStamp & GetTimeStamp
- *    -----------------------------
- *    Summary:
- *      Provide the current date and time in a human-readable format.
- *    GetDateStamp:
- *      Returns the date in "YYYY-MM-DD" format with leading zeros for single-digit days or months.
- *    GetTimeStamp:
- *      Returns the time in "HH:MM:SS" format.
- *
- * 10. Unix and UTC Date/Time Functions
- *     ----------------------------------
- *     Functions:
- *       - GetDateInt / GetUTCDateInt:
- *           Compute the number of days since January 1, 1970 based on local or UTC date.
- *       - GetUnixInt / GetUTCUnixInt:
- *           Calculate and return the Unix timestamp (seconds elapsed since Jan 1 1970) for local or UTC time.
- *     Note:
- *       Takes into account leap years using the IsLeapYear helper function.
- *
- * 11. Configuration Getters
- *     -----------------------
- *     Functions:
- *       - GetConfigInt, GetConfigFloat, GetConfigString:
- *           Retrieve single configuration values from predefined configuration paths (magazines, weapons, vehicles).
- *       - GetConfigTStringArray, GetConfigTFloatArray, GetConfigTIntArray:
- *           Retrieve arrays of configuration values for the respective data types.
- *     Behavior:
- *       - Each function attempts to locate the configuration value in multiple asset paths.
- *       - Returns true if the configuration exists and has been successfully loaded, false otherwise.
- *
- * Notes:
- *   - Many functions rely on global game objects (like g_Game) and assume a proper game context.
- *   - The configuration retrieval functions expect specific naming conventions for paths and variables.
- *   - Error handling is minimal; functions typically return empty strings or NULL when they fail.
+ * @class UUtil
+ * @brief Comprehensive utility class providing helper functions for common DayZ modding tasks.
+ * 
+ * Provides static methods for:
+ * - Player operations (Steam ID, GUID lookup, notifications)
+ * - File system operations (directory scanning)
+ * - String utilities (random ID generation, number formatting)
+ * - Time/date operations (timestamps, Unix time)
+ * - Configuration retrieval (weapons, vehicles, magazines)
+ * 
+ * @note All methods are static - no instance required.
+ * @note Extends UUtilBase for emoji handling and date/time helpers.
  */
 /**
  * Converts an array of ULogPlayerPos objects into a JSON string.
  *
- * This function leverages the JsonFileLoader's JsonMakeData method to serialize an array
- * of ULogPlayerPos pointers into its JSON representation.
- *
- * @param thePlayerlist Array containing autopointers to ULogPlayerPos objects.
- * @return              A JSON string that represents the provided array.
+ * @param thePlayerlist Array of ULogPlayerPos objects to serialize.
+ * @return JSON string representation of the array.
+ * 
+ * @usage
+ * array<autoptr ULogPlayerPos> positions = new array<autoptr ULogPlayerPos>();
+ * string json = GetLogPlayerPosArray(positions);
  */
 static string GetLogPlayerPosArray(array<autoptr ULogPlayerPos> thePlayerlist){
 	return JsonFileLoader<array<autoptr ULogPlayerPos>>.JsonMakeData(thePlayerlist);
@@ -158,17 +30,19 @@ static string GetLogPlayerPosArray(array<autoptr ULogPlayerPos> thePlayerlist){
 class UUtil extends UUtilBase {
 	
 	/**
-	 * Gets the Steam ID of the current player.
+	 * Gets the Steam ID of the current client player.
 	 * 
-	 * For client side:
-	 *  - If the game has a valid TitleInitiator, returns its UID.
-	 *  - Otherwise, if the client and player identity exist, returns the plain ID.
-	 *  - Returns an empty string if none of these conditions are met.
-	 *
-	 * @return string The Steam ID as a string, or empty if not found.
+	 * @return Steam ID string, or empty if not available.
+	 * 
+	 * @note Client-side only. Returns empty string on server.
+	 * @note Tries TitleInitiator first, then PlayerIdentity fallback.
+	 * 
+	 * @usage
+	 * string steamId = UUtil::GetSteamId();
+	 * if (steamId != "") {
+	 *     Print("Player Steam ID: " + steamId);
+	 * }
 	 */
-	 
-	//Client side function to get the steam id
 	static string GetSteamId(){
 		DayZPlayer player;
 		if (g_Game && g_Game.GetUserManager() && g_Game.GetUserManager().GetTitleInitiator()){
@@ -180,15 +54,17 @@ class UUtil extends UUtilBase {
 	}
 	
 	/**
-	 * Finds and returns an array of file names located in the specified directory.
+	 * Scans a directory and returns all file names found.
 	 *
-	 * The function builds a search pattern by appending "\*" to the directory path,
-	 * then iterates through the matching files. Only valid file attributes result in an insertion.
-	 *
-	 * @param directory The path to the directory in which to search for files.
-	 * @return TStringArray An array of file names found in the directory.
+	 * @param directory Directory path to scan (e.g., "$profile:MyMod/Data").
+	 * @return Array of file names (not full paths).
+	 * 
+	 * @usage
+	 * TStringArray files = UUtil::FindFilesInDirectory("$profile:Logs");
+	 * foreach (string filename : files) {
+	 *     Print("Found: " + filename);
+	 * }
 	 */
-	//Return an array of file names for all the files in the specified directory
 	static TStringArray FindFilesInDirectory(string directory)  { 
 		TStringArray fileList = new TStringArray;
 		
@@ -213,16 +89,17 @@ class UUtil extends UUtilBase {
 	};
 	
 	/**
-	 * Generates a random id string of a specified length.
+	 * Generates a random alphanumeric ID string.
 	 *
-	 * Uses a predefined character array including uppercase, lowercase letters, and digits.
-	 * A loop selects random characters from the array to construct the id.
-	 * Note: The loop iterates from 0 to number inclusive, resulting in (number+1) characters.
-	 *
-	 * @param number The number determining the length of the generated id.
-	 * @return string The generated random id.
+	 * @param number Length of ID to generate (actually generates number+1 characters).
+	 * @return Random string containing [A-Za-z0-9].
+	 * 
+	 * @note Uses quantum random pool (Math.QRandomInt) for better randomness.
+	 * @note Loop goes from 0 to number inclusive, so length is actually number+1.
+	 * 
+	 * @usage
+	 * string sessionId = UUtil::GetRandomId(15); // Generates 16-character ID
 	 */
-	//Generate a random id string of a specified length
 	static string GetRandomId(int number){
 		U().CheckAndRenewQRandom();
 		TStringArray Chars = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","0","1","2","3","4","5","6","7","8","9"};
@@ -235,15 +112,20 @@ class UUtil extends UUtilBase {
 	}
 	
 	/**
-	 * Finds a player on the server based on their GUID.
+	 * Finds a player by their identity GUID.
 	 *
-	 * Iterates over all connected players and casts each to a DayZPlayer.
-	 * If a player's identity exists and matches the provided GUID, that player is returned.
-	 *
-	 * @param GUID The unique identifier for the player.
-	 * @return DayZPlayer The player with the matching GUID, or NULL if the player is not found.
+	 * @param GUID Player's unique identifier (from PlayerIdentity.GetId()).
+	 * @return DayZPlayer if found, NULL otherwise.
+	 * 
+	 * @note Server-side only - always returns NULL on client.
+	 * @note Iterates all connected players - O(n) performance.
+	 * 
+	 * @usage
+	 * DayZPlayer player = UUtil::FindPlayer("ABC123XYZ");
+	 * if (player) {
+	 *     Print("Found player: " + player.GetIdentity().GetName());
+	 * }
 	 */
-	//Simple function for finding a player based on their GUID
 	static DayZPlayer FindPlayer(string GUID){
 		if (g_Game.IsServer()){
 			autoptr array<Man> players = new array<Man>;
@@ -259,15 +141,22 @@ class UUtil extends UUtilBase {
 	}
 	
 	/**
-	 * Finds a player by their identity.
+	 * Finds a player by their PlayerIdentity object.
 	 *
-	 * Retrieves the network ID corresponding to the player's identity, then returns the player object
-	 * associated with that network ID.
-	 *
-	 * @param identity The PlayerIdentity to find.
-	 * @return DayZPlayer The corresponding player, or NULL if not found.
+	 * @param identity PlayerIdentity to locate.
+	 * @return DayZPlayer if found, NULL otherwise.
+	 * 
+	 * @note More efficient than FindPlayer(GUID) - uses network ID lookup.
+	 * @note Returns NULL if identity is null.
+	 * 
+	 * @usage
+	 * void OnPlayerConnected(PlayerIdentity identity) {
+	 *     DayZPlayer player = UUtil::FindPlayerByIdentity(identity);
+	 *     if (player) {
+	 *         Print("Player joined: " + player.GetIdentity().GetName());
+	 *     }
+	 * }
 	 */
-	//Simple function for finding a player based on their identity
 	static DayZPlayer FindPlayerByIdentity(PlayerIdentity identity) {
 		if (!identity)
 			return NULL;
@@ -324,6 +213,18 @@ class UUtil extends UUtilBase {
 	 *
 	 * @param DollarAmount The integer value to format.
 	 * @return string The formatted string representation of the integer.
+	 */
+	/**
+	 * Formats an integer with comma separators for readability.
+	 *
+	 * @param DollarAmount Integer to format (e.g., currency, scores).
+	 * @return Formatted string with commas (e.g., "1,234,567").
+	 * 
+	 * @note Handles negative values correctly (e.g., "-1,234").
+	 * 
+	 * @usage
+	 * string balance = UUtil::ConvertIntToNiceString(1234567); // "1,234,567"
+	 * string debt = UUtil::ConvertIntToNiceString(-5000); // "-5,000"
 	 */
 	static string ConvertIntToNiceString(int DollarAmount){
 		string prefix = "";

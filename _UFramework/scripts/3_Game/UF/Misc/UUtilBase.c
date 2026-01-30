@@ -1,14 +1,15 @@
 /**
- * UUtilBase - Base Utility Class
- * ==============================
+ * @class UUtilBase
+ * @brief Base utility class providing emoji handling and date/time helpers.
  * 
- * Provides foundational data structures and helper methods for the UUtil class.
- * Contains:
- * - Emoji mappings and replacement logic using a data-driven approach
- * - Date/time constants and helper functions
- * - String formatting helpers
+ * Provides foundational utilities for UUtil including:
+ * - Emoji-to-ASCII mapping and replacement (200+ emojis supported)
+ * - Date/time formatting and padding helpers
+ * - Leap year calculations
+ * - Protected helper methods for string formatting
  * 
- * This base class handles supporting functions that don't rely on game API.
+ * @note This is the base class for UUtil - most methods are protected/static.
+ * @note Emoji maps use lazy initialization for performance.
  */
 class UUtilBase extends Managed
 {
@@ -490,13 +491,16 @@ class UUtilBase extends Managed
 	}
 	
 	/**
-	 * ApplyEmojiReplacements
-	 * ----------------------
-	 * Replaces all known emojis in the input string with their ASCII equivalents.
-	 * Uses the centralized emoji map for efficient, maintainable replacement.
+	 * Replaces all emojis in text with ASCII equivalents.
 	 *
-	 * @param input The string containing emojis.
-	 * @return String with emojis replaced by ASCII representations.
+	 * @param input String containing emojis.
+	 * @return String with emojis replaced (e.g., "😀" -> ":D", "❤️" -> "<3").
+	 * 
+	 * @note Supports 200+ common emojis.
+	 * @note Uses centralized emoji map for maintainability.
+	 * 
+	 * @usage
+	 * string clean = UUtil::ApplyEmojiReplacements("Hello 😀❤️"); // "Hello :D<3"
 	 */
 	static string ApplyEmojiReplacements(string input)
 	{
@@ -520,13 +524,15 @@ class UUtilBase extends Managed
 	}
 	
 	/**
-	 * StripKnownEmojis
-	 * ----------------
-	 * Removes all known emojis from the input string without replacement.
-	 * Uses the centralized emoji list for efficient, maintainable stripping.
+	 * Removes all known emojis from text without replacement.
 	 *
-	 * @param input The string to strip emojis from.
-	 * @return String with known emojis removed.
+	 * @param input String to strip emojis from.
+	 * @return String with all emojis removed.
+	 * 
+	 * @note More aggressive than ApplyEmojiReplacements - completely removes emojis.
+	 * 
+	 * @usage
+	 * string clean = UUtil::StripKnownEmojis("Hello 😀❤️"); // "Hello "
 	 */
 	static string StripKnownEmojis(string input)
 	{

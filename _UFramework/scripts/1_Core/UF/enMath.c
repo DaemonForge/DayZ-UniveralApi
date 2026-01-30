@@ -1,89 +1,29 @@
 /**
- * Class: Math (modded)
- *
- * Description:
- *   This class extends the basic Math functionality by providing a queue-based
- *   quantum-random number generator. It uses an internal pool (m_QRandomNumbers)
- *   to produce random integer, float, and boolean values. When the pool becomes empty,
- *   the implementation falls back to the vanilla random methods, this is done since the
- *   vanilla random methods are not very well designed and arn't very random.
- *
- * Properties:
- *   - m_QRandomNumbers:
- *       A static, protected integer array that holds a pool of random numbers for use
- *       by the various random generation methods.
- *
- * Methods:
- *
- *   - AddQRandomNumber(TIntArray numbers):
- *       Description:
- *         Inserts a set of integers into the internal random number pool.
- *       Parameters:
- *         - numbers: An array of integers to be added to the pool.
- *       Remarks:
- *         Should not be called directly; use U().CheckAndRenewQRandom() for automatic management.
- *
- *   - QRandomRemaining():
- *       Description:
- *         Returns the number of remaining random numbers in the pool.
- *       Returns:
- *         - int: The count of available random numbers.
- *
- *   - GetAndRemoveNumber():
- *       Description:
- *         Retrieves a random number from the pool by selecting a random index,
- *         returns the number at that index, and removes it from the pool.
- *       Returns:
- *         - int: The retrieved random number.
- *       Access Level:
- *         Protected helper method.
- *
- *   - QRandom():
- *       Description:
- *         Returns a pseudo-random number. If the pool is not empty, a number is
- *         retrieved from it; otherwise, it uses the vanilla random method to generate a number.
- *       Returns:
- *         - int: A pseudo-random integer.
- *
- *   - QRandomInt(int min = 0, int max = int.MAX):
- *       Description:
- *         Returns a pseudo-random integer within the specified range. It uses a number
- *         from the pool to generate a value between min and max by applying the modulus operator.
- *       Parameters:
- *         - min: The lower bound of the return value range (default is 0).
- *         - max: The upper bound of the return value range (default is int.MAX).
- *       Returns:
- *         - int: The generated random integer within the specified range.
- *       Remarks:
- *         If the internal pool is empty or min equals max, the traditional random method is used.
- *
- *   - QRandomFloat(float min = 0, float max = 1):
- *       Description:
- *         Returns a pseudo-random floating-point number within the specified range.
- *         A number from the pool is used to calculate the float value based upon int.MAX normalization.
- *       Parameters:
- *         - min: The lower bound of the return value range (default is 0.0).
- *         - max: The upper bound of the return value range (default is 1.0).
- *       Returns:
- *         - float: The generated random float within the specified range.
- *       Remarks:
- *         Similar to QRandomInt, defaults to vanilla random when the pool is empty.
- *
- *   - QRandomFlip():
- *       Description:
- *         Returns a pseudo-random boolean value. It determines the boolean outcome by
- *         checking the parity of a number retrieved from the pool.
- *       Returns:
- *         - bool: True or false determined randomly.
- *       Remarks:
- *         Falls back to the vanilla random method if the pool is depleted.
+ * Modded Math class with quantum random number pool.
+ * 
+ * Provides higher-quality random numbers than vanilla using a server-provided
+ * quantum random pool. Falls back to vanilla when pool is empty.
+ * 
+ * @usage int random = Math.QRandomInt(1, 100);
+ * @usage float chance = Math.QRandomFloat(0.0, 1.0);
+ * @usage bool flip = Math.QRandomFlip();
+ * 
+ * @note Pool auto-refills via U().CheckAndRenewQRandom()
+ * @note Use QRandom methods instead of vanilla Random for better randomness
  */
 modded class Math
 {
 	
 	protected static autoptr TIntArray m_QRandomNumbers = new TIntArray;
 	
-	//Adds a new array shouldn't be called manually Use U().CheckAndRenewQRandom();
+	/**
+	 * Adds quantum random numbers to the pool.
+	 * 
+	 * @param numbers Array of random integers from API
+	 * 
+	 * @note Internal use - called by UFramework automatically
+	 * @note Do not call manually - use U().CheckAndRenewQRandom() instead
+	 */
 	static void AddQRandomNumber(TIntArray numbers){
 		if (!m_QRandomNumbers){
 			m_QRandomNumbers = new TIntArray;
@@ -91,7 +31,13 @@ modded class Math
 		m_QRandomNumbers.InsertAll(numbers);
 	}
 	
-	//returns the remaining Random numbers to choose from
+	/**
+	 * Gets count of remaining random numbers in pool.
+	 * 
+	 * @return Number of random integers available
+	 * 
+	 * @usage if (Math.QRandomRemaining() < 1000) { U().CheckAndRenewQRandom(); }
+	 */
 	static int QRandomRemaining(){
 		if (!m_QRandomNumbers){
 			return 0;
@@ -107,7 +53,14 @@ modded class Math
 		return number;
 	}
 	
-	//returns a random number between int.MAX and int.MIN
+	/**
+	 * Gets random integer from full int range.
+	 * 
+	 * @return Random int between int.MIN and int.MAX
+	 * 
+	 * @note Falls back to vanilla RandomInt() if pool empty
+	 * @note Prefer QRandomInt() with explicit range for most uses
+	 */
 	static int QRandom(){
 		if (QRandomRemaining() <= 0){
 			//Error2("[UF] QRandom", "Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
@@ -117,8 +70,17 @@ modded class Math
 		return number;
 	}
 	
-	//returns a random integer max difference between numbers is int.MAX(2147483647)
-	//Unless returning a number between 0 and int.MAX exactly I would recomend not doing more than a difference of 10,000(ish) use random float instead
+	/**
+	 * Gets random integer within specified range.
+	 * 
+	 * @param min Lower bound (inclusive, default: 0)
+	 * @param max Upper bound (inclusive, default: int.MAX)
+	 * @return Random integer between min and max
+	 * 
+	 * @usage int dice = Math.QRandomInt(1, 6);
+	 * @note Falls back to vanilla RandomInt() if pool empty
+	 * @note For ranges > 10000, consider QRandomFloat() for better distribution
+	 */
 	static int QRandomInt(int min = 0, int max = int.MAX){
 		if (QRandomRemaining() <= 0){
 			//Error2("[UF] QRandomInt", "Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
@@ -143,7 +105,17 @@ modded class Math
 		return min + randomNum;
 	}
 	
-	//returns a random float
+	/**
+	 * Gets random float within specified range.
+	 * 
+	 * @param min Lower bound (default: 0.0)
+	 * @param max Upper bound (default: 1.0)
+	 * @return Random float between min and max
+	 * 
+	 * @usage float chance = Math.QRandomFloat(0.0, 1.0);
+	 * @usage float damage = Math.QRandomFloat(50.0, 100.0);
+	 * @note Falls back to vanilla RandomFloat() if pool empty
+	 */
 	static float QRandomFloat(float min = 0, float max = 1){
 		if (QRandomRemaining() <= 0){
 			//Error2("[UF] QRandomFloat", "Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
@@ -164,7 +136,14 @@ modded class Math
 		return  dnum + min;
 	}
 	
-	//returns a random true or false value
+	/**
+	 * Gets random boolean (coin flip).
+	 * 
+	 * @return Random true or false
+	 * 
+	 * @usage if (Math.QRandomFlip()) { /* 50% chance */ }
+	 * @note Falls back to vanilla random if pool empty
+	 */
 	static bool QRandomFlip(){
 		if (QRandomRemaining() <= 0){
 			//Error2("[UF] QRandomFlip", "Q RANDOM OUT OF NUMBERS USING VANILLA RANDOM");
