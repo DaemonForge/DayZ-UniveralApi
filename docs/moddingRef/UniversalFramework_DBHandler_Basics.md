@@ -16,17 +16,17 @@
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
 | **OBJECT_DB** |||
-| Load | âœ… Read + Create | âœ… Read only |
-| Save | âœ… | âŒ |
-| Update/Transaction | âœ… | âŒ |
-| Query | âœ… | âœ… |
+| Load | [YES] Read + Create | [YES] Read only |
+| Save | [YES] | âŒ |
+| Update/Transaction | [YES] | âŒ |
+| Query | [YES] | [YES] |
 | **PLAYER_DB** |||
-| Load | âœ… Any player | âœ… Own GUID only |
-| Save | âœ… | âŒ |
-| Update/Transaction | âœ… | âŒ |
-| Query | âœ… | âŒ |
-| PublicLoad | âœ… | âœ… (no auth) |
-| PublicSave | âœ… | âŒ |
+| Load | [YES] Any player | [YES] Own GUID only |
+| Save | [YES] | âŒ |
+| Update/Transaction | [YES] | âŒ |
+| Query | [YES] | âŒ |
+| PublicLoad | [YES] | [YES] (no auth) |
+| PublicSave | [YES] | âŒ |
 
 > **Note:** Player auth tokens are GUID-specific. A player can only load their own data from `PLAYER_DB`. The server can access any player's data.
 
@@ -79,7 +79,7 @@ void OnPlayerLoaded(int cid, int status, string oid, MyPlayerData data) {
 }
 ```
 
-âœ… **CORRECT - Use Class.CastTo():**
+[YES] **CORRECT - Use Class.CastTo():**
 ```enforce
 void OnPlayerLoaded(int cid, int status, string oid, MyPlayerData data) {
     if (status == UF_SUCCESS) {
@@ -102,7 +102,7 @@ void OnQuery(int cid, int status, string oid, UDBQueryResult<MyData> result) {
 }
 ```
 
-âœ… **CORRECT:**
+[YES] **CORRECT:**
 ```enforce
 typedef UDBQueryResult<MyData> UDBQueryResultMyData;  // In 3_Game layer
 
@@ -123,7 +123,7 @@ DayZ serializes booleans as `0`/`1`, not `true`/`false`. MongoDB queries must us
 UDBQuery query = new UDBQuery("{ \"IsVIP\": true }");
 ```
 
-âœ… **CORRECT:**
+[YES] **CORRECT:**
 ```enforce
 UDBQuery query = new UDBQuery("{ \"IsVIP\": 1 }");
 ```
@@ -146,7 +146,7 @@ class DataManager {
 }
 ```
 
-âœ… **CORRECT - Use instance method:**
+[YES] **CORRECT - Use instance method:**
 ```enforce
 class DataManager {
     void OnLoaded(int cid, int status, string oid, MyData data) {

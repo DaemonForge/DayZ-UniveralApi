@@ -20,13 +20,13 @@ UniversalDSEndpoint discord = U().ds();
 
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
-| Get / GetChannel | âœ… | âœ… Own GUID only |
-| AddRole / RemoveRole | âœ… | âŒ |
-| Mute / Kick / Move | âœ… | âŒ |
-| Send (DM) / SetNickname | âœ… | âŒ |
-| Check / CheckRole | âœ… (no auth) | âœ… (no auth) |
-| Channel Create/Delete/Edit | âœ… | âŒ |
-| Channel Send/Messages | âœ… | âœ… |
+| Get / GetChannel | [YES] | [YES] Own GUID only |
+| AddRole / RemoveRole | [YES] | âŒ |
+| Mute / Kick / Move | [YES] | âŒ |
+| Send (DM) / SetNickname | [YES] | âŒ |
+| Check / CheckRole | [YES] (no auth) | [YES] (no auth) |
+| Channel Create/Delete/Edit | [YES] | âŒ |
+| Channel Send/Messages | [YES] | [YES] |
 
 > **Note:** Players can only query their own Discord info. Role modifications, DMs, and voice controls are server-only.
 

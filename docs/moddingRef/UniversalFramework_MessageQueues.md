@@ -51,12 +51,12 @@ U().Msg().ReadLatest("MyMod", "notifications", 15, callback);
 
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
-| Read | âœ… | âœ… |
-| ReadLatest | âœ… | âœ… |
-| Write | âœ… | âœ…* |
-| Meta (configure queue) | âœ… | âŒ |
-| Reset | âœ… | âŒ |
-| Purge | âœ… | âŒ |
+| Read | [YES] | [YES] |
+| ReadLatest | [YES] | [YES] |
+| Write | [YES] | [YES]* |
+| Meta (configure queue) | [YES] | âŒ |
+| Reset | [YES] | âŒ |
+| Purge | [YES] | âŒ |
 
 *Player writes are controlled by the queue's `AllowPlayerWrites` metadata setting. Server must enable this for players to write.
 

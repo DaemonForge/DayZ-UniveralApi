@@ -23,13 +23,13 @@ The AI Chat system integrates OpenAI's GPT models into DayZ, enabling intelligen
 
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
-| Create session | âœ… | âŒ |
-| Send message | âœ… | âœ… |
-| Check message status | âœ… | âœ… |
-| Read history | âœ… | âœ… |
-| Reset chat | âœ… | âœ… |
-| Summarize | âœ… | âœ… |
-| Delete session | âœ… | âŒ |
+| Create session | [YES] | âŒ |
+| Send message | [YES] | [YES] |
+| Check message status | [YES] | [YES] |
+| Read history | [YES] | [YES] |
+| Reset chat | [YES] | [YES] |
+| Summarize | [YES] | [YES] |
+| Delete session | [YES] | âŒ |
 
 > **Note:** The server must create chat sessions. Once created, both server and players can send messages and interact with the chat.
 

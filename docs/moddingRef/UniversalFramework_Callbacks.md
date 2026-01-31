@@ -324,7 +324,7 @@ void OnDataLoaded(int cid, int status, string oid, MyPlayerData data) {
 }
 ```
 
-âœ… **CORRECT - Use Class.CastTo():**
+[YES] **CORRECT - Use Class.CastTo():**
 ```enforce
 void OnDataLoaded(int cid, int status, string oid, MyPlayerData data) {
     if (status == UF_SUCCESS) {
@@ -349,7 +349,7 @@ void OnQueryComplete(int cid, int status, string oid, UDBQueryResult<MyData> res
 }
 ```
 
-âœ… **CORRECT:**
+[YES] **CORRECT:**
 ```enforce
 void OnQueryComplete(int cid, int status, string oid, UDBQueryResult<MyData> result) {
     if (status == UF_SUCCESS) {
@@ -371,7 +371,7 @@ void OnQuery(int cid, int status, string oid, UDBQueryResult<MyClass> result) {
 }
 ```
 
-âœ… **CORRECT - Create typedef in 3_Game:**
+[YES] **CORRECT - Create typedef in 3_Game:**
 ```enforce
 // In scripts/3_Game/TypeDefs.c (or similar)
 typedef UDBQueryResult<MyClass> UDBQueryResultMyClass;
@@ -394,7 +394,7 @@ void OnQuery(int cid, int status, string oid, UDBQueryResultMyClass result) {
 UDBQuery query = new UDBQuery("{ \"isActive\": { \"$ne\": true } }");
 ```
 
-âœ… **CORRECT - Use integers:**
+[YES] **CORRECT - Use integers:**
 ```enforce
 UDBQuery query = new UDBQuery("{ \"isActive\": { \"$ne\": 1 } }");
 ```
@@ -422,7 +422,7 @@ class MyManager {
 }
 ```
 
-âœ… **CORRECT - Instance method:**
+[YES] **CORRECT - Instance method:**
 ```enforce
 class MyManager {
     void OnDataLoaded(int cid, int status, string oid, string data) {

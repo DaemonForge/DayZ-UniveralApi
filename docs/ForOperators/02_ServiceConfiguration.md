@@ -2,7 +2,7 @@
 
 This document details all configuration options in the UF Server Service `config.json` file.
 
-> **âš ï¸ Windows Users:**
+> **[!] Windows Users:**
 > Do NOT edit `config.json` manually unless necessary.
 > Use the **Settings** menu in the System Tray application:
 > **Right-click Tray Icon -> Options -> Settings**

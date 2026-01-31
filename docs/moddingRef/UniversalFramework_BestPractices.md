@@ -101,7 +101,7 @@ modded class MissionServer
 ### The Solution: Direct Client Database Access
 
 ```enforce
-// âœ… GOOD: Each client fetches their own data directly
+// [YES] GOOD: Each client fetches their own data directly
 // Server handles 0 requests - clients talk directly to API
 
 modded class MissionGameplay
@@ -125,9 +125,9 @@ modded class MissionGameplay
 
 | Database | Client Can Read | Client Can Write | Notes |
 |----------|-----------------|------------------|-------|
-| `OBJECT_DB` | âœ… All data | âŒ No | Public data store |
-| `PLAYER_DB` | âœ… Own data only | âŒ No | Player-specific data |
-| `globals()` | âœ… All data | âŒ No | Server config/state |
+| `OBJECT_DB` | [YES] All data | âŒ No | Public data store |
+| `PLAYER_DB` | [YES] Own data only | âŒ No | Player-specific data |
+| `globals()` | [YES] All data | âŒ No | Server config/state |
 
 ### When to Use Client-Side Calls
 
@@ -362,7 +362,7 @@ if (g_Game.IsServer()){
 ### Use autoptr for Handlers
 
 ```enforce
-// âœ… GOOD: autoptr automatically cleans up
+// [YES] GOOD: autoptr automatically cleans up
 autoptr MyHandler handler = new MyHandler();
 handler.Load();
 
@@ -815,7 +815,7 @@ modded class ItemBase {
 ### The Fix for Cleanup Issues
 
 ```enforce
-// âœ… CORRECT: Track and cancel pending calls
+// [YES] CORRECT: Track and cancel pending calls
 class GoodExample {
     protected ref array<int> m_Pending = new array<int>;
     protected bool m_HasCron = false;
@@ -842,7 +842,7 @@ class GoodExample {
     }
 }
 
-// âœ… CORRECT: Entity cleanup in EEDelete
+// [YES] CORRECT: Entity cleanup in EEDelete
 modded class ItemBase {
     protected bool m_HasCron = false;
     

@@ -30,8 +30,8 @@ The KB Manager has a two-panel layout:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| **KB ID** | âœ… | Unique identifier used in code (letters, numbers, underscores only) |
-| **Name** | âœ… | Human-readable name |
+| **KB ID** | [YES] | Unique identifier used in code (letters, numbers, underscores only) |
+| **Name** | [YES] | Human-readable name |
 | **Description** | âŒ | Optional description of the KB's purpose |
 | **Enable Shorter Answers** | âŒ | Uses AI to extract only relevant excerpts instead of full chunks |
 | **Extract Model** | âŒ | AI model for extraction (default: `gpt-5-mini`) |
@@ -222,9 +222,9 @@ When **Enable Shorter Answers** is turned on:
 4. Results in more focused, concise responses
 
 **When to Use:**
-- âœ… Documents with mixed content (some relevant, some not)
-- âœ… Large documents where only snippets are needed
-- âœ… FAQ-style content
+- [YES] Documents with mixed content (some relevant, some not)
+- [YES] Large documents where only snippets are needed
+- [YES] FAQ-style content
 - âŒ Small, focused documents
 - âŒ When full context is always needed
 

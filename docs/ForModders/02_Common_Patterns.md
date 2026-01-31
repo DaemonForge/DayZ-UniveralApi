@@ -8,13 +8,13 @@ This document outlines standard patterns for error handling, data management, an
 ## 1. The Callback Pattern
 All API calls are **asynchronous**. Never assume data is available immediately after a call.
 
-### âŒ WRONG: Blocking/Synchronous Thinking
+### [X] WRONG: Blocking/Synchronous Thinking
 ```enforce
 string data = U().db().Load("MyMod", "id"); // ERROR: Load returns void or call ID
 Print(data); // Will be empty/null
 ```
 
-### âœ… RIGHT: Async Callback
+### [YES] RIGHT: Async Callback
 ```enforce
 // 1. Initiate Request
 U().db().Load("MyMod", "id", this, "OnLoaded");
@@ -78,18 +78,18 @@ db.Load(playerUID, this, "OnStatsLoaded");
 db.Save(playerUID); // Uses internal m_Data automatically
 ```
 
-### âš ï¸ CRITICAL: Always Use Class.CastTo() in Callbacks
+### [!] CRITICAL: Always Use Class.CastTo() in Callbacks
 
 When receiving typed data from callbacks, **never use direct assignment**. Always use `Class.CastTo()`:
 
-âŒ **WRONG - Can crash:**
+[X] **WRONG - Can crash:**
 ```enforce
 void OnStatsLoaded(int cid, int status, string oid, MyPlayerData data) {
     m_PlayerData = data;  // DANGEROUS!
 }
 ```
 
-âœ… **CORRECT:**
+[YES] **CORRECT:**
 ```enforce
 void OnStatsLoaded(int cid, int status, string oid, MyPlayerData data) {
     if (status == UF_SUCCESS) {
@@ -113,11 +113,11 @@ void OnQuery(int cid, int status, string oid, UDBQueryResultMyPlayerData result)
 }
 ```
 
-### âš ï¸ CRITICAL: Callbacks Must Be Instance Methods (Not Static)
+### [!] CRITICAL: Callbacks Must Be Instance Methods (Not Static)
 
 **Static functions cannot be used as callbacks:**
 
-âŒ **WRONG:**
+[X] **WRONG:**
 ```enforce
 class MyManager {
     static void OnLoaded(int cid, int status, string oid, string data) {
@@ -126,7 +126,7 @@ class MyManager {
 }
 ```
 
-âœ… **CORRECT:**
+[YES] **CORRECT:**
 ```enforce
 class MyManager {
     void OnLoaded(int cid, int status, string oid, string data) {
@@ -146,9 +146,9 @@ DayZ scripts run on both client and server. UFramework handles authentication au
 
 | Operation | Server | Client | Note |
 |-----------|--------|--------|------|
-| `OBJECT_DB.Save()` | âœ… OK | âŒ Fail | Only servers can write object/global data. |
-| `PLAYER_DB.Load()` | âœ… Any | âœ… Self | Clients can only load their *own* data. |
-| `Discord.AddRole()` | âœ… OK | âŒ Fail | Admin actions are server-only. |
+| `OBJECT_DB.Save()` | [YES] OK | [NO] Fail | Only servers can write object/global data. |
+| `PLAYER_DB.Load()` | [YES] Any | [YES] Self | Clients can only load their *own* data. |
+| `Discord.AddRole()` | [YES] OK | [NO] Fail | Admin actions are server-only. |
 
 Use `GetGame().IsServer()` to guard logic:
 

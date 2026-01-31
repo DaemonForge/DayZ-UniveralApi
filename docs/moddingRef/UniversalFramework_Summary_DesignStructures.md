@@ -38,42 +38,42 @@ Players receive a JWT token issued by the server on connect. Limited access - pr
 | Feature | Server | Player | Notes |
 |---------|--------|--------|-------|
 | **Object DB** ||||
-| Load | âœ… Read + Create | âœ… Read only | Server can create if not exists |
-| Save | âœ… | âŒ | |
-| Update/Transaction | âœ… | âŒ | |
-| Query | âœ… | âœ… | Both can query |
+| Load | [YES] Read + Create | [YES] Read only | Server can create if not exists |
+| Save | [YES] | [NO] | |
+| Update/Transaction | [YES] | [NO] | |
+| Query | [YES] | [YES] | Both can query |
 | **Player DB** ||||
-| Load | âœ… Any player | âœ… Own GUID only | Player token restricts to own data |
-| Save | âœ… | âŒ | |
-| Update/Transaction | âœ… | âŒ | |
-| Query | âœ… | âŒ | Server only |
-| PublicLoad | âœ… | âœ… (no auth) | Anyone can read `Public.{mod}` data |
-| PublicSave | âœ… | âŒ | |
+| Load | [YES] Any player | [YES] Own GUID only | Player token restricts to own data |
+| Save | [YES] | [NO] | |
+| Update/Transaction | [YES] | [NO] | |
+| Query | [YES] | [NO] | Server only |
+| PublicLoad | [YES] | [YES] (no auth) | Anyone can read `Public.{mod}` data |
+| PublicSave | [YES] | [NO] | |
 | **Globals** ||||
-| Load | âœ… | âœ… | Both can read |
-| Save/Update/Transaction | âœ… | âŒ | |
+| Load | [YES] | [YES] | Both can read |
+| Save/Update/Transaction | [YES] | [NO] | |
 | **Discord** ||||
-| Get / GetChannel | âœ… | âœ… Own GUID | Player can check own Discord |
-| AddRole / RemoveRole | âœ… | âŒ | |
-| Mute / Kick / Move | âœ… | âŒ | |
-| Send (DM) / SetNickname | âœ… | âŒ | |
-| Check / CheckRole | âœ… (no auth) | âœ… (no auth) | Public endpoints |
-| Channel Create/Delete/Edit | âœ… | âŒ | |
-| Channel Send/Messages | âœ… | âœ… | Both can interact |
+| Get / GetChannel | [YES] | [YES] Own GUID | Player can check own Discord |
+| AddRole / RemoveRole | [YES] | [NO] | |
+| Mute / Kick / Move | [YES] | [NO] | |
+| Send (DM) / SetNickname | [YES] | [NO] | |
+| Check / CheckRole | [YES] (no auth) | [YES] (no auth) | Public endpoints |
+| Channel Create/Delete/Edit | [YES] | [NO] | |
+| Channel Send/Messages | [YES] | [YES] | Both can interact |
 | **AI Chat** ||||
-| Create | âœ… | âŒ | Server creates sessions |
-| Send / Read / Reset | âœ… | âœ… | Both can use existing chats |
-| MessageStatus / Summarize | âœ… | âœ… | |
-| Delete | âœ… | âŒ | |
+| Create | [YES] | [NO] | Server creates sessions |
+| Send / Read / Reset | [YES] | [YES] | Both can use existing chats |
+| MessageStatus / Summarize | [YES] | [YES] | |
+| Delete | [YES] | [NO] | |
 | **Message Queues** ||||
-| Read | âœ… | âœ… | Per-reader pointers |
-| Write | âœ… | âœ…* | *Controlled by queue `AllowPlayerWrites` setting |
-| Meta / Reset / Purge | âœ… | âŒ | |
+| Read | [YES] | [YES] | Per-reader pointers |
+| Write | [YES] | [YES]* | *Controlled by queue `AllowPlayerWrites` setting |
+| Meta / Reset / Purge | [YES] | [NO] | |
 | **External APIs** ||||
-| TTS Generate/Status/Download | âœ… | âœ… | Rate limited |
-| ServerQuery | âœ… | âœ… | |
-| Crypto prices | âœ… | âœ… | |
-| Random numbers | âœ… | âœ… | |
+| TTS Generate/Status/Download | [YES] | [YES] | Rate limited |
+| ServerQuery | [YES] | [YES] | |
+| Crypto prices | [YES] | [YES] | |
+| Random numbers | [YES] | [YES] | |
 
 ### Key Rules
 

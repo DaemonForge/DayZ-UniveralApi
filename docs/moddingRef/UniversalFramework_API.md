@@ -16,10 +16,10 @@ All external API endpoints allow both server and player access:
 
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
-| SteamQuery | âœ… | âœ… |
-| CryptoPrice / CryptoConvert / Crypto | âœ… | âœ… |
-| RandomNumbers | âœ… | âœ… |
-| TTS Generate / Status / Download | âœ… | âœ… |
+| SteamQuery | [YES] | [YES] |
+| CryptoPrice / CryptoConvert / Crypto | [YES] | [YES] |
+| RandomNumbers | [YES] | [YES] |
+| TTS Generate / Status / Download | [YES] | [YES] |
 
 > **Note:** These endpoints are rate-limited to prevent abuse.
 

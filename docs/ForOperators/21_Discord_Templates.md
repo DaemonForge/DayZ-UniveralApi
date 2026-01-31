@@ -236,7 +236,7 @@ You can use any JavaScript within `<% %>` tags:
 
 ### Common Mistakes and Fixes
 
-| âŒ Wrong | âœ… Correct | Reason |
+| âŒ Wrong | [YES] Correct | Reason |
 |----------|-----------|--------|
 | `<% SteamId %>` | `<%= SteamId %>` | Need `=` to output the value |
 | `<% if (x) { }` | `<% if (x) { %> ... <% } %>` | Must close bracket with `%>` |
@@ -964,7 +964,7 @@ If your template has EJS syntax errors:
 
 - Ensure you're using `<%= variable %>` not `<% variable %>`
 - Check variable spelling - they are case-sensitive:
-  - âœ… `<%= SteamId %>`
+  - [YES] `<%= SteamId %>`
   - âŒ `<%= steamid %>`
   - âŒ `<%= steamId %>`
 - Verify you're editing the correct template file

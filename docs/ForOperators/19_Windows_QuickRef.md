@@ -36,9 +36,9 @@ Windows uses the Electron application, which provides a graphical system tray in
 | Audio cache (TTS) | `%APPDATA%\ufserverservice\audioCache\` |
 
 **Quick Access:**
-- Right-click tray icon â†’ "Open Data Directory"
-- Right-click tray icon â†’ "View Logs"
-- Right-click tray icon â†’ "ðŸ“ Discord Templates"
+- Right-click tray icon -> "Open Data Directory"
+- Right-click tray icon -> "View Logs"
+- Right-click tray icon -> "[DIR] Discord Templates"
 
 ---
 
@@ -47,8 +47,8 @@ Windows uses the Electron application, which provides a graphical system tray in
 ### Start/Stop Service
 
 - **Start**: Launch from Start Menu or shortcut
-- **Stop**: Right-click tray icon â†’ "Exit"
-- **Restart**: Right-click tray icon â†’ "Restart Service"
+- **Stop**: Right-click tray icon -> "Exit"
+- **Restart**: Right-click tray icon -> "Restart Service"
 
 ### View Logs
 
@@ -74,7 +74,7 @@ Get-Content "$env:APPDATA\ufserverservice\logs\UF-*.log" -Wait -Tail 50
 1. Right-click tray icon
 2. Click "Edit Config" (opens in default editor)
 3. Save changes
-4. Right-click tray icon â†’ "Restart Service"
+4. Right-click tray icon -> "Restart Service"
 
 **PowerShell:**
 ```powershell
@@ -85,7 +85,7 @@ notepad "$env:APPDATA\ufserverservice\config.json"
 
 **Tray Menu:**
 1. Right-click tray icon
-2. Click "ðŸ“ Discord Templates"
+2. Click "[DIR] Discord Templates"
 
 **PowerShell:**
 ```powershell
@@ -172,7 +172,7 @@ The service uses a bundled self-signed certificate by default. For custom certif
 
 | Component | Required | Installation |
 |-----------|----------|--------------|
-| MongoDB 4.4+ | âœ… Yes | `winget install MongoDB.Server` |
+| MongoDB 4.4+ | [YES] Yes | `winget install MongoDB.Server` |
 | .NET Runtime | âŒ No | - |
 | Visual C++ Redist | âš ï¸ Maybe | [Download](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
 | FFmpeg | âš ï¸ For TTS | Bundled with Electron app |

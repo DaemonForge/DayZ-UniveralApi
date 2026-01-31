@@ -143,14 +143,14 @@ The `ReplaceEmojisWithASCII()` and `SanitizeString()` functions convert 150+ emo
 | â¤ï¸ ðŸ’• ðŸ’– | `<3` | Hearts |
 | ðŸ‘ | `+1` | Thumbs up |
 | ðŸ‘Ž | `-1` | Thumbs down |
-| ðŸ‘‹ âœ‹ | `o/` | Wave |
+| ðŸ‘‹ [NO]‹ | `o/` | Wave |
 | ðŸ‘Œ | `OK` | OK hand |
-| âœŒï¸ | `V` | Peace |
+| [NO]Œï¸ | `V` | Peace |
 | ðŸ¤˜ ðŸ¤Ÿ | `\m/` | Rock on |
 | ðŸ”¥ | `*fire*` | Fire |
 | â­ ðŸŒŸ | `*` | Stars |
-| âœ… âœ”ï¸ | `check` | Checkmark |
-| âŒ âœ— | `X` | X mark |
+| [YES] [NO]”ï¸ | `check` | Checkmark |
+| âŒ [NO]— | `X` | X mark |
 
 ### Practical Examples
 
