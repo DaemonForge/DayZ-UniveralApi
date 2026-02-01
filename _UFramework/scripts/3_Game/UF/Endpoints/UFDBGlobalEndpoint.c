@@ -9,6 +9,10 @@
  */
 class UDBGlobalEndpoint extends UFBaseEndpoint {
 	
+	/**
+	 * Returns the base URL for global database endpoint
+	 * @return Base URL with "Globals/" appended
+	 */
 	override protected string EndpointBaseUrl(){
 		return UFConfig().GetBaseURL() + "Globals/";
 	}
@@ -79,6 +83,18 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
+	/**
+	 * Loads global data with callback notification.
+	 * 
+	 * @param mod Mod identifier
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @param jsonString Optional query parameters (default: "{}")
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().globals().Load("MyMod", this, "OnLoaded");
+	 * @note Callback signature: void OnLoaded(int cid, int status, string oid, string data)
+	 */
 	int Load(string mod, Class cbInstance, string cbFunction, string jsonString = "{}") {
 		UFLog.Debug("[UDBGlobalEndpoint::Load] mod=" + mod + " cbFunction=" + cbFunction);
 		int cid = -1;
@@ -109,6 +125,17 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
+	/**
+	 * Loads global data with UFCallbackBase callback.
+	 * 
+	 * @param mod Mod identifier
+	 * @param cb UFCallbackBase-derived callback
+	 * @param jsonString Optional query parameters (default: "{}")
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().globals().Load("MyMod", new MyLoadCallback());
+	 * @note Callback receives parsed object as typed parameter if using UFCallback<T>
+	 */
 	int Load(string mod, UFCallbackBase cb, string jsonString = "{}") {
 		UFLog.Debug("[UDBGlobalEndpoint::Load] mod=" + mod + " with UFCallbackBase");
 		int cid = -1;
@@ -181,6 +208,19 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
+	/**
+	 * Atomically modifies a global numeric field with callback notification.
+	 * 
+	 * @param mod Mod identifier
+	 * @param element Field name
+	 * @param value Amount to add/subtract
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().globals().Transaction("MyMod", "totalKills", 1, this, "OnUpdated");
+	 * @note Atomic operation - thread-safe
+	 */
 	int Transaction(string mod, string element, float value, Class cbInstance, string cbFunction) {
 		int cid = U().CallId();
 		string endpoint = "Transaction/" + mod;
@@ -196,6 +236,18 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
+	/**
+	 * Atomically modifies a global numeric field with UFCallbackBase callback.
+	 * 
+	 * @param mod Mod identifier
+	 * @param element Field name
+	 * @param value Amount to add/subtract
+	 * @param cb UFCallbackBase-derived callback
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().globals().Transaction("MyMod", "serverScore", 100, new MyCallback());
+	 * @note Atomic operation - thread-safe
+	 */
 	int Transaction(string mod, string element, float value, UFCallbackBase cb) {
 		int cid = -1;
 		string endpoint = "Transaction/" + mod;
@@ -212,7 +264,20 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-		
+	/**
+	 * Updates a single global field.
+	 * 
+	 * @param mod Mod identifier
+	 * @param element Field name
+	 * @param value New value (JSON-encoded string)
+	 * @param operation Update operation (default: UpdateOpts.SET)
+	 * @param cbInstance Optional callback object
+	 * @param cbFunction Optional callback method name
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().globals().Update("MyMod", "status", "\"active\"", UpdateOpts.SET, this, "OnUpdated");
+	 * @note For strings, must quote: Update(mod, "name", "\"ServerName\"");
+	 */	
 	int Update(string mod, string element, string value, string operation = UpdateOpts.SET, Class cbInstance = NULL, string cbFunction = "") {	
 		int cid = U().CallId();
 		autoptr UFRestCallBackBase DBCBX;

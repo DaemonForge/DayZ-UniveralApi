@@ -141,7 +141,7 @@ modded class Math
 	 * 
 	 * @return Random true or false
 	 * 
-	 * @usage if (Math.QRandomFlip()) { /* 50% chance */ }
+	 * @usage if (Math.QRandomFlip()) {  //50% chance }
 	 * @note Falls back to vanilla random if pool empty
 	 */
 	static bool QRandomFlip(){

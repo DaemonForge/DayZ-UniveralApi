@@ -11,6 +11,10 @@
 
 class UFMsgEndpoint extends UFBaseEndpoint {
     
+	/**
+	 * Returns the base URL for message queue endpoint
+	 * @return Base URL with "Messages/" appended
+	 */
 	override protected string EndpointBaseUrl(){
 		return UFConfig().GetBaseURL() + "Messages/";
 	}

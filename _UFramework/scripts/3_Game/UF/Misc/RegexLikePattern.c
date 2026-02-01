@@ -98,7 +98,18 @@ class URegexLikePattern
     private static const string CLASS_WORD      = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
     private static const string CLASS_SPACE     = " \t\n\r";
 
-    // Constructor: parses the pattern once
+    /**
+     * Constructor: parses the pattern once and prepares for matching.
+     * 
+     * @param pattern The regex pattern string to compile.
+     * @param caseInsensitive If true, matching ignores case (default: false).
+     * 
+     * @usage
+     * URegexLikePattern rx = new URegexLikePattern("^Admin_[A-Za-z0-9_]+$");
+     * if (rx.IsValid()) { ... }
+     * 
+     * @note Check IsValid() after construction. If false, use GetError() for details.
+     */
     void URegexLikePattern(string pattern, bool caseInsensitive = false)
     {
         m_Types      = new array<int>();
@@ -122,16 +133,35 @@ class URegexLikePattern
             OptimizeLiteralPrefix();
     }
 
+    /**
+     * Check if the pattern compiled successfully.
+     * 
+     * @return True if the pattern is valid and ready for matching, false otherwise.
+     * 
+     * @note If false, use GetError() to get the error message.
+     */
     bool IsValid()
     {
         return m_IsValid;
     }
 
+    /**
+     * Get the error message if pattern compilation failed.
+     * 
+     * @return Error message string, or empty if no error.
+     * 
+     * @note Only meaningful when IsValid() returns false.
+     */
     string GetError()
     {
         return m_ErrorMessage;
     }
     
+    /**
+     * Get the original pattern string.
+     * 
+     * @return The pattern string passed to the constructor.
+     */
     string GetPattern()
     {
         return m_OriginalPattern;
@@ -139,7 +169,10 @@ class URegexLikePattern
     
     /**
      * Returns the start position of the last successful match.
-     * Returns -1 if no match or Match() not called yet.
+     * 
+     * @return The start index (0-based) of the last match, or -1 if no match or Match() not called yet.
+     * 
+     * @note Only valid after a successful Match(), MatchFull(), or CountMatches() call.
      */
     int GetMatchStart()
     {
@@ -148,7 +181,10 @@ class URegexLikePattern
     
     /**
      * Returns the end position (exclusive) of the last successful match.
-     * Returns -1 if no match or Match() not called yet.
+     * 
+     * @return The end index (exclusive, 0-based) of the last match, or -1 if no match or Match() not called yet.
+     * 
+     * @note Only valid after a successful Match(), MatchFull(), or CountMatches() call.
      */
     int GetMatchEnd()
     {
@@ -157,7 +193,17 @@ class URegexLikePattern
     
     /**
      * Returns the matched substring from the last successful match.
-     * Returns empty string if no match.
+     * 
+     * @param text The same text string that was matched against.
+     * @return The matched substring, or empty string if no match.
+     * 
+     * @usage
+     * if (rx.Match("test@example.com")) {
+     *     string matched = rx.GetMatchedString("test@example.com");
+     *     Print(matched); // Prints the matched portion
+     * }
+     * 
+     * @note Only valid after a successful Match() call.
      */
     string GetMatchedString(string text)
     {
@@ -167,9 +213,18 @@ class URegexLikePattern
     }
 
     /**
-     * Main match function.
-     * If pattern starts with ^, anchors at start.
-     * Otherwise searches for the pattern anywhere in the text.
+     * Main match function. Searches for the pattern anywhere in the text.
+     * 
+     * @param text The text string to search within.
+     * @return True if the pattern matches somewhere in the text, false otherwise.
+     * 
+     * @usage
+     * URegexLikePattern rx = new URegexLikePattern("Admin_[A-Za-z0-9_]+");
+     * if (rx.Match("User: Admin_John42")) {
+     *     Print("Found admin name!");
+     * }
+     * 
+     * @note If pattern starts with ^, anchors at start. Use GetMatchStart(), GetMatchEnd(), GetMatchedString() to retrieve match details.
      */
     bool Match(string text)
     {
@@ -242,6 +297,17 @@ class URegexLikePattern
     
     /**
      * Test if the pattern matches the entire string (implicit ^...$).
+     * 
+     * @param text The text string to match against.
+     * @return True if the pattern matches the ENTIRE string, false otherwise.
+     * 
+     * @usage
+     * URegexLikePattern rx = new URegexLikePattern("\\d+");
+     * if (rx.MatchFull("12345")) {
+     *     Print("String is all digits");
+     * }
+     * 
+     * @note Equivalent to adding ^ and $ anchors to the pattern.
      */
     bool MatchFull(string text)
     {
@@ -273,6 +339,16 @@ class URegexLikePattern
     
     /**
      * Count all non-overlapping matches in the text.
+     * 
+     * @param text The text string to search within.
+     * @return The number of non-overlapping matches found.
+     * 
+     * @usage
+     * URegexLikePattern rx = new URegexLikePattern("\\d+");
+     * int count = rx.CountMatches("I have 3 apples and 42 oranges");
+     * Print("Found " + count.ToString() + " numbers"); // Prints "Found 2 numbers"
+     * 
+     * @note Matches do not overlap. After each match, search continues from the end of that match.
      */
     int CountMatches(string text)
     {
@@ -319,6 +395,13 @@ class URegexLikePattern
 
     // ----------------- PARSING -----------------
 
+    /**
+     * Internal: Sets an error message and marks the pattern as invalid.
+     * 
+     * @param msg The error message to store.
+     * 
+     * @note Private method for internal use during pattern parsing.
+     */
     private void SetError(string msg)
     {
         m_ErrorMessage = msg;
@@ -326,7 +409,13 @@ class URegexLikePattern
     }
     
     /**
-     * Expands shorthand character classes (\d, \w, \s, etc.)
+     * Expands shorthand character classes (\d, \w, \s, etc.) to their full character sets.
+     * 
+     * @param shorthand The shorthand class identifier (d, D, w, W, s, S).
+     * @return The expanded character class string, or empty if not a recognized shorthand.
+     * 
+     * @note Internal method used during pattern parsing.
+     * @note Uppercase variants (D, W, S) return negated classes (prefixed with ^).
      */
     private string ExpandShorthandClass(string shorthand)
     {
@@ -342,6 +431,14 @@ class URegexLikePattern
         return "";
     }
 
+    /**
+     * Internal: Parses the pattern string into tokens for matching.
+     * 
+     * @param pattern The pattern string to parse.
+     * @return True if parsing succeeded, false if syntax errors found.
+     * 
+     * @note Private method called during construction. Sets m_IsValid and m_ErrorMessage.
+     */
     private bool ParsePattern(string pattern)
     {
         int i;
@@ -520,6 +617,17 @@ class URegexLikePattern
         return true;
     }
 
+    /**
+     * Internal: Adds a parsed token to the pattern's token arrays.
+     * 
+     * @param type The token type (EUTokenType).
+     * @param lit The literal character (for CHAR tokens).
+     * @param classSpec The character class specification (for CLASS tokens).
+     * @param classNeg True if the class is negated (for CLASS tokens).
+     * @param repeat The repeat mode (REPEAT_ONCE, REPEAT_OPTIONAL, REPEAT_STAR, REPEAT_PLUS).
+     * 
+     * @note Private method used during pattern parsing.
+     */
     private void PushToken(int type, string lit, string classSpec, bool classNeg, int repeat)
     {
         m_Types.Insert(type);
@@ -530,9 +638,11 @@ class URegexLikePattern
     }
     
     /**
-     * Optimization: extract leading literal chars for fast rejection.
-     * If the pattern starts with literal characters, we can use IndexOf()
-     * to quickly reject strings that don't contain them.
+     * Internal optimization: extract leading literal chars for fast rejection.
+     * 
+     * @note If the pattern starts with literal characters, we can use IndexOf() to quickly reject strings that don't contain them.
+     * @note Sets m_LiteralPrefix and m_IsSimpleLiteral flags for performance optimization.
+     * @note Private method called after successful pattern parsing.
      */
     private void OptimizeLiteralPrefix()
     {
@@ -574,9 +684,17 @@ class URegexLikePattern
     // ----------------- MATCHING ENGINE -----------------
 
     /**
-     * Core matching engine.
-     * pi = pattern index, ti = text index, depth = recursion depth (safety)
-     * matchLen is updated to track total characters matched
+     * Internal: Core matching engine with backtracking.
+     * 
+     * @param pi Pattern index (current position in token array).
+     * @param text The text string being matched.
+     * @param ti Text index (current position in text).
+     * @param depth Recursion depth (for safety against pathological patterns).
+     * @param matchLen Output parameter tracking total characters matched.
+     * @return True if the pattern matches from this position, false otherwise.
+     * 
+     * @note Private recursive method implementing greedy backtracking.
+     * @note Protected against stack overflow by MAX_DEPTH limit.
      */
     private bool MatchHere(int pi, string text, int ti, int depth, out int matchLen)
     {
@@ -675,6 +793,19 @@ class URegexLikePattern
         return false;
     }
 
+    /**
+     * Internal: Tests if a single token matches a single character.
+     * 
+     * @param tokenType The token type (CHAR, DOT, CLASS, etc.).
+     * @param lit The literal character (for CHAR tokens).
+     * @param classSpec The character class specification (for CLASS tokens).
+     * @param neg True if the class is negated (for CLASS tokens).
+     * @param text The text string being matched.
+     * @param ti Text index (position to test).
+     * @return True if the token matches at position ti, false otherwise.
+     * 
+     * @note Private method used by MatchHere().
+     */
     private bool SingleMatch(int tokenType, string lit, string classSpec, bool neg, string text, int ti)
     {
         int tLen = text.Length();
@@ -701,6 +832,17 @@ class URegexLikePattern
         return false;
     }
 
+    /**
+     * Internal: Tests if a character matches a character class specification.
+     * 
+     * @param ch The character to test.
+     * @param spec The character class specification (e.g., "a-z0-9").
+     * @param neg True if the class is negated (match when NOT in class).
+     * @return True if the character matches the class, false otherwise.
+     * 
+     * @note Handles ranges (a-z), plain characters, and negation.
+     * @note Private method used by SingleMatch().
+     */
     private bool MatchClass(string ch, string spec, bool neg)
     {
         int len    = spec.Length();
@@ -756,8 +898,14 @@ class URegexLikePattern
  * Create a compiled regex pattern object.
  * 
  * @param pattern The regex pattern string.
- * @param caseInsensitive If true, matching ignores case.
+ * @param caseInsensitive If true, matching ignores case (default: false).
  * @return A compiled URegexLikePattern object.
+ * 
+ * @usage
+ * URegexLikePattern rx = UCreateRegex("^Admin_[A-Za-z0-9_]+$");
+ * if (rx.IsValid() && rx.Match("Admin_John42")) { ... }
+ * 
+ * @note Check IsValid() after creation to ensure pattern compiled successfully.
  */
 URegexLikePattern UCreateRegex(string pattern, bool caseInsensitive = false)
 {
@@ -766,8 +914,18 @@ URegexLikePattern UCreateRegex(string pattern, bool caseInsensitive = false)
 
 /**
  * Quick test if a pattern matches anywhere in the text.
- * Creates a temporary pattern object - for repeated matches, 
- * create the pattern once and reuse it.
+ * 
+ * @param pattern The regex pattern string.
+ * @param text The text string to search within.
+ * @param caseInsensitive If true, matching ignores case (default: false).
+ * @return True if the pattern matches somewhere in the text, false otherwise.
+ * 
+ * @usage
+ * if (URegexMatch("Admin_\\w+", "User: Admin_John42")) {
+ *     Print("Found admin name!");
+ * }
+ * 
+ * @note Creates a temporary pattern object - for repeated matches, create the pattern once and reuse it.
  */
 bool URegexMatch(string pattern, string text, bool caseInsensitive = false)
 {
@@ -779,6 +937,18 @@ bool URegexMatch(string pattern, string text, bool caseInsensitive = false)
 
 /**
  * Quick test if a pattern matches the entire text.
+ * 
+ * @param pattern The regex pattern string.
+ * @param text The text string to match against.
+ * @param caseInsensitive If true, matching ignores case (default: false).
+ * @return True if the pattern matches the ENTIRE string, false otherwise.
+ * 
+ * @usage
+ * if (URegexMatchFull("\\d+", "12345")) {
+ *     Print("String is all digits");
+ * }
+ * 
+ * @note Equivalent to adding ^ and $ anchors to the pattern.
  */
 bool URegexMatchFull(string pattern, string text, bool caseInsensitive = false)
 {
@@ -790,6 +960,17 @@ bool URegexMatchFull(string pattern, string text, bool caseInsensitive = false)
 
 /**
  * Count occurrences of a pattern in text.
+ * 
+ * @param pattern The regex pattern string.
+ * @param text The text string to search within.
+ * @param caseInsensitive If true, matching ignores case (default: false).
+ * @return The number of non-overlapping matches found.
+ * 
+ * @usage
+ * int count = URegexCount("\\d+", "I have 3 apples and 42 oranges");
+ * Print("Found " + count.ToString() + " numbers"); // Prints "Found 2 numbers"
+ * 
+ * @note Matches do not overlap. Creates a temporary pattern object.
  */
 int URegexCount(string pattern, string text, bool caseInsensitive = false)
 {
@@ -799,7 +980,20 @@ int URegexCount(string pattern, string text, bool caseInsensitive = false)
     return rx.CountMatches(text);
 }
 
-// Test function demonstrating regex features
+/**
+ * Test function demonstrating regex features and usage patterns.
+ * 
+ * @usage
+ * Call TestRegexUsage() to see examples of:
+ * - Anchored patterns (^...$)
+ * - File extension matching
+ * - Search patterns (no anchors)
+ * - Case-insensitive matching
+ * - Shorthand character classes (\d, \w)
+ * - Counting matches
+ * 
+ * @note This is a demonstration function for learning and testing.
+ */
 void TestRegexUsage()
 {
     // Basic pattern with anchors

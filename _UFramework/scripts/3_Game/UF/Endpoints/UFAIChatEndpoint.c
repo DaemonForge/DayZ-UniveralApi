@@ -8,6 +8,10 @@
 
 class UFAIChatEndpoint extends UFBaseEndpoint {
 
+	/**
+	 * Returns the base URL for AI Chat endpoint
+	 * @return Base URL with "AI/Chat/" appended
+	 */
 	override protected string EndpointBaseUrl(){
 		return UFConfig().GetBaseURL() + "AI/Chat/";
 	}

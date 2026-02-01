@@ -167,8 +167,19 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	//To Be removed
-	//Runs a Steam Query for a server returning a `UFServerStatus` object
+	/**
+	 * Queries a game server via Steam query protocol (DEPRECATED - use SteamQuery instead).
+	 * 
+	 * @param ip Server IP address
+	 * @param queryPort Server query port
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @param oid Optional object ID for callback context
+	 * @return Call ID or -1 on error
+	 * 
+	 * @deprecated Use SteamQuery() instead - this method will be removed
+	 * @note Returns raw callback string instead of typed object
+	 */
 	int ServerQuery(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = ""){
 		int cid = -1;
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
@@ -190,7 +201,20 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	//Runs a Steam Query for a server returning a `UFServerStatus` object
+	/**
+	 * Queries a game server via Steam query protocol with typed callback.
+	 * 
+	 * @param ip Server IP address
+	 * @param queryPort Server query port
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @param oid Optional object ID for callback context
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().api().ServerQueryObj("127.0.0.1", "27016", this, "OnServerData");
+	 * @note Callback signature: void OnServerData(int cid, int status, string oid, UFServerStatus data)
+	 * @note Prefer using SteamQuery() for consistency
+	 */
 	int ServerQueryObj(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = ""){
 		int cid = -1;
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
@@ -241,8 +265,20 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	
-	//Gets the value of the set value amount market prices for Crypto currencys `UCryptoConvertResult`
+	/**
+	 * Gets the current market price for cryptocurrency conversion.
+	 * 
+	 * @param from Source cryptocurrency symbol
+	 * @param to Target cryptocurrency symbol
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @param oid Optional object ID for callback context
+	 * @param ReturnString If true, returns raw string instead of UCryptoConvertResult
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().api().CryptoPrice("BTC", "USD", this, "OnPrice");
+	 * @note Callback signature: void OnPrice(int cid, int status, string oid, UCryptoConvertResult data)
+	 */
 	int CryptoPrice(string from, string to, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = -1;
 		string endpoint = "Crypto/Price/" + from + "/" + to;
@@ -262,7 +298,21 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	//Gets the value of the set value amount market prices for Crypto currencys `UCryptoConvertResult`
+	/**
+	 * Converts a cryptocurrency amount from one currency to another.
+	 * 
+	 * @param from Source cryptocurrency symbol
+	 * @param to Target cryptocurrency symbol
+	 * @param value Amount to convert (must be > 0)
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @param oid Optional object ID for callback context
+	 * @param ReturnString If true, returns raw string instead of UCryptoConvertResult
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().api().CryptoConvert("BTC", "USD", 1.5, this, "OnConverted");
+	 * @note Callback signature: void OnConverted(int cid, int status, string oid, UCryptoConvertResult data)
+	 */
 	int CryptoConvert(string from, string to, float value, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = -1;
 		string endpoint = "Crypto/Convert/" + from + "/" + to;
@@ -284,7 +334,21 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	//Gets a map of live market prices for Crypto currencys `UCryptoResults`
+	/**
+	 * Gets live market prices for multiple cryptocurrencies.
+	 * 
+	 * @param from Array of source cryptocurrency symbols
+	 * @param to Target cryptocurrency symbol
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @param oid Optional object ID for callback context
+	 * @param ReturnString If true, returns raw string instead of UCryptoResults
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage TStringArray cryptos = {"BTC", "ETH", "DOGE"};
+	 *        U().api().Crypto(cryptos, "USD", this, "OnPrices");
+	 * @note Callback signature: void OnPrices(int cid, int status, string oid, UCryptoResults data)
+	 */
 	int Crypto(TStringArray from, string to, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
 		int cid = -1;
 		string endpoint = "Crypto/" + to;
@@ -306,9 +370,19 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	//Generates a TTS audio, taking the UTTSMessage Object and Voice ID 
-	//Constants in: UTTSVoice
-	//voiceID: alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, shimmer, and verse
+	/**
+	 * Generates text-to-speech audio using OpenAI TTS.
+	 * 
+	 * @param voiceID Voice to use: alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, shimmer, verse
+	 * @param msg UTTSMessage object with text and options
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage auto msg = new UTTSMessage("Hello world");
+	 *        U().api().TTSGenerate(UTTSVoice.NOVA, msg, this, "OnTTSReady");
+	 * @note See UTTSVoice constants for valid voice IDs
+	 */
 	int TTSGenerate(string voiceID, UTTSMessage msg, Class cbInstance, string cbFunction  ){
 		int cid = -1;
 		string endpoint = "TTS/Generate/" + voiceID;
@@ -322,6 +396,16 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
+	/**
+	 * Checks the generation status of a TTS audio request.
+	 * 
+	 * @param ttsId The TTS ID returned from TTSGenerate
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().api().TTSStatus(ttsId, this, "OnTTSStatus");
+	 */
 	int TTSStatus(string ttsId, Class cbInstance, string cbFunction ){
 		int cid = -1;
 		string endpoint = "TTS/Status/" + ttsId;
@@ -335,7 +419,15 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	//Downloads an Audio file
+	/**
+	 * Downloads TTS audio file to client (fire-and-forget).
+	 * 
+	 * @param ttsId The TTS ID from successful TTSGenerate
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().api().TTSDownload(ttsId);
+	 * @note Client-only - returns -1 on server
+	 */
 	int TTSDownload(string ttsId){
 		if (g_Game.IsDedicatedServer()) {
 			Error2("[UF] TTSDownload Called from Server", " TTSid: " + ttsId);
@@ -353,7 +445,17 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
-	//Downloads and Calls back when complete
+	/**
+	 * Downloads TTS audio file to client with callback notification.
+	 * 
+	 * @param ttsId The TTS ID from successful TTSGenerate
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @return Call ID or -1 on error
+	 * 
+	 * @usage U().api().TTSDownload(ttsId, this, "OnDownloaded");
+	 * @note Client-only - returns -1 on server
+	 */
 	int TTSDownload(string ttsId, Class cbInstance, string cbFunction){
 		if (g_Game.IsDedicatedServer()) {
 			Error2("[UF] TTSDownload Called from Server", " TTSid: " + ttsId);
@@ -371,6 +473,16 @@ class UApiEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
+	/**
+	 * Downloads (if needed) and plays TTS audio.
+	 * 
+	 * @param ttsId The TTS ID from successful TTSGenerate
+	 * @return Call ID or -1 on error/already playing
+	 * 
+	 * @usage U().api().TTSPlay(ttsId);
+	 * @note Client-only - returns -1 on server
+	 * @note Auto-downloads if file not already cached
+	 */
 	int TTSPlay(string ttsId){
 		if (g_Game.IsDedicatedServer()) {
 			Error2("[UF] PlayTTS Called from Server", " TTSid: " + ttsId);
