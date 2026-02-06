@@ -104,8 +104,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 		
 		if (status != UF_SUCCESS) {
 			Error2("[UF] [UAIChatHandler] Message response error", "Status: " + status);
-			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-				new Param4<int, int, string, T>(callId, status, m_ChatId, null));
+			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, T>(callId, status, m_ChatId, null));
 				
 			// Move to the next message in queue if this one failed
 			m_PendingMessageId = "";
@@ -152,8 +151,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 				if (!success || error != "") {
 					Error2("[UF] [UAIChatHandler] Failed to parse JSON response", error);
 					UFLog.Debug("[UAIChatHandler<T>] JSON Parse Error: " + error + ", Raw: " + jsonMessage.Substring(0, Math.Min(200, jsonMessage.Length())));
-					g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-						new Param4<int, int, string, T>(callId, UF_JSONERROR, m_ChatId, null));
+					g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, T>(callId, UF_JSONERROR, m_ChatId, null));
 					
 					// Move to the next message even if parsing failed
 					m_PendingMessageId = "";
@@ -170,8 +168,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 			
 			UFLog.Debug("[UAIChatHandler<T>] Calling user callback: " + m_funcName);
 			// Call the callback with the parsed object
-			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-				new Param4<int, int, string, T>(callId, ufStatus, m_ChatId, typedResponse));
+			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, T>(callId, ufStatus, m_ChatId, typedResponse));
 				
 			// Process next message in queue
 			ProcessMessageQueue();
@@ -184,8 +181,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 			EnsurePollingStarted();
 		} else {
 			// Status is Error or other, just pass along the status
-			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-				new Param4<int, int, string, T>(callId, ufStatus, m_ChatId, null));
+			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, T>(callId, ufStatus, m_ChatId, null));
 				
 			// Move to the next message in queue
 			m_PendingMessageId = "";
@@ -232,8 +228,7 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 		
 		UFLog.Debug("[UStringAIChatHandler] Calling Create endpoint");
 		// Create the chat with string response format
-		m_LastCallId = U().AI().Create(systemMessage, "string", "", model, maxHistory, 
-			new UFCallback<StatusObject>(this, "OnChatCreated"));
+		m_LastCallId = U().AI().Create(systemMessage, "string", "", model, maxHistory, new UFCallback<StatusObject>(this, "OnChatCreated"));
 		UFLog.Debug("[UStringAIChatHandler] Create request sent, CID: " + m_LastCallId);
 	}
 	
@@ -284,8 +279,7 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 		
 		if (status != UF_SUCCESS) {
 			Error2("[UF] [UStringAIChatHandler] Message response error", "Status: " + status);
-			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-				new Param4<int, int, string, string>(callId, status, m_ChatId, ""));
+			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, string>(callId, status, m_ChatId, ""));
 				
 			// Move to the next message in queue if this one failed
 			m_PendingMessageId = "";
@@ -523,8 +517,7 @@ class UAIChatHandlerBase extends Managed
 				m_PendingMessageRetries = 0;
 				
 				// Notify the callback of timeout
-				g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-					new Param4<int, int, string, string>(m_LastCallId, UF_TIMEOUT, m_ChatId, "Operation timed out after " + messageElapsedTime + " seconds"));
+				g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, string>(m_LastCallId, UF_TIMEOUT, m_ChatId, "Operation timed out after " + messageElapsedTime + " seconds"));
 				
 				// Process next message in queue
 				ProcessMessageQueue();
@@ -546,8 +539,7 @@ class UAIChatHandlerBase extends Managed
 				m_PendingSummaryRetries = 0;
 				
 				// Notify the callback of timeout
-				g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-					new Param4<int, int, string, string>(m_LastCallId, UF_TIMEOUT, m_ChatId, "Summary operation timed out after " + summaryElapsedTime + " seconds"));
+				g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, string>(m_LastCallId, UF_TIMEOUT, m_ChatId, "Summary operation timed out after " + summaryElapsedTime + " seconds"));
 				return;
 			}
 			
@@ -568,8 +560,7 @@ class UAIChatHandlerBase extends Managed
 		if (m_PendingMessageId == "") return;
 		
 		UFLog.Debug("[UAIChatHandlerBase] CheckPendingMessage - MessageId: " + m_PendingMessageId + ", Elapsed: " + ((g_Game.GetTime() / 1000) - m_PendingMessageStartTime) + "s");
-		m_LastCallId = U().AI().MessageStatus(m_PendingMessageId, 
-			new UFCallback<UAIChatMessageResponse>(this, "OnMessageStatusUpdate"));
+		m_LastCallId = U().AI().MessageStatus(m_PendingMessageId, new UFCallback<UAIChatMessageResponse>(this, "OnMessageStatusUpdate"));
 	}
 	
 	/**
@@ -606,8 +597,7 @@ class UAIChatHandlerBase extends Managed
 				m_PendingMessageRetries = 0;
 				
 				// Notify the callback of network error
-				g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-					new Param4<int, int, string, string>(m_LastCallId, UF_ERROR, m_ChatId, "Network error after " + m_PendingMessageRetries + " retries"));
+				g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, string>(m_LastCallId, UF_ERROR, m_ChatId, "Network error after " + m_PendingMessageRetries + " retries"));
 				
 				// Process next message in queue
 				ProcessMessageQueue();
@@ -636,8 +626,7 @@ class UAIChatHandlerBase extends Managed
 	{
 		if (m_PendingSummaryId == "") return -1;
 		
-		m_LastCallId = U().AI().SummaryStatus(m_PendingSummaryId, 
-			new UFCallback<UAIChatSummaryResponse>(this, "OnSummaryStatusUpdate"));
+		m_LastCallId = U().AI().SummaryStatus(m_PendingSummaryId, new UFCallback<UAIChatSummaryResponse>(this, "OnSummaryStatusUpdate"));
 		return m_LastCallId;
 	}
 	
@@ -663,8 +652,7 @@ class UAIChatHandlerBase extends Managed
 				m_PendingSummaryRetries = 0;
 				
 				// Notify the callback of network error
-				g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-					new Param4<int, int, string, string>(m_LastCallId, UF_ERROR, m_ChatId, "Network error after " + m_PendingSummaryRetries + " retries"));
+				g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, string>(m_LastCallId, UF_ERROR, m_ChatId, "Network error after " + m_PendingSummaryRetries + " retries"));
 			}
 			
 			return;
@@ -711,8 +699,7 @@ class UAIChatHandlerBase extends Managed
 			return -1;
 		}
 		
-		m_LastCallId = U().AI().MessageStatus(messageId, 
-			new UFCallback<UAIChatMessageResponse>(this, "OnMessageStatusUpdate"));
+		m_LastCallId = U().AI().MessageStatus(messageId, new UFCallback<UAIChatMessageResponse>(this, "OnMessageStatusUpdate"));
 		return m_LastCallId;
 	}
 	
@@ -855,8 +842,7 @@ class UAIChatHandlerBase extends Managed
 			m_LastCallId = U().AI().Summarize(m_ChatId, callback);
 		} else {
 			// Use internal callback and polling
-			m_LastCallId = U().AI().Summarize(m_ChatId, 
-				new UFCallback<UAIChatSummaryResponse>(this, "OnSummarizeResponse"));
+			m_LastCallId = U().AI().Summarize(m_ChatId, new UFCallback<UAIChatSummaryResponse>(this, "OnSummarizeResponse"));
 		}
 		
 		return m_LastCallId;
@@ -869,8 +855,7 @@ class UAIChatHandlerBase extends Managed
 	{
 		if (status != UF_SUCCESS) {
 			Error2("[UF] [UAIChatHandlerBase] Summarize error", "Status: " + status);
-			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, 
-				new Param4<int, int, string, string>(m_LastCallId, status, m_ChatId, ""));
+			g_Game.GameScript.CallFunctionParams(m_obj, m_funcName, NULL, new Param4<int, int, string, string>(m_LastCallId, status, m_ChatId, ""));
 			return;
 		}
 		

@@ -67,8 +67,13 @@ class UQueueHandler<Class T> extends UQueueHandlerBase
 				}
 			}
 		} else if (status != UF_EMPTY && status != UF_SUCCESS){
-			// Log errors but don't spam for empty results
-			UFLog.Err("UQueueHandler<" + T.ToString() + "> Read error: " + UUtil.StatusToString(status));
+			// Log non-success statuses (but not as crash-log errors)
+			// CLIENT_ERROR (400) is normal for things like non-existent queues
+			if (status == UF_SERVERERROR || status == UF_TIMEOUT){
+				UFLog.Info("UQueueHandler<" + T.ToString() + "> Read status: " + UUtil.StatusToString(status));
+			} else {
+				UFLog.Debug("UQueueHandler<" + T.ToString() + "> Read status: " + UUtil.StatusToString(status));
+			}
 		}
 	} 
 }
@@ -118,7 +123,7 @@ class UStringQueueHandler extends UQueueHandlerBase
 	 * @return Call ID or -1 on error
 	 */
  	int Write(string message){
-		if (message == ""){
+		if (message == "") {
 			Error2("[UF] UStringQueueHandler", "Cannot write empty message");
 			return -1;
 		}
@@ -142,8 +147,13 @@ class UStringQueueHandler extends UQueueHandlerBase
 				}
 			}
 		} else if (status != UF_EMPTY && status != UF_SUCCESS){
-			// Log errors but don't spam for empty results
-			UFLog.Err("UStringQueueHandler Read error: " + UUtil.StatusToString(status));
+			// Log non-success statuses (but not as crash-log errors)
+			// CLIENT_ERROR (400) is normal for things like non-existent queues
+			if (status == UF_SERVERERROR || status == UF_TIMEOUT){
+				UFLog.Info("UStringQueueHandler Read status: " + UUtil.StatusToString(status));
+			} else {
+				UFLog.Debug("UStringQueueHandler Read status: " + UUtil.StatusToString(status));
+			}
 		}
 	}
 }
@@ -213,7 +223,7 @@ class UQueueHandlerBase extends Managed
 		// Only set meta from server
 		if (meta && g_Game.IsDedicatedServer()){
 			m_LastWriteCall = U().Msg().SetMeta(m_mod, m_queue, meta);
-		}
+		} 
 	}
 
 	/**
