@@ -29,7 +29,11 @@ class DiscordLoggedInWidget extends ScriptedWidgetEventHandler
 	protected bool m_isSet = false;
 	protected bool m_isShowing = false;
     
-    // Constructor: load the layout and obtain references to the child widgets.
+    /**
+     * Constructor: loads the Discord status widget layout.
+     * 
+     * @note Creates widget from layout file and initializes references to avatar and username elements.
+     */
     void DiscordLoggedInWidget()
     {
         // Create the widget using the provided layout file.
@@ -42,7 +46,11 @@ class DiscordLoggedInWidget extends ScriptedWidgetEventHandler
 		m_Root.Show(false);
     }
     
-    // Destructor: clean up the widget references.
+    /**
+     * Destructor: cleans up widget resources.
+     * 
+     * @note Automatically hides and deletes the root widget.
+     */
     void ~DiscordLoggedInWidget()
     {
         // Hide and delete the widgets if needed.
@@ -50,7 +58,16 @@ class DiscordLoggedInWidget extends ScriptedWidgetEventHandler
             delete m_Root;
     }
     
-    // UpdateData – This method sets the username text and loads a new image for the avatar.
+    /**
+     * Update the displayed Discord username and avatar image.
+     * 
+     * @param username The Discord username to display.
+     * @param avatarImagePath Path to the avatar image file (.edds format).
+     * 
+     * @usage GetDiscordLoggedInWidget().UpdateData("Username#1234", "$saves:discordme.edds");
+     * 
+     * @note Sets the m_isSet flag to true when called.
+     */
     void UpdateData(string username, string avatarImagePath)
     {
         if (m_Username)
@@ -64,24 +81,44 @@ class DiscordLoggedInWidget extends ScriptedWidgetEventHandler
 		m_isSet = true;
     }
     
-    // HideAvatar – Hides the avatar image from view.
+    /**
+     * Hide the Discord status widget.
+     * 
+     * @usage GetDiscordLoggedInWidget().HideAvatar();
+     */
     void HideAvatar()
     {
         if (m_Root)
             m_Root.Show(false);
     }
     
-    // ShowAvatar – Shows the avatar image.
+    /**
+     * Show the Discord status widget.
+     * 
+     * @usage GetDiscordLoggedInWidget().ShowAvatar();
+     */
     void ShowAvatar()
     {
         if (m_Root)
             m_Root.Show(true);
     }
 	
+	/**
+	 * Check if Discord data has been loaded.
+	 * 
+	 * @return True if UpdateData() has been called, false otherwise.
+	 */
 	bool IsSet(){
 		return m_isSet;
 	}
 	
+	/**
+	 * Toggle the visibility of the Discord status widget.
+	 * 
+	 * @usage GetDiscordLoggedInWidget().ToggleAvatar();
+	 * 
+	 * @note Switches between shown and hidden state.
+	 */
 	void ToggleAvatar(){
 		if (m_Root)
 		{

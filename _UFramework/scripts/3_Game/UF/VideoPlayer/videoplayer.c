@@ -33,18 +33,38 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 	
 	protected autoptr TStringArray m_VideoQueue;
 
+	/**
+	 * Constructor: initializes the video player widget and queue.
+	 * 
+	 * @note Automatically called when creating new UFVideoPlayer instance.
+	 */
 	void UFVideoPlayer(){
 		Init();
 	}
 
+	/**
+	 * Destructor: cleans up video player resources.
+	 * 
+	 * @note Automatically stops playback and destroys widgets.
+	 */
 	void ~UFVideoPlayer(){
 		Destroy();
 	}
 	
+	/**
+	 * Check if audio is currently playing.
+	 * 
+	 * @return True if audio playback is active, false otherwise.
+	 */
 	bool isAudioPlaying(){
 		return m_isAudioPlaying;
 	}
 	
+	/**
+	 * Destroy the video player and clean up resources.
+	 * 
+	 * @note Stops playback, unloads video, and deletes layout widgets.
+	 */
 	void Destroy(){
 		if (!m_LayoutRoot) return;
 		m_LayoutRoot.Show(false);
@@ -59,6 +79,12 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 		delete m_LayoutRoot;
 	}
 
+	/**
+	 * Initialize the video player widget and queue.
+	 * 
+	 * @note Creates layout widgets, initializes queue, and prepares video widget.
+	 * @note No-op on dedicated server.
+	 */
 	void Init(){
         if (g_Game.IsDedicatedServer()) return;
 		m_LayoutRoot = g_Game.GetWorkspace().CreateWidgets(m_LayoutPath, NULL, true);
@@ -70,6 +96,17 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
         #endif
 	}
 
+    /**
+     * Load and play a TTS audio file by ID.
+     * 
+     * @param oid The TTS object ID (filename without extension).
+     * @param showIcon If true, shows the audio playback icon.
+     * 
+     * @usage GetUFVideoPlayer().LoadAndPlay("tts_12345", true);
+     * 
+     * @note Does nothing if audio is already playing (use AddToQueue instead).
+     * @note Expects file at $saves:{oid}.mp4
+     */
     void LoadAndPlay(string  oid, bool showIcon){
 		if (isAudioPlaying()){
 			Print("Trying to play but audio is already playing");
@@ -92,6 +129,15 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
         #endif
 
     }
+    /**
+     * Load a video/audio file by absolute path.
+     * 
+     * @param videoPath The full path to the video/audio file.
+     * 
+     * @usage GetUFVideoPlayer().LoadPath("$saves:myaudio.mp4");
+     * 
+     * @note Does not auto-play, use Play() afterwards.
+     */
     void LoadPath(string videoPath){
         if (g_Game.IsDedicatedServer()) return;
         if (!m_Video) return;
@@ -102,6 +148,15 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 
     }
 	
+    /**
+     * Load a TTS audio file by ID without playing.
+     * 
+     * @param oid The TTS object ID (filename without extension).
+     * 
+     * @usage GetUFVideoPlayer().Load("tts_12345");
+     * 
+     * @note Expects file at $saves:{oid}.mp4. Use Play() to start playback.
+     */
     void Load(string oid){
         if (g_Game.IsDedicatedServer()) return;
         if (!m_Video) return;
@@ -113,6 +168,15 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 
     }
 	
+	/**
+	 * Play the currently loaded audio/video.
+	 * 
+	 * @param showIcon If true, shows the playback icon (default: true).
+	 * 
+	 * @usage GetUFVideoPlayer().Play(true);
+	 * 
+	 * @note Requires Load() or LoadPath() to be called first.
+	 */
 	void Play(bool showIcon = true){
         if (g_Game.IsDedicatedServer()) return;
         if (!m_Video) return;
@@ -123,6 +187,12 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
         #endif
 	}
 	
+    /**
+     * Stop playback and unload the current audio/video.
+     * 
+     * @note Automatically plays next queued item if any.
+     * @note Hides the playback icon.
+     */
     void Stop(){
         if (g_Game.IsDedicatedServer()) return;
         if (!m_Video) return;
@@ -136,6 +206,11 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 		PlayNextInQueue();
     }
 	
+	/**
+	 * Internal: plays the next queued audio file.
+	 * 
+	 * @note Automatically called by Stop() when playback finishes.
+	 */
 	void PlayNextInQueue(){
 		if (m_VideoQueue.Count() > 0){
 			string oid = m_VideoQueue.Get(0);
@@ -159,6 +234,16 @@ class UFVideoPlayer extends ScriptedWidgetEventHandler {
 		}
 	}
 	
+	/**
+	 * Callback handler for TTS playback requests.
+	 * 
+	 * @param cid Callback ID.
+	 * @param status Status code (UF_SUCCESS or error).
+	 * @param oid TTS object ID.
+	 * @param msg Error message if status != UF_SUCCESS.
+	 * 
+	 * @note Automatically adds audio to queue on success.
+	 */
 	void UCBHandlePlay(int cid, int status, string oid, string msg){
 		if (status == UF_SUCCESS){
 			AddToQueue(oid);
