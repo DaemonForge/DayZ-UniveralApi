@@ -1,4 +1,4 @@
-﻿# Universal Framework - AI Chat Knowledge Base
+# Universal Framework - AI Chat Knowledge Base
 
 ## Overview
 

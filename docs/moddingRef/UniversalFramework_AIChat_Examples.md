@@ -421,3 +421,111 @@ class QuestNPCController {
 
 ---
 
+## Quick Reference Snippets
+
+Copy-paste starting points for common patterns:
+
+### Minimal String Agent
+
+```enforce
+class MyAgent extends UFAIChatAgent {
+    override string SystemInstructions() {
+        return "You are a helpful assistant.";
+    }
+}
+
+void Use() {
+    autoptr MyAgent agent = new MyAgent();
+    agent.Chat("Hello", this, "OnReply");
+}
+
+void OnReply(int cid, int status, string oid, string response) {
+    Print(response);
+}
+```
+
+### Minimal Typed Agent
+
+```enforce
+class MyData : Managed {
+    string action;
+    int priority;
+}
+
+class MyTypedAgent extends UAIChatAgent<MyData> {
+    override string SystemInstructions() { return "Decide an action."; }
+    
+    void MyTypedAgent() {
+        SetSchema("MyData", "{\"type\":\"object\",\"properties\":{\"action\":{\"type\":\"string\"},\"priority\":{\"type\":\"integer\"}},\"required\":[\"action\",\"priority\"],\"additionalProperties\":false}");
+    }
+}
+
+void OnData(int cid, int status, string oid, MyData data) {
+    if (data) Print(data.action + " (priority: " + data.priority + ")");
+}
+```
+
+### Agent with Tools
+
+```enforce
+class ToolAgent extends UFAIChatAgent {
+    override string SystemInstructions() {
+        return "You can get player info using tools.";
+    }
+    
+    override void RegisterTools(out array<autoptr UAIChatToolDef> tools) {
+        tools.Insert(new UAIChatToolDef("GetHealth", "Get player health", {"playerName"}));
+    }
+    
+    // Method name MUST match tool name
+    string GetHealth(string playerName) {
+        return playerName + " has 85% health";
+    }
+}
+```
+
+### Dynamic Context
+
+```enforce
+class ContextAgent extends UFAIChatAgent {
+    protected float m_Health = 100;
+    protected string m_Location = "Cherno";
+    
+    override array<string> ExtraContext() {
+        array<string> ctx = new array<string>;
+        ctx.Insert("Player health: " + m_Health.ToString() + "%");
+        ctx.Insert("Location: " + m_Location);
+        return ctx;
+    }
+    
+    void UpdateState(float health, string location) {
+        m_Health = health;
+        m_Location = location;
+    }
+}
+```
+
+### Error Handling
+
+```enforce
+void OnResponse(int cid, int status, string oid, string response) {
+    switch (status) {
+        case UF_SUCCESS:
+            Print(response);
+            break;
+        case UF_TIMEOUT:
+            Print("AI response timed out");
+            break;
+        case UF_JSONERROR:
+            Print("Failed to parse AI response");
+            break;
+        case UF_ERROR:
+        default:
+            Print("AI Error: " + status);
+            break;
+    }
+}
+```
+
+## Tags
+`ai`, `examples`, `npc`, `tools`, `handlers`, `quickref`, `modder`

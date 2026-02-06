@@ -1,41 +1,17 @@
-﻿ï»¿# Universal Framework - AI Chat
+﻿# Universal Framework - AI Chat SDK Reference
 
-## Overview
+This document covers the core classes for integrating AI chat into your mod. For an introduction, see [AI Chat Overview](UniversalFramework_AIChat_Overview.md).
 
-The AI Chat system integrates OpenAI's GPT models into DayZ, enabling intelligent NPCs, player assistants, and automated systems. It supports both simple string responses (`UFAIChatAgent`) and structured JSON responses with type-safe parsing (`UAIChatAgent<T>`).
+## Agent vs Handler Classes
 
-### Key Features
+| Class Type | Use When |
+|-----------|----------|
+| **Agent Classes** (`UFAIChatAgent`, `UAIChatAgent<T>`) | Server-side AI. Subclass to customize behavior. |
+| **Handler Classes** (`UStringAIChatHandler`, `UAIChatHandler<T>`) | Client needs access, or you have an existing Chat ID. |
 
-- **Two Agent Types**: String responses (`UFAIChatAgent`) or typed JSON (`UAIChatAgent<T>`)
-- **Tool Calling**: Let the AI call functions on your agent to gather information
-- **Knowledge Base Integration**: Attach document collections for AI-powered retrieval
-- **Context System**: Provide dynamic and static context to guide AI responses
-- **Conversation History**: Automatic history management with configurable limits
+## Server-Client Architecture
 
-## Related Documentation
-
-- [AI Chat Overview](UniversalFramework_AIChat_Overview.md) - Quick start guide
-- [AI Chat Tools](UniversalFramework_AIChat_Tools.md) - Tool calling system
-- [AI Chat Typed Agents](UniversalFramework_AIChat_TypedAgents.md) - Structured responses
-- [AI Chat Knowledge Base](UniversalFramework_AIChat_KnowledgeBase.md) - Document retrieval
-
-## Permissions
-
-| Operation | Server | Player (Client) |
-|-----------|--------|----------------|
-| Create session | [YES] | âŒ |
-| Send message | [YES] | [YES] |
-| Check message status | [YES] | [YES] |
-| Read history | [YES] | [YES] |
-| Reset chat | [YES] | [YES] |
-| Summarize | [YES] | [YES] |
-| Delete session | [YES] | âŒ |
-
-> **Note:** The server must create chat sessions. Once created, both server and players can send messages and interact with the chat.
-
-### Server-Client Architecture
-
-The AI Chat system is designed for server-authoritative usage:
+The AI Chat system is server-authoritative:
 
 1. **Server creates the chat session** - Only the server can call `Create()` or instantiate Agent classes
 2. **Server sends Chat ID to client** - Use RPC to transmit the chat ID
@@ -44,15 +20,15 @@ The AI Chat system is designed for server-authoritative usage:
 
 ```
 Server                                    Client
-  'â€â€š                                         'â€â€š
-  'â€â€š  Agent.Chat() creates session           'â€â€š
-  'â€Å“'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬'â€Â¤
-  'â€â€š  'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬ RPC: Send ChatId to client 'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬>  'â€â€š
-  'â€â€š                                         'â€â€š
-  'â€â€š                     Handler receives messages
-  'â€â€š                                         'â€â€š
-  'â€â€š  <'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬ Both can send messages 'â€â‚¬'â€â‚¬'â€â‚¬'â€â‚¬>     'â€â€š
-  'â€â€š                                         'â€â€š
+  |                                         |
+  |  Agent.Chat() creates session           |
+  +-----------------------------------------+
+  |  ---- RPC: Send ChatId to client ---->  |
+  |                                         |
+  |                     Handler receives messages
+  |                                         |
+  |  <---- Both can send messages ---->     |
+  |                                         |
 ```
 
 ---
@@ -92,8 +68,8 @@ Best for **client-side chat** or when you have an existing chat ID from the serv
 // SERVER: Create chat
 // Parameters: systemMessage, callbackTarget, callbackFunc, model, maxHistory
 // NOTE: The callback is for MESSAGE responses, not creation!
-// We ideally pass the model to ensure we hit the correct constructor overload
-autoptr UStringAIChatHandler serverHandler = new UStringAIChatHandler("You are a helpful assistant", this, "OnMessageResponse", "gpt-4o-mini", 25);
+autoptr UStringAIChatHandler serverHandler = new UStringAIChatHandler(
+    "You are a helpful assistant", this, "OnMessageResponse", "gpt-4o-mini", 25);
 
 // To get ChatId when creation completes, use NotifyOnCreated
 serverHandler.NotifyOnCreated("OnChatCreated");
@@ -105,7 +81,8 @@ void OnChatCreated(int cid, int status, string chatId, bool success) {
 }
 
 // CLIENT: Connect to existing chat using ChatId received from server
-autoptr UStringAIChatHandler clientHandler = new UStringAIChatHandler(chatIdFromServer, this, "OnMessageResponse");
+autoptr UStringAIChatHandler clientHandler = new UStringAIChatHandler(
+    chatIdFromServer, this, "OnMessageResponse");
 clientHandler.SendMessage("Hello from client!");
 ```
 
@@ -146,10 +123,11 @@ Chat creation happens automatically - messages can be sent immediately (they que
 | `maxHistory` | int | Max history entries (optional - default: -1 unlimited) |
 
 ```enforce
-autoptr UStringAIChatHandler handler = new UStringAIChatHandler("You are a helpful NPC.", this, "OnMessage", "gpt-4o-mini");
+autoptr UStringAIChatHandler handler = new UStringAIChatHandler(
+    "You are a helpful NPC.", this, "OnMessage", "gpt-4o-mini");
 ```
 
-> **Note:** When creating a new chat, it is recommended to explicitly pass the model parameter to distinguish this call from the "Existing Chat" constructor.
+> **Note:** When creating a new chat, explicitly pass the model parameter to distinguish from the "Existing Chat" constructor.
 
 **Constructor 2: Connect to existing chat (SERVER or CLIENT)**
 
@@ -194,8 +172,6 @@ void OnChatCreated(int cid, int status, string chatId, bool success);
 
 **Constructor 1: Create new chat (SERVER ONLY)**
 
-Chat creation happens automatically - messages queue until ready.
-
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `systemMessage` | string | System prompt for the AI |
@@ -206,7 +182,8 @@ Chat creation happens automatically - messages queue until ready.
 | `maxHistory` | int | Max history entries (optional) |
 
 ```enforce
-autoptr UAIChatHandler<MyResponse> handler = new UAIChatHandler<MyResponse>("You are helpful.", this, "OnMessage", mySchema);
+autoptr UAIChatHandler<MyResponse> handler = new UAIChatHandler<MyResponse>(
+    "You are helpful.", this, "OnMessage", mySchema);
 ```
 
 **Constructor 2: Connect to existing chat (SERVER or CLIENT)**
@@ -219,15 +196,14 @@ autoptr UAIChatHandler<MyResponse> handler = new UAIChatHandler<MyResponse>("You
 | `jsonSchema` | string | Schema for parsing (optional if server set it) |
 
 ```enforce
-autoptr UAIChatHandler<MyResponse> handler = new UAIChatHandler<MyResponse>(chatId, this, "OnMessage", mySchema);
+autoptr UAIChatHandler<MyResponse> handler = new UAIChatHandler<MyResponse>(
+    chatId, this, "OnMessage", mySchema);
 ```
 
 **Message Callback Signature:**
 ```enforce
 void OnMessageResponse(int cid, int status, string chatId, T response);
 ```
-
-> Same behavior as `UStringAIChatHandler` - use `NotifyOnCreated()` if you need to know when the chat is created.
 
 ### Complete Server-Client Example
 
@@ -241,9 +217,8 @@ class ServerNPCManager {
         m_Player = player;
         
         // Create the chat on server
-        // Parameters: systemMessage, callbackTarget, callbackFunc, model, maxHistory
-        // NOTE: The callback ("OnNPCMessage") is for MESSAGE responses
-        m_Handler = new UStringAIChatHandler("You are a friendly trader NPC.", this, "OnNPCMessage", "gpt-4o-mini", 25);
+        m_Handler = new UStringAIChatHandler(
+            "You are a friendly trader NPC.", this, "OnNPCMessage", "gpt-4o-mini", 25);
         
         // Set a SEPARATE callback for when creation completes
         m_Handler.NotifyOnCreated("OnChatCreated");
@@ -299,9 +274,6 @@ class ClientNPCChat {
 }
 ```
 
-## Tags
-`ai`, `core`, `architecture`, `handlers`, `agents`, `reference`, `how-to`, `doc-usage`, `modder`
-
 > **Key Pattern:** Use `NotifyOnCreated()` to get the ChatId, then RPC it to clients. The constructor callback is for message responses only.
 
 ---
@@ -316,7 +288,7 @@ High-level agent for AI chat with string responses.
 class MyAIAssistant extends UFAIChatAgent {
     
     override string SystemInstructions() {
-        return "You are a helpful survival guide for DayZ. Provide practical advice. Never break character.";
+        return "You are a helpful survival guide for DayZ. Provide practical advice.";
     }
     
     // Optional: Add dynamic context
@@ -352,7 +324,7 @@ class SurvivalGuide {
         m_AI.Chat(question, this, "OnAIResponse");
     }
     
-    void OnAIResponse(int cid, int status, string oid, string response) {
+    void OnAIResponse(int cid, int status, string chatId, string response) {
         if (status == UF_SUCCESS) {
             Print("AI says: " + response);
         } else {
@@ -400,7 +372,13 @@ class AIDecision {
 class DecisionAI extends UAIChatAgent<AIDecision> {
     
     void DecisionAI() {
-        string schema = "{\"type\":\"object\",\"properties\":{\"Action\":{\"type\":\"string\",\"enum\":[\"attack\",\"flee\",\"trade\",\"ignore\"]},\"Priority\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":10},\"Reason\":{\"type\":\"string\"},\"Items\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"Action\",\"Priority\",\"Reason\",\"Items\"],\"additionalProperties\":false}";
+        string schema = "{\"type\":\"object\",\"properties\":{" +
+            "\"Action\":{\"type\":\"string\",\"enum\":[\"attack\",\"flee\",\"trade\",\"ignore\"]}," +
+            "\"Priority\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":10}," +
+            "\"Reason\":{\"type\":\"string\"}," +
+            "\"Items\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}" +
+            "},\"required\":[\"Action\",\"Priority\",\"Reason\",\"Items\"]," +
+            "\"additionalProperties\":false}";
         SetSchema("AIDecision", schema);
     }
     
@@ -424,7 +402,7 @@ class NPCBrain {
         m_DecisionAI.Chat(context, this, "OnDecision");
     }
     
-    void OnDecision(int cid, int status, string oid, AIDecision decision) {
+    void OnDecision(int cid, int status, string chatId, AIDecision decision) {
         if (status == UF_SUCCESS && decision) {
             Print("Action: " + decision.Action);
             Print("Priority: " + decision.Priority);
@@ -445,4 +423,7 @@ class NPCBrain {
     }
 }
 ```
+
+## Tags
+`ai`, `core`, `architecture`, `handlers`, `agents`, `reference`, `how-to`, `modder`
 

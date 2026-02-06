@@ -1,4 +1,4 @@
-﻿# Universal Framework - AI Chat Tool Calling
+# Universal Framework - AI Chat Tool Calling
 
 ## Overview
 
