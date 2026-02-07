@@ -40,7 +40,7 @@ class UFRestCallBackBase : RestCallback
 		//Always call super to prevent memory leaks
 		string debugtrace;
 		DumpStackString(debugtrace);
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback, m_UFid, debugtrace);
 	};
 	
 	/**

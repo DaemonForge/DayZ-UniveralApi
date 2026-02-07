@@ -258,3 +258,16 @@ class UAIChatSummaryResponse extends StatusObject {
 		return Summary;
 	}
 } 
+
+/**
+ * UAIChatHistoryEntry - stores a single message in chat history with role.
+ */
+class UAIChatHistoryEntry extends Managed {
+    string Role;    // "user" or "assistant"
+    string Message;
+
+    void UAIChatHistoryEntry(string role, string message){
+        Role = role;
+        Message = message;
+    }
+}

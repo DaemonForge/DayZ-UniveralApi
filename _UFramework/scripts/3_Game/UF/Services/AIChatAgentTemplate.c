@@ -1,45 +1,47 @@
+
+// ============================================================================
+// TEMPLATED AI CHAT AGENT - Returns typed objects instead of strings
+// ============================================================================
+
 /**
- * UFAIChatAgent - base class for per-mod AI chat agents.
+ * UAIChatAgent<T> - Template AI chat agent that returns typed objects.
  *
- * Modders extend this class and:
- *   1) Override SystemInstructions() to return their system prompt
- *   2) Override RegisterTools(out array<autoptr UAIChatToolDef> tools) to register tool functions
- *   3) Define methods matching your tool names (framework calls them automatically)
- *   4) Call Chat(input, handler, handlerFn) to send messages with familiar callback pattern
+ * Similar to UDBHandler<T>, this class allows you to define an AI agent that
+ * returns structured data parsed into your class type T.
  *
- * Basic Example (string params):
- *   class MyAI extends UFAIChatAgent {
- *       override string SystemInstructions(){ return "You are a helpful assistant."; }
- *       override void RegisterTools(out array<autoptr UAIChatToolDef> tools){
- *           tools.Insert(new UAIChatToolDef("Echo", "Echoes text back", {"text"}));
- *       }
- *       string Echo(string text){ return "Echo: " + text; }  // Called automatically!
- *   }
- *
- * Typed Example (int, float, vector, etc.):
- *   override void RegisterTools(out array<autoptr UAIChatToolDef> tools){
- *       // Create typed parameters
- *       autoptr array<autoptr UAIChatToolParam> teleportParams = new array<autoptr UAIChatToolParam>;
- *       teleportParams.Insert(new UAIChatToolParam("playerName", "string", "Name of the player"));
- *       teleportParams.Insert(new UAIChatToolParam("position", "vector", "Target position"));
- *       tools.Insert(UAIChatToolDef.CreateTyped("Teleport", "Teleport a player", teleportParams));
- *   }
- *   
- *   string Teleport(string playerName, string position){
- *       vector pos = UAIChatToolParams.Vec(position);  // "123.5 51.0 45.2" -> vector
- *       // ... teleport logic ...
- *       return "Teleported " + playerName + " to " + pos.ToString();
- *   }
- *
- * Supported parameter types: "string", "int", "float", "bool", "vector"
+ * IMPORTANT: You MUST call SetSchema() before calling Chat() to provide a valid
+ * JSON Schema that defines the expected response format.
  *
  * Usage:
- *   autoptr MyAI ai = new MyAI();
- *   ai.Chat("Hello", this, "OnAIResponse");
+ *   // Define your response class
+ *   class MyAIResponse {
+ *       string Action;
+ *       int Priority;
+ *       array<string> Items;
+ *   }
  *
- *   void OnAIResponse(int cid, int status, string oid, string data){ ... }
+ *   // Create a typed agent
+ *   class MyTypedAI extends UAIChatAgent<MyAIResponse> {
+ *       override string SystemInstructions(){ 
+ *           return "You are a helpful assistant that responds with structured data."; 
+ *       }
+ *   }
+ *
+ *   // Use it - MUST set schema first!
+ *   // NOTE: OpenAI strict mode requires "additionalProperties": false
+ *   autoptr MyTypedAI ai = new MyTypedAI();
+ *   ai.SetSchema("MyAIResponse", "{\"type\":\"object\",\"properties\":{\"Action\":{\"type\":\"string\"},\"Priority\":{\"type\":\"integer\"},\"Items\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"Action\",\"Priority\",\"Items\"],\"additionalProperties\":false}");
+ *   ai.Chat("What should I do?", this, "OnAIResponse");
+ *
+ *   // Callback receives typed object
+ *   void OnAIResponse(int cid, int status, string oid, MyAIResponse data){
+ *       if (status == UF_SUCCESS && data){
+ *           Print("Action: " + data.Action);
+ *           Print("Priority: " + data.Priority);
+ *       }
+ *   }
  */
-class UFAIChatAgent extends Managed {
+class UAIChatAgent<Class T> extends Managed {
 
     protected string m_ChatId;
     protected string m_KBId;
@@ -49,6 +51,8 @@ class UFAIChatAgent extends Managed {
     protected autoptr array<autoptr UAIChatHistoryEntry> m_History;
     protected autoptr array<autoptr UAIChatContext> m_StaticContext;
     protected autoptr array<autoptr UAIChatToolDef> m_Tools;
+    protected string m_SchemaName;
+    protected string m_JsonSchema;
 
     // Pending chat request while session is being created
     protected string m_PendingMessage;
@@ -61,7 +65,7 @@ class UFAIChatAgent extends Managed {
     // Configurable poll timeout in seconds (default 90)
     protected int m_PollTimeout;
 
-    void UFAIChatAgent(){
+    void UAIChatAgent(){
         m_Ready = false;
         m_IncludeHistory = true;
         m_MaxHistory = 25;
@@ -70,6 +74,8 @@ class UFAIChatAgent extends Managed {
         m_History = new array<autoptr UAIChatHistoryEntry>;
         m_StaticContext = new array<autoptr UAIChatContext>;
         m_Tools = new array<autoptr UAIChatToolDef>;
+        m_SchemaName = "";
+        m_JsonSchema = "";
 
         // Let subclass register tools
         RegisterTools(m_Tools);
@@ -80,7 +86,7 @@ class UFAIChatAgent extends Managed {
         m_PendingPollCallback = cb;
     }
     
-    // Set the polling timeout in seconds (default 90). Call before Chat() or override in subclass.
+    // Set the polling timeout in seconds (default 90). Override in subclass or call before Chat().
     void SetPollTimeout(int seconds){
         m_PollTimeout = Math.Max(10, seconds); // Minimum 10 seconds
     }
@@ -117,26 +123,20 @@ class UFAIChatAgent extends Managed {
     /**
      * Executes a tool by calling the method with the matching name.
      * The framework calls this automatically - you just define methods matching your tool names.
-     * 
-     * Example: If you register "GetPlayerHealth", define:
-     *   string GetPlayerHealth(string playerName) { return "Health is 100%"; }
-     * 
-     * Supports 0-5 parameters. All parameters are strings.
      */
     string ExecuteTool(string toolName, string p1, string p2, string p3, string p4, string p5, int paramCount){
         string result = "";
         bool success = false;
         
-        // Try to call the method by name with the appropriate number of parameters
         switch (paramCount) {
             case 0:
-                success = GetGame().GameScript.CallFunctionParams(this, toolName, result, NULL);
+                success = g_Game.GameScript.CallFunctionParams(this, toolName, result, NULL); 
                 break;
             case 1:
-                success = GetGame().GameScript.CallFunctionParams(this, toolName, result, new Param1<string>(p1));
+                success = g_Game.GameScript.CallFunctionParams(this, toolName, result, new Param1<string>(p1));
                 break;
             case 2:
-                success = GetGame().GameScript.CallFunctionParams(this, toolName, result, new Param2<string, string>(p1, p2));
+                success = g_Game.GameScript.CallFunctionParams(this, toolName, result, new Param2<string, string>(p1, p2));
                 break;
             case 3:
                 success = GetGame().GameScript.CallFunctionParams(this, toolName, result, new Param3<string, string, string>(p1, p2, p3));
@@ -150,16 +150,13 @@ class UFAIChatAgent extends Managed {
         }
         
         if (!success) {
-            Error2("[UF][AIChatAgent] ExecuteTool", "Method '" + toolName + "' not found or failed. Make sure you defined: string " + toolName + "(...)");
+            Error2("[UF][UAIChatAgent<T>] ExecuteTool", "Method '" + toolName + "' not found. Define: string " + toolName + "(...)");
             return "Error: Tool '" + toolName + "' not implemented";
         }
         
         return result;
     }
     
-    /**
-     * Gets the parameter count for a registered tool.
-     */
     int GetToolParamCount(string toolName){
         foreach (autoptr UAIChatToolDef tool : m_Tools){
             if (tool && tool.Name == toolName){
@@ -170,6 +167,30 @@ class UFAIChatAgent extends Managed {
     }
 
     // ============ CONFIGURATION ============
+
+    /**
+     * SetSchema - REQUIRED: Set the JSON schema for the AI response format.
+     * @param name - The schema name (e.g. "MyResponse"). Used by OpenAI for structured output.
+     * @param jsonSchemaString - A valid JSON Schema string defining the response structure.
+     *
+     * Example JSON Schema for a response with Action, Priority, Items:
+     *   {"type":"object","properties":{"Action":{"type":"string"},"Priority":{"type":"integer"},"Items":{"type":"array","items":{"type":"string"}}},"required":["Action","Priority","Items"],"additionalProperties":false}
+     */
+    void SetSchema(string name, string jsonSchemaString){
+        m_SchemaName = name;
+        m_JsonSchema = jsonSchemaString;
+    }
+
+    // Check if schema has been set
+    bool HasSchema(){
+        return m_SchemaName != "" && m_JsonSchema != "";
+    }
+
+    // Get the full schema object as JSON string for the API (includes name, schema, strict)
+    protected string GetSchemaForAPI(){
+        // Format: {"name":"<name>","schema":<schema>,"strict":true}
+        return "{\"name\":\"" + m_SchemaName + "\",\"schema\":" + m_JsonSchema + ",\"strict\":true}";
+    }
 
     void SetIncludeHistory(bool includeHistory, int maxHistory = 25){
         m_IncludeHistory = includeHistory;
@@ -185,6 +206,7 @@ class UFAIChatAgent extends Managed {
      */
     void SetKBId(string kbId){
         m_KBId = kbId;
+        UFLog.Debug("[UAIChatAgent<T>] SetKBId: " + kbId);
     }
 
     /**
@@ -207,21 +229,27 @@ class UFAIChatAgent extends Managed {
     // ============ MAIN API ============
 
     /**
-     * Send a chat message. Callback signature: void handler(int cid, int status, string oid, string data)
+     * Send a chat message. Callback signature: void handler(int cid, int status, string oid, T data)
      * If the session is not yet created, it will be created automatically.
      */
     void Chat(string input, Class handler, string handlerFn){
-        UFLog.Debug("[AIChatAgent] Chat - Input length: " + input.Length().ToString() + ", Ready: " + m_Ready.ToString() + ", KBId: " + m_KBId);
+        UFLog.Debug("[UAIChatAgent<T>] Chat - InputLen: " + input.Length().ToString() + ", Ready: " + m_Ready.ToString() + ", KBId: " + m_KBId);
         
+        if (!HasSchema()){
+            Error2("[UF][UAIChatAgent<T>] Chat", "Schema not set. Call SetSchema() before Chat()");
+            CallHandlerError(handler, handlerFn, -1);
+            return;
+        }
+
         if (!U().IsOpenAIEnabled()){
-            Error2("[UF][AIChatAgent] Chat", "OpenAI service is not online");
-            CallHandlerError(handler, handlerFn, -1, "OpenAI service is not online");
+            Error2("[UF][UAIChatAgent<T>] Chat", "OpenAI service is not online");
+            CallHandlerError(handler, handlerFn, -1);
             return;
         }
 
         if (!m_Ready){
             // Need to create session first
-            UFLog.Debug("[AIChatAgent] Chat - Session not ready, creating...");
+            UFLog.Debug("[UAIChatAgent<T>] Chat - Session not ready, creating...");
             m_PendingMessage = input;
             m_PendingHandler = handler;
             m_PendingHandlerFn = handlerFn;
@@ -235,36 +263,38 @@ class UFAIChatAgent extends Managed {
     // ============ INTERNAL ============
 
     protected void CreateSession(){
-        UFLog.Debug("[AIChatAgent] CreateSession - Starting, KBId: " + m_KBId);
+        UFLog.Debug("[UAIChatAgent<T>] CreateSession - KBId: " + m_KBId);
         UFAIChatEndpoint ai = U().AI();
-        int cid = ai.Create(SystemInstructions(), "string", "", GetModel(), m_MaxHistory, new UFAIChatAgentCreateCB(this, ""), m_KBId);
+        string schema = GetSchemaForAPI();
+        // Use "JSON" response format with schema
+        int cid = ai.Create(SystemInstructions(), "JSON", schema, GetModel(), m_MaxHistory, new UAIChatAgentCreateCB<T>(this, ""), m_KBId);
         if (cid == -1){
-            Error2("[UF][AIChatAgent] CreateSession", "Failed to create AI chat session");
-            CallHandlerError(m_PendingHandler, m_PendingHandlerFn, -1, "Failed to create session");
+            Error2("[UF][UAIChatAgent<T>] CreateSession", "Failed to create AI chat session");
+            CallHandlerError(m_PendingHandler, m_PendingHandlerFn, -1);
             ClearPending();
         } else {
-            UFLog.Debug("[AIChatAgent] CreateSession - Request sent, CID: " + cid);
+            UFLog.Debug("[UAIChatAgent<T>] CreateSession - Request sent, CID: " + cid);
         }
     }
 
     void OnSessionCreated(string chatId){
-        string hasPending = "no";
-        if (m_PendingMessage != "") hasPending = "yes";
-        UFLog.Debug("[AIChatAgent] OnSessionCreated - ChatId: " + chatId + ", PendingMessage: " + hasPending);
         m_ChatId = chatId;
         m_Ready = true;
+        string hasPending = "no";
+        if (m_PendingMessage != "") hasPending = "yes";
+        UFLog.Debug("[UAIChatAgent<T>] OnSessionCreated - ChatId: " + chatId + ", KBId: " + m_KBId + ", PendingMessage: " + hasPending);
 
         if (m_PendingMessage != "" && m_PendingHandler){
-            UFLog.Debug("[AIChatAgent] OnSessionCreated - Sending pending message");
+            UFLog.Debug("[UAIChatAgent<T>] OnSessionCreated - Sending pending message");
             SendMessage(m_PendingMessage, m_PendingHandler, m_PendingHandlerFn);
             ClearPending();
         }
     }
 
     void OnSessionCreateFailed(string error){
-        UFLog.Debug("[AIChatAgent] OnSessionCreateFailed - Error: " + error);
-        Error2("[UF][AIChatAgent] OnSessionCreateFailed", error);
-        CallHandlerError(m_PendingHandler, m_PendingHandlerFn, -1, error);
+        UFLog.Debug("[UAIChatAgent<T>] OnSessionCreateFailed - Error: " + error);
+        Error2("[UF][UAIChatAgent<T>] OnSessionCreateFailed", error);
+        CallHandlerError(m_PendingHandler, m_PendingHandlerFn, -1);
         ClearPending();
     }
 
@@ -275,29 +305,29 @@ class UFAIChatAgent extends Managed {
     }
 
     protected void SendMessage(string input, Class handler, string handlerFn){
-        UFLog.Debug("[AIChatAgent] SendMessage - ChatId: " + m_ChatId + ", InputLen: " + input.Length().ToString());
+        UFLog.Debug("[UAIChatAgent<T>] SendMessage - ChatId: " + m_ChatId + ", InputLen: " + input.Length().ToString());
         
         autoptr array<autoptr UAIChatContext> ctx = BuildContext();
         autoptr array<autoptr UAIToolDef> tools = BuildToolDefs();
         
         if (ctx) {
-            UFLog.Debug("[AIChatAgent] SendMessage - Context blocks: " + ctx.Count().ToString());
+            UFLog.Debug("[UAIChatAgent<T>] SendMessage - Context blocks: " + ctx.Count().ToString());
         }
         if (tools) {
-            UFLog.Debug("[AIChatAgent] SendMessage - Tools: " + tools.Count().ToString());
+            UFLog.Debug("[UAIChatAgent<T>] SendMessage - Tools: " + tools.Count().ToString());
         }
 
         UFAIChatEndpoint ai = U().AI();
-        autoptr UFAIChatAgentSendCB cb = new UFAIChatAgentSendCB(this, "");
+        autoptr UAIChatAgentSendCB<T> cb = new UAIChatAgentSendCB<T>(this, "");
         cb.Init(handler, handlerFn);
         int cid = ai.Send(m_ChatId, input, cb, ctx, tools);
 
         if (cid == -1){
-            CallHandlerError(handler, handlerFn, -1, "Failed to send message");
+            CallHandlerError(handler, handlerFn, -1);
             return;
         }
         
-        UFLog.Debug("[AIChatAgent] SendMessage - Sent, CID: " + cid);
+        UFLog.Debug("[UAIChatAgent<T>] SendMessage - Sent, CID: " + cid);
 
         if (m_IncludeHistory){
             m_History.Insert(new UAIChatHistoryEntry("user", input));
@@ -305,13 +335,12 @@ class UFAIChatAgent extends Managed {
         }
     }
 
-    void OnMessageResponse(int cid, int status, string data, Class handler, string handlerFn){
-        // Tool calls are now handled by native OpenAI function calling in the callback.
-        // This method only receives final responses.
-        UFLog.Debug("[AIChatAgent] OnMessageResponse - CID: " + cid + ", Status: " + status + ", DataLen: " + data.Length().ToString());
+    void OnMessageResponse(int cid, int status, T data, string rawJson, Class handler, string handlerFn){
+        UFLog.Debug("[UAIChatAgent<T>] OnMessageResponse - CID: " + cid + ", Status: " + status + ", RawLen: " + rawJson.Length().ToString());
         
-        if (m_IncludeHistory && data != "" && status == UF_SUCCESS){
-            m_History.Insert(new UAIChatHistoryEntry("assistant", data));
+        // Store raw JSON in history for context
+        if (m_IncludeHistory && rawJson != ""){
+            m_History.Insert(new UAIChatHistoryEntry("assistant", rawJson));
             TrimHistory();
         }
         CallHandler(handler, handlerFn, cid, status, m_ChatId, data);
@@ -379,15 +408,12 @@ class UFAIChatAgent extends Managed {
 
     // ============ CALLBACK HELPERS ============
 
-    protected void CallHandler(Class handler, string handlerFn, int cid, int status, string oid, string data){
+    protected void CallHandler(Class handler, string handlerFn, int cid, int status, string oid, T data){
         if (!handler || handlerFn == "") return;
-        g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallByName(handler, handlerFn, new Param4<int, int, string, string>(cid, status, oid, data));
+        g_Game.GameScript.CallFunctionParams(handler, handlerFn, NULL, new Param4<int, int, string, T>(cid, status, oid, data));
     }
 
-    protected void CallHandlerError(Class handler, string handlerFn, int cid, string error){
-        CallHandler(handler, handlerFn, cid, -1, "", error);
+    protected void CallHandlerError(Class handler, string handlerFn, int cid){
+        CallHandler(handler, handlerFn, cid, -1, "", NULL);
     }
 }
-
-
-
