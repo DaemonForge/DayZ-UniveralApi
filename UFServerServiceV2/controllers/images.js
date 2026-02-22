@@ -40,6 +40,36 @@ function detectImageConversionTool() {
           }
      }
      
+     // Check for bundled magick binary next to the executable (Linux pkg builds)
+     if (process.pkg && process.platform !== 'win32') {
+          const bundledMagick = path.join(path.dirname(process.execPath), 'bin', 'magick');
+          if (fs.existsSync(bundledMagick)) {
+               // Copy to temp dir and make executable so we can invoke it
+               const tempDir = os.tmpdir();
+               const targetPath = path.join(tempDir, 'uf-magick');
+               if (!fs.existsSync(targetPath)) {
+                    fs.copyFileSync(bundledMagick, targetPath);
+                    try { fs.chmodSync(targetPath, 0o755); } catch (e) { /* ignore */ }
+               }
+               // Verify it works and has DDS support
+               try {
+                    const ver = execSync(`"${targetPath}" -version 2>/dev/null`, { encoding: 'utf8', timeout: 5000, stdio: ['pipe', 'pipe', 'pipe'] });
+                    if (ver.includes('ImageMagick')) {
+                         const fmts = execSync(`"${targetPath}" identify -list format 2>/dev/null`, { encoding: 'utf8', timeout: 5000, stdio: ['pipe', 'pipe', 'pipe'] });
+                         if (fmts.includes('DDS')) {
+                              const useMagick7 = ver.includes('Version: ImageMagick 7');
+                              imageConversionTool = { type: 'imagemagick', command: targetPath, version: useMagick7 ? 7 : 6 };
+                              imageConversionAvailable = true;
+                              logger.info(`Image conversion: Using bundled ImageMagick at ${targetPath}`);
+                              return;
+                         }
+                    }
+               } catch (e) {
+                    logger.debug('Bundled magick binary failed verification, falling back to system ImageMagick');
+               }
+          }
+     }
+
      // Linux/macOS: Check for ImageMagick (supports DDS with DXT5 compression)
      try {
           // Check if ImageMagick is installed and supports DDS

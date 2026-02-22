@@ -129,12 +129,12 @@
     <input type="text" id="Discord_Client_Id" name="Discord_Client_Id">
   
     <label for="Discord_Client_Secret" title="Enter your Discord Client Secret">Client Secret:</label>
-    <input type="text" id="Discord_Client_Secret" name="Discord_Client_Secret">
+    <input type="password" id="Discord_Client_Secret" name="Discord_Client_Secret">
   
     <label for="Discord_Bot_Token" title="Enter your Discord Bot Token (read-only after saving)">
       Bot Token:
     </label>
-    <input type="text" id="Discord_Bot_Token" name="Discord_Bot_Token">
+    <input type="password" id="Discord_Bot_Token" name="Discord_Bot_Token">
   
     <label for="Discord_Guild_Id" title="Enter your Discord Guild ID">Guild ID:</label>
     <input type="text" id="Discord_Guild_Id" name="Discord_Guild_Id">
@@ -147,11 +147,76 @@
       </div>
     </details>
 
+    <!-- Cloudflare Tunnel -->
+    <details>
+      <summary>Cloudflare Tunnel</summary>
+      <p style="color: #aaa; font-size: 0.85em; margin-bottom: 12px;">
+        Expose your service securely via a Cloudflare Tunnel without opening ports.
+        <button type="button" id="tunnelSetupGuideBtn" class="small-btn" style="margin-left: 6px; font-size: 0.85em; vertical-align: middle;">
+          📖 Setup Guide
+        </button>
+      </p>
+      <div class="toggle-container">
+        <label title="Enable Cloudflare Tunnel" class="toggle-switch">
+          <input type="checkbox" id="Tunnel_enabled" name="Tunnel_enabled">
+          <span class="slider"></span>
+        </label>
+        <span>Enable Tunnel</span>
+      </div>
+      <div id="tunnelConfigFields">
+        <label for="Tunnel_token" title="Paste your Cloudflare Tunnel token from Zero Trust dashboard">Tunnel Token:</label>
+        <input type="password" id="Tunnel_token" name="Tunnel_token" placeholder="Paste token or full install command — prefix is stripped automatically">
+        <span id="tunnelTokenStripped" style="display:none; color: #4da6ff; font-size: 0.8em;">✓ Token extracted from install command</span>
+        <div class="toggle-container">
+          <label title="Automatically start tunnel when the service starts" class="toggle-switch">
+            <input type="checkbox" id="Tunnel_autoStart" name="Tunnel_autoStart">
+            <span class="slider"></span>
+          </label>
+          <span>Auto-Start on Launch</span>
+        </div>
+        <div id="tunnelStatusSection" style="margin-top: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <span id="tunnelStatusIndicator" style="font-size: 1.2em;">⚫</span>
+            <span id="tunnelStatusLabel" style="color: #ccc;">Not Running</span>
+          </div>
+          <div id="tunnelDomainRow" style="display: none; margin-bottom: 8px; font-size: 0.85em;">
+            <span style="color: #aaa;">Domain: </span>
+            <span id="tunnelDomainLabel" style="color: #4da6ff; font-family: monospace;"></span>
+          </div>
+          <div id="tunnelVersionRow" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85em; color: #aaa;">
+            <span id="tunnelVersionLabel">Version: unknown</span>
+            <span id="tunnelUpdateBadge" style="display:none; background: #f59e0b; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold;">Update Available</span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" id="tunnelStartBtn" class="small-btn" title="Start the tunnel">
+              <svg style="fill: #ffffff;" xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20"><path d="M0 0h24v24H0z" fill="none"/><path d="M8 5v14l11-7z"/></svg>
+              Start
+            </button>
+            <button type="button" id="tunnelStopBtn" class="small-btn" title="Stop the tunnel" style="display:none;">
+              <svg style="fill: #ffffff;" xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20"><path d="M0 0h24v24H0z" fill="none"/><path d="M6 6h12v12H6z"/></svg>
+              Stop
+            </button>
+            <button type="button" id="tunnelDownloadBtn" class="small-btn" title="Download cloudflared binary">
+              <svg style="fill: #ffffff;" xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+              Download cloudflared
+            </button>
+            <button type="button" id="tunnelCheckUpdateBtn" class="small-btn" title="Check for cloudflared updates">
+              🔄 Check for Update
+            </button>
+            <button type="button" id="tunnelUpdateBtn" class="small-btn" title="Update cloudflared to the latest version" style="display:none;">
+              ⬆️ Update Now
+            </button>
+          </div>
+          <div id="tunnelErrors" style="display:none; margin-top: 8px; color: #ff6b6b; font-size: 0.85em; max-height: 80px; overflow-y: auto;"></div>
+        </div>
+      </div>
+    </details>
+
     <!-- OpenAI -->
     <details>
       <summary>OpenAI</summary>
       <label for="OpenAIApi_ApiKey" title="Enter your OpenAI API Key">API Key:</label>
-      <input type="text" id="OpenAIApi_ApiKey" name="OpenAIApi_ApiKey">
+      <input type="password" id="OpenAIApi_ApiKey" name="OpenAIApi_ApiKey">
       <div class="toggle-container">
         <label title="Enable prompt Protection on system prompts" class="toggle-switch">
           <input type="checkbox" id="OpenAIApi_enablePromptProtection" name="OpenAIApi_enablePromptProtection">
@@ -233,6 +298,132 @@
       3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
     </svg>
   </button>
+
+  <!-- Cloudflare Tunnel Setup Guide Dialog -->
+  <dialog id="tunnelSetupDialog" style="max-width: 660px; max-height: 80vh; overflow-y: auto;">
+    <h2 style="margin-top: 0;">☁️ Cloudflare Tunnel Setup Guide</h2>
+
+    <div style="font-size: 0.9em; line-height: 1.6; color: #ccc;">
+
+      <h3 style="color: #4da6ff; margin-bottom: 4px;">What is Cloudflare Tunnel?</h3>
+      <p>
+        Cloudflare Tunnel lets you securely expose this service to the internet <strong>without opening any ports</strong> on your router or firewall. 
+        Traffic is routed through Cloudflare's network, which also provides DDoS protection and SSL automatically.
+      </p>
+
+      <h3 style="color: #4da6ff; margin-bottom: 4px;">💰 Cost</h3>
+      <p>
+        Cloudflare Tunnel is part of <strong>Cloudflare Zero Trust</strong>, which has a <strong>free tier</strong> supporting up to <strong>50 users</strong>. 
+        This is more than enough for most DayZ server setups. You do <strong>not</strong> need a paid plan unless you require advanced access policies or have a very large team.
+      </p>
+      <p>
+        <strong>You will need a domain name</strong> (even a cheap one) added to your Cloudflare account. 
+        Domain registration through Cloudflare starts around ~$10/year for common TLDs.
+        If you already own a domain, you can transfer its DNS to Cloudflare for free.
+      </p>
+
+      <h3 style="color: #4da6ff; margin-bottom: 4px;">⚙️ Before You Start — Service Settings</h3>
+      <div style="background: #2a2a3a; border: 1px solid #4da6ff44; border-radius: 6px; padding: 10px 14px; margin-bottom: 12px;">
+        <p style="margin: 0 0 6px 0;">Before setting up the tunnel, configure this service:</p>
+        <ol style="padding-left: 20px; margin: 0;">
+          <li>Set <strong>Certificate Type</strong> to <strong>Self Signed</strong> in the SSL/TLS section above. 
+            Cloudflare handles public SSL for you — the self-signed cert is only used for the local connection between cloudflared and this service.</li>
+          <li>Note your <strong>Port</strong> number (currently <strong id="guideCurrentPort">443</strong>). You'll need this when configuring the tunnel hostname.</li>
+          <li><strong>Save settings and restart</strong> the app before proceeding.</li>
+        </ol>
+      </div>
+
+      <h3 style="color: #4da6ff; margin-bottom: 4px;">📋 Step-by-Step Setup</h3>
+      <ol style="padding-left: 20px;">
+        <li>
+          <strong>Create a Cloudflare account</strong> (if you don't have one) at 
+          <a href="https://dash.cloudflare.com/sign-up" class="ext-link" style="color: #4da6ff;">dash.cloudflare.com</a>.
+        </li>
+        <li>
+          <strong>Add a domain</strong> to your Cloudflare account and update your domain registrar's nameservers to Cloudflare's 
+          (Cloudflare will walk you through this).
+        </li>
+        <li>
+          <strong>Open Zero Trust dashboard</strong> — go to 
+          <a href="https://one.dash.cloudflare.com/" class="ext-link" style="color: #4da6ff;">one.dash.cloudflare.com</a> 
+          and select the free plan when prompted.
+        </li>
+        <li>
+          <strong>Create a tunnel:</strong>
+          <ul style="margin-top: 4px;">
+            <li>Navigate to <em>Networks → Tunnels</em>.</li>
+            <li>Click <strong>Create a tunnel</strong>.</li>
+            <li>Select <strong>Cloudflared</strong> as the connector type.</li>
+            <li>Give it a name (e.g. <code style="background:#333; padding:2px 4px; border-radius:3px;">my-dayz-server</code>).</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Copy the tunnel token</strong> — on the "Install connector" step, 
+          Cloudflare shows a command like:<br>
+          <code style="background:#333; padding:4px 8px; border-radius:3px; display:inline-block; margin:4px 0; word-break:break-all; font-size:0.85em;">cloudflared.exe service install eyJhIjoiNj...</code><br>
+          You can copy <strong>the entire command</strong> — this app will automatically extract just the token for you. 
+          Or copy just the <code style="background:#333; padding:2px 4px; border-radius:3px;">eyJ...</code> part.
+        </li>
+        <li>
+          <strong>Configure the public hostname:</strong>
+          <ul style="margin-top: 4px;">
+            <li>On the next step, add a <strong>Public Hostname</strong>.</li>
+            <li>Set a <strong>subdomain</strong> (e.g. <code style="background:#333; padding:2px 4px; border-radius:3px;">api</code>) and select your <strong>domain</strong>.</li>
+            <li>Leave <strong>Path</strong> empty.</li>
+            <li>Under <strong>Service</strong>:
+              <ul style="margin-top: 4px;">
+                <li>Type: <strong>HTTPS</strong></li>
+                <li>URL: <strong id="guideServiceUrl">localhost</strong></li>
+              </ul>
+            </li>
+            <li>Expand <strong>Additional application settings → TLS</strong> and enable <strong>No TLS Verify</strong> 
+              (required because the service uses a self-signed certificate).</li>
+            <li>Click <strong>Save tunnel</strong>.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Paste the token here</strong> — back in these settings:
+          <ol style="margin-top: 4px; padding-left: 16px;">
+            <li>Paste the token into the <em>Tunnel Token</em> field above.</li>
+            <li>Check <strong>Enable Tunnel</strong>.</li>
+            <li>Click the <strong>Save</strong> button (bottom-right) and restart the app.</li>
+            <li>The tunnel will connect automatically on next launch (if Auto-Start is on), or click <strong>Start</strong>.</li>
+          </ol>
+        </li>
+      </ol>
+
+      <h3 style="color: #4da6ff; margin-bottom: 4px;">🎮 DayZ Mod Configuration</h3>
+      <div style="background: #2a2a3a; border: 1px solid #4da6ff44; border-radius: 6px; padding: 10px 14px; margin-bottom: 12px;">
+        <p style="margin: 0 0 6px 0;">Once the tunnel is running, update your DayZ mod config file 
+          (<code style="background:#333; padding:2px 4px; border-radius:3px;">UF/UFramework.json</code> in your server profile):</p>
+        <pre style="background:#1e1e1e; padding:8px 12px; border-radius:4px; margin:6px 0; overflow-x:auto;"><code>"ServerURL": "<span id="guideModUrl" style="color:#4da6ff;">https://api.yourdomain.com</span>"</code></pre>
+        <p style="margin: 4px 0 0; font-size: 0.85em; color: #aaa;">Replace with your actual subdomain + domain from step 6 above (e.g. <code style="background:#333; padding:2px 4px; border-radius:3px;">https://mytestserver.dayz.onl</code>).
+          No port number is needed — Cloudflare routes traffic on standard HTTPS port 443.</p>
+      </div>
+
+      <h3 style="color: #4da6ff; margin-bottom: 4px;">🔒 Security Notes</h3>
+      <ul style="padding-left: 20px;">
+        <li>The tunnel token is stored locally in your config and is <strong>never shared</strong> with anyone.</li>
+        <li>Cloudflare handles public SSL — your DayZ mod connects via HTTPS to your tunnel URL.</li>
+        <li>You can add access policies in Zero Trust to restrict who can reach your service.</li>
+        <li>The cloudflared binary is downloaded from 
+          <a href="https://github.com/cloudflare/cloudflared/releases" class="ext-link" style="color: #4da6ff;">GitHub releases</a> 
+          and checks for updates automatically every 24 hours.</li>
+      </ul>
+
+      <h3 style="color: #4da6ff; margin-bottom: 4px;">💡 Tips</h3>
+      <ul style="padding-left: 20px;">
+        <li>Enable <strong>Auto-Start on Launch</strong> so the tunnel connects whenever the service starts.</li>
+        <li>If the tunnel shows errors, check that your token hasn't been revoked in the Zero Trust dashboard.</li>
+        <li>If you change the <strong>Port</strong> in settings, update the URL in your Cloudflare tunnel hostname config to match.</li>
+        <li>You do <strong>not</strong> need to open any firewall ports — that's the whole point of the tunnel!</li>
+      </ul>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" id="tunnelSetupClose">Close</button>
+    </div>
+  </dialog>
 
   <!-- Modal Overlay for Save Success -->
   <dialog id="saveDialog">

@@ -59,6 +59,11 @@ const BASE_DEFAULT_CONFIG = {
     token: "",
     lastRenew: "",
     autoRenew: false
+  },
+  Tunnel: {
+    enabled: false,
+    token: "",
+    autoStart: true
   }
 };
 
@@ -182,6 +187,13 @@ function normalizeConfig(raw, { ensureAuthToken = false } = {}) {
     ...ensureObject(result.Proxy)
   };
   result.Proxy.autoRenew = Boolean(result.Proxy.autoRenew);
+
+  result.Tunnel = {
+    ...BASE_DEFAULT_CONFIG.Tunnel,
+    ...ensureObject(result.Tunnel)
+  };
+  result.Tunnel.enabled = Boolean(result.Tunnel.enabled);
+  result.Tunnel.autoStart = result.Tunnel.autoStart !== false;
 
   return result;
 }

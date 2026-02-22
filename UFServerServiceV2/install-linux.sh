@@ -256,6 +256,20 @@ install_ffmpeg() {
         mkdir -p "$INSTALL_DIR/bin"
         cp "$ffmpeg_path" "$INSTALL_DIR/bin/ffmpeg"
         chmod +x "$INSTALL_DIR/bin/ffmpeg"
+        print_status "Bundled FFmpeg installed to $INSTALL_DIR/bin/ffmpeg"
+    fi
+}
+
+# Install ImageMagick binary (if bundled)
+install_magick() {
+    local magick_path="$1"
+    
+    if [[ -f "$magick_path" ]]; then
+        print_status "Installing bundled ImageMagick..."
+        mkdir -p "$INSTALL_DIR/bin"
+        cp "$magick_path" "$INSTALL_DIR/bin/magick"
+        chmod +x "$INSTALL_DIR/bin/magick"
+        print_status "Bundled ImageMagick installed to $INSTALL_DIR/bin/magick"
     fi
 }
 
@@ -276,7 +290,7 @@ create_config() {
     "DB": "DayZ",
     "AllowClientWrite": false,
     "IP": "0.0.0.0",
-    "Port": 8443,
+    "Port": 443,
     "CreateIndexes": true,
     "LogToFile": true,
     "CheckForNewVersion": true,
@@ -478,12 +492,13 @@ usage() {
     echo "  -h, --help        Show this help message"
     echo "  -u, --uninstall   Uninstall the service"
     echo "  -f, --ffmpeg      Path to FFmpeg binary to bundle"
+    echo "  -m, --magick      Path to ImageMagick binary to bundle"
     echo "  -i, --install-deps  Automatically install dependencies"
     echo
     echo "Examples:"
     echo "  $0 ./ufserverservice-linux"
     echo "  $0 -i ./ufserverservice-linux     # Auto-install dependencies"
-    echo "  $0 -f ./ffmpeg ./ufserverservice-linux"
+    echo "  $0 -f ./bin/ffmpeg -m ./bin/magick ./ufserverservice-linux"
     echo "  $0 --uninstall"
 }
 
@@ -491,6 +506,7 @@ usage() {
 main() {
     local binary_path=""
     local ffmpeg_path=""
+    local magick_path=""
     local do_uninstall=false
     local auto_install_deps=false
     
@@ -507,6 +523,10 @@ main() {
                 ;;
             -f|--ffmpeg)
                 ffmpeg_path="$2"
+                shift 2
+                ;;
+            -m|--magick)
+                magick_path="$2"
                 shift 2
                 ;;
             -i|--install-deps)
@@ -539,6 +559,18 @@ main() {
         fi
     fi
     
+    # Auto-detect bundled binaries in the same directory as the service binary
+    local binary_dir
+    binary_dir="$(dirname "$binary_path")"
+    if [[ -z "$ffmpeg_path" && -f "$binary_dir/bin/ffmpeg" ]]; then
+        ffmpeg_path="$binary_dir/bin/ffmpeg"
+        print_status "Auto-detected bundled FFmpeg at $ffmpeg_path"
+    fi
+    if [[ -z "$magick_path" && -f "$binary_dir/bin/magick" ]]; then
+        magick_path="$binary_dir/bin/magick"
+        print_status "Auto-detected bundled ImageMagick at $magick_path"
+    fi
+    
     # Install dependencies if requested
     if $auto_install_deps; then
         install_dependencies
@@ -549,6 +581,7 @@ main() {
     create_directories
     install_binary "$binary_path"
     install_ffmpeg "$ffmpeg_path"
+    install_magick "$magick_path"
     create_config
     create_systemd_service
     set_permissions

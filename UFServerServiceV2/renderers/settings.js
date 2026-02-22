@@ -75,6 +75,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /**
+   * resolveServerURL: Determines the best ServerURL for the UFramework.json DayZ config.
+   * Priority: Tunnel hostname > Proxy subdomain > Let's Encrypt domain > fallback localhost:Port.
+   * @returns {Promise<string>} The resolved server URL (e.g. "https://example.com/").
+   */
+  async function resolveServerURL() {
+    // 1. Tunnel hostname (highest priority)
+    try {
+      const status = await window.api.tunnelStatus();
+      if (status && status.hostname) {
+        return 'https://' + status.hostname + '/';
+      }
+    } catch (_) { /* tunnel not available */ }
+
+    // 2. Proxy subdomain
+    const proxySub = document.getElementById('proxySubdomain')?.value?.trim();
+    if (proxySub) {
+      return 'https://' + proxySub + '/';
+    }
+
+    // 3. Let's Encrypt domain
+    const leDomain = document.getElementById('LE_Domain')?.value?.trim();
+    if (leDomain) {
+      return 'https://' + leDomain + '/';
+    }
+
+    // 4. Fallback: localhost with configured port
+    const port = document.getElementById('Port')?.value || '443';
+    return 'https://localhost:' + port + '/';
+  }
+
+  /**
    * createAuthEntry: Creates a new list item for a ServerAuth token with an inline label.
    * The token is displayed in a read-only input; next to it a text input field allows a label.
    * Copy and delete buttons are included.
@@ -137,6 +168,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    // "Copy DayZ Config" button — generates the UFramework.json content for this auth key
+    const configBtn = document.createElement('button');
+    configBtn.type = 'button';
+    configBtn.className = 'delete-btn copy-btn';
+    configBtn.title = 'Copy DayZ Server Config (UFramework.json)';
+    configBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+      <path d="M0 0h24v24H0z" fill="none"/>
+      <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM6 20V4h5v7h7v9H6z"/>
+    </svg>`;
+    configBtn.addEventListener('click', async () => {
+      try {
+        const serverUrl = await resolveServerURL();
+        const serverId = labelInput.value?.trim() || '';
+        const discordEnabled = !!document.getElementById('Discord_Bot_Token')?.value?.trim();
+        const config = {
+          ConfigVersion: "2",
+          ServerURL: serverUrl,
+          ServerID: serverId,
+          ServerAuth: tokenInput.value,
+          EnableBuiltinLogging: 0,
+          PromptDiscordOnConnect: discordEnabled ? 1 : 0,
+          DebugLevel: "INFO",
+          LogToSeperateFile: 0
+        };
+        await navigator.clipboard.writeText(JSON.stringify(config, null, 4));
+        configBtn.classList.add('animate-copy');
+        configBtn.title = 'Config Copied!';
+        showNotification('UFramework.json config copied to clipboard');
+        setTimeout(() => {
+          configBtn.classList.remove('animate-copy');
+          configBtn.title = 'Copy DayZ Server Config (UFramework.json)';
+        }, 2000);
+      } catch (err) {
+        console.error('Error generating DayZ config:', err);
+        showNotification('Failed to generate config: ' + err.message);
+      }
+    });
+
     // Delete button with provided SVG.
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
@@ -154,9 +223,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('floatingSaveBtn').hidden = false;
     });
 
-    // Append elements in order: auth token, label input, copy and delete buttons.
+    // Append elements in order: auth token, label input, copy config, copy auth, and delete buttons.
     wrapper.appendChild(tokenInput);
     wrapper.appendChild(labelInput);
+    wrapper.appendChild(configBtn);
     wrapper.appendChild(copyBtn);
     wrapper.appendChild(deleteBtn);
     return wrapper;
@@ -455,6 +525,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         subdomain: "",
         token: "",
         lastRenew: ""
+      },
+      Tunnel: {
+        enabled: false,
+        token: "",
+        autoStart: true
       }
     };
 
@@ -580,8 +655,271 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('proxyRegistered').style.display = 'none';
       }
     }
+
+    // Populate Tunnel configuration fields.
+    const tunnel = cfg.Tunnel || {};
+    document.getElementById('Tunnel_enabled').checked = Boolean(tunnel.enabled);
+    document.getElementById('Tunnel_token').value = tunnel.token || '';
+    document.getElementById('Tunnel_autoStart').checked = tunnel.autoStart !== false;
+    toggleTunnelFields(Boolean(tunnel.enabled));
   }
   await loadConfig();
+
+  // ----------------- External Links Handler -----------------
+  // Make all links with class "ext-link" open in the system browser
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a.ext-link');
+    if (link && link.href) {
+      e.preventDefault();
+      if (window.api && window.api.openExternal) {
+        window.api.openExternal(link.href);
+      }
+    }
+  });
+
+  // ----------------- Tunnel Token Stripping -----------------
+  /**
+   * Strip common prefixes from pasted tunnel tokens.
+   * Users often paste the full command: "cloudflared.exe service install eyJ..."
+   * We want just the token part: "eyJ..."
+   */
+  function stripTunnelToken(value) {
+    if (!value) return value;
+    let stripped = value.trim();
+    // Remove common command prefixes (case-insensitive)
+    stripped = stripped.replace(/^.*(?:cloudflared(?:\.exe)?\s+(?:service\s+install|tunnel\s+(?:--no-autoupdate\s+)?run\s+--token))\s+/i, '');
+    // Also handle if they pasted with quotes
+    stripped = stripped.replace(/^["']+|["']+$/g, '');
+    return stripped.trim();
+  }
+
+  const tunnelTokenInput = document.getElementById('Tunnel_token');
+  const tunnelTokenStripped = document.getElementById('tunnelTokenStripped');
+
+  function handleTokenClean() {
+    const raw = tunnelTokenInput.value;
+    const clean = stripTunnelToken(raw);
+    if (clean !== raw) {
+      tunnelTokenInput.value = clean;
+      tunnelTokenStripped.style.display = '';
+      setTimeout(() => { tunnelTokenStripped.style.display = 'none'; }, 4000);
+    }
+  }
+
+  tunnelTokenInput.addEventListener('paste', () => {
+    // Defer to let the paste value populate the input first
+    setTimeout(handleTokenClean, 0);
+  });
+  tunnelTokenInput.addEventListener('blur', handleTokenClean);
+
+  // ----------------- Tunnel Setup Guide Dialog -----------------
+  const tunnelSetupDialog = document.getElementById('tunnelSetupDialog');
+  document.getElementById('tunnelSetupGuideBtn').addEventListener('click', () => {
+    // Update dynamic values in the guide before showing
+    const port = document.getElementById('Port').value || '443';
+    const serviceUrlEl = document.getElementById('guideServiceUrl');
+    const modUrlEl = document.getElementById('guideModUrl');
+    const currentPortEl = document.getElementById('guideCurrentPort');
+    if (serviceUrlEl) serviceUrlEl.textContent = 'localhost:' + port;
+    if (currentPortEl) currentPortEl.textContent = port;
+    if (modUrlEl) modUrlEl.textContent = 'https://api.yourdomain.com';
+    tunnelSetupDialog.showModal();
+  });
+  document.getElementById('tunnelSetupClose').addEventListener('click', () => {
+    tunnelSetupDialog.close();
+  });
+
+  // ----------------- Tunnel Configuration Section -----------------
+  function toggleTunnelFields(enabled) {
+    const fields = document.getElementById('tunnelConfigFields');
+    if (fields) {
+      fields.style.opacity = enabled ? '1' : '0.5';
+      fields.querySelectorAll('input:not(#Tunnel_enabled), button').forEach(el => {
+        el.disabled = !enabled;
+      });
+    }
+  }
+
+  document.getElementById('Tunnel_enabled').addEventListener('change', (e) => {
+    toggleTunnelFields(e.target.checked);
+  });
+
+  function updateTunnelStatusUI(status) {
+    const indicator = document.getElementById('tunnelStatusIndicator');
+    const label = document.getElementById('tunnelStatusLabel');
+    const startBtn = document.getElementById('tunnelStartBtn');
+    const stopBtn = document.getElementById('tunnelStopBtn');
+    const errorsDiv = document.getElementById('tunnelErrors');
+    const versionLabel = document.getElementById('tunnelVersionLabel');
+    const updateBadge = document.getElementById('tunnelUpdateBadge');
+    const updateBtn = document.getElementById('tunnelUpdateBtn');
+    const domainRow = document.getElementById('tunnelDomainRow');
+    const domainLabel = document.getElementById('tunnelDomainLabel');
+
+    if (!indicator) return;
+
+    const hasErrors = status.errors && status.errors.length > 0;
+
+    if (status.downloading) {
+      indicator.textContent = '⏳';
+      label.textContent = 'Downloading cloudflared...';
+      startBtn.style.display = 'none';
+      stopBtn.style.display = 'none';
+    } else if (status.running) {
+      if (status.connectedAt) {
+        indicator.textContent = '🟢';
+        const domainSuffix = status.hostname ? ` — ${status.hostname}` : (status.url ? ` — ${status.url}` : '');
+        label.textContent = 'Online' + domainSuffix;
+      } else if (hasErrors) {
+        indicator.textContent = '⚠️';
+        label.textContent = 'Error';
+      } else {
+        indicator.textContent = '🟡';
+        label.textContent = 'Connecting...';
+      }
+      startBtn.style.display = 'none';
+      stopBtn.style.display = '';
+    } else {
+      indicator.textContent = '🔴';
+      label.textContent = 'Offline';
+      startBtn.style.display = '';
+      stopBtn.style.display = 'none';
+    }
+
+    // Version info
+    if (versionLabel) {
+      const ver = status.installedVersion || 'unknown';
+      const latest = status.latestVersion ? ` (latest: ${status.latestVersion})` : '';
+      versionLabel.textContent = `Version: ${ver}${latest}`;
+    }
+    if (updateBadge && updateBtn) {
+      if (status.updateAvailable) {
+        updateBadge.style.display = '';
+        updateBtn.style.display = '';
+      } else {
+        updateBadge.style.display = 'none';
+        updateBtn.style.display = 'none';
+      }
+    }
+
+    if (status.errors && status.errors.length > 0) {
+      errorsDiv.style.display = 'block';
+      errorsDiv.textContent = status.errors.slice(-3).join('\n');
+    } else {
+      errorsDiv.style.display = 'none';
+      errorsDiv.textContent = '';
+    }
+
+    // Domain/hostname display
+    if (domainRow && domainLabel) {
+      const host = status.hostname || status.url || null;
+      if (host && status.running) {
+        domainRow.style.display = '';
+        domainLabel.textContent = host;
+      } else {
+        domainRow.style.display = 'none';
+        domainLabel.textContent = '';
+      }
+    }
+  }
+
+  // Load initial tunnel status
+  try {
+    const initialStatus = await window.api.tunnelStatus();
+    updateTunnelStatusUI(initialStatus);
+  } catch (_) { /* ignore */ }
+
+  // Listen for live status updates
+  window.api.onTunnelStatusChanged((status) => {
+    updateTunnelStatusUI(status);
+  });
+
+  document.getElementById('tunnelStartBtn').addEventListener('click', async () => {
+    const tokenInput = document.getElementById('Tunnel_token');
+    // Clean the token in case they pasted the full command
+    handleTokenClean();
+    if (!tokenInput.value) {
+      showNotification('Please enter a Cloudflare Tunnel token first. Click the Setup Guide button for instructions.');
+      return;
+    }
+    const result = await window.api.tunnelStart();
+    if (!result.success) {
+      // Check if the error is about missing token in saved config
+      if (result.error && result.error.includes('No tunnel token configured')) {
+        showNotification('Your tunnel token has not been saved yet. Please click the Save button first, then restart the app and try again.');
+      } else {
+        showNotification('Failed to start tunnel: ' + result.error);
+      }
+    }
+  });
+
+  document.getElementById('tunnelStopBtn').addEventListener('click', async () => {
+    const result = await window.api.tunnelStop();
+    if (!result.success) {
+      showNotification('Failed to stop tunnel: ' + result.error);
+    }
+  });
+
+  document.getElementById('tunnelDownloadBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('tunnelDownloadBtn');
+    btn.disabled = true;
+    btn.textContent = 'Downloading...';
+    try {
+      const result = await window.api.tunnelDownload();
+      if (result.success) {
+        showNotification(result.message || 'cloudflared downloaded successfully!');
+      } else {
+        showNotification('Download failed: ' + result.error);
+      }
+    } catch (err) {
+      showNotification('Download error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg style="fill: #ffffff;" xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download cloudflared`;
+    }
+  });
+
+  document.getElementById('tunnelCheckUpdateBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('tunnelCheckUpdateBtn');
+    btn.disabled = true;
+    btn.textContent = '🔄 Checking...';
+    try {
+      const result = await window.api.tunnelCheckUpdate();
+      if (result.success) {
+        if (result.updateAvailable) {
+          showNotification(`Update available: ${result.latestVersion} (installed: ${result.installedVersion})`);
+        } else {
+          showNotification(`cloudflared is up to date (${result.installedVersion || 'unknown'})`);
+        }
+      } else {
+        showNotification('Update check failed: ' + result.error);
+      }
+    } catch (err) {
+      showNotification('Update check error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔄 Check for Update';
+    }
+  });
+
+  document.getElementById('tunnelUpdateBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('tunnelUpdateBtn');
+    btn.disabled = true;
+    btn.textContent = '⬆️ Updating...';
+    try {
+      const result = await window.api.tunnelUpdate();
+      if (result.success) {
+        showNotification('cloudflared updated successfully!');
+      } else {
+        showNotification('Update failed: ' + result.error);
+      }
+    } catch (err) {
+      showNotification('Update error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⬆️ Update Now';
+    }
+  });
 
   configForm.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -664,7 +1002,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           lastRenew: previousProxy.lastRenew || new Date().toISOString(),
           autoRenew: Boolean(previousProxy.autoRenew)
         };
-      })()
+      })(),
+      Tunnel: {
+        enabled: document.getElementById('Tunnel_enabled').checked,
+        token: stripTunnelToken(document.getElementById('Tunnel_token').value),
+        autoStart: document.getElementById('Tunnel_autoStart').checked
+      }
     };
 
     const functionEntries = document.querySelectorAll('.functionEntry');

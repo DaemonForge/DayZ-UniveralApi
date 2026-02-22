@@ -45,10 +45,11 @@ function initializeLogger() {
   });
 
   // Determine default log level:
-  // If packaged in Electron or pkg, use the global config's log level or default to 'info'
-  // Otherwise, set log level to 'debug'
-  const isPackaged = Boolean(process.pkg || (process.versions && process.versions.electron));
-  const logLevel = !isPackaged ? (global.config?.LogLevel || 'info') : 'debug';
+  // - Dev (plain Node, or `electron .` via npm run start): default to 'debug'
+  // - Packaged Electron app or pkg binary: use config or default to 'info'
+  // process.defaultApp is true when running `electron .` (dev), undefined in packaged builds
+  const isPackaged = Boolean(process.pkg || (process.versions?.electron && !process.defaultApp));
+  const logLevel = isPackaged ? (global.config?.LogLevel || 'info') : 'debug';
 
   console.log(`Log level set to: ${logLevel}`); // Log the determined log level
   // Create Winston logger with base configuration

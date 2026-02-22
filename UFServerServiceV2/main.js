@@ -7,8 +7,9 @@ const { Writable } = require('stream');
 const { readFileSync, writeFileSync, existsSync, mkdirSync } = require('fs');
 const net = require('net');
 
-// Global variables
+// Global variables – MUST be set before requiring tunnelManager (singleton reads SAVEPATH in constructor)
 global.SAVEPATH = `${app.getPath('userData')}/`;
+let tunnelManager = null; // Lazy-loaded after app.js initializes global.logger
 global.isElectron = true;
 global.APIVERSION = process.env.npm_package_version || app.getVersion();
 global.rootPath = path.join(__dirname);
@@ -131,9 +132,24 @@ app.on('ready', () => {
   // Set initial "Starting Up" menu immediately so users can interact with tray
   setInitialTrayMenu();
 
-  // Load your main service (if required)
+  // Load your main service (if required) — this sets global.logger
   const ufService = require('./app');
   createLoggerStream();
+
+  // Require tunnelManager AFTER global.logger exists so createLogger() works normally
+  tunnelManager = require('./tunnelManager');
+
+  // Forward tunnel status changes to all renderer windows
+  tunnelManager.onStatusChange((status) => {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      try {
+        win.webContents.send('tunnel-status-changed', status);
+      } catch (_) { /* window may be destroyed */ }
+    });
+    // Update tray to reflect tunnel status
+    updateTrayMenu();
+  });
+
   // Build context menu with actual status.
   updateTrayMenu();
   setTimeout(updateTrayMenu, 2500);
@@ -143,6 +159,12 @@ app.on('ready', () => {
 
   // Start auto-renewal for proxy token, if configured.
   startProxyAutoRenew();
+
+  // Auto-start Cloudflare tunnel if configured
+  startTunnelIfConfigured();
+
+  // Start periodic cloudflared update checks (non-blocking)
+  tunnelManager.startUpdateChecks();
 });
 
 function createLoggerStream(){
@@ -517,6 +539,31 @@ function updateTrayMenu() {
     }
     const openaiStatusLabel = `OpenAI: ${openaiStatus} ${openaiEmoji}`;
     
+    // Process Tunnel status.
+    const tunnelStatus = tunnelManager.getStatus();
+    let tunnelAction = null;
+    const cfg = loadConfigSync();
+    const tunnelConfigured = cfg.Tunnel && cfg.Tunnel.enabled && cfg.Tunnel.token;
+    let tunnelMenuItems = [];
+    if (tunnelConfigured) {
+      let tunnelLabel;
+      const hasErrors = tunnelStatus.errors && tunnelStatus.errors.length > 0;
+      if (tunnelStatus.running) {
+        if (tunnelStatus.connectedAt) {
+          tunnelLabel = 'Tunnel: Online 🟢';
+        } else if (hasErrors) {
+          tunnelLabel = 'Tunnel: Error ⚠️';
+        } else {
+          tunnelLabel = 'Tunnel: Connecting 🟡';
+        }
+        tunnelAction = { label: '⏹️ Stop Tunnel', click: () => { tunnelManager.stop(); } };
+      } else {
+        tunnelLabel = 'Tunnel: Offline 🔴';
+        tunnelAction = { label: '▶️ Start Tunnel', click: () => { tunnelManager.start(cfg.Tunnel.token).catch(e => { (global.logger || console).error('[Tunnel] Start failed:', e.message); }); } };
+      }
+      tunnelMenuItems = [{ label: tunnelLabel, enabled: false }];
+    }
+
     const contextMenu = Menu.buildFromTemplate([
       {
         label: `UF API Service ${apiStatusSubLabel}`,
@@ -528,6 +575,7 @@ function updateTrayMenu() {
         sublabel: openaiStatusLabel,
         enabled: false
       },
+      ...tunnelMenuItems,
       { type: 'separator' },
       {
         label: '🖥️ Console',
@@ -593,6 +641,7 @@ function updateTrayMenu() {
               shell.openPath(path.join(global.SAVEPATH,'templates'));
             }
           },
+          ...(tunnelAction ? [tunnelAction] : []),
           {
             label: '🛑 Stop',
             click: () => {
@@ -763,6 +812,20 @@ function openSettingsWindow() {
 
   settingsWindow.loadFile(path.join(__dirname, 'views', 'settings.html'));
   //settingsWindow.webContents.openDevTools();
+
+  // Intercept navigation to external URLs — open in system browser instead
+  settingsWindow.webContents.on('will-navigate', (event, url) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  });
+  settingsWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
    
     // When the window is truly closed (app quit), then clean up.
     settingsWindow.on('closed', () => {
@@ -1487,6 +1550,14 @@ app.on('window-all-closed', (e) => {
 
 // Cleanup on app exit
 app.on('will-quit', async () => {
+  // Stop cloudflared tunnel & update checks
+  try {
+    tunnelManager.stopUpdateChecks();
+    tunnelManager.stop();
+  } catch (err) {
+    (global.logger || console).warn('Error stopping tunnel on exit', { error: err.message });
+  }
+
   // Close MongoDB connection from index manager
   try {
     const indexManager = getIndexManager();
@@ -1577,6 +1648,95 @@ ipcMain.handle('register-proxy', async (event, selectedDomain) => {
     throw error;
   }
 });
+
+// ----------------------- External Link Handler -----------------------
+ipcMain.handle('open-external', async (event, url) => {
+  // Only allow http/https URLs to prevent shell injection
+  if (typeof url === 'string' && (url.startsWith('https://') || url.startsWith('http://'))) {
+    await shell.openExternal(url);
+    return true;
+  }
+  return false;
+});
+
+// ----------------------- Cloudflare Tunnel IPC Handlers -----------------------
+
+/**
+ * Auto-start the tunnel on app launch if configured.
+ */
+function startTunnelIfConfigured() {
+  try {
+    const cfg = loadConfigSync();
+    if (cfg.Tunnel && cfg.Tunnel.enabled && cfg.Tunnel.token && cfg.Tunnel.autoStart) {
+      (global.logger || console).info('[Tunnel] Auto-starting cloudflared tunnel...');
+      tunnelManager.start(cfg.Tunnel.token).catch(err => {
+        (global.logger || console).error('[Tunnel] Auto-start failed:', err.message);
+      });
+    }
+  } catch (err) {
+    (global.logger || console).error('[Tunnel] Error checking tunnel config for auto-start:', err.message);
+  }
+}
+
+ipcMain.handle('tunnel-start', async () => {
+  try {
+    const cfg = loadConfigSync();
+    if (!cfg.Tunnel || !cfg.Tunnel.token) {
+      return { success: false, error: 'No tunnel token configured. Add your Cloudflare tunnel token in Settings.' };
+    }
+    await tunnelManager.start(cfg.Tunnel.token);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('tunnel-stop', async () => {
+  try {
+    tunnelManager.stop();
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('tunnel-status', async () => {
+  return tunnelManager.getStatus();
+});
+
+ipcMain.handle('tunnel-download', async () => {
+  try {
+    if (tunnelManager.isBinaryInstalled()) {
+      return { success: true, message: 'cloudflared already installed' };
+    }
+    await tunnelManager.downloadBinary();
+    return { success: true, message: 'cloudflared downloaded successfully' };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('tunnel-check-update', async () => {
+  try {
+    const result = await tunnelManager.checkForUpdate();
+    return { success: true, ...result };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('tunnel-update', async () => {
+  try {
+    const cfg = loadConfigSync();
+    const token = (cfg.Tunnel && cfg.Tunnel.token) || null;
+    await tunnelManager.update(token);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+
 
 // ----------------------- Proxy Auto-Renew Functions -----------------------
 function loadConfigSync() {

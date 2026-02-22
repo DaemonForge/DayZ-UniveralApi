@@ -44,5 +44,10 @@
     "subdomain": "",
     "token": "",
     "lastRenew": ""
+  },
+  "Tunnel": {
+    "enabled": false,
+    "token": "",
+    "autoStart": true
   }
 }

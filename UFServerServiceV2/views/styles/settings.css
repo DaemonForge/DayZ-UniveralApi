@@ -44,6 +44,7 @@ html, body {
   input[type="text"],
   input[type="number"],
   input[type="email"],
+  input[type="password"],
   textarea,
   select {
     width: 100%;
@@ -100,6 +101,9 @@ html, body {
     padding: 0 4px;
     cursor: pointer;
     color: #ddd;
+  }
+  .delete-btn svg, .copy-btn svg, .small-btn svg {
+    fill: #ddd;
   }
   
   /* Function entry styling */
