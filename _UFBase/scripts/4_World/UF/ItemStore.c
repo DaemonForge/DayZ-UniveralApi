@@ -139,18 +139,17 @@ class UEntityStore extends UFObject_Base {
 	}
 	
 	EntityAI Create(EntityAI parent = NULL, bool RestoreOrginalLocation = true){
-		
+		return null;
 	}
 	
 	EntityAI CreateAtPos(vector Pos, vector Ori = "0 0 0"){
-		
+		return null;
 	}
 	
 	void LoadEntity(EntityAI item){
 		
 	}
-	
-	
+		
 	override string ToJson(){
 		string jsonString = JsonFileLoader<UEntityStore>.JsonMakeData(this);
 		return jsonString;

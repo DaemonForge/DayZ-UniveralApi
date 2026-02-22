@@ -24,6 +24,10 @@ class UFLog extends ULoggerBase {
 		}
 		return m_LoggerBaseInstanceUF;
 	}
+
+	override static void Init(){
+		SetLogLevels(LOG_DEBUG, LOG_INFO); // Default to DEBUG locally, Info to API
+	}
 	
 	override static void CreateInstance(){
 		m_LoggerBaseInstanceUF = new ULoggerBaseInstance(getLogID());
@@ -132,14 +136,6 @@ class ULoggerBaseInstance extends Managed {
 	void ULoggerBaseInstance(string logType, int level = 4) {	
 		m_LogLevel = level;	
 		m_LogType = logType;
-		if ( !g_Game.IsServer() || g_Game.IsClient() ){
-			return;	
-		}
-		
-		m_FileHandle = CreateFile(LogDir + m_LogType + "_" + GetDateStampFile() + ".log");
-		if (m_FileHandle != 0){
-			m_isInit = true;
-		}
 	}
 	
 	void ~ULoggerBaseInstance() {
@@ -154,6 +150,26 @@ class ULoggerBaseInstance extends Managed {
 	
 	void SetApiLogLevel(int level){
 		m_LogToApiLevel = level;
+	}
+	
+	/**
+	 * EnableFileLogging
+	 *
+	 * Opens a log file for writing. Once enabled, DoLog will write to the file
+	 * instead of using Print(). Only works on dedicated server.
+	 * Safe to call multiple times - will not re-open if already initialized.
+	 */
+	void EnableFileLogging(){
+		if (m_isInit){
+			return;
+		}
+		if (!g_Game.IsServer() || g_Game.IsClient()){
+			return;
+		}
+		m_FileHandle = CreateFile(LogDir + m_LogType + "_" + GetDateStampFile() + ".log");
+		if (m_FileHandle != 0){
+			m_isInit = true;
+		}
 	}
 	
 	protected FileHandle CreateFile(string path) {
@@ -228,13 +244,16 @@ class ULoggerBaseInstance extends Managed {
 	
 	
 	void DoLog(string text, int level = 1)
-	{	
+	{
+		// Early exit: skip all work if nothing will handle this level
+		if (m_LogLevel < level && m_LogToApiLevel < level){
+			return;
+		}
 		if (level == 2 && m_LogLevel >= level) {
 			g_Game.AdminLog("[" + m_LogType + "]" + GetTag(level) + text);
 		}
 		if (m_isInit && m_LogLevel >= level){
-			//Print("[MapLink] " + GetTag(level) + GetTimeStamp() + " | " + text);
-			string towrite = GetTag(level)  + GetTimeStamp() + " | " + " " + text;
+			string towrite = GetTag(level) + GetTimeStamp() + " | " + " " + text;
 			FPrintln(m_FileHandle, towrite);
 		} else if (m_LogLevel >= level) {
 			Print("[" + m_LogType + "]" + GetTag(level) + " " + text);

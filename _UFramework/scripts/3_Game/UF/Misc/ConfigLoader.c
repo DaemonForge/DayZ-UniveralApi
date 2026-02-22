@@ -6,12 +6,14 @@
  * are sent via RPC from the server.
  *
  * Configuration Fields:
- *   - ConfigVersion: Version identifier for the config format (current: "1")
+ *   - ConfigVersion: Version identifier for the config format (current: "2")
  *   - ServerURL: Base URL for the UFServerService API endpoint
  *   - ServerID: Unique identifier for this DayZ server instance
  *   - ServerAuth: Authentication token for server-to-service communication
  *   - EnableBuiltinLogging: Flag to enable/disable built-in logging features (0/1)
  *   - PromptDiscordOnConnect: Flag to prompt players about Discord linking on connect (0/1)
+ *   - DebugLevel: Log verbosity level ("INFO" or "DEBUG"). DEBUG includes INFO messages. Default: "INFO"
+ *   - LogToSeperateFile: Whether to write logs to a separate file (1) or to script Print (0). Default: 0
  *
  * Methods:
  *   - Load(): Loads configuration from file or creates default if missing
@@ -28,12 +30,14 @@ class UFrameworkConfig extends Managed {
 	
 	protected static string ConfigDIR = "$profile:UF";
 	protected static string ConfigPATH = ConfigDIR + "\\UFramework.json";
-	string ConfigVersion = "1";
+	string ConfigVersion = "2";
 	string ServerURL = "";
 	string ServerID = "";
     string ServerAuth = "";
 	int EnableBuiltinLogging = 0;
 	int PromptDiscordOnConnect = 0;
+	string DebugLevel = "INFO";
+	int LogToSeperateFile = 0;
 	
 	/**
 	 * Load
@@ -58,14 +62,27 @@ class UFrameworkConfig extends Managed {
 						Save();
 					}
 				}
-				if (ConfigVersion != "1"){
-					ConfigVersion = "1";
-					PromptDiscordOnConnect = 0;
+				if (ConfigVersion == "1"){
+					ConfigVersion = "2";
+					DebugLevel = "INFO";
+					LogToSeperateFile = 0;
 					Save();
+				}
+				// Apply log level from config
+				int logLevel = LOG_INFO;
+				if (DebugLevel == "DEBUG"){
+					logLevel = LOG_DEBUG;
+				}
+				UFLog.SetLogLevels(logLevel);
+				// Enable file logging if configured
+				if (LogToSeperateFile == 1){
+					UFLog.GetInstance().EnableFileLogging();
 				}
 			} else { //File does not exist create file	
 				MakeDirectory(ConfigDIR);
 				Save();
+				// Default is INFO, set it explicitly
+				UFLog.SetLogLevels(LOG_INFO);
 			}
 		}
 	}

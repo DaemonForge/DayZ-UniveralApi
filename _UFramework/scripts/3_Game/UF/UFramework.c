@@ -955,6 +955,17 @@ class UFramework extends Managed {
 		} else {
 			UFLog.Info("Received Config and Auth Token but Config or Server URL are Null");
 		}
+		
+		// Apply log level from server config to client logger
+		if (m_UFrameworkConfig){
+			int logLevel = LOG_INFO;
+			if (m_UFrameworkConfig.DebugLevel == "DEBUG"){
+				logLevel = LOG_DEBUG;
+			}
+			UFLog.SetLogLevels(logLevel);
+			UFLog.Debug("[Auth] Client log level set to: " + m_UFrameworkConfig.DebugLevel);
+		}
+		
 		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnTokenReceived);
 	}
 	
@@ -1191,6 +1202,8 @@ class UFramework extends Managed {
 			cClientConfig.ServerAuth = "null";
 			cClientConfig.EnableBuiltinLogging = UFConfig().EnableBuiltinLogging;
 			cClientConfig.PromptDiscordOnConnect = UFConfig().PromptDiscordOnConnect;
+			cClientConfig.DebugLevel = UFConfig().DebugLevel;
+			cClientConfig.LogToSeperateFile = 0; // Client always uses Print, never file
 			
 			// Native RPC: Server -> specific Client
 			// Find the player object to use as RPC target

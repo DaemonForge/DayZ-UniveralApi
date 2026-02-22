@@ -21,6 +21,7 @@ class UCurrencyValue extends Managed {
 typedef array<autoptr UCurrencyValue> UCurrencyBase;
 
 class UCurrency extends UCurrencyBase{
+
 	protected static autoptr map<string, autoptr UCurrency> m_UCurrencysMap = new map<string, autoptr UCurrency>;
 	
 	static UCurrency GetCurrency(string key){
@@ -116,19 +117,19 @@ class UCurrency extends UCurrencyBase{
 		SortCurrency();
 		int LastIndex = Count() - 1;
 		for (int i = 0; i < Count(); i++){
-			if (GetAmount(Get(i), amount) > 0){
-				return Get(i);
+			if (GetAmount(this.Get(i), amount) > 0){
+				return this.Get(i);
 			}
 		}
 		return NULL;
 	}
 	
 	string GetTypeClass(int idx){
-		return Get(idx).TypeClass();
+		return this.Get(idx).TypeClass();
 	}
 	
 	int GetValue(int idx){
-		return Get(idx).Value();
+		return this.Get(idx).Value();
 	}
 	
 	
@@ -145,14 +146,14 @@ class UCurrency extends UCurrencyBase{
 		SortCurrency();
 	}
 	int LastIndex(){
-		return Count() - 1;
+		return this.Count() - 1;
 	}
 	int LowestDenominationValue(){
 		SortCurrency();
-		return Get(LastIndex()).Value();
+		return this.Get(LastIndex()).Value();
 	}
 	UCurrencyValue LowestDenomination(){
 		SortCurrency();
-		return Get(LastIndex());
+		return this.Get(LastIndex());
 	}
 }
