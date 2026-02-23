@@ -82,9 +82,15 @@ function startProxyAutoRenew() {
 
 // --------------- Graceful shutdown ---------------
 async function gracefulShutdown(signal) {
-  console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+  const cluster = require('cluster');
+  const isPrimary = cluster.isMaster || cluster.isPrimary;
 
-  // Stop cloudflared tunnel & update checks
+  // Only the primary process logs the shutdown message to avoid 8x noise
+  if (isPrimary) {
+    console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+  }
+
+  // Stop cloudflared tunnel & update checks (only set in primary)
   try {
     if (tunnelManager) {
       tunnelManager.stopUpdateChecks();
@@ -94,20 +100,18 @@ async function gracefulShutdown(signal) {
     (global.logger || console).warn('Error stopping tunnel on exit', { error: err.message });
   }
 
-  // Stop proxy auto-renew interval
+  // Stop proxy auto-renew interval (only set in primary)
   if (proxyRenewInterval) {
     clearInterval(proxyRenewInterval);
   }
 
-  // Close MongoDB connection from index manager
+  // Close MongoDB connection — each worker has its own connection
   try {
     const indexManager = require('./models/indexManager');
     if (indexManager && indexManager.closeConnection) {
       await indexManager.closeConnection();
     }
-  } catch (err) {
-    (global.logger || console).warn('Error closing IndexManager connection on exit', { error: err.message });
-  }
+  } catch (_) { /* closing silently is fine for workers */ }
 
   process.exit(0);
 }
@@ -118,8 +122,11 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 // --------------- Start the application ---------------
 require('./app');
 
-// Start tunnel and proxy after app.js has loaded (logger is now available)
+// Start tunnel and proxy only in the master/primary process (not in cluster workers)
+const cluster = require('cluster');
 setTimeout(() => {
-  startTunnelIfConfigured();
-  startProxyAutoRenew();
+  if (cluster.isMaster || cluster.isPrimary) {
+    startTunnelIfConfigured();
+    startProxyAutoRenew();
+  }
 }, 3000);

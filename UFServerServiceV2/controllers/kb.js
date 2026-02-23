@@ -8,7 +8,8 @@ const router = express.Router();
 const multer = require('multer');
 const { OpenAI } = require('openai').default;
 const mammoth = require('mammoth');
-const pdf = require('pdf-parse');
+// pdf-parse is lazy-loaded to avoid pdfjs-dist DOMMatrix polyfill crash at startup
+let pdf;
 const { createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'kb');
 
@@ -176,6 +177,7 @@ async function extractTextFromFile(buffer, filename, mimetype) {
                 return buffer.toString('utf-8');
             
             case '.pdf':
+                if (!pdf) pdf = require('pdf-parse');
                 const pdfData = await pdf(buffer);
                 return pdfData.text;
             

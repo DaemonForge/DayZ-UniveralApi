@@ -8,8 +8,8 @@
     "dev": "nodemon app.js",
     "build": "dotenv -e .env.trustedsigning -- electron-builder",
     "build:unsigned": "electron-builder -c.win.azureSignOptions=null",
-    "pkg": "pkg . --compress GZip --target node22-win-x64 --output ../Build/Service/ufserverservice-win.exe && node build.js",
-    "pkg:linux": "pkg . --compress GZip --target node22-linux-x64 --output ../Build/Service/ufserverservice-linux && node -e \"const fs=require('fs');const p=require('path');fs.copyFileSync('install-linux.sh','../Build/Service/install.sh');const bd='../Build/Service/bin';fs.mkdirSync(bd,{recursive:true});['ffmpeg','magick'].forEach(f=>{const s=p.join('bin',f);if(fs.existsSync(s))fs.copyFileSync(s,p.join(bd,f))})\"",
+    "pkg": "pkg . --no-bytecode --public --public-packages \"*\" --compress GZip --target node22-win-x64 --output ../Build/Service/ufserverservice-win.exe && node build.js",
+    "pkg:linux": "pkg . --no-bytecode --public --public-packages \"*\" --compress GZip --target node22-linux-x64 --output ../Build/Service/ufserverservice-linux && node -e \"const fs=require('fs');const p=require('path');fs.copyFileSync('install-linux.sh','../Build/Service/install.sh');const bd='../Build/Service/bin';fs.mkdirSync(bd,{recursive:true});['ffmpeg','magick'].forEach(f=>{const s=p.join('bin',f);if(fs.existsSync(s))fs.copyFileSync(s,p.join(bd,f))})\"",
     "pkg:all": "npm run pkg && npm run pkg:linux",
     "tunnel": "cloudflared tunnel --config .cloudflared/config.yaml run ufdev"
   },

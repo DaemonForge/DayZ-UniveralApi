@@ -237,17 +237,18 @@ The `pkg:linux` build now copies `bin/magick` alongside the service binary. At r
 
 ---
 
-## 10. MongoDB Auto-Install — `main.js` only
+## 10. MongoDB Auto-Install — `main.js` + `install-linux.sh`
 
 | Step | Windows | Linux | Impact |
 |------|---------|-------|--------|
 | Port 27017 check | `net.Socket.connect()` | **Not performed** | |
 | Windows Service check | `sc query "MongoDB"` | **Not performed** | |
-| winget check + install dialog | `winget list MongoDB.Server` → `dialog.showMessageBox()` → auto-install | **Not performed** | |
+| winget check + install dialog | `winget list MongoDB.Server` → `dialog.showMessageBox()` → auto-install | `install-linux.sh` — auto-install from official MongoDB 8.0 repo | |
 | Compass install option | Yes — `winget install MongoDB.Compass.Community` | **Not available** | |
 | Remote DB detection | Skips local check if `DBServer` is not localhost | **Not performed** (but also not needed — no auto-install) | |
+| **Security setup** | **Not performed** | `install-linux.sh` — creates DB user, enables auth, binds to localhost, updates config | |
 
-On Linux, the `install-linux.sh` script checks for MongoDB and **warns** but doesn't auto-install.
+On Linux, the `install-linux.sh` script auto-installs MongoDB from the official repo (Debian/Ubuntu/RHEL/Fedora), secures it with authentication, and generates the connection string in config.json.
 
 ---
 
@@ -379,7 +380,7 @@ All 7 view HTMLs and 7 renderer JS files are **Electron-only**. The `templates/`
 | **Image DDS conversion** | ✅ Bundled texconv | ✅ Bundled ImageMagick | None |
 | **Clustering** | ❌ Disabled | ✅ Enabled | **low** — Linux has better scaling |
 | **System Tray + GUI** | ✅ Full GUI | ❌ Headless only | **Medium** — 7 management windows absent |
-| **MongoDB auto-install** | ✅ winget dialog | ❌ Must use install-linux.sh script  | **Medium** |
+| **MongoDB auto-install** | ✅ winget dialog | ✅ install-linux.sh (official repo) | None |
 | **Tunnel auto-start** | ✅ Config + tray | ✅ Config-driven | None  |
 | **Tunnel update checks** | ✅ Every 24h | ✅ Started with tunnel | None |
 | **Proxy auto-renew** | ✅ Every 24h | ✅ Every 24h | None |
@@ -390,7 +391,7 @@ All 7 view HTMLs and 7 renderer JS files are **Electron-only**. The `templates/`
 | **Globals editor GUI** | ✅ | ❌ Use MongoDB shell | **Low** |
 | **KB manager GUI** | ✅ | ❌ Use API endpoints | **Low** |
 | **Data manager GUI** | ✅ | ❌ Use MongoDB shell | **Low** |
-| **Port 443 default** | ✅ Runs as admin | ⚠️ Needs root or port >1024 | **Low** |
+| **Port 443 default** | ✅ Runs as admin | ✅ CAP_NET_BIND_SERVICE via systemd | None |
 | **In-memory log history** | ✅ Used by Console window | ⚠️ Allocated but never consumed | **Trivial** — wasted memory |
 
 ---

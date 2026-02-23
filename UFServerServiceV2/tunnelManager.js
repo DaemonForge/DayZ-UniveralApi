@@ -35,6 +35,7 @@ const UPDATE_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 class TunnelManager {
   constructor() {
     this._process = null;
+    this._stopping = false;
     this._status = {
       running: false,
       pid: null,
@@ -473,7 +474,13 @@ class TunnelManager {
         }
         // Route by cloudflared's own log level
         if (level === 'error' || level === 'fatal') {
-          logger.error('[cloudflared] ' + msg);
+          // During graceful shutdown, cloudflared emits expected errors
+          // like "context canceled" — downgrade to debug to avoid alarm
+          if (this._stopping) {
+            logger.debug('[cloudflared] (shutdown) ' + msg);
+          } else {
+            logger.error('[cloudflared] ' + msg);
+          }
         } else if (level === 'warn' || level === 'warning') {
           logger.warn('[cloudflared] ' + msg);
         } else if (level === 'debug') {
@@ -491,7 +498,11 @@ class TunnelManager {
     // Plain-text cloudflared lines: route by level token (INF/ERR/WRN/DBG)
     // Only promote errors/warnings to visible levels; everything else is debug noise.
     if (/\bERR\b/.test(line)) {
-      logger.error('[cloudflared] ' + line);
+      if (this._stopping) {
+        logger.debug('[cloudflared] (shutdown) ' + line);
+      } else {
+        logger.error('[cloudflared] ' + line);
+      }
     } else if (/\bWRN\b/.test(line)) {
       logger.warn('[cloudflared] ' + line);
     } else {
@@ -650,6 +661,7 @@ class TunnelManager {
       logger.info('No tunnel process running');
       return;
     }
+    this._stopping = true;
     logger.info('Stopping cloudflared tunnel...');
     try {
       if (process.platform === 'win32') {
@@ -677,6 +689,7 @@ class TunnelManager {
    */
   _cleanup() {
     this._process = null;
+    this._stopping = false;
     this._status.running = false;
     this._status.pid = null;
     this._status.hostname = null;

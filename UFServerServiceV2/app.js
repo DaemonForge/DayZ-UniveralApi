@@ -437,33 +437,44 @@ function Start(isElectron = false) {
     if (global.config?.CheckForNewVersion) {
       CheckRecentVersion();
     }
+    // Master handles one-time DB index + KB setup
+    setTimeout(CheckIndexes, 1000);
+    const { ensureAllKBIndexes: ensureKB, ensureAllEmbeddings: ensureEmb } = require('./models/kb');
+    setTimeout(ensureKB, 2000);
+    setTimeout(async () => {
+      try {
+        const kbController = require('./controllers/kb');
+        if (kbController.generateEmbeddings) {
+          await ensureEmb(kbController.generateEmbeddings);
+        }
+      } catch (err) {
+        (global.logger || console).warn('[KB] Could not run embedding check on startup', { error: err.message });
+      }
+    }, 5000);
   } else {
-    // Single process mode
+    // Single process mode (worker or single-CPU)
     startWebServer();
     
     if (totalCPUs <= 1) {
       if (global.config?.CheckForNewVersion) {
         CheckRecentVersion();
       }
+      // Single-process: handle one-time DB index + KB setup here
+      setTimeout(CheckIndexes, 1000);
+      const { ensureAllKBIndexes, ensureAllEmbeddings } = require('./models/kb');
+      setTimeout(ensureAllKBIndexes, 2000);
+      setTimeout(async () => {
+        try {
+          const kbController = require('./controllers/kb');
+          if (kbController.generateEmbeddings) {
+            await ensureAllEmbeddings(kbController.generateEmbeddings);
+          }
+        } catch (err) {
+          (global.logger || console).warn('[KB] Could not run embedding check on startup', { error: err.message });
+        }
+      }, 5000);
     }
   }
-  setTimeout(CheckIndexes, 1000);
-  
-  // Ensure KB indexes are created for all existing KBs
-  const { ensureAllKBIndexes, ensureAllEmbeddings } = require('./models/kb');
-  setTimeout(ensureAllKBIndexes, 2000);
-  
-  // Ensure all KB documents have embeddings (runs after indexes are created)
-  setTimeout(async () => {
-    try {
-      const kbController = require('./controllers/kb');
-      if (kbController.generateEmbeddings) {
-        await ensureAllEmbeddings(kbController.generateEmbeddings);
-      }
-    } catch (err) {
-      (global.logger || console).warn('[KB] Could not run embedding check on startup', { error: err.message });
-    }
-  }, 5000);
 }
 
 
