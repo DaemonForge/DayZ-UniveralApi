@@ -81,6 +81,7 @@ const AIAssistantRouter = require('./controllers/aiAssistant');
 const AudioRouter = require('./controllers/tts');
 const ImageRouter = require('./controllers/images');
 const KBRouter = require('./controllers/kb');
+const ModSettingsRouter = require('./controllers/modSettings');
 
 const HOSTNAME_REGEX = /^(?=.{1,253}$)(?!-)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.(?!-)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
 
@@ -206,6 +207,7 @@ function createExpressApp() {
   app.use('/TTS', AudioRouter);
   app.use('/Images', ImageRouter);
   app.use('/KB', KBRouter);
+  app.use('/ModSettings', ModSettingsRouter);
   
   const iconFile = path.join(global.SAVEPATH, 'templates', 'icon.png');
   const defaultIcon = path.join(__dirname, 'public', 'icon.png');

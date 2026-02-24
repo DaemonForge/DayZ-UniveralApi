@@ -1,0 +1,29 @@
+{
+  "name": "ufctl",
+  "version": "1.0.0",
+  "description": "CLI companion for Universal Framework Server Service (Linux)",
+  "main": "src/index.js",
+  "bin": {
+    "ufctl": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "build": "node build.js"
+  },
+  "pkg": {
+    "scripts": [
+      "src/**/*.js"
+    ],
+    "assets": ["package.json"],
+    "targets": ["node22-linux-x64"],
+    "outputPath": "dist"
+  },
+  "dependencies": {
+    "commander": "^14.0.3",
+    "mongodb": "^7.1.0",
+    "openai": "^4.86.2"
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.10.1"
+  }
+}

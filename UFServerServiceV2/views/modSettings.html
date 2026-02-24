@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #1e1e1e;">
+<head>
+  <meta charset="UTF-8">
+  <title>Mod Settings</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; frame-src blob:; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data:;">
+  <link rel="stylesheet" href="styles/modSettings.css">
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>Mod Settings</h1>
+        <button id="refreshListBtn" class="btn-icon" title="Refresh List">🔄</button>
+      </div>
+      <input type="search" id="searchInput" class="search" placeholder="Search mods..." autocomplete="off">
+      <div id="modList" class="mod-list"></div>
+    </aside>
+    <main class="editor-pane">
+      <div class="editor-header">
+        <div class="title-block">
+          <h2 id="currentModLabel">No mod selected</h2>
+          <div id="statusMessage" class="status" data-type="info">Select a mod from the sidebar</div>
+        </div>
+        <div class="meta-block" id="metaBlock" style="display:none;">
+          <span class="meta-tag" id="metaVersion"></span>
+          <span class="meta-tag" id="metaAuthor"></span>
+        </div>
+        <div class="actions">
+          <button id="reloadBtn" class="btn" disabled title="Reload this mod's settings page">Reload</button>
+        </div>
+      </div>
+      <div id="editorContainer" class="editor-container">
+        <div id="placeholder" class="placeholder">
+          <div class="placeholder-icon">⚙️</div>
+          <h3>Mod Settings</h3>
+          <p>Select a mod from the sidebar to view and edit its settings.<br>
+          Mods register their custom settings pages via the UFramework SDK.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../renderers/modSettings.js" defer></script>
+</body>
+</html>
