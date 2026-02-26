@@ -22,13 +22,13 @@ async function getClientAndCollection() {
 
 /**
  * List all registered mod settings pages.
- * Returns an array of { modId, modName, description, version, updatedAt }.
+ * Returns an array of { modId, modName, author, updatedAt }.
  */
 async function listModSettings() {
   const { client, collection } = await getClientAndCollection();
   try {
     const docs = await collection
-      .find({}, { projection: { modId: 1, modName: 1, description: 1, version: 1, author: 1, updatedAt: 1, _id: 0 } })
+      .find({}, { projection: { modId: 1, modName: 1, author: 1, updatedAt: 1, _id: 0 } })
       .sort({ modName: 1 })
       .toArray();
     logger.info("[ModSettings] Listed mod settings", { count: docs.length });
@@ -45,7 +45,7 @@ async function listModSettings() {
 async function getModSettings(modId) {
   const { client, collection } = await getClientAndCollection();
   try {
-    const doc = await collection.findOne({ modId });
+    const doc = await collection.findOne({ modId }, { projection: { _id: 0 } });
     if (doc) {
       logger.info("[ModSettings] Retrieved settings page", { modId });
     } else {
@@ -60,14 +60,12 @@ async function getModSettings(modId) {
 /**
  * Register or update a mod settings page (upsert).
  *
- * @param {string} modId - Unique identifier for the mod (lowercase, alphanumeric + hyphens)
- * @param {object} payload - { modName, description, version, author, template, globals }
+ * @param {string} modId - Unique identifier for the mod (alphanumeric + hyphens/underscores)
+ * @param {object} payload - { modName, author, template, globals }
  *   - modName: Human-readable mod name
- *   - description: Short description of what the settings page configures
- *   - version: Semantic version string
  *   - author: Author name (optional)
  *   - template: The full HTML template string
- *   - globals: Array of global names this mod reads/writes e.g. ["MyMod_Factions", "MyMod_Config"]
+ *   - globals: Array of global names (informational) e.g. ["MyMod_Config"]
  * @returns {object} The upserted document (without _id)
  */
 async function upsertModSettings(modId, payload) {
@@ -77,8 +75,6 @@ async function upsertModSettings(modId, payload) {
     const doc = {
       modId,
       modName: payload.modName || modId,
-      description: payload.description || "",
-      version: payload.version || "1.0.0",
       author: payload.author || "",
       template: payload.template || "",
       globals: Array.isArray(payload.globals) ? payload.globals : [],

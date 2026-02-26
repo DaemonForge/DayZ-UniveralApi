@@ -443,6 +443,8 @@ function Start(isElectron = false) {
     setTimeout(CheckIndexes, 1000);
     const { ensureAllKBIndexes: ensureKB, ensureAllEmbeddings: ensureEmb } = require('./models/kb');
     setTimeout(ensureKB, 2000);
+    const { ensureModSettingsIndexes } = require('./models/modSettings');
+    setTimeout(ensureModSettingsIndexes, 2500);
     setTimeout(async () => {
       try {
         const kbController = require('./controllers/kb');
@@ -465,6 +467,8 @@ function Start(isElectron = false) {
       setTimeout(CheckIndexes, 1000);
       const { ensureAllKBIndexes, ensureAllEmbeddings } = require('./models/kb');
       setTimeout(ensureAllKBIndexes, 2000);
+      const { ensureModSettingsIndexes: ensureModSettingsIdx } = require('./models/modSettings');
+      setTimeout(ensureModSettingsIdx, 2500);
       setTimeout(async () => {
         try {
           const kbController = require('./controllers/kb');

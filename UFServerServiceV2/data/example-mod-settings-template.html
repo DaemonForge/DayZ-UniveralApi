@@ -1,0 +1,417 @@
+<!--
+  ============================================================================
+  Example Mod Settings Template
+  ============================================================================
+  
+  This is a complete example HTML template that demonstrates how to build a
+  custom settings page for your DayZ mod using the UFramework Mod Settings system.
+  
+  HOW IT WORKS:
+  This HTML file runs inside a sandboxed iframe. The UFramework service injects
+  a bridge script that provides `window.UF` — a small API for reading and writing
+  your mod's Global data in MongoDB.
+
+  TEMPLATE RULES:
+  - Must be a single, self-contained HTML file
+  - All CSS and JavaScript must be inline (no external CDN links)
+  - The file is rendered inside a sandboxed iframe (allow-scripts, allow-forms)
+  - Maximum file size: 2MB
+
+  API REFERENCE (window.UF):
+  
+    UF.modId        → (string)   Your mod's unique ID
+    UF.globals      → (string[]) Global names your mod registered
+
+    UF.loadGlobal(globalName)          → Promise<object|null>
+      Loads the JSON data for the named global from the database.
+
+    UF.saveGlobal(globalName, data)    → Promise<boolean>
+      Saves the provided object as the global's data. Returns true on success.
+
+    UF.ready()  
+      Called automatically. Notifies the host that the template is ready.
+
+    window.onUFReady(initData)  (optional callback)
+      If defined, called when the host sends initialization data.
+      initData = { modId: string, globals: string[] }
+
+  ============================================================================
+  
+  This example template is for a fictional "Factions Mod" that stores faction
+  configuration in a global called "Factions_Config".
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factions Mod Settings</title>
+  <style>
+    /* ─── Reset & Base ─── */
+    *, *::before, *::after { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      line-height: 1.5;
+    }
+
+    h1 { font-size: 22px; margin: 0 0 4px 0; }
+    h2 { font-size: 16px; margin: 20px 0 10px 0; color: #ccc; }
+    p.subtitle { margin: 0 0 20px 0; color: #888; font-size: 13px; }
+
+    /* ─── Status Bar ─── */
+    .status-bar {
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      display: none;
+    }
+    .status-bar.success { display: block; background: #1b3a1b; color: #4caf50; border: 1px solid #2e5c2e; }
+    .status-bar.error   { display: block; background: #3a1b1b; color: #f44336; border: 1px solid #5c2e2e; }
+    .status-bar.info    { display: block; background: #1b2a3a; color: #64b5f6; border: 1px solid #2e4a5c; }
+
+    /* ─── Form Controls ─── */
+    label {
+      display: block;
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #3a3a3a;
+      background-color: #2a2a2a;
+      color: #f0f0f0;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #0e639c;
+    }
+
+    textarea { resize: vertical; min-height: 80px; font-family: 'Consolas', monospace; }
+
+    /* ─── Buttons ─── */
+    .btn-row { display: flex; gap: 8px; margin-top: 16px; }
+
+    button {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.15s;
+    }
+
+    .btn-primary { background: #0e639c; color: #fff; }
+    .btn-primary:hover { background: #1177bb; }
+    .btn-secondary { background: #3a3d41; color: #fff; }
+    .btn-secondary:hover { background: #4a4d51; }
+    .btn-danger { background: #a1260d; color: #fff; }
+    .btn-danger:hover { background: #c02f11; }
+
+    button:disabled { opacity: 0.5; cursor: default; }
+
+    /* ─── Faction List ─── */
+    .faction-card {
+      background: #252526;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .faction-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      border: 1px solid #555;
+    }
+
+    .faction-info { flex: 1; min-width: 0; }
+    .faction-name { font-weight: 600; font-size: 14px; }
+    .faction-desc { font-size: 12px; color: #888; }
+
+    .faction-actions button {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+
+    /* ─── Loading Spinner ─── */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #555;
+      border-top-color: #0e639c;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Two Column Layout ─── */
+    .columns { display: flex; gap: 20px; }
+    .column { flex: 1; min-width: 0; }
+
+    /* ─── Divider ─── */
+    hr { border: none; border-top: 1px solid #333; margin: 20px 0; }
+  </style>
+</head>
+<body>
+
+  <h1>⚔️ Factions Mod</h1>
+  <p class="subtitle">Configure your server's faction system. Changes are saved directly to the database.</p>
+
+  <div id="statusBar" class="status-bar"></div>
+  <div id="loadingIndicator" class="loading">Loading settings</div>
+
+  <div id="settingsPanel" style="display: none;">
+
+    <!-- ─── General Settings ─── -->
+    <h2>General Settings</h2>
+    <div class="columns">
+      <div class="column">
+        <label for="maxFactions">Max Factions</label>
+        <input type="number" id="maxFactions" min="2" max="20" value="4">
+      </div>
+      <div class="column">
+        <label for="pvpMode">PvP Mode</label>
+        <select id="pvpMode">
+          <option value="faction_only">Faction vs Faction Only</option>
+          <option value="free_for_all">Free For All</option>
+          <option value="disabled">Disabled</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="columns">
+      <div class="column">
+        <label for="friendlyFire">
+          <input type="checkbox" id="friendlyFire"> Allow Friendly Fire
+        </label>
+      </div>
+      <div class="column">
+        <label for="autoBalance">
+          <input type="checkbox" id="autoBalance"> Auto-Balance Teams
+        </label>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- ─── Factions List ─── -->
+    <h2>Factions</h2>
+    <div id="factionList"></div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" id="addFactionBtn">+ Add Faction</button>
+    </div>
+
+    <hr>
+
+    <!-- ─── Save / Reset ─── -->
+    <div class="btn-row">
+      <button class="btn-primary" id="saveBtn">💾 Save All Settings</button>
+      <button class="btn-secondary" id="reloadBtn">🔄 Reload from Database</button>
+    </div>
+  </div>
+
+  <script>
+    // ─── State ───
+    var GLOBAL_NAME = 'Factions_Config'; // The global name in the database
+    var config = null; // Current in-memory config
+
+    var DEFAULT_CONFIG = {
+      maxFactions: 4,
+      pvpMode: 'faction_only',
+      friendlyFire: false,
+      autoBalance: true,
+      factions: [
+        { name: 'Survivors', color: '#4caf50', description: 'The default faction for new players' },
+        { name: 'Bandits', color: '#f44336', description: 'Hostile players and raiders' },
+        { name: 'Traders', color: '#ff9800', description: 'Neutral traders and merchants' },
+        { name: 'Military', color: '#2196f3', description: 'Organized military forces' }
+      ]
+    };
+
+    // ─── DOM Refs ───
+    var statusBar = document.getElementById('statusBar');
+    var loadingIndicator = document.getElementById('loadingIndicator');
+    var settingsPanel = document.getElementById('settingsPanel');
+    var factionListEl = document.getElementById('factionList');
+
+    // ─── Status Helpers ───
+    function showStatus(type, message) {
+      statusBar.className = 'status-bar ' + type;
+      statusBar.textContent = message;
+      if (type === 'success') {
+        setTimeout(function() { statusBar.className = 'status-bar'; }, 3000);
+      }
+    }
+
+    function showLoading(show) {
+      loadingIndicator.style.display = show ? 'block' : 'none';
+      settingsPanel.style.display = show ? 'none' : 'block';
+    }
+
+    // ─── Render Factions ───
+    function renderFactions() {
+      factionListEl.innerHTML = '';
+      if (!config || !config.factions) return;
+
+      config.factions.forEach(function(faction, index) {
+        var card = document.createElement('div');
+        card.className = 'faction-card';
+        card.innerHTML =
+          '<div class="faction-color" style="background:' + escapeHtml(faction.color) + '"></div>' +
+          '<div class="faction-info">' +
+            '<div class="faction-name">' + escapeHtml(faction.name) + '</div>' +
+            '<div class="faction-desc">' + escapeHtml(faction.description || '') + '</div>' +
+          '</div>' +
+          '<div class="faction-actions">' +
+            '<button class="btn-secondary edit-btn" data-index="' + index + '">Edit</button> ' +
+            '<button class="btn-danger remove-btn" data-index="' + index + '">Remove</button>' +
+          '</div>';
+        factionListEl.appendChild(card);
+      });
+
+      // Bind edit/remove buttons
+      factionListEl.querySelectorAll('.edit-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { editFaction(parseInt(btn.dataset.index)); });
+      });
+      factionListEl.querySelectorAll('.remove-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { removeFaction(parseInt(btn.dataset.index)); });
+      });
+    }
+
+    // ─── Populate Form from Config ───
+    function populateForm() {
+      if (!config) return;
+      document.getElementById('maxFactions').value = config.maxFactions || 4;
+      document.getElementById('pvpMode').value = config.pvpMode || 'faction_only';
+      document.getElementById('friendlyFire').checked = !!config.friendlyFire;
+      document.getElementById('autoBalance').checked = config.autoBalance !== false;
+      renderFactions();
+    }
+
+    // ─── Read Form into Config ───
+    function readForm() {
+      if (!config) config = {};
+      config.maxFactions = parseInt(document.getElementById('maxFactions').value) || 4;
+      config.pvpMode = document.getElementById('pvpMode').value;
+      config.friendlyFire = document.getElementById('friendlyFire').checked;
+      config.autoBalance = document.getElementById('autoBalance').checked;
+      // factions are already in config.factions (managed via add/edit/remove)
+    }
+
+    // ─── Faction CRUD ───
+    function addFaction() {
+      var name = prompt('Faction Name:');
+      if (!name) return;
+      var color = prompt('Faction Color (hex, e.g. #ff0000):', '#ffffff');
+      var description = prompt('Description (optional):', '');
+      if (!config.factions) config.factions = [];
+      config.factions.push({ name: name, color: color || '#ffffff', description: description || '' });
+      renderFactions();
+    }
+
+    function editFaction(index) {
+      var faction = config.factions[index];
+      if (!faction) return;
+      var name = prompt('Faction Name:', faction.name);
+      if (name === null) return;
+      var color = prompt('Color:', faction.color);
+      var description = prompt('Description:', faction.description);
+      faction.name = name || faction.name;
+      faction.color = color || faction.color;
+      faction.description = description !== null ? description : faction.description;
+      renderFactions();
+    }
+
+    function removeFaction(index) {
+      if (!confirm('Remove faction "' + config.factions[index].name + '"?')) return;
+      config.factions.splice(index, 1);
+      renderFactions();
+    }
+
+    // ─── Load Settings ───
+    async function loadSettings() {
+      showLoading(true);
+      try {
+        var data = await UF.loadGlobal(GLOBAL_NAME);
+        if (data && typeof data === 'object') {
+          // loadGlobal returns your saved config object directly (or null)
+          config = data;
+        } else {
+          // No data yet; use defaults
+          config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+          showStatus('info', 'No saved settings found. Using defaults.');
+        }
+        populateForm();
+        showLoading(false);
+      } catch (err) {
+        showStatus('error', 'Failed to load: ' + err.message);
+        config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+        populateForm();
+        showLoading(false);
+      }
+    }
+
+    // ─── Save Settings ───
+    async function saveSettings() {
+      readForm();
+      try {
+        document.getElementById('saveBtn').disabled = true;
+        await UF.saveGlobal(GLOBAL_NAME, config);
+        showStatus('success', 'Settings saved successfully!');
+      } catch (err) {
+        showStatus('error', 'Failed to save: ' + err.message);
+      } finally {
+        document.getElementById('saveBtn').disabled = false;
+      }
+    }
+
+    // ─── Utility ───
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    // ─── Event Listeners ───
+    document.getElementById('saveBtn').addEventListener('click', saveSettings);
+    document.getElementById('reloadBtn').addEventListener('click', loadSettings);
+    document.getElementById('addFactionBtn').addEventListener('click', addFaction);
+
+    // ─── Init: Load on ready ───
+    // The UF bridge auto-fires ready. We load settings when the page is ready.
+    loadSettings();
+  </script>
+
+</body>
+</html>

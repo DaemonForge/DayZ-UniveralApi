@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Mod Settings</title>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; frame-src blob:; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; frame-src blob:; worker-src 'self' blob:; connect-src 'self'; img-src 'self' data: blob:;">
   <link rel="stylesheet" href="styles/modSettings.css">
 </head>
 <body>
@@ -23,7 +23,6 @@
           <div id="statusMessage" class="status" data-type="info">Select a mod from the sidebar</div>
         </div>
         <div class="meta-block" id="metaBlock" style="display:none;">
-          <span class="meta-tag" id="metaVersion"></span>
           <span class="meta-tag" id="metaAuthor"></span>
         </div>
         <div class="actions">
@@ -39,6 +38,41 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Batch Save Confirmation Modal -->
+  <div id="saveConfirmOverlay" class="modal-overlay" style="display:none;">
+    <div class="modal-dialog batch-modal">
+      <div class="modal-header">
+        <h3>⚠️ Confirm Save</h3>
+      </div>
+      <div class="modal-body">
+        <p id="saveConfirmDesc">A mod template is requesting to save globals:</p>
+        <div class="batch-list" id="saveBatchList"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="saveConfirmCancel" class="btn">Cancel</button>
+        <button id="saveConfirmOk" class="btn primary">Save All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- External Link Confirmation Modal -->
+  <div id="linkConfirmOverlay" class="modal-overlay" style="display:none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>🔗 External Link</h3>
+      </div>
+      <div class="modal-body">
+        <p>A mod template is trying to open an external website:</p>
+        <div class="link-url-display" id="linkConfirmUrl"></div>
+        <p class="link-warning">Only continue if you trust this link.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="linkConfirmCancel" class="btn">Cancel</button>
+        <button id="linkConfirmOk" class="btn primary">Open in Browser</button>
+      </div>
+    </div>
   </div>
 
   <script src="../renderers/modSettings.js" defer></script>

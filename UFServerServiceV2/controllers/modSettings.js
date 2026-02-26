@@ -82,8 +82,6 @@ router.get("/Template/:modId", requireServerAuth, async (req, res) => {
  * Registers or updates a mod settings page. Body is JSON:
  * {
  *   "modName": "My Factions Mod",
- *   "description": "Configure faction settings",
- *   "version": "1.0.0",
  *   "author": "AuthorName",
  *   "template": "<html>...</html>",
  *   "globals": ["MyMod_Factions", "MyMod_Config"]
@@ -109,7 +107,7 @@ router.post("/Register/:modId", requireServerAuth, async (req, res) => {
 
     const doc = await upsertModSettings(modId, payload);
     logger.info("Mod settings registered", { modId, modName: doc.modName });
-    res.json({ Status: "Success", Data: { modId: doc.modId, modName: doc.modName, version: doc.version } });
+    res.json({ Status: "Success", Data: { modId: doc.modId, modName: doc.modName } });
   } catch (err) {
     logger.error("Failed to register mod settings", { modId: req.params.modId, error: err.message });
     res.status(500).json({ Status: "Error", Error: err.message });

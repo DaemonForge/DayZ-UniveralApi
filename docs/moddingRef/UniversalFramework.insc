@@ -15,6 +15,8 @@ Universal Framework provides backend service integration for DayZ modding includ
 | `UniversalFramework_AIVoice` | Text-to-Speech: `TTSGenerate`, `TTSPlay`, voice constants |
 | `UniversalFramework_MessageQueues` | Async messaging: `UQueueHandler<T>`, send/receive, polling |
 | `UniversalFramework_GlobalHandler` | Server-wide key-value storage: `U().globals()` |
+| `UniversalFramework_ModSettings` | Mod Settings SDK: `U().Settings().Register()`, template registration |
+| `UniversalFramework_ModSettings_Templates` | Mod Settings HTML templates: `window.UF` API, styling guide, patterns |
 | `UniversalFramework_CronManager` | Scheduled tasks: `runEndless`, `runEndTime`, `runEndCount`, `runOnce` |
 | `UniversalFramework_ItemStore` | Entity serialization: `UEntityStore`, `OnUFSave`/`OnUFLoad` |
 | `UniversalFramework_TextureSystem` | Dynamic skins: `RegisterTextureAndMaterial`, `SetTexture`, client overrides |

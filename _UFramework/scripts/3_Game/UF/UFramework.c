@@ -241,6 +241,26 @@ class UFramework extends Managed {
 		}
 		return m_UFAIChatEndpoint;
 	}
+	
+	/**
+	 * Gets the Mod Settings endpoint for registering custom HTML settings pages.
+	 * 
+	 * Server operators can view and interact with registered settings pages in the
+	 * Electron UI under Options → Mod Settings.
+	 * 
+	 * @return UFModSettingsEndpoint for settings page registration
+	 * 
+	 * @usage
+	 * U().Settings().Register("my-mod", htmlTemplate);
+	 * U().Settings().Register("my-mod", "My Mod", htmlTemplate);
+	 */
+	UFModSettingsEndpoint Settings(){
+		if (!m_UFModSettingsEndpoint){
+			m_UFModSettingsEndpoint = new UFModSettingsEndpoint;
+		}
+		return m_UFModSettingsEndpoint;
+	}
+	
 	/**
 	 * Requests cancellation of an active REST callback by its call ID.
 	 * 
@@ -531,6 +551,8 @@ class UFramework extends Managed {
 	protected autoptr UFMsgEndpoint m_UFMsgEndpoint;
 	
 	protected autoptr UFAIChatEndpoint m_UFAIChatEndpoint;
+	
+	protected autoptr UFModSettingsEndpoint m_UFModSettingsEndpoint;
 	
 	protected autoptr UDiscordUser dsUser;
 		

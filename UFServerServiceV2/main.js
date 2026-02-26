@@ -22,10 +22,12 @@ let kbWindow = null;
 let modManagerWindow = null;
 let indexOptimizerWindow = null;
 let indexOptimizerOpening = false;
+let modSettingsWindow = null;
 let cachedGlobalModel = null;
 let cachedKBModel = null;
 let cachedModDataModel = null;
 let cachedIndexManager = null;
+let cachedModSettingsModel = null;
 
 function getGlobalModel() {
   if (!cachedGlobalModel) {
@@ -53,6 +55,13 @@ function getIndexManager() {
     cachedIndexManager = require('./models/indexManager');
   }
   return cachedIndexManager;
+}
+
+function getModSettingsModel() {
+  if (!cachedModSettingsModel) {
+    cachedModSettingsModel = require('./models/modSettings');
+  }
+  return cachedModSettingsModel;
 }
 
 function getKBController() {
@@ -436,6 +445,12 @@ function setInitialTrayMenu() {
           }
         },
         {
+          label: '⚙️ Mod Settings',
+          click: () => {
+            openModSettingsWindow();
+          }
+        },
+        {
           label: '📚 KB Manager',
           click: () => {
             openKBWindow();
@@ -618,6 +633,12 @@ function updateTrayMenu() {
             }
           },
           {
+            label: '⚙️ Mod Settings',
+            click: () => {
+              openModSettingsWindow();
+            }
+          },
+          {
             label: '📚 KB Manager',
             click: () => {
               openKBWindow();
@@ -716,6 +737,46 @@ function openKBWindow() {
   kbWindow.loadURL(kbUrl.toString());
   kbWindow.on('closed', () => {
     kbWindow = null;
+  });
+}
+
+function openModSettingsWindow() {
+  if (modSettingsWindow) {
+    modSettingsWindow.restore();
+    modSettingsWindow.focus();
+    return;
+  }
+
+  modSettingsWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    title: 'Mod Settings',
+    icon: windowIconImage || resolveAssetPath('public', 'icon.ico'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+      preload: path.join(__dirname, 'preload', 'modSettings.js')
+    }
+  });
+
+  modSettingsWindow.setMenu(null);
+  const msPath = path.join(__dirname, 'views', 'modSettings.html');
+  const msUrl = pathToFileURL(msPath);
+  msUrl.searchParams.set('ts', Date.now().toString());
+  modSettingsWindow.loadURL(msUrl.toString());
+
+  // Enable DevTools shortcuts in dev mode only (Ctrl+Shift+I or F12)
+  if (!app.isPackaged) {
+    modSettingsWindow.webContents.on('before-input-event', (event, input) => {
+      if (input.key === 'F12' || (input.control && input.shift && input.key === 'I')) {
+        modSettingsWindow.webContents.toggleDevTools();
+      }
+    });
+  }
+
+  modSettingsWindow.on('closed', () => {
+    modSettingsWindow = null;
   });
 }
 
@@ -903,6 +964,10 @@ ipcMain.on('force-close', () => {
     indexOptimizerWindow.removeAllListeners('close');
     indexOptimizerWindow.close();
   }
+  if (modSettingsWindow) {
+    modSettingsWindow.removeAllListeners('close');
+    modSettingsWindow.close();
+  }
 });
 ipcMain.on('restart-app', () => {
   if (settingsWindow) {
@@ -928,6 +993,10 @@ ipcMain.on('restart-app', () => {
   if (indexOptimizerWindow) {
     indexOptimizerWindow.removeAllListeners('close');
     indexOptimizerWindow.close();
+  }
+  if (modSettingsWindow) {
+    modSettingsWindow.removeAllListeners('close');
+    modSettingsWindow.close();
   }
   if (ConsoleWindow) {
     ConsoleWindow.removeAllListeners('close');
@@ -1006,6 +1075,107 @@ ipcMain.handle('globals:delete', async (event, mod) => {
     return { success: true };
   } catch (err) {
     (global.logger || console).error('[GlobalsEditor] Failed to delete module', { mod, error: err.message });
+    return { success: false, error: err.message };
+  }
+});
+
+// ===================== Mod Settings IPC Handlers =====================
+
+ipcMain.handle('modSettings:list', async () => {
+  const log = global.logger || console;
+  log.info('[ModSettings:IPC] list → invoked');
+  try {
+    const { listModSettings } = getModSettingsModel();
+    const data = await listModSettings();
+    log.info('[ModSettings:IPC] list → success', { count: Array.isArray(data) ? data.length : 'n/a' });
+    return { success: true, data };
+  } catch (err) {
+    log.error('[ModSettings:IPC] list → FAILED', { error: err.message, stack: err.stack });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('modSettings:get', async (event, modId) => {
+  const log = global.logger || console;
+  log.info('[ModSettings:IPC] get → invoked', { modId });
+  try {
+    if (!modId || typeof modId !== 'string') {
+      throw new Error('modId is required.');
+    }
+    const { getModSettings } = getModSettingsModel();
+    const doc = await getModSettings(modId);
+    if (!doc) {
+      log.warn('[ModSettings:IPC] get → not found', { modId });
+      return { success: false, error: 'Mod settings not found.' };
+    }
+    log.info('[ModSettings:IPC] get → success', { modId, hasTemplate: !!doc.template, templateLen: doc.template?.length });
+    return { success: true, data: doc };
+  } catch (err) {
+    log.error('[ModSettings:IPC] get → FAILED', { modId, error: err.message, stack: err.stack });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('modSettings:loadGlobal', async (event, globalName) => {
+  const log = global.logger || console;
+  log.info('[ModSettings:IPC] loadGlobal → invoked', { globalName });
+  try {
+    if (!globalName || typeof globalName !== 'string') {
+      throw new Error('globalName is required.');
+    }
+    const { getGlobalDocument } = getGlobalModel();
+    const doc = await getGlobalDocument(globalName);
+    if (!doc) {
+      log.info('[ModSettings:IPC] loadGlobal → no document found (returning null)', { globalName });
+      return { success: true, data: null };
+    }
+    log.info('[ModSettings:IPC] loadGlobal → success', { globalName, hasData: !!doc.data, keys: doc.data ? Object.keys(doc.data) : [] });
+    return { success: true, data: doc };
+  } catch (err) {
+    log.error('[ModSettings:IPC] loadGlobal → FAILED', { globalName, error: err.message, stack: err.stack });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('modSettings:saveGlobal', async (event, payload) => {
+  const log = global.logger || console;
+  log.info('[ModSettings:IPC] saveGlobal → invoked', { globalName: payload?.globalName });
+  try {
+    const globalName = payload?.globalName;
+    const data = payload?.data;
+    if (!globalName || typeof globalName !== 'string') {
+      throw new Error('globalName is required.');
+    }
+    if (data === null || data === undefined) {
+      throw new Error('Data is required.');
+    }
+    const { saveGlobalDocument } = getGlobalModel();
+    await saveGlobalDocument(globalName, data);
+    log.info('[ModSettings:IPC] saveGlobal → success', { globalName });
+    return { success: true };
+  } catch (err) {
+    log.error('[ModSettings:IPC] saveGlobal → FAILED', { globalName: payload?.globalName, error: err.message, stack: err.stack });
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('modSettings:openExternal', async (event, url) => {
+  const log = global.logger || console;
+  log.info('[ModSettings:IPC] openExternal → invoked', { url });
+  try {
+    if (!url || typeof url !== 'string') {
+      throw new Error('URL is required.');
+    }
+    // Only allow http and https URLs
+    if (!/^https?:\/\//i.test(url)) {
+      throw new Error('Only http/https URLs are allowed.');
+    }
+    const { shell } = require('electron');
+    await shell.openExternal(url);
+    log.info('[ModSettings:IPC] openExternal → success', { url });
+    return { success: true };
+  } catch (err) {
+    log.error('[ModSettings:IPC] openExternal → FAILED', { url, error: err.message });
     return { success: false, error: err.message };
   }
 });
