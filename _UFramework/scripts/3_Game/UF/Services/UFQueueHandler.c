@@ -70,9 +70,9 @@ class UQueueHandler<Class T> extends UQueueHandlerBase
 			// Log non-success statuses (but not as crash-log errors)
 			// CLIENT_ERROR (400) is normal for things like non-existent queues
 			if (status == UF_SERVERERROR || status == UF_TIMEOUT){
-				UFLog.Info("UQueueHandler<" + T.ToString() + "> Read status: " + UUtil.StatusToString(status));
+				UFLog.Info("UQueueHandler<" /*+ T.StaticType().ToString() */ + "> Read status: " + UUtil.StatusToString(status));
 			} else {
-				UFLog.Debug("UQueueHandler<" + T.ToString() + "> Read status: " + UUtil.StatusToString(status));
+				UFLog.Debug("UQueueHandler<" /*+ T.StaticType().ToString() */ + "> Read status: " + UUtil.StatusToString(status));
 			}
 		}
 	} 
