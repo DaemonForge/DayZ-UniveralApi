@@ -389,8 +389,52 @@ setup_mongodb_security() {
     
     if $auth_enabled; then
         print_status "MongoDB authentication is already enabled."
-        print_status "Skipping security setup. Ensure your config.json has the correct connection string."
-        return 0
+        # Try to verify the existing credentials actually work
+        load_mongodb_credentials
+        if [[ -z "$MONGO_AUTH_URI" ]]; then
+            # No stored URI — try loading from config.json
+            if [[ -f "$CONFIG_DIR/config.json" ]] && command -v python3 &>/dev/null; then
+                local cfg_uri
+                cfg_uri=$(python3 -c "
+import json, sys
+try:
+    with open('$CONFIG_DIR/config.json') as f: c = json.load(f)
+    print(c.get('DBServer',''))
+except: pass
+" 2>/dev/null || true)
+                if [[ -n "$cfg_uri" ]] && [[ "$cfg_uri" != "mongodb://localhost:27017" ]]; then
+                    MONGO_AUTH_URI="$cfg_uri"
+                fi
+            fi
+        fi
+        if [[ -n "$MONGO_AUTH_URI" ]]; then
+            # Verify the stored credentials actually work
+            if $MONGO_CMD --quiet "$MONGO_AUTH_URI" --eval "db.runCommand({ping:1})" &>/dev/null; then
+                print_status "Existing MongoDB credentials verified — connection OK."
+                return 0
+            else
+                print_warning "MongoDB auth is enabled but existing credentials FAILED to connect!"
+                print_warning "The password may contain characters that break the connection URI."
+                echo -e "  ${YELLOW}Stored URI: ${MONGO_AUTH_URI%%@*}@...${NC}"
+                echo
+                echo "  The installer will drop the existing user and create a new one"
+                echo "  with a URI-safe password."
+                echo
+                # Fall through to recreate user — disable auth first
+                print_status "Temporarily disabling auth to recreate user..."
+                sed -i 's/^\(\s*authorization:\).*/\1 disabled/' /etc/mongod.conf 2>/dev/null || true
+                systemctl restart mongod || {
+                    print_error "Failed to restart MongoDB. Re-enabling auth..."
+                    sed -i 's/^\(\s*authorization:\).*/\1 enabled/' /etc/mongod.conf 2>/dev/null || true
+                    systemctl restart mongod 2>/dev/null || true
+                    return 1
+                }
+                sleep 2
+            fi
+        else
+            print_status "Skipping security setup. Ensure your config.json has the correct connection string."
+            return 0
+        fi
     fi
     
     # --- Step 1: Ensure bindIp is 127.0.0.1 ---
@@ -414,9 +458,10 @@ setup_mongodb_security() {
     fi
     
     # --- Step 2: Generate a strong random password ---
-    # 48 chars, alphanumeric + URI-safe special chars (no @, :, /, #, ?)
+    # 48 chars using ONLY RFC 3986 unreserved characters (safe raw in URIs and bash)
+    # Unreserved = A-Z a-z 0-9 - . _ ~   (no ! * + which break URIs and bash history)
     local db_pass
-    db_pass=$(tr -dc 'A-Za-z0-9_+~.!*-' < /dev/urandom | head -c 48)
+    db_pass=$(tr -dc 'A-Za-z0-9._~-' < /dev/urandom | head -c 48)
     
     # Save credentials to file IMMEDIATELY so they survive a crash
     local cred_file="$CONFIG_DIR/.mongodb_credentials"
@@ -1463,12 +1508,56 @@ resecure_mongodb() {
         exit 1
     fi
     
+    # Load existing DB name from config.json so prompt default is correct
+    if [[ -z "$MONGO_DB" ]] && [[ -f "$CONFIG_DIR/config.json" ]] && command -v python3 &>/dev/null; then
+        local cfg_db
+        cfg_db=$(python3 -c "
+import json, sys
+try:
+    with open('$CONFIG_DIR/config.json') as f: c = json.load(f)
+    print(c.get('DB',''))
+except: pass
+" 2>/dev/null || true)
+        if [[ -n "$cfg_db" ]]; then
+            MONGO_DB="$cfg_db"
+        fi
+    fi
+    
+    # Also load credential backup if available
+    load_mongodb_credentials
+    
     # Check if auth is already enabled
     if grep -qE '^\s*authorization:\s*enabled' /etc/mongod.conf 2>/dev/null; then
+        # Determine which shell command is available
+        local MONGO_CMD_CHECK=""
+        if command -v mongosh &> /dev/null; then
+            MONGO_CMD_CHECK="mongosh"
+        elif command -v mongo &> /dev/null; then
+            MONGO_CMD_CHECK="mongo"
+        fi
+        
+        # Try to verify existing credentials before asking what to do
+        local creds_ok=false
+        if [[ -n "$MONGO_CMD_CHECK" ]] && [[ -n "$MONGO_AUTH_URI" ]]; then
+            if $MONGO_CMD_CHECK --quiet "$MONGO_AUTH_URI" --eval "db.runCommand({ping:1})" &>/dev/null; then
+                creds_ok=true
+            fi
+        fi
+        
         print_warning "MongoDB authentication is already enabled."
+        if $creds_ok; then
+            print_status "Existing credentials verified — connection OK."
+        else
+            print_warning "Existing credentials could NOT connect to MongoDB!"
+            [[ -n "$MONGO_AUTH_URI" ]] && echo -e "  ${YELLOW}Stored URI: ${MONGO_AUTH_URI%%@*}@...${NC}" || true
+        fi
         echo
         echo "  Options:"
-        echo "    1) Create a NEW user with a new password (drops existing ufservice user)"
+        if $creds_ok; then
+            echo "    1) Create a NEW user with a new password (drops existing ufservice user)"
+        else
+            echo "    1) Fix credentials — create a new user with a new URI-safe password"
+        fi
         echo "    2) Cancel"
         echo
         local choice
@@ -1544,6 +1633,12 @@ print("Updated successfully")
                 sed -i "s|\"DBServer\":.*|\"DBServer\": \"${MONGO_AUTH_URI}\",|" "$config_file" 2>/dev/null || true
                 sed -i "s|\"DB\":.*|\"DB\": \"${MONGO_DB}\",|" "$config_file" 2>/dev/null || true
                 print_status "Config updated."
+            fi
+            
+            # Restore correct ownership/permissions on config.json
+            if id "$SERVICE_USER" &>/dev/null; then
+                chown "$SERVICE_USER:$SERVICE_USER" "$config_file" 2>/dev/null || true
+                chmod 640 "$config_file" 2>/dev/null || true
             fi
             
             # Offer restart
@@ -3042,7 +3137,46 @@ main() {
                     print_warning "Skipping MongoDB security setup. Your database has NO password!"
                 fi
             else
-                print_status "MongoDB authentication is already enabled. Skipping."
+                # Auth already enabled — verify credentials actually work
+                load_mongodb_credentials
+                if [[ -z "$MONGO_AUTH_URI" ]] && [[ -f "$CONFIG_DIR/config.json" ]] && command -v python3 &>/dev/null; then
+                    local cfg_uri
+                    cfg_uri=$(python3 -c "
+import json, sys
+try:
+    with open('$CONFIG_DIR/config.json') as f: c = json.load(f)
+    print(c.get('DBServer',''))
+except: pass
+" 2>/dev/null || true)
+                    if [[ -n "$cfg_uri" ]] && [[ "$cfg_uri" != "mongodb://localhost:27017" ]]; then
+                        MONGO_AUTH_URI="$cfg_uri"
+                    fi
+                fi
+                if [[ -n "$MONGO_AUTH_URI" ]]; then
+                    local VERIFY_CMD=""
+                    if command -v mongosh &> /dev/null; then
+                        VERIFY_CMD="mongosh"
+                    elif command -v mongo &> /dev/null; then
+                        VERIFY_CMD="mongo"
+                    fi
+                    if [[ -n "$VERIFY_CMD" ]]; then
+                        if $VERIFY_CMD --quiet "$MONGO_AUTH_URI" --eval "db.runCommand({ping:1})" &>/dev/null; then
+                            print_status "MongoDB authentication is enabled and credentials verified."
+                        else
+                            print_warning "MongoDB auth is enabled but credentials FAILED!"
+                            print_warning "Running security re-setup to fix credentials..."
+                            # Temporarily disable auth to recreate user
+                            sed -i 's/^\(\s*authorization:\).*/\1 disabled/' /etc/mongod.conf 2>/dev/null || true
+                            systemctl restart mongod 2>/dev/null
+                            sleep 2
+                            setup_mongodb_security "${CFG_DB_NAME:-DayZ}" || print_warning "MongoDB security re-setup encountered issues."
+                        fi
+                    else
+                        print_status "MongoDB authentication is already enabled (could not verify — no mongo shell)."
+                    fi
+                else
+                    print_status "MongoDB authentication is already enabled. Skipping."
+                fi
             fi
         else
             print_warning "MongoDB is not running. Skipping security setup."
@@ -3076,6 +3210,30 @@ main() {
     step=$((step + 1))
     print_step $step $total_steps "Verifying Installation"
     verify_installation
+    
+    # Start or restart the service
+    echo
+    if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
+        print_status "Service is already running. Restarting to apply new configuration..."
+        systemctl restart "$SERVICE_NAME"
+        sleep 2
+        if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
+            print_status "Service restarted successfully!"
+        else
+            print_warning "Service failed to start after restart."
+            print_warning "Check logs: journalctl -u $SERVICE_NAME -n 30"
+        fi
+    else
+        print_status "Starting service..."
+        systemctl enable "$SERVICE_NAME" 2>/dev/null || true
+        systemctl start "$SERVICE_NAME"
+        sleep 3
+        if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
+            print_status "Service started successfully!"
+        else
+            print_warning "Service did not start. Check logs: journalctl -u $SERVICE_NAME -n 30"
+        fi
+    fi
     
     print_completion
 }
