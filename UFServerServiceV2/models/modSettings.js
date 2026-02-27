@@ -2,7 +2,6 @@
 // MongoDB data access layer for Mod Settings (custom HTML setting pages uploaded by mods)
 
 const { MongoClient } = require("mongodb");
-const config = require("../config");
 const { createLogger } = require("../utils");
 
 const logger = createLogger(global.logger, "db.modSettings");
@@ -13,9 +12,9 @@ const COLLECTION = "ModSettings";
  * Connect to MongoDB and return { client, collection } for the ModSettings collection.
  */
 async function getClientAndCollection() {
-  const client = new MongoClient(config.DBServer);
+  const client = new MongoClient(global.config.DBServer);
   await client.connect();
-  const db = client.db(config.DB);
+  const db = client.db(global.config.DB);
   const collection = db.collection(COLLECTION);
   return { client, collection };
 }

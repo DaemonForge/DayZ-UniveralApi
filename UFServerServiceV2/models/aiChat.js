@@ -1,5 +1,4 @@
 const { MongoClient, ObjectId } = require('mongodb');
-const config = require('../config'); // Exports { DBServer, DB }
 const { createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'db.aiChat');
 
@@ -8,9 +7,9 @@ const logger = createLogger(global.logger, 'db.aiChat');
  * @returns {Promise<{ client: MongoClient, chats: Collection, chatSummaries: Collection }>}
  */
 async function getCollections() {
-  const client = new MongoClient(config.DBServer);
+  const client = new MongoClient(global.config.DBServer);
   await client.connect();
-  const db = client.db(config.DB);
+  const db = client.db(global.config.DB);
   return { client, chats: db.collection("Chats"), chatSummaries: db.collection("ChatSummaries") };
 }
 

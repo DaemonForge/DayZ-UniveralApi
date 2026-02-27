@@ -2,7 +2,7 @@
 // Manages MongoDB indexes - retrieving current indexes, creating new ones, and analyzing coverage
 
 const { MongoClient } = require('mongodb');
-const config = require('../config');
+const config = global.config;  // Expects: { DBServer, DB }
 const { createLogger } = require('../utils');
 const { getAnalyzer } = require('./queryAnalyzer');
 const logger = createLogger(global.logger, 'IndexManager');
@@ -18,7 +18,7 @@ async function getConnection() {
   
   if (_db) {
     try {
-      await _client.db("admin").command({ ping: 1 });
+      await _db.command({ ping: 1 });
       return _db;
     } catch (e) {
       logger.warn("MongoDB connection lost, reconnecting...", { error: e.message });
@@ -30,9 +30,9 @@ async function getConnection() {
 
   // Create connection promise to prevent race condition
   _connectionPromise = (async () => {
-    _client = new MongoClient(config.DBServer);
+    _client = new MongoClient(global.config.DBServer);
     await _client.connect();
-    _db = _client.db(config.DB);
+    _db = _client.db(global.config.DB);
     logger.info("MongoDB connection established for index management");
     return _db;
   })();

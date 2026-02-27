@@ -1,13 +1,12 @@
 // models/aiAssistant.js
 const { MongoClient, ObjectId } = require('mongodb');
-const config = require('../config');  // Expects: { DBServer, DB }
 const { createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'db.aiAssistant');
 
 async function getCollections() {
-  const client = new MongoClient(config.DBServer);
+  const client = new MongoClient(global.config.DBServer);
   await client.connect();
-  const db = client.db(config.DB);
+  const db = client.db(global.config.DB);
   return {
     client,
     assistants: db.collection("Assistants"),

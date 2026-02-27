@@ -1,7 +1,6 @@
 // models/globals.js
 
 const { MongoClient } = require("mongodb");
-const config = require("../config"); // Expects config.DBServer and config.DB
 
 const { isArray, isObject, isEmpty, processValue, buildUpdateDoc, createLogger } = require("../utils");
 
@@ -21,9 +20,9 @@ function normalizeId(id) {
  * Connects to MongoDB and returns { client, collection } for the "Globals" collection.
  */
 async function getClientAndCollection() {
-  const client = new MongoClient(config.DBServer);
+  const client = new MongoClient(global.config.DBServer);
   await client.connect();
-  const db = client.db(config.DB);
+  const db = client.db(global.config.DB);
   const collection = db.collection("Globals");
   return { client, collection };
 }

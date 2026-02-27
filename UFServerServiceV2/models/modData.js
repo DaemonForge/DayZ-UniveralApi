@@ -18,7 +18,6 @@
  */
 
 const { MongoClient } = require("mongodb");
-const config = require('../config');
 const { createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'db.modData');
 
@@ -34,7 +33,7 @@ let _connectionPromise = null;
 async function getConnection() {
   if (_db) {
     try {
-      await _client.db("admin").command({ ping: 1 });
+      await _db.command({ ping: 1 });
       return _db;
     } catch (e) {
       logger.warn("MongoDB connection lost, reconnecting...", { error: e.message });
@@ -51,7 +50,7 @@ async function getConnection() {
 
   _connectionPromise = (async () => {
     try {
-      _client = new MongoClient(config.DBServer, {
+      _client = new MongoClient(global.config.DBServer, {
         maxPoolSize: 10,
         minPoolSize: 2,
         maxIdleTimeMS: 60000,
@@ -59,7 +58,7 @@ async function getConnection() {
         socketTimeoutMS: 45000
       });
       await _client.connect();
-      _db = _client.db(config.DB);
+      _db = _client.db(global.config.DB);
       logger.info("MongoDB connection pool established for ModData");
       
       _client.on('error', (err) => {

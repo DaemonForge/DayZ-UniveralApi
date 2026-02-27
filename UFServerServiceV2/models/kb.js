@@ -7,7 +7,6 @@
  */
 
 const { MongoClient, ObjectId } = require('mongodb');
-const config = require('../config'); // Loads config.json - expects { DBServer, DB }
 const { createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'db.kb');
 
@@ -21,7 +20,7 @@ const OVERLAP_SIZE = 1200; // Character overlap when splitting
  * Get MongoDB client and KB metadata collection
  */
 async function getClient() {
-    const client = new MongoClient(config.DBServer);
+    const client = new MongoClient(global.config.DBServer);
     await client.connect();
     return client;
 }
@@ -31,7 +30,7 @@ async function getClient() {
  */
 async function getKBMetadataCollection() {
     const client = await getClient();
-    const db = client.db(config.DB);
+    const db = client.db(global.config.DB);
     return { client, collection: db.collection("KBMetadata") };
 }
 
@@ -41,7 +40,7 @@ async function getKBMetadataCollection() {
  */
 async function getKBCollection(kbId) {
     const client = await getClient();
-    const db = client.db(config.DB);
+    const db = client.db(global.config.DB);
     const collectionName = `KB_${kbId}`;
     return { client, collection: db.collection(collectionName), collectionName };
 }
@@ -315,7 +314,7 @@ async function updateKB(kbId, updates) {
 async function deleteKB(kbId) {
     const metaClient = await getClient();
     try {
-        const db = metaClient.db(config.DB);
+        const db = metaClient.db(global.config.DB);
         
         // Delete the KB collection
         const collectionName = `KB_${kbId}`;
@@ -455,7 +454,7 @@ async function addDocument(kbId, name, content, contextHint = '', fileType = 'tx
 async function updateDocumentCount(kbId) {
     const client = await getClient();
     try {
-        const db = client.db(config.DB);
+        const db = client.db(global.config.DB);
         const kbCollection = db.collection(`KB_${kbId}`);
         const metaCollection = db.collection("KBMetadata");
         

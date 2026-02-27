@@ -286,7 +286,7 @@ function makeAuthToken(GUID, serverId) {
  */
 function findLabelByAuthKey(authKey) {
     // First, check if a valid configuration object is provided and contains the ServerAuth array.
-    if (!config || !Array.isArray(global.ServerAuth)) {
+    if (!global.config || !Array.isArray(global.config.ServerAuth)) {
       console.error("Invalid config: ServerAuth array is missing.");
       return "undefined";
     }
