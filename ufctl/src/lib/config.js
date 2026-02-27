@@ -67,6 +67,18 @@ function loadServiceConfig(flagPath) {
 }
 
 /**
+ * Save the config object back to disk.
+ * Strips internal metadata (_configPath) before writing.
+ */
+function saveServiceConfig(cfg) {
+    const p = cfg._configPath;
+    if (!p) throw new Error('Cannot save: no _configPath on config object.');
+    const toWrite = { ...cfg };
+    delete toWrite._configPath;
+    fs.writeFileSync(p, JSON.stringify(toWrite, null, 4), 'utf-8');
+}
+
+/**
  * Resolve the effective connection / config values.
  * CLI flags override config.json values.
  */
@@ -105,4 +117,4 @@ function resolveConnection(flags) {
     };
 }
 
-module.exports = { findServiceConfig, loadServiceConfig, resolveConnection };
+module.exports = { findServiceConfig, loadServiceConfig, saveServiceConfig, resolveConnection };

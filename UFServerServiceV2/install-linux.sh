@@ -1810,6 +1810,21 @@ print("Updated successfully")
                 sed -i "s|\"DBServer\":.*|\"DBServer\": \"${MONGO_AUTH_URI}\",|" "$config_file" 2>/dev/null
                 print_status "Config updated with MongoDB credentials."
             fi
+        else
+            # MONGO_AUTH_URI is empty — read DBServer from the existing config so
+            # the rest of the installer (verify_installation, print_completion) has it.
+            local existing_uri
+            existing_uri=$(python3 -c "
+import json, sys
+try:
+    with open('$config_file') as f: c = json.load(f)
+    print(c.get('DBServer',''))
+except: pass
+" 2>/dev/null || true)
+            if [[ -n "$existing_uri" ]] && [[ "$existing_uri" != "mongodb://localhost:27017" ]]; then
+                MONGO_AUTH_URI="$existing_uri"
+                print_status "Preserved existing MongoDB URI from config."
+            fi
         fi
         # Ensure symlink exists even when config was pre-existing
         ln -sfn "$config_file" "$DATA_DIR/config.json" 2>/dev/null || true
@@ -3040,6 +3055,16 @@ main() {
     print_step $step $total_steps "Configuration Wizard"
     # Ensure MongoDB credentials are loaded (from backup file if globals empty)
     load_mongodb_credentials
+    # If re-installing over existing config, load its values as defaults for the wizard
+    if [[ -f "$CONFIG_DIR/config.json" ]]; then
+        print_status "Loading existing configuration as defaults..."
+        load_existing_config
+        # Back up and force-rewrite so wizard changes actually take effect
+        local backup_file="${CONFIG_DIR}/config.json.bak.$(date +%Y%m%d%H%M%S)"
+        cp "$CONFIG_DIR/config.json" "$backup_file"
+        print_status "Backed up existing config to $backup_file"
+        FORCE_RECONFIG=true
+    fi
     configure_wizard
     
     step=$((step + 1))
