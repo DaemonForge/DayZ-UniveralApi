@@ -94,12 +94,12 @@ print_welcome() {
     echo -e "${GREEN}║                                                  ║${NC}"
     echo -e "${GREEN}║  This installer will:                            ║${NC}"
     echo -e "${GREEN}║                                                  ║${NC}"
-    echo -e "${GREEN}║   1. Install dependencies (MongoDB, FFmpeg, etc) ║${NC}"
-    echo -e "${GREEN}║   2. Create a dedicated service user             ║${NC}"
-    echo -e "${GREEN}║   3. Set up directories & install the binary     ║${NC}"
-    echo -e "${GREEN}║   4. Secure MongoDB with authentication          ║${NC}"
+    echo -e "${GREEN}║   1. Install dependencies (FFmpeg, etc)          ║${NC}"
+    echo -e "${GREEN}║   2. Set up MongoDB (local or external)          ║${NC}"
+    echo -e "${GREEN}║   3. Create a dedicated service user             ║${NC}"
+    echo -e "${GREEN}║   4. Install the service binary                  ║${NC}"
     echo -e "${GREEN}║   5. Walk you through service configuration      ║${NC}"
-    echo -e "${GREEN}║   6. Generate configuration & systemd service    ║${NC}"
+    echo -e "${GREEN}║   6. Generate config & systemd service           ║${NC}"
     echo -e "${GREEN}║   7. Verify the installation                     ║${NC}"
     echo -e "${GREEN}║                                                  ║${NC}"
     echo -e "${GREEN}╚══════════════════════════════════════════════════╝${NC}"
@@ -582,6 +582,66 @@ check_dependencies() {
     fi
 }
 
+# Grant a user read access to service config (for ufctl)
+# Usage: setup_ufctl_config_access [username ...]
+#   - With no args: grants access to $SUDO_USER (the user who ran sudo)
+#   - With args:    grants access to each listed username
+setup_ufctl_config_access() {
+    local users_to_add=()
+
+    if [[ $# -gt 0 ]]; then
+        users_to_add=("$@")
+    else
+        local real_user="${SUDO_USER:-}"
+        # Only meaningful when a non-root user ran sudo
+        if [[ -n "$real_user" ]] && [[ "$real_user" != "root" ]]; then
+            users_to_add+=("$real_user")
+        fi
+    fi
+
+    # Auto-add well-known DayZ server manager user if it exists
+    if id "dzsm" &>/dev/null 2>&1; then
+        users_to_add+=("dzsm")
+    fi
+
+    # Nothing to do
+    if [[ ${#users_to_add[@]} -eq 0 ]]; then
+        return
+    fi
+
+    # Service group must exist
+    if ! getent group "$SERVICE_USER" &>/dev/null; then
+        print_warning "Service group '$SERVICE_USER' does not exist. Run a full install first."
+        return
+    fi
+
+    local need_relogin=false
+    for target_user in "${users_to_add[@]}"; do
+        # Validate user exists
+        if ! id "$target_user" &>/dev/null; then
+            print_warning "User '$target_user' does not exist — skipping."
+            continue
+        fi
+        # Skip root
+        if [[ "$target_user" == "root" ]]; then
+            continue
+        fi
+        # Already a member?
+        if id -nG "$target_user" 2>/dev/null | grep -qw "$SERVICE_USER"; then
+            print_status "User '$target_user' already has config access (member of '$SERVICE_USER' group)"
+            continue
+        fi
+        print_status "Granting '$target_user' read access to service config..."
+        usermod -aG "$SERVICE_USER" "$target_user"
+        print_status "User '$target_user' added to '$SERVICE_USER' group"
+        need_relogin=true
+    done
+
+    if $need_relogin; then
+        print_warning "Affected users must log out and back in (or run 'newgrp $SERVICE_USER') for ufctl to work without sudo."
+    fi
+}
+
 # Create service user
 create_user() {
     if id "$SERVICE_USER" &>/dev/null; then
@@ -786,6 +846,20 @@ wizard_database() {
     echo -e "${BLUE}  │${NC} The MongoDB database name for this service.      ${BLUE}│${NC}"
     echo -e "${BLUE}  │${NC} Each service instance should use a unique name.  ${BLUE}│${NC}"
     echo -e "${BLUE}  └──────────────────────────────────────────────────┘${NC}"
+    
+    # If using an external URI that already has a DB name, show it and confirm
+    if [[ -n "$MONGO_AUTH_URI" ]] && [[ -n "$CFG_DB_NAME" ]] && [[ "$CFG_DB_NAME" != "DayZ" || "$MONGO_AUTH_URI" == *"/$CFG_DB_NAME"* ]]; then
+        echo -e "  Detected from connection string: ${YELLOW}${CFG_DB_NAME}${NC}"
+        if ! $AUTO_YES; then
+            if prompt_yes_no "  Use this database name?" "y"; then
+                MONGO_DB="$CFG_DB_NAME"
+                return
+            fi
+        else
+            MONGO_DB="$CFG_DB_NAME"
+            return
+        fi
+    fi
     
     if $IS_RECONFIGURE && [[ -n "$CFG_DB_NAME" ]]; then
         echo -e "  Current database: ${YELLOW}${CFG_DB_NAME}${NC}"
@@ -1903,12 +1977,19 @@ EOF
 create_systemd_service() {
     print_status "Creating systemd service..."
     
+    # Only depend on local mongod if not using external MongoDB
+    local mongo_after=""
+    local mongo_wants=""
+    if command -v mongod &>/dev/null && [[ -z "$MONGO_AUTH_URI" || -n "$MONGO_USER" ]]; then
+        mongo_after=" mongod.service"
+        mongo_wants=$'\nWants=mongod.service'
+    fi
+    
     cat > "/etc/systemd/system/${SERVICE_NAME}.service" << EOF
 [Unit]
 Description=Universal Framework Service for DayZ
 Documentation=https://github.com/daemonforge/DayZ-UniveralApi
-After=network.target mongod.service
-Wants=mongod.service
+After=network.target${mongo_after}${mongo_wants}
 
 [Service]
 Type=simple
@@ -2019,7 +2100,10 @@ verify_installation() {
     fi
     
     # Check MongoDB
-    if systemctl is-active --quiet mongod 2>/dev/null; then
+    if [[ -n "$MONGO_AUTH_URI" ]] && [[ -z "$MONGO_USER" ]]; then
+        # External MongoDB — don't check local mongod
+        print_status "MongoDB:   ✓ External connection configured"
+    elif systemctl is-active --quiet mongod 2>/dev/null; then
         print_status "MongoDB:   ✓ Running"
         # Check if auth is enabled
         if grep -qE '^\s*authorization:\s*enabled' /etc/mongod.conf 2>/dev/null; then
@@ -2028,7 +2112,18 @@ verify_installation() {
             print_warning "MongoDB:   ⚠ Authentication NOT enabled (insecure)"
         fi
     else
-        print_warning "MongoDB:   ⚠ Not running (start with: sudo systemctl start mongod)"
+        # Check if config has a non-localhost DBServer (external)
+        if [[ -f "$CONFIG_DIR/config.json" ]] && command -v grep &>/dev/null; then
+            local db_server_line
+            db_server_line=$(grep -o '"DBServer"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_DIR/config.json" 2>/dev/null || true)
+            if [[ -n "$db_server_line" ]] && [[ ! "$db_server_line" =~ localhost ]] && [[ ! "$db_server_line" =~ 127\.0\.0\.1 ]]; then
+                print_status "MongoDB:   ✓ External connection configured"
+            else
+                print_warning "MongoDB:   ⚠ Not running (start with: sudo systemctl start mongod)"
+            fi
+        else
+            print_warning "MongoDB:   ⚠ Not running (start with: sudo systemctl start mongod)"
+        fi
     fi
     
     # Check FFmpeg
@@ -2127,7 +2222,8 @@ print_completion() {
     # MongoDB
     echo
     echo -e "${BLUE}── MongoDB ────────────────────────────────────────${NC}"
-    if [[ -n "$MONGO_AUTH_URI" ]]; then
+    if [[ -n "$MONGO_AUTH_URI" && -n "$MONGO_USER" ]]; then
+        # Local MongoDB secured by the installer
         echo -e "  Status:    ${GREEN}✓ Secured with authentication${NC}"
         echo -e "  Database:  ${YELLOW}${MONGO_DB}${NC}"
         echo -e "  Username:  ${YELLOW}${MONGO_USER}${NC}"
@@ -2135,6 +2231,14 @@ print_completion() {
         if [[ -f "$CONFIG_DIR/.mongodb_credentials" ]]; then
             echo -e "  Backup:    ${YELLOW}$CONFIG_DIR/.mongodb_credentials${NC}"
         fi
+    elif [[ -n "$MONGO_AUTH_URI" ]]; then
+        # External MongoDB connection string
+        echo -e "  Status:    ${GREEN}✓ External MongoDB configured${NC}"
+        echo -e "  Database:  ${YELLOW}${MONGO_DB}${NC}"
+        # Mask the URI for display (show host, hide password)
+        local masked_uri
+        masked_uri=$(echo "$MONGO_AUTH_URI" | sed 's|://[^:]*:[^@]*@|://****:****@|')
+        echo -e "  URI:       ${YELLOW}${masked_uri}${NC}"
     else
         echo -e "  Status:    ${RED}⚠ No authentication (insecure)${NC}"
         echo -e "  URI:       mongodb://localhost:27017"
@@ -2241,8 +2345,10 @@ print_completion() {
         needs_edit=true
     fi
     
-    if [[ -n "$MONGO_AUTH_URI" ]]; then
+    if [[ -n "$MONGO_AUTH_URI" && -n "$MONGO_USER" ]]; then
         echo -e "  ${GREEN}✓${NC} MongoDB secured with authentication"
+    elif [[ -n "$MONGO_AUTH_URI" ]]; then
+        echo -e "  ${GREEN}✓${NC} External MongoDB connection configured"
     else
         echo -e "  ${RED}⚠${NC} MongoDB has NO authentication — secure it manually!"
         needs_edit=true
@@ -2339,6 +2445,194 @@ uninstall() {
     print_status "Uninstallation complete"
 }
 
+# ── Upgrade an existing installation in-place ────────────────────
+upgrade_service() {
+    local new_binary="${1:-}"
+    
+    # Verify existing installation
+    if [[ ! -x "$INSTALL_DIR/$BINARY_NAME" ]]; then
+        print_error "No existing installation found at $INSTALL_DIR/$BINARY_NAME"
+        print_error "Use a full install instead: sudo $0 <binary-path>"
+        exit 1
+    fi
+    
+    # Auto-detect the new binary
+    if [[ -z "$new_binary" ]]; then
+        if [[ -f "./$BINARY_NAME" ]]; then
+            new_binary="./$BINARY_NAME"
+        else
+            print_error "No new binary specified and ./$BINARY_NAME not found in current directory."
+            echo "  Usage: sudo $0 --upgrade [path-to-new-binary]"
+            exit 1
+        fi
+    fi
+    
+    # Resolve to absolute path
+    new_binary="$(readlink -f "$new_binary")"
+    
+    if [[ ! -f "$new_binary" ]]; then
+        print_error "Binary not found: $new_binary"
+        exit 1
+    fi
+    
+    # Validate ELF
+    if ! file "$new_binary" | grep -qi 'ELF'; then
+        print_error "File does not appear to be a Linux binary (not ELF): $new_binary"
+        exit 1
+    fi
+    
+    # Validate architecture
+    local current_arch
+    current_arch=$(uname -m)
+    local binary_arch
+    binary_arch=$(file "$new_binary")
+    case "$current_arch" in
+        x86_64)
+            if ! echo "$binary_arch" | grep -q 'x86-64'; then
+                print_error "Architecture mismatch: binary is not x86_64"
+                exit 1
+            fi ;;
+        aarch64)
+            if ! echo "$binary_arch" | grep -q 'aarch64\|ARM aarch64'; then
+                print_error "Architecture mismatch: binary is not aarch64"
+                exit 1
+            fi ;;
+    esac
+    
+    # Show size comparison
+    local old_size new_size
+    old_size=$(stat -c%s "$INSTALL_DIR/$BINARY_NAME" 2>/dev/null || echo 0)
+    new_size=$(stat -c%s "$new_binary" 2>/dev/null || echo 0)
+    echo
+    print_header "Upgrading Universal Framework Service"
+    echo "  Current binary:  $INSTALL_DIR/$BINARY_NAME ($(numfmt --to=iec "$old_size" 2>/dev/null || echo "${old_size}B"))"
+    echo "  New binary:      $new_binary ($(numfmt --to=iec "$new_size" 2>/dev/null || echo "${new_size}B"))"
+    echo
+    
+    if ! $AUTO_YES; then
+        read -p "  Proceed with upgrade? [Y/n] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Nn]$ ]]; then
+            print_status "Upgrade cancelled."
+            exit 0
+        fi
+    fi
+    
+    # Backup current binary
+    local backup_name="${BINARY_NAME}.backup.$(date +%Y%m%d_%H%M%S)"
+    cp "$INSTALL_DIR/$BINARY_NAME" "$INSTALL_DIR/$backup_name"
+    print_status "Backed up current binary to $INSTALL_DIR/$backup_name"
+    
+    # Stop the service
+    local was_running=false
+    if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
+        was_running=true
+        print_status "Stopping service..."
+        systemctl stop "$SERVICE_NAME"
+    fi
+    
+    # Replace binary
+    cp "$new_binary" "$INSTALL_DIR/$BINARY_NAME"
+    chmod +x "$INSTALL_DIR/$BINARY_NAME"
+    chown "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR/$BINARY_NAME"
+    print_status "Binary replaced."
+    
+    # Also upgrade bundled tools if found alongside
+    local new_dir
+    new_dir="$(dirname "$new_binary")"
+    if [[ -f "$new_dir/bin/ffmpeg" ]]; then
+        cp "$new_dir/bin/ffmpeg" "$INSTALL_DIR/bin/ffmpeg"
+        chmod +x "$INSTALL_DIR/bin/ffmpeg"
+        print_status "Upgraded bundled FFmpeg"
+    fi
+    if [[ -f "$new_dir/bin/magick" ]]; then
+        cp "$new_dir/bin/magick" "$INSTALL_DIR/bin/magick"
+        chmod +x "$INSTALL_DIR/bin/magick"
+        print_status "Upgraded bundled ImageMagick"
+    fi
+    if [[ -f "$new_dir/ufctl-linux" ]]; then
+        cp "$new_dir/ufctl-linux" /usr/local/bin/ufctl
+        chmod +x /usr/local/bin/ufctl
+        print_status "Upgraded ufctl CLI"
+    fi
+
+    # Ensure the calling user can read the config (for ufctl)
+    setup_ufctl_config_access
+    
+    # Restart if it was running
+    if $was_running; then
+        print_status "Restarting service..."
+        systemctl start "$SERVICE_NAME"
+        sleep 2
+        if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
+            print_status "Service is running with the new binary!"
+        else
+            print_error "Service failed to start after upgrade!"
+            echo "  Rollback: sudo cp $INSTALL_DIR/$backup_name $INSTALL_DIR/$BINARY_NAME"
+            echo "           sudo systemctl start $SERVICE_NAME"
+            echo "  Logs:     sudo journalctl -u $SERVICE_NAME -n 30 --no-pager"
+            exit 1
+        fi
+    else
+        print_status "Service was not running before upgrade. Start with:"
+        echo "  sudo systemctl start $SERVICE_NAME"
+    fi
+    
+    echo
+    print_status "Upgrade complete!"
+}
+
+# ── Install ufctl CLI tool only ──────────────────────────────────
+install_ufctl_only() {
+    local ufctl_path="${1:-}"
+    
+    # Auto-detect
+    if [[ -z "$ufctl_path" ]]; then
+        local script_dir
+        script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        if [[ -f "./ufctl-linux" ]]; then
+            ufctl_path="./ufctl-linux"
+        elif [[ -f "$script_dir/ufctl-linux" ]]; then
+            ufctl_path="$script_dir/ufctl-linux"
+        else
+            print_error "ufctl-linux not found in current directory or script directory."
+            echo "  Usage: sudo $0 --ufctl [path-to-ufctl-linux]"
+            exit 1
+        fi
+    fi
+    
+    ufctl_path="$(readlink -f "$ufctl_path")"
+    
+    if [[ ! -f "$ufctl_path" ]]; then
+        print_error "File not found: $ufctl_path"
+        exit 1
+    fi
+    
+    # Validate ELF
+    if ! file "$ufctl_path" | grep -qi 'ELF'; then
+        print_error "File does not appear to be a Linux binary (not ELF): $ufctl_path"
+        exit 1
+    fi
+    
+    print_status "Installing ufctl to /usr/local/bin/ufctl ..."
+    cp "$ufctl_path" /usr/local/bin/ufctl
+    chmod +x /usr/local/bin/ufctl
+    
+    # Verify
+    if command -v ufctl &>/dev/null; then
+        print_status "ufctl installed successfully!"
+        local ufctl_ver
+        ufctl_ver=$(ufctl --version 2>/dev/null || echo "(could not detect version)")
+        echo "  Version: $ufctl_ver"
+        echo "  Path:    $(command -v ufctl)"
+    else
+        print_warning "ufctl was copied but is not in PATH. You may need to reload your shell."
+    fi
+
+    # Grant the calling user access to the service config so ufctl works without sudo
+    setup_ufctl_config_access
+}
+
 # Show usage
 usage() {
     echo "Universal Framework Service - Linux Installer"
@@ -2346,19 +2640,30 @@ usage() {
     echo "Usage: $0 [OPTIONS] <binary-path>"
     echo
     echo "Options:"
-    echo "  -h, --help          Show this help message"
-    echo "  -u, --uninstall     Uninstall the service"
-    echo "  -s, --status        Check installation health"
-    echo "  -c, --configure     Re-run the configuration wizard"
-    echo "  --secure-mongodb    Re-run MongoDB security setup"
-    echo "  -f, --ffmpeg        Path to FFmpeg binary to bundle"
-    echo "  -m, --magick        Path to ImageMagick binary to bundle"
-    echo "  -y, --yes           Skip confirmation prompts (auto-yes)"
+    echo "  -h, --help                Show this help message"
+    echo "  -u, --uninstall           Uninstall the service"
+    echo "  -U, --upgrade [binary]    Upgrade the binary in-place (keeps config & data)"
+    echo "  -s, --status              Check installation health"
+    echo "  -c, --configure           Re-run the configuration wizard"
+    echo "  --secure-mongodb          Re-run MongoDB security setup"
+    echo "  --mongo-uri <URI>         Use an external MongoDB connection string"
+    echo "  --ufctl [path]            Install only the ufctl CLI tool"
+    echo "  --grant-access <user>     Grant a user ufctl config access (repeatable)"
+    echo "  -f, --ffmpeg <path>       Path to FFmpeg binary to bundle"
+    echo "  -m, --magick <path>       Path to ImageMagick binary to bundle"
+    echo "  -y, --yes                 Skip confirmation prompts (auto-yes)"
     echo
     echo "Examples:"
     echo "  $0 ./ufserverservice-linux                              # Install interactively"
     echo "  $0 -y ./ufserverservice-linux                           # Auto-install without prompts"
     echo "  $0 -f ./bin/ffmpeg -m ./bin/magick ./ufserverservice-linux"
+    echo "  $0 --upgrade ./ufserverservice-linux                    # Upgrade binary in-place"
+    echo "  $0 --upgrade                                            # Upgrade (auto-detect binary)"
+    echo "  $0 --mongo-uri 'mongodb+srv://user:pass@cluster/DayZ' ./ufserverservice-linux"
+    echo "  $0 --ufctl                                              # Install ufctl CLI only"
+    echo "  $0 --ufctl ./ufctl-linux                                # Install ufctl from path"
+    echo "  $0 --grant-access alice                                 # Grant alice ufctl access"
+    echo "  $0 --grant-access alice --grant-access bob              # Grant multiple users"
     echo "  $0 --status                                             # Check installation health"
     echo "  $0 --configure                                          # Re-run configuration wizard"
     echo "  $0 --secure-mongodb                                     # Re-run MongoDB security"
@@ -2374,6 +2679,12 @@ main() {
     local do_status=false
     local do_configure=false
     local do_secure_mongo=false
+    local do_grant_access=false
+    local grant_access_users=()
+    local do_upgrade=false
+    local do_ufctl_only=false
+    local ufctl_path=""
+    local external_mongo_uri=""
     
     # Parse arguments
     while [[ $# -gt 0 ]]; do
@@ -2418,6 +2729,43 @@ main() {
                 AUTO_YES=true
                 shift
                 ;;
+            -U|--upgrade)
+                do_upgrade=true
+                # Next arg might be a binary path (optional)
+                if [[ -n "${2:-}" && "${2:0:1}" != "-" ]]; then
+                    binary_path="$2"
+                    shift 2
+                else
+                    shift
+                fi
+                ;;
+            --ufctl)
+                do_ufctl_only=true
+                # Next arg might be a path (optional)
+                if [[ -n "${2:-}" && "${2:0:1}" != "-" ]]; then
+                    ufctl_path="$2"
+                    shift 2
+                else
+                    shift
+                fi
+                ;;
+            --grant-access)
+                if [[ -z "${2:-}" ]]; then
+                    print_error "--grant-access requires a username argument"
+                    exit 1
+                fi
+                do_grant_access=true
+                grant_access_users+=("$2")
+                shift 2
+                ;;
+            --mongo-uri)
+                if [[ -z "${2:-}" ]]; then
+                    print_error "--mongo-uri requires a connection string argument"
+                    exit 1
+                fi
+                external_mongo_uri="$2"
+                shift 2
+                ;;
             *)
                 binary_path="$1"
                 shift
@@ -2457,6 +2805,21 @@ main() {
         exit 0
     fi
     
+    if $do_grant_access; then
+        setup_ufctl_config_access "${grant_access_users[@]}"
+        exit 0
+    fi
+
+    if $do_upgrade; then
+        upgrade_service "$binary_path"
+        exit 0
+    fi
+    
+    if $do_ufctl_only; then
+        install_ufctl_only "$ufctl_path"
+        exit 0
+    fi
+    
     if [[ -z "$binary_path" ]]; then
         # Try to find binary in current directory
         if [[ -f "./$BINARY_NAME" ]]; then
@@ -2465,6 +2828,25 @@ main() {
             print_error "No binary path provided"
             usage
             exit 1
+        fi
+    fi
+    
+    # If an external MongoDB URI was supplied via CLI, wire it up now and skip
+    # the local MongoDB install / security steps entirely.
+    local skip_local_mongo=false
+    if [[ -n "$external_mongo_uri" ]]; then
+        skip_local_mongo=true
+        MONGO_AUTH_URI="$external_mongo_uri"
+        # Try to extract the database name from the URI (last path segment)
+        local uri_db
+        uri_db=$(echo "$external_mongo_uri" | sed -n 's|.*://[^/]*/\([^?]*\).*|\1|p')
+        if [[ -n "$uri_db" ]]; then
+            MONGO_DB="$uri_db"
+            CFG_DB_NAME="$uri_db"
+        fi
+        print_status "Using external MongoDB: $external_mongo_uri"
+        if [[ -n "$uri_db" ]]; then
+            print_status "Detected database name: $uri_db"
         fi
     fi
     
@@ -2480,68 +2862,194 @@ main() {
         print_status "Auto-detected bundled ImageMagick at $magick_path"
     fi
     
-    # Always install dependencies (use -y to skip prompts)
+    # Determine step count based on whether we skip local MongoDB
+    local total_steps=8
+    if $skip_local_mongo; then
+        total_steps=7
+    fi
+    local step=0
+    
     print_welcome
     
-    print_step 1 8 "Installing Dependencies"
-    install_dependencies
+    # ── Ask about MongoDB if not already decided via --mongo-uri ──
+    if ! $skip_local_mongo && ! $AUTO_YES; then
+        # Check if MongoDB is already installed
+        local mongo_already_installed=false
+        if command -v mongod &>/dev/null || systemctl list-unit-files 2>/dev/null | grep -q mongod; then
+            mongo_already_installed=true
+        fi
+        
+        echo
+        echo -e "${BLUE}  ┌─ MongoDB Setup ──────────────────────────────────┐${NC}"
+        echo -e "${BLUE}  │${NC} This service requires a MongoDB database.         ${BLUE}│${NC}"
+        echo -e "${BLUE}  │${NC}                                                   ${BLUE}│${NC}"
+        if $mongo_already_installed; then
+            echo -e "${BLUE}  │${NC}  ${GREEN}1)${NC} Use local MongoDB (already installed)           ${BLUE}│${NC}"
+            echo -e "${BLUE}  │${NC}     Keep using the MongoDB instance on this       ${BLUE}│${NC}"
+            echo -e "${BLUE}  │${NC}     server. The installer will secure it if       ${BLUE}│${NC}"
+            echo -e "${BLUE}  │${NC}     authentication is not yet enabled.            ${BLUE}│${NC}"
+        else
+            echo -e "${BLUE}  │${NC}  ${GREEN}1)${NC} Install MongoDB locally (recommended)          ${BLUE}│${NC}"
+            echo -e "${BLUE}  │${NC}     The installer will set up MongoDB on this      ${BLUE}│${NC}"
+            echo -e "${BLUE}  │${NC}     server, create a database user, and enable     ${BLUE}│${NC}"
+            echo -e "${BLUE}  │${NC}     authentication automatically.                  ${BLUE}│${NC}"
+        fi
+        echo -e "${BLUE}  │${NC}                                                   ${BLUE}│${NC}"
+        echo -e "${BLUE}  │${NC}  ${GREEN}2)${NC} Use an external MongoDB connection string      ${BLUE}│${NC}"
+        echo -e "${BLUE}  │${NC}     Use MongoDB Atlas, a remote server, or an      ${BLUE}│${NC}"
+        echo -e "${BLUE}  │${NC}     existing MongoDB instance. You provide the     ${BLUE}│${NC}"
+        echo -e "${BLUE}  │${NC}     connection URI.                                ${BLUE}│${NC}"
+        echo -e "${BLUE}  └───────────────────────────────────────────────────┘${NC}"
+        echo
+        local mongo_choice
+        read -r -p "  Choose MongoDB setup [1-2] (default: 1): " mongo_choice
+        
+        if [[ "$mongo_choice" == "2" ]]; then
+            echo
+            local user_mongo_uri
+            read -r -p "  MongoDB connection string (e.g. mongodb+srv://user:pass@cluster/DayZ): " user_mongo_uri
+            
+            if [[ -n "$user_mongo_uri" ]]; then
+                skip_local_mongo=true
+                MONGO_AUTH_URI="$user_mongo_uri"
+                # Try to extract the database name from the URI
+                local uri_db
+                uri_db=$(echo "$user_mongo_uri" | sed -n 's|.*://[^/]*/\([^?]*\).*|\1|p')
+                if [[ -n "$uri_db" ]]; then
+                    MONGO_DB="$uri_db"
+                    CFG_DB_NAME="$uri_db"
+                fi
+                echo
+                print_status "Using external MongoDB: $user_mongo_uri"
+                if [[ -n "$uri_db" ]]; then
+                    print_status "Detected database name: $uri_db"
+                fi
+                
+                # Recalculate steps
+                total_steps=7
+            else
+                print_warning "No URI provided — falling back to local MongoDB."
+            fi
+        fi
+    fi
     
-    print_step 2 8 "Checking Dependencies"
-    check_dependencies
+    step=$((step + 1))
+    print_step $step $total_steps "Installing Dependencies"
+    if $skip_local_mongo; then
+        # Install media deps only — skip MongoDB entirely
+        print_status "Skipping MongoDB install (external URI provided)"
+        if [[ "$PKG_MANAGER" != "unknown" ]]; then
+            local install_ffmpeg_pkg=false
+            local install_imagemagick_pkg=false
+            if ! command -v ffmpeg &> /dev/null; then install_ffmpeg_pkg=true; fi
+            if ! command -v convert &> /dev/null && ! command -v magick &> /dev/null; then install_imagemagick_pkg=true; fi
+            if $install_ffmpeg_pkg || $install_imagemagick_pkg; then
+                local do_media=true
+                if ! $AUTO_YES; then
+                    read -p "Install missing media dependencies (ffmpeg, imagemagick)? [Y/n] " -n 1 -r
+                    echo
+                    [[ $REPLY =~ ^[Nn]$ ]] && do_media=false || true
+                fi
+                if $do_media; then
+                    $PKG_UPDATE || true
+                    $install_ffmpeg_pkg && { $PKG_INSTALL ffmpeg || true; }
+                    $install_imagemagick_pkg && { $PKG_INSTALL imagemagick || $PKG_INSTALL ImageMagick || true; }
+                fi
+            fi
+        fi
+    else
+        install_dependencies
+    fi
     
-    print_step 3 8 "Creating Service User & Directories"
+    step=$((step + 1))
+    print_step $step $total_steps "Checking Dependencies"
+    if $skip_local_mongo; then
+        # Just check media deps; MongoDB is remote
+        print_status "MongoDB: external URI (skipping local check)"
+        if ! command -v ffmpeg &> /dev/null; then
+            print_warning "FFmpeg: NOT FOUND (TTS features will not work)"
+        else
+            print_status "FFmpeg: OK"
+        fi
+        if ! command -v convert &> /dev/null && ! command -v magick &> /dev/null; then
+            print_warning "ImageMagick: NOT FOUND (Image DDS conversion will not work)"
+        else
+            print_status "ImageMagick: OK"
+        fi
+    else
+        check_dependencies
+    fi
+    
+    step=$((step + 1))
+    print_step $step $total_steps "Creating Service User & Directories"
     create_user
     create_directories
     
-    print_step 4 8 "Installing Binaries"
+    step=$((step + 1))
+    print_step $step $total_steps "Installing Binaries"
     install_binary "$binary_path"
     install_ffmpeg "$ffmpeg_path"
     install_magick "$magick_path"
+    # Also install ufctl if found alongside the binary
+    if [[ -f "$binary_dir/ufctl-linux" ]]; then
+        print_status "Installing ufctl CLI tool..."
+        cp "$binary_dir/ufctl-linux" /usr/local/bin/ufctl
+        chmod +x /usr/local/bin/ufctl
+        print_status "ufctl installed to /usr/local/bin/ufctl"
+    fi
+    # Grant the calling user access to the service config so ufctl works without sudo
+    setup_ufctl_config_access
     
     # Secure MongoDB if it was freshly installed or has no auth
-    print_step 5 8 "Securing MongoDB"
-    if systemctl is-active --quiet mongod 2>/dev/null; then
-        if ! grep -qE '^\s*authorization:\s*enabled' /etc/mongod.conf 2>/dev/null; then
-            local do_secure=true
-            if ! $AUTO_YES; then
-                echo
-                echo -e "${YELLOW}MongoDB does not have authentication enabled.${NC}"
-                echo "  This means anyone with network access to port 27017 can read/write your database."
-                echo "  The installer can automatically:"
-                echo "    • Create a dedicated database user with a random password"
-                echo "    • Enable authentication in MongoDB"
-                echo "    • Bind MongoDB to localhost only"
-                echo "    • Save the credentials to your config.json"
-                echo
-                read -p "Secure MongoDB now? (strongly recommended) [Y/n] " -n 1 -r
-                echo
-                [[ $REPLY =~ ^[Nn]$ ]] && do_secure=false || true
-            fi
-            if $do_secure; then
-                setup_mongodb_security || print_warning "MongoDB security setup encountered issues. Review the output above."
+    if ! $skip_local_mongo; then
+        step=$((step + 1))
+        print_step $step $total_steps "Securing MongoDB"
+        if systemctl is-active --quiet mongod 2>/dev/null; then
+            if ! grep -qE '^\s*authorization:\s*enabled' /etc/mongod.conf 2>/dev/null; then
+                local do_secure=true
+                if ! $AUTO_YES; then
+                    echo
+                    echo -e "${YELLOW}MongoDB does not have authentication enabled.${NC}"
+                    echo "  This means anyone with network access to port 27017 can read/write your database."
+                    echo "  The installer can automatically:"
+                    echo "    • Create a dedicated database user with a random password"
+                    echo "    • Enable authentication in MongoDB"
+                    echo "    • Bind MongoDB to localhost only"
+                    echo "    • Save the credentials to your config.json"
+                    echo
+                    read -p "Secure MongoDB now? (strongly recommended) [Y/n] " -n 1 -r
+                    echo
+                    [[ $REPLY =~ ^[Nn]$ ]] && do_secure=false || true
+                fi
+                if $do_secure; then
+                    setup_mongodb_security || print_warning "MongoDB security setup encountered issues. Review the output above."
+                else
+                    print_warning "Skipping MongoDB security setup. Your database has NO password!"
+                fi
             else
-                print_warning "Skipping MongoDB security setup. Your database has NO password!"
+                print_status "MongoDB authentication is already enabled. Skipping."
             fi
         else
-            print_status "MongoDB authentication is already enabled. Skipping."
+            print_warning "MongoDB is not running. Skipping security setup."
+            print_warning "After starting MongoDB, secure it manually:"
+            print_warning "  https://www.mongodb.com/docs/manual/tutorial/enable-authentication/"
         fi
-    else
-        print_warning "MongoDB is not running. Skipping security setup."
-        print_warning "After starting MongoDB, secure it manually:"
-        print_warning "  https://www.mongodb.com/docs/manual/tutorial/enable-authentication/"
     fi
     
-    print_step 6 8 "Configuration Wizard"
+    step=$((step + 1))
+    print_step $step $total_steps "Configuration Wizard"
     # Ensure MongoDB credentials are loaded (from backup file if globals empty)
     load_mongodb_credentials
     configure_wizard
     
-    print_step 7 8 "Writing Config & Systemd Service"
+    step=$((step + 1))
+    print_step $step $total_steps "Writing Config & Systemd Service"
     create_config
     create_systemd_service
     set_permissions
     
-    print_step 8 8 "Verifying Installation"
+    step=$((step + 1))
+    print_step $step $total_steps "Verifying Installation"
     verify_installation
     
     print_completion
