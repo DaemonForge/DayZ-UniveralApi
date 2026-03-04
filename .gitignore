@@ -19,3 +19,4 @@ DesktopManager/.greenlockrc
 **/greenlock/
 .env.trustedsigning
 debug.log
+/ufctl/dist
