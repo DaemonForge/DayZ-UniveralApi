@@ -130,6 +130,15 @@ modded class MissionGameplay extends MissionBase
 	 * - CRITICAL: <60 seconds remaining
 	 * - NO_VALID_TOKEN: No token or expired
 	 */
+	/**
+	 * Watchdog CRON job - logs token status every 60 seconds AND triggers renewal
+	 * if the token is in danger. This acts as Layer 1.5 between the 10-min cron
+	 * renewal (Layer 1) and the per-request proactive check (Layer 2).
+	 *
+	 * If the token has less than 5 minutes left, the primary cron renewal should
+	 * have already renewed it (it fires at 10 min = 5 min before expiry).
+	 * If we're here with <5 min left, something went wrong - force a renewal.
+	 */
 	void LogTokenStatus(){
 		if (!g_Game.IsServer()){
 			if (U().HasValidAuth()){
@@ -139,8 +148,16 @@ modded class MissionGameplay extends MissionBase
 				else if (secsLeft < 240) status = "EXPIRING_SOON";
 				else if (secsLeft < 300) status = "LOW";
 				UFLog.Debug("[Auth] [STATUS] " + status + " SecsLeft=" + secsLeft + " Suffix=..." + U().GetTokenSuffix());
+				
+				// WATCHDOG: If token has <5 min left, the 10-min cron should have renewed by now
+				// Something likely went wrong (dropped RPC, clock drift, etc.) - trigger renewal
+				if (secsLeft < 300 && secsLeft > 0) {
+					UFLog.Info("[Auth] [WATCHDOG] Token has " + secsLeft + "s left - primary cron may have failed, triggering renewal");
+					U().RequestAuthToken(false);
+				}
 			} else {
-				UFLog.Debug("[Auth] [STATUS] NO_VALID_TOKEN");
+				UFLog.Debug("[Auth] [STATUS] NO_VALID_TOKEN - requesting new token");
+				U().RequestAuthToken(true);
 			}
 		}
 	}

@@ -808,11 +808,10 @@ class UFramework extends Managed {
 				return ""; // Return empty so request will fail gracefully instead of using expired token
 			}
 			// Proactive renewal: if token expires in less than 4 minutes, trigger background renewal
-			// This is a fallback - if we get here, the cron job (every 10 min) likely failed
-			// Token expires at 15 min, cron runs at 10 min, so 4 min buffer = cron missed
+			// This is a last-resort fallback (Layer 3) - watchdog at 60s (Layer 1.5) should catch first
+			// Only log once per renewal cycle to avoid log spam that was previously causing stack overflow
 			if (m_UFauthToken.IsExpiringSoon(240)) {
-				UFLog.Info("[Auth] Token expiring soon (" + m_UFauthToken.GetSecondsUntilExpiry() + "s left) - cron renewal may have failed, triggering proactive renewal");
-				RequestAuthToken(false); // Non-blocking renewal (rate limited to 30s)
+				RequestAuthToken(false); // Non-blocking renewal (rate limited to 30s internally)
 			}
 			return m_UFauthToken.GetAuthToken();
 		} else if (g_Game.IsServer() && UFConfig().ServerAuth != ""){
@@ -830,7 +829,17 @@ class UFramework extends Managed {
 	 */
 	bool HasValidAuth(){
 		if (!m_UFauthToken) return false;
-		return (!m_UFauthToken.IsExpired() && GetAuthToken() != "null" && GetAuthToken() != "error" && GetAuthToken() != "ERROR" && GetAuthToken() != "" );
+		if (m_UFauthToken.IsExpired()) return false;
+		// Don't call GetAuthToken() here - it has side effects (logging, renewal)
+		// that cause infinite recursion: HasValidAuth -> GetAuthToken -> UFLog.Info -> SendToApi -> HasValidAuth
+		string token;
+		if (g_Game.IsServer()) {
+			if (!UFConfig()) return false;
+			token = UFConfig().ServerAuth;
+		} else {
+			token = m_UFauthToken.GetAuthToken();
+		}
+		return (token != "null" && token != "error" && token != "ERROR" && token != "");
 	}
 	
 	/**
