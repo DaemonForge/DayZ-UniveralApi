@@ -35,6 +35,17 @@ const { resolveConnection } = require('./config');
 //   globals.transaction(mod, element, amt) → number | null
 //   globals.delete(mod)                    → boolean
 //
+//   index.getCollections()                 → [string]
+//   index.getIndexes(collection)           → [{ name, key, unique, sparse, ... }]
+//   index.getAllIndexes()                   → { collection: [indexes] }
+//   index.getIndexStats(collection)         → [{ name, accesses }]
+//   index.analyzeCollection(collection)     → { collection, documentCount, ... }
+//   index.createIndex(coll, spec, opts)     → { success, indexName }
+//   index.dropIndex(coll, indexName)        → { success }
+//
+//   data.scanInstalledMods()               → [{ modName, collections, totalDocuments }]
+//   data.deleteModData(modName)            → { modName, collections, totalDeleted, errors }
+//
 //   close()                                → void  (cleanup connections)
 
 // ─────────────────────────────────────────────────────
@@ -48,6 +59,8 @@ class DirectBackend {
         this.openaiApiKey = openaiApiKey || '';
         this._kb = null;
         this._globals = null;
+        this._index = null;
+        this._data = null;
     }
 
     /** Lazy-load the KB model so it only connects on first use */
@@ -64,6 +77,22 @@ class DirectBackend {
             this._globals = require('./directGlobals')(this.dbUri, this.dbName);
         }
         return this._globals;
+    }
+
+    /** Lazy-load the Index model */
+    _getIndex() {
+        if (!this._index) {
+            this._index = require('./directIndex')(this.dbUri, this.dbName);
+        }
+        return this._index;
+    }
+
+    /** Lazy-load the Data model */
+    _getData() {
+        if (!this._data) {
+            this._data = require('./directData')(this.dbUri, this.dbName);
+        }
+        return this._data;
     }
 
     get kb() {
@@ -91,6 +120,27 @@ class DirectBackend {
             setParam:    (mod, element, value)       => g.setParam(mod, element, value),
             transaction: (mod, element, amount)      => g.transactionGlobal(mod, element, amount),
             delete:      (mod)                      => g.deleteGlobal(mod),
+        };
+    }
+
+    get index() {
+        const idx = this._getIndex();
+        return {
+            getCollections:     ()                            => idx.getCollections(),
+            getIndexes:         (collection)                  => idx.getIndexes(collection),
+            getAllIndexes:      ()                            => idx.getAllIndexes(),
+            getIndexStats:      (collection)                  => idx.getIndexStats(collection),
+            analyzeCollection:  (collection)                  => idx.analyzeCollection(collection),
+            createIndex:        (collection, spec, opts)      => idx.createIndex(collection, spec, opts),
+            dropIndex:          (collection, indexName)       => idx.dropIndex(collection, indexName),
+        };
+    }
+
+    get data() {
+        const d = this._getData();
+        return {
+            scanInstalledMods: ()         => d.scanInstalledMods(),
+            deleteModData:     (modName)  => d.deleteModData(modName),
         };
     }
 
@@ -185,6 +235,20 @@ class ApiBackend {
                 );
             },
         };
+    }
+
+    get index() {
+        throw new Error(
+            'Index management is not available via the REST API.\n' +
+            'Use direct mode (default) or omit --mode api.'
+        );
+    }
+
+    get data() {
+        throw new Error(
+            'Data management is not available via the REST API.\n' +
+            'Use direct mode (default) or omit --mode api.'
+        );
     }
 
     async close() { /* nothing to clean up */ }

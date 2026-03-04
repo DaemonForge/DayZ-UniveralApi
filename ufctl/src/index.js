@@ -20,6 +20,8 @@ const { loadServiceConfig, findServiceConfig, saveServiceConfig } = require('./l
 const { ok, info, warn, die, c, table } = require('./lib/output');
 const registerKBCommands = require('./commands/kb');
 const registerGlobalsCommands = require('./commands/globals');
+const registerIndexCommands = require('./commands/index');
+const registerDataCommands = require('./commands/data');
 
 const pkg = require('../package.json');
 
@@ -213,6 +215,14 @@ registerKBCommands(program);
 // ── globals subcommand ──────────────────────────────
 
 registerGlobalsCommands(program);
+
+// ── index subcommand ────────────────────────────────
+
+registerIndexCommands(program);
+
+// ── data subcommand ─────────────────────────────────
+
+registerDataCommands(program);
 
 // ── run ─────────────────────────────────────────────
 
