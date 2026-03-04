@@ -43,39 +43,46 @@ modded class ULoggerBaseInstance extends Managed {
 	 */
 	override protected void SendToApi(string jsonString){
 		// Prevent re-entrancy (infinite loop)
+		// CRITICAL: Set guard IMMEDIATELY before any calls that could trigger logging
+		// (e.g. HasValidAuth -> GetAuthToken -> UFLog.Info -> DoLog -> SendToApi)
 		if (m_SendingToApi){
 			return;
 		}
+		m_SendingToApi = true;
 		
 		// Don't try to log to API if framework isn't initialized or API is offline
 		// Silently skip - file logging still works, no need to spam console
 		if (!UFramework.isGlobalInit() || !U().IsOnline()) {
+			m_SendingToApi = false;
 			return;
 		}
 		
 		// Check if API configuration is available (ServerURL and ServerAuth)
 		// This prevents API calls before config is loaded
 		if (!UFConfig()) {
+			m_SendingToApi = false;
 			return;
 		}
 		
 		if (g_Game.IsServer()) {
 			// On server, verify ServerAuth is configured
 			if (UFConfig().ServerAuth == "" || UFConfig().ServerAuth == "null") {
+				m_SendingToApi = false;
 				return;
 			}
 			// Verify ServerURL is configured
 			if (UFConfig().ServerURL == "" || UFConfig().ServerURL == "null") {
+				m_SendingToApi = false;
 				return;
 			}
 		} else {
 			// On client, verify we have received auth token from server via RPC
 			if (!U().HasValidAuth()) {
+				m_SendingToApi = false;
 				return;
 			}
 		}
 		
-		m_SendingToApi = true;
 		U().Rest().Log(jsonString);
 		m_SendingToApi = false;
 	}
