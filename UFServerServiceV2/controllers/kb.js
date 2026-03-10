@@ -273,7 +273,7 @@ router.post('/', requireServerAuth, async (req, res) => {
         }
 
         const kb = await createKB(kbId, name, description, { shorterAnswers, extractModel });
-        res.status(201).json({ Status: 'Success', data: kb });
+        res.status(200).json({ Status: 'Success', data: kb });
     } catch (err) {
         logger.error('Failed to create KB', { error: err.message });
         res.status(400).json({ Status: 'Error', Error: err.message });
@@ -425,7 +425,7 @@ router.post('/:kbId/documents', requireServerAuth, upload.single('file'), async 
             result.embeddingError = embErr.message;
         }
 
-        res.status(201).json({ 
+        res.status(200).json({ 
             Status: 'Success', 
             data: result,
             splitInfo
@@ -469,7 +469,7 @@ router.post('/:kbId/documents/text', requireServerAuth, async (req, res) => {
             result.hasEmbedding = false;
         }
 
-        res.status(201).json({ Status: 'Success', data: result });
+        res.status(200).json({ Status: 'Success', data: result });
     } catch (err) {
         logger.error('Failed to add text document', { error: err.message });
         res.status(500).json({ Status: 'Error', Error: err.message });
