@@ -162,7 +162,7 @@ async function saveObject(req, res) {
             res.status(200).json(data);
         } else {
             logger.error(`[SAVE][${mod}] SAVE FAILED - No match or upsert!`, { mod, ObjectId, result });
-            res.status(203).json(data);
+            res.status(200).json(data);
         }
     } catch (err) {
         logger.error(`Error in Save endpoint: ${err.message}`, { error: err, mod, ObjectId });
@@ -189,11 +189,11 @@ async function runUpdate(req, res) {
             res.status(200).json({ Status: "Success", Element: element, Mod: mod, ID: ObjectId });
         } else {
             logger.warn(`Error updating ${element} for mod: ${mod}, ObjectId: ${ObjectId}`);
-            res.status(203).json({ Status: "NotFound", Element: element, Mod: mod, ID: ObjectId });
+            res.status(200).json({ Status: "NotFound", Element: element, Mod: mod, ID: ObjectId });
         }
     } catch (err) {
         logger.error(`Error in Update endpoint: ${err.message}`, { error: err, mod, ObjectId });
-        res.status(203).json({ Status: "Error", Element: data.Element, Mod: mod, ID: ObjectId });
+        res.status(200).json({ Status: "Error", Element: data.Element, Mod: mod, ID: ObjectId });
     }
 }
 

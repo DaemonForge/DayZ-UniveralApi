@@ -12,7 +12,7 @@ async function CreateChannel(req, res) {
         let channel = await guild.channels.create(RawData.Name, options);
         let id = channel.id;
 
-        res.status(201);
+        res.status(200);
         res.json({ Status: "Success", Error: "", oid: `${id}` });
     } catch (e) {
         res.status(400);
@@ -245,7 +245,7 @@ async function InviteChannel(req, res) {
                     });
 
                     logger.info(`Created invite for channel ${id}`, { channelId: id, inviteCode: invite.code });
-                    res.status(201).json({
+                    res.status(200).json({
                         Status: "Success",
                         Error: "",
                         oid: `${invite.code}`,

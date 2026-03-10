@@ -49,11 +49,11 @@ async function AddRole(req, res) {
                     resObj.Status = "NotFound";
                 }
             }
-            res.status(202);
+            res.status(200);
             res.json(resObj);
         }catch(err){
             console.log(err);
-            res.status(203);
+            res.status(200);
             res.json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
             logger.warn("Error in AddRole", { error: err });
         }
@@ -65,14 +65,14 @@ async function RemoveRole(req, res){
             let resObj = {};
             if ((await playerExists(GUID)) === false){
                 logger.info(`Error: Discord RemoveRole - Player doesn't exist`, { GUID });
-                return res.status(203).json({Status: "NotFound", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
+                return res.status(200).json({Status: "NotFound", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
             } 
             let dsInfo = GetDiscordObj(GUID);
             let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
             dsInfo = await dsInfo;
             if (dsInfo === undefined || dsInfo.id === undefined || dsInfo.id === "0" ){
                 logger.info(`Discord RemoveRole - User doesn't have discord set up`, { GUID });
-                return res.status(203).json(resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
+                return res.status(200).json(resObj = {Status: "NotSetup", Error: `Player Doesn't have discord set up`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
             } 
             let RawData = req.body;
             let Role = RawData.Role;
@@ -97,10 +97,10 @@ async function RemoveRole(req, res){
                 resObj.Error = "User not found in discord";
                 resObj.Status = "NotFound";
             }
-            return res.status(202).json(resObj);
+            return res.status(200).json(resObj);
         }catch(err){
             logger.warn("Error in RemoveRole", err);
-            return res.status(203).json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
+            return res.status(200).json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
         }
 }
 
@@ -111,7 +111,7 @@ async function GetUserAndRoles(req, res){
         let dsInfo = await GetDiscordObj(GUID);
         if (dsInfo?.id  === undefined || dsInfo.id === "0" ){
             logger.info("Can't find Player in database", { GUID });
-            res.status(201);
+            res.status(200);
             res.json({Status: "NotSetup", Error: `Player with ${GUID} Not Found`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
         } else {
 
@@ -143,7 +143,7 @@ async function GetUserAndRoles(req, res){
         }
     }catch(err){
         logger.warn("Error in GetUserAndRoles", { GUID, error: err });
-        res.status(203);
+        res.status(200);
         res.json({Status: "Error", Error: `${err}`, Roles: [], VoiceChannel: "", id: "0", Username: "", GlobalName: "", Avatar: "" });
     }
 }

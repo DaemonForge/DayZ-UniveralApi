@@ -295,7 +295,7 @@ router.post('/Download/:imageId', async (req, res) => {
           }
           if (!imageRecord.base64) {
                 logger.debug(`/Download/${imageId}: Image still processing - status: ${imageRecord.status}`);
-                return res.status(202).send("Image is still processing: " + imageRecord.status);
+                return res.status(200).send("Image is still processing: " + imageRecord.status);
           }
           logger.debug(`/Download/${imageId}: Returning Base64 data`);
           res.set('Content-Type', 'text/plain');

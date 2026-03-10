@@ -177,7 +177,7 @@ if (cluster.isMaster) {
         let count = req.body.Count || 4096;
         if (count > 4096 || count < 1) {
             logger.warn(`Request rejected due to invalid count: ${count}`, { count });
-            res.status(203);
+            res.status(200);
             return res.json({ Status: "Error", Error: "Invalid Array Request Size" });
         }
         try {
@@ -204,7 +204,7 @@ if (cluster.isMaster) {
             return res.status(200).json({ Status: "Success", Error: "", Numbers: numbers });
         } catch (e) {
             logger.error(`Error generating random numbers: ${e.message}`, { error: e, stack: e.stack });
-            res.status(203);
+            res.status(200);
             return res.json({ Status: "Error", Error: `${e}` });
         }
     };
@@ -238,7 +238,7 @@ async function getRandom(req, res) {
     let count = req.body.Count || 4096;
     if (count > 4096 || count < 1) {
         logger.warn(`Request rejected due to invalid count: ${count}`, { count });
-        res.status(203);
+        res.status(200);
         return res.json({ Status: "Error", Error: `Invalid Array Request Size` });
     }
     
@@ -269,7 +269,7 @@ async function getRandom(req, res) {
         return res.status(200).json({ Status: "Success", Error: "", Numbers: numbers });
     } catch (e) {
         logger.error(`Error in getRandom: ${e.message}`, { error: e, stack: e.stack });
-        res.status(203);
+        res.status(200);
         return res.json({ Status: "Error", Error: `${e}` });
     }
 }

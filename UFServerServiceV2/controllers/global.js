@@ -31,7 +31,7 @@ async function runGet(req, res) {
     const data = await getGlobal(mod, defaultData, CheckServerAuth(req.headers['auth-key']));
     if (data === null) {
       // If no data is returned, document creation likely failed.
-      res.status(203).json(defaultData);
+      res.status(200).json(defaultData);
     } else {
       res.json(data);
     }
@@ -80,7 +80,7 @@ async function runSave(req, res) {
       if (success) {
         res.status(200).json(rawData);
       } else {
-        res.status(203).json(rawData);
+        res.status(200).json(rawData);
       }
     }
   } catch (error) {
@@ -111,7 +111,7 @@ async function runTransaction(req, res) {
       res.json({ Status: "Success", ID: mod, Value: newValue, Element: req.body.Element });
     } else {
       logger.warn(`Transaction failed for module "${mod}" on element "${req.body.Element}"`, { mod, element: req.body.Element });
-      res.status(203).json({ Status: "Error", ID: mod, Value: 0, Element: req.body.Element });
+      res.status(200).json({ Status: "Error", ID: mod, Value: 0, Element: req.body.Element });
     }
   } catch (error) {
     logger.error(`runTransaction error for module "${mod}" on element "${req.body.Element}": ${error.message}`, { mod, error });
@@ -135,7 +135,7 @@ async function runUpdate(req, res) {
       res.status(200).json({ Status: "Success", Element: req.body.Element, ID: mod });
     } else {
       logger.warn(`Update failed for module "${mod}" on element "${req.body.Element}"`, { mod, element: req.body.Element });
-      res.status(203).json({ Status: "Error", Element: req.body.Element, ID: mod });
+      res.status(200).json({ Status: "Error", Element: req.body.Element, ID: mod });
     }
   } catch (error) {
     logger.error(`runUpdate error for module "${mod}" on element "${req.body.Element}": ${error.message}`, { mod, error });

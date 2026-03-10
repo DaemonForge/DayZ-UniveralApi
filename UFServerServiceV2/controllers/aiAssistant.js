@@ -164,7 +164,7 @@ async function createAssistant(req, res) {
       return res.status(400).json({ Status: "Error", Error: result.Message });
     }
     logger.info(`[createAssistant] Assistant created with ID ${AssistantId}`, { AssistantApiId, Mod });
-    return res.status(201).json({ Status: "Success", AssistantId: result.AssistantId });
+    return res.status(200).json({ Status: "Success", AssistantId: result.AssistantId });
   } catch (err) {
     logger.error(`[createAssistant] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to create assistant" });
@@ -266,7 +266,7 @@ async function createThread(req, res) {
     logger.debug('[createThread] OpenAI thread created', { openaiThreadId: openaiThread.id });
     const result = await aiAssistantModel.createThread(GUID, AssistantId, Mod, openaiThread.id);
     logger.info(`[createThread] Thread created with ThreadId: ${openaiThread.id}`);
-    return res.status(201).json({ Status: "Success", ThreadId: openaiThread.id });
+    return res.status(200).json({ Status: "Success", ThreadId: openaiThread.id });
   } catch (err) {
     logger.error(`[createThread] Error: ${err.message}`, { error: err });
     return res.status(500).json({ Status: "Error", Error: "Failed to create thread" });
@@ -320,7 +320,7 @@ async function sendMessageInThread(req, res) {
     logger.debug('[sendMessageInThread] Assistant placeholder inserted', { MessageId });
 
     // 3. Return the placeholder MessageId immediately.
-    res.status(202).json({ Status: "Pending", MessageId });
+    res.status(200).json({ Status: "Pending", MessageId });
     logger.debug('[sendMessageInThread] Returned placeholder MessageId to client', { MessageId });
     
     // Build additional instructions (if context is provided).
@@ -611,7 +611,7 @@ async function runSummarizeChat(req, res) {
     const summaryRecord = await createChatSummary(ThreadId);
     const { SummaryId } = summaryRecord;
     logger.info(`[runSummarizeChat] Created summary record ${SummaryId} for ThreadId=${ThreadId}`);
-    res.status(202).json({ Status: "Pending", SummaryId, Summary: "", Error: "" });
+    res.status(200).json({ Status: "Pending", SummaryId, Summary: "", Error: "" });
     
     // Asynchronous summary processing.
     (async () => {

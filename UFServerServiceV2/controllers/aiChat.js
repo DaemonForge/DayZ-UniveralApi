@@ -820,7 +820,7 @@ async function sendMessage(req, res){
             logger.error("Error creating assistant placeholder: " + err.message, { stack: err.stack });
             return res.status(500).json({ Status: "Error", Error: "Failed to create assistant placeholder" });
         }
-        res.status(202).json({ Status: "Pending", MessageId: assistantMessageId });
+        res.status(200).json({ Status: "Pending", MessageId: assistantMessageId });
 
 
         // Process the AI response asynchronously.
@@ -1199,7 +1199,7 @@ async function runSummarizeChat(req, res){
         const summaryRecord = await createChatSummary(ChatId);
         const { SummaryId } = summaryRecord;
         logger.info("Created summary record", { ChatId, SummaryId });
-        res.status(202).json({ Status: "Pending", SummaryId, Summary: "", Error:"" });
+        res.status(200).json({ Status: "Pending", SummaryId, Summary: "", Error:"" });
 
         // Process the summary asynchronously.
         (async () => {
@@ -1321,7 +1321,7 @@ async function submitToolResult(req, res) {
         const newAssistantMessageId = await addMessageToChat(ChatId, "assistant", "", "Pending");
         
         // Return immediately with the new message ID
-        res.status(202).json({ Status: "Pending", MessageId: newAssistantMessageId });
+        res.status(200).json({ Status: "Pending", MessageId: newAssistantMessageId });
         
         // Process the continuation asynchronously
         (async () => {
