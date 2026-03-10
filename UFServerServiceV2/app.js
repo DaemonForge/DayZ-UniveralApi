@@ -291,16 +291,79 @@ function startWebServer() {
       domains: letsEncryptHosts
     });
 
-    // Check for existing accounts to warn about rate limits if missing
-    const accountsDir = path.join(greenlockRootDir, 'accounts');
+    // Check for existing ACME accounts (accounts live inside greenlock.d/, not the root)
+    const accountsDir = path.join(greenlockDir, 'accounts');
     if (!existsSync(accountsDir)) {
-      logger.warn('[WebServer] Greenlock accounts directory missing. A new Let\'s Encrypt account will be registered. Warning: Frequent deletions may hit rate limits.');
+      logger.warn('[WebServer] No existing ACME accounts found. A new Let\'s Encrypt account will be registered on first certificate order.');
+    }
+
+    // Seed greenlock config.json with proper site entries, defaults, and challenge config.
+    // Without this, greenlock does not know which domains to manage and the ACME ordering
+    // flow can hit undefined-challenges edge cases in @root/acme.
+    const greenlockConfigPath = path.join(greenlockDir, 'config.json');
+    try {
+      let glConfig;
+      try {
+        glConfig = JSON.parse(readFileSync(greenlockConfigPath, 'utf8'));
+      } catch (_e) {
+        glConfig = {};
+      }
+
+      // Ensure defaults
+      if (!glConfig.defaults) glConfig.defaults = {};
+      glConfig.defaults.subscriberEmail = letsEncrypt.Email;
+      glConfig.defaults.agreeToTerms = true;
+      if (!glConfig.defaults.store) {
+        glConfig.defaults.store = { module: 'greenlock-store-fs' };
+      }
+      if (!glConfig.defaults.challenges) {
+        glConfig.defaults.challenges = {
+          'http-01': { module: 'acme-http-01-standalone' }
+        };
+      }
+
+      // Ensure sites (greenlock-manager-fs accepts both object and array formats)
+      if (!glConfig.sites) glConfig.sites = {};
+      if (Array.isArray(glConfig.sites)) {
+        const sitesObj = {};
+        glConfig.sites.forEach(s => { if (s.subject) sitesObj[s.subject] = s; });
+        glConfig.sites = sitesObj;
+      }
+
+      const subject = letsEncryptHosts[0];
+      if (!glConfig.sites[subject]) {
+        glConfig.sites[subject] = {
+          subject: subject,
+          altnames: letsEncryptHosts.slice(0),
+          renewAt: 1
+        };
+        logger.info('[WebServer] Adding site to Greenlock config', { subject, altnames: letsEncryptHosts });
+      } else {
+        // Update altnames in case the config changed
+        glConfig.sites[subject].altnames = letsEncryptHosts.slice(0);
+      }
+
+      // Remove stale sites that are no longer in the user's LetsEncrypt config
+      const letsEncryptSubjects = new Set(letsEncryptHosts);
+      Object.keys(glConfig.sites).forEach(key => {
+        if (!letsEncryptSubjects.has(key)) {
+          logger.info('[WebServer] Removing stale site from Greenlock config', { subject: key });
+          delete glConfig.sites[key];
+        }
+      });
+
+      writeFileSync(greenlockConfigPath, JSON.stringify(glConfig, null, 2));
+      logger.debug('[WebServer] Greenlock config.json written', { path: greenlockConfigPath });
+    } catch (err) {
+      logger.warn('[WebServer] Failed to seed Greenlock config', { error: err.message });
     }
 
     require("greenlock-express").init({
       packageRoot: greenlockRootDir,
       packageAgent,
       configDir: greenlockDir,
+      subscriberEmail: letsEncrypt.Email,
+      agreeToTerms: true,
       notify: function(type, object) {
         const details = typeof object === 'object' && object !== null ? object : { message: object };
         
@@ -315,6 +378,7 @@ function startWebServer() {
             code: details.code,
             context: details.context,
             message: details.message || details.detail || details.reason,
+            stack: details.stack,
             raw: details
           });
         } else {
@@ -325,48 +389,56 @@ function startWebServer() {
       cluster: false
     }).ready(setupGreenlockServer);
 
-    // Load fallback certificates for localhost/non-configured hostnames
-    const fallbackCerts = loadCertificates();
-    const letsEncryptHostsSet = new Set(letsEncryptHosts.map(h => h.toLowerCase()));
-
     function setupGreenlockServer(glx) {
-      // Create SNI callback that uses Let's Encrypt certs for configured domains
-      // and falls back to self-signed cert for localhost/other hostnames
-      const greenlockSNI = glx.httpsServer().listeners('secureConnection')[0];
-      
-      // Setup HTTPS server with SNI callback for fallback support
-      const tlsOptions = {
-        SNICallback: (servername, cb) => {
-          const hostname = (servername || '').toLowerCase();
-          // For localhost or non-configured hostnames, use fallback cert
-          if (hostname === 'localhost' || hostname === '127.0.0.1' || !letsEncryptHostsSet.has(hostname)) {
-            //logger.debug('[WebServer] Using fallback certificate', { hostname });
-            const tls = require('tls');
-            const ctx = tls.createSecureContext({
-              key: fallbackCerts.key,
-              cert: fallbackCerts.cert
-            });
-            cb(null, ctx);
-          } else {
-            // Use greenlock's SNI for configured Let's Encrypt domains
-            glx.tlsOptions.SNICallback(servername, cb);
-          }
-        },
+      // Load fallback certificates for localhost/non-configured hostnames
+      const fallbackCerts = loadCertificates();
+      const letsEncryptHostsSet = new Set(letsEncryptHosts.map(h => h.toLowerCase()));
+
+      // Greenlock's httpsServer() mutates the secureOpts we pass in, installing its
+      // own SNICallback. By keeping a reference to the opts object, we can grab that
+      // callback after the call and wrap it with our localhost fallback logic.
+      const secureOpts = {
         key: fallbackCerts.key,
         cert: fallbackCerts.cert
       };
 
-      const httpsServer = https.createServer(tlsOptions, webapp);
-      
-      httpsServer.listen(port, ip, function() {
+      const greenlockHttpsServer = glx.httpsServer(secureOpts, webapp);
+
+      // Greenlock's wrapDefaultSniCallback() sets secureOpts.SNICallback in-place
+      const greenlockSNI = secureOpts.SNICallback || null;
+
+      if (greenlockSNI) {
+        const tls = require('tls');
+        const fallbackCtx = tls.createSecureContext({
+          key: fallbackCerts.key,
+          cert: fallbackCerts.cert
+        });
+
+        // Replace the SNI callback on the actual server's secure context
+        // so localhost/non-LE hostnames get the fallback cert
+        greenlockHttpsServer.setSecureContext({
+          SNICallback: (servername, cb) => {
+            const hostname = (servername || '').toLowerCase();
+            if (hostname === 'localhost' || hostname === '127.0.0.1' || !letsEncryptHostsSet.has(hostname)) {
+              cb(null, fallbackCtx);
+            } else {
+              greenlockSNI(servername, cb);
+            }
+          },
+          key: fallbackCerts.key,
+          cert: fallbackCerts.cert
+        });
+      }
+
+      greenlockHttpsServer.listen(port, ip, function() {
         logger.info("[WebServer] Server started", { 
-          address: httpsServer.address().address, 
-          port: httpsServer.address().port, 
+          address: greenlockHttpsServer.address().address, 
+          port: greenlockHttpsServer.address().port, 
           ssl: "Let's Encrypt" 
         });
       });
       
-      httpsServer.on('error', function(e) {
+      greenlockHttpsServer.on('error', function(e) {
         logger.error("[WebServer] HTTPS server error", { error: e.message, stack: e.stack });
       });
 
