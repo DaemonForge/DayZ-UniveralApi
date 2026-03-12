@@ -1829,6 +1829,42 @@ ipcMain.handle('open-external', async (event, url) => {
   return false;
 });
 
+// ----------------------- Domain Status Check -----------------------
+ipcMain.handle('check-domain-status', async (event, domain) => {
+  if (!domain || typeof domain !== 'string') {
+    return { reachable: false, error: 'No domain provided' };
+  }
+  // Sanitize: only allow valid hostname characters
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9.-]+[a-zA-Z0-9]$/.test(domain)) {
+    return { reachable: false, error: 'Invalid domain format' };
+  }
+  return new Promise((resolve) => {
+    const options = {
+      hostname: domain,
+      port: 443,
+      path: '/Status?noLog=1',
+      method: 'GET',
+      rejectUnauthorized: true,
+      timeout: 8000
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          resolve({ reachable: true, status: json.Status, version: json.Version });
+        } catch (_) {
+          resolve({ reachable: true, status: 'Unknown', error: 'Invalid response' });
+        }
+      });
+    });
+    req.on('timeout', () => { req.destroy(); resolve({ reachable: false, error: 'Timeout' }); });
+    req.on('error', (err) => { resolve({ reachable: false, error: err.message }); });
+    req.end();
+  });
+});
+
 // ----------------------- Cloudflare Tunnel IPC Handlers -----------------------
 
 /**

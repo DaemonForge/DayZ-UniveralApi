@@ -82,6 +82,11 @@
       <div id="letsEncryptFields" style="display: none;">
         <label for="LE_Domain" title="Enter your domain for Let's Encrypt">Domain:</label>
         <input type="text" id="LE_Domain" name="LE_Domain">
+        <div id="leDomainStatusSection" style="margin-top: 6px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+          <span id="leDomainStatusIndicator" style="font-size: 1.1em;">⚫</span>
+          <span id="leDomainStatusLabel" style="color: #ccc; font-size: 0.85em;">Not checked</span>
+          <button type="button" id="leDomainCheckBtn" class="small-btn" title="Check if domain is reachable" style="font-size: 0.8em; padding: 2px 8px;">Check</button>
+        </div>
         <label for="LE_Email" title="Enter a valid email for Let's Encrypt registration">Email:</label>
         <input type="email" id="LE_Email" name="LE_Email">
         <label for="LE_AltNames" title="Enter alternative domain names separated by commas">Alt Names:</label>

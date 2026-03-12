@@ -74,6 +74,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // ----------------- Let's Encrypt Domain Status Check -----------------
+  const leDomainCheckBtn = document.getElementById('leDomainCheckBtn');
+  const leDomainStatusIndicator = document.getElementById('leDomainStatusIndicator');
+  const leDomainStatusLabel = document.getElementById('leDomainStatusLabel');
+
+  async function checkLEDomainStatus() {
+    const domain = document.getElementById('LE_Domain')?.value?.trim();
+    if (!domain) {
+      leDomainStatusIndicator.textContent = '⚫';
+      leDomainStatusLabel.textContent = 'No domain entered';
+      return;
+    }
+    leDomainStatusIndicator.textContent = '🟡';
+    leDomainStatusLabel.textContent = 'Checking...';
+    leDomainCheckBtn.disabled = true;
+    try {
+      const result = await window.api.checkDomainStatus(domain);
+      if (result.reachable && result.status === 'Success') {
+        leDomainStatusIndicator.textContent = '🟢';
+        leDomainStatusLabel.textContent = 'Online' + (result.version ? ` (v${result.version})` : '');
+      } else if (result.reachable) {
+        leDomainStatusIndicator.textContent = '🟡';
+        leDomainStatusLabel.textContent = 'Reachable but status: ' + (result.status || result.error || 'Unknown');
+      } else {
+        leDomainStatusIndicator.textContent = '🔴';
+        leDomainStatusLabel.textContent = 'Unreachable — ' + (result.error || 'Unknown error');
+      }
+    } catch (err) {
+      leDomainStatusIndicator.textContent = '🔴';
+      leDomainStatusLabel.textContent = 'Check failed';
+    } finally {
+      leDomainCheckBtn.disabled = false;
+    }
+  }
+
+  if (leDomainCheckBtn) {
+    leDomainCheckBtn.addEventListener('click', checkLEDomainStatus);
+  }
+
   /**
    * resolveServerURL: Determines the best ServerURL for the UFramework.json DayZ config.
    * Priority: Tunnel hostname > Proxy subdomain > Let's Encrypt domain > fallback localhost:Port.
@@ -573,6 +612,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('LE_Domain').value = cfg.LetsEncypt.Domain;
     document.getElementById('LE_Email').value = cfg.LetsEncypt.Email;
     document.getElementById('LE_AltNames').value = cfg.LetsEncypt.AltNames.join(', ');
+
+    // Auto-check LE domain status if Let's Encrypt is enabled and a domain is configured
+    if (cfg.LetsEncypt.Enabled && cfg.LetsEncypt.Domain) {
+      checkLEDomainStatus();
+    }
 
     document.getElementById('Discord_Client_Id').value = cfg.Discord.Client_Id;
     document.getElementById('Discord_Client_Secret').value = cfg.Discord.Client_Secret;

@@ -16,5 +16,6 @@ contextBridge.exposeInMainWorld('api', {
   tunnelCheckUpdate: () => ipcRenderer.invoke('tunnel-check-update'),
   tunnelUpdate: () => ipcRenderer.invoke('tunnel-update'),
   onTunnelStatusChanged: (callback) => ipcRenderer.on('tunnel-status-changed', (event, status) => callback(status)),
-  openExternal: (url) => ipcRenderer.invoke('open-external', url)
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  checkDomainStatus: (domain) => ipcRenderer.invoke('check-domain-status', domain)
 });
