@@ -72,10 +72,11 @@ class MyPlayerDB extends UDBHandler<MyPlayerData>
 MyPlayerDB db = new MyPlayerDB("MyMod", "MyPlayerDB", PLAYER_DB); // ModName, CollectionName, Type
 
 // Load
-db.Load(playerUID, this, "OnStatsLoaded");
+// PLAYER_DB keys must use player.GetIdentity().GetId(), never GetPlainId()
+db.Load(playerGuid, this, "OnStatsLoaded");
 
 // Save
-db.Save(playerUID); // Uses internal m_Data automatically
+db.Save(playerGuid); // Uses internal m_Data automatically
 ```
 
 ### [!] CRITICAL: Always Use Class.CastTo() in Callbacks
@@ -147,7 +148,7 @@ DayZ scripts run on both client and server. UFramework handles authentication au
 | Operation | Server | Client | Note |
 |-----------|--------|--------|------|
 | `OBJECT_DB.Save()` | [YES] OK | [NO] Fail | Only servers can write object/global data. |
-| `PLAYER_DB.Load()` | [YES] Any | [YES] Self | Clients can only load their *own* data. |
+| `PLAYER_DB.Load()` | [YES] Any | [YES] Self | Clients can only load their *own* data, and the key must be the player's GUID from `GetIdentity().GetId()`. |
 | `Discord.AddRole()` | [YES] OK | [NO] Fail | Admin actions are server-only. |
 
 Use `GetGame().IsServer()` to guard logic:

@@ -111,7 +111,7 @@ class ServerNPCChatManager {
     void PlayerStartsNPCChat(PlayerBase player, string npcName) {
         if (!GetGame().IsServer()) return;
         
-        string guid = player.GetIdentity().GetPlainId();
+        string guid = player.GetIdentity().GetId();
         
         // Create new chat for this player
         string systemPrompt = "You are " + npcName + ", a survivor in DayZ. Keep responses short.";

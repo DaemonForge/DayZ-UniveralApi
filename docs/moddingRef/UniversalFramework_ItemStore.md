@@ -142,8 +142,9 @@ Allow players to save "Presets" of gear.
 
 ```enforce
 void LoadPlayerInventory(PlayerBase player) {
-    U().db(PLAYER_DB).Load("Inventory", player.GetIdentity().GetPlainId(), 
-        new UFCallback<array<autoptr UEntityStore>>(this, "OnInventoryLoaded", player.GetIdentity().GetPlainId()));
+    string guid = player.GetIdentity().GetId();
+    U().db(PLAYER_DB).Load("Inventory", guid,
+        new UFCallback<array<autoptr UEntityStore>>(this, "OnInventoryLoaded", guid));
 }
 
 void OnInventoryLoaded(int cid, int status, string oid, array<autoptr UEntityStore> inventory) {
@@ -253,6 +254,8 @@ class StorageChest {
 
 ### Player Loadout System
 
+`PLAYER_DB` loadouts must be keyed by the player's GUID from `GetIdentity().GetId()`. Do not use `GetPlainId()` here.
+
 ```enforce
 class LoadoutManager {
     
@@ -273,20 +276,22 @@ class LoadoutManager {
         
         string json;
         if (UJSONHandler<array<autoptr UEntityStore>>.GetString(loadout, json)) {
+            string guid = player.GetIdentity().GetId();
             U().db(PLAYER_DB).Save("Loadout_" + loadoutName, 
-                player.GetIdentity().GetPlainId(), json);
+                guid, json);
         }
     }
     
     void ApplyLoadout(PlayerBase player, string loadoutName) {
         // Clear current inventory first
         ClearInventory(player);
+        string guid = player.GetIdentity().GetId();
         
         // Load saved loadout
         U().db(PLAYER_DB).Load("Loadout_" + loadoutName,
-            player.GetIdentity().GetPlainId(),
+            guid,
             new UFCallback<array<autoptr UEntityStore>>(this, "OnLoadoutLoaded", 
-                player.GetIdentity().GetPlainId()));
+                guid));
     }
     
     void OnLoadoutLoaded(int cid, int status, string oid, array<autoptr UEntityStore> loadout) {

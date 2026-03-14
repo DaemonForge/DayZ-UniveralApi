@@ -169,7 +169,7 @@ Update a specific field in an object using a designated operation.
 
 ### POST /Object/Transaction/:ObjectId/:mod
 
-Perform an atomic increment/decrement operation on a numeric field. Supports optional value clamping.
+Perform an atomic increment/decrement operation on a numeric field. Supports optional bounds validation.
 
 **Authentication**: Server auth only
 
@@ -187,7 +187,7 @@ Perform an atomic increment/decrement operation on a numeric field. Supports opt
 }
 ```
 
-With validation (clamping):
+With bounds validation:
 ```json
 {
   "Element": "count",
@@ -205,7 +205,7 @@ With validation (clamping):
 | `Min` | number | (Optional) Minimum allowed result value |
 | `Max` | number | (Optional) Maximum allowed result value |
 
-When `Min` and `Max` are provided and are different, a validated transaction is performed that ensures the result stays within bounds.
+When `Min` and `Max` are provided, a validated transaction is performed. If the result would fall outside `[Min, Max]`, the transaction is **rejected** (not clamped) and returns `"Status": "Error"` with `"Error": "Out of Range"`.
 
 **Response Body**:
 ```json

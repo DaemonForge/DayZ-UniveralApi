@@ -183,6 +183,10 @@ U().db().Load("MyMod", "globalConfig", this, "OnLoaded"); // Same as above (defa
 // PLAYER_DB - Player-specific data, client can only read their own
 // Good for: player profiles, stats, inventories (read-only from client)
 U().db(PLAYER_DB).Load("MyMod", playerGuid, this, "OnLoaded");
+
+// PLAYER_DB ids must be the player's GUID
+// Use: player.GetIdentity().GetId()
+// Never use: player.GetIdentity().GetPlainId()
 ```
 
 ### Globals Endpoint

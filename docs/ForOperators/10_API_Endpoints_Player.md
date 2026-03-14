@@ -4,7 +4,7 @@ This document covers all REST API endpoints for Player database operations.
 
 ## Overview
 
-The Player database stores per-player data organized by mod namespace. Each player is identified by their Steam GUID (17-digit Steam ID).
+The Player database stores per-player data organized by mod namespace. Each player is identified by their GUID (returned by `GetIdentity().GetId()` in DayZ).
 
 **Base URL Path**: `/Player`
 
@@ -56,7 +56,7 @@ Load a player's mod-specific data.
 **URL Parameters**:
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `GUID` | string | Player's 17-digit Steam ID |
+| `GUID` | string | Player's GUID |
 | `mod` | string | Mod name/namespace |
 
 **Request Body**: Empty or ignored
@@ -90,7 +90,7 @@ Save a player's mod-specific data. Creates player record if it doesn't exist.
 **URL Parameters**:
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `GUID` | string | Player's 17-digit Steam ID |
+| `GUID` | string | Player's GUID |
 | `mod` | string | Mod name/namespace |
 
 **Request Body**:
@@ -121,7 +121,7 @@ Update a specific field in a player's mod data.
 **URL Parameters**:
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `GUID` | string | Player's Steam ID |
+| `GUID` | string | Player's GUID |
 | `mod` | string | Mod name/namespace |
 
 **Request Body**:
@@ -165,7 +165,7 @@ Perform an atomic increment/decrement on a numeric field.
 **URL Parameters**:
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `GUID` | string | Player's Steam ID |
+| `GUID` | string | Player's GUID |
 | `mod` | string | Mod name/namespace |
 
 **Request Body**:
@@ -210,7 +210,7 @@ Load a player's public mod data. No authentication required.
 **URL Parameters**:
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `GUID` | string | Player's Steam ID |
+| `GUID` | string | Player's GUID |
 | `mod` | string | Mod name (will be prefixed with `Public.`) |
 
 **Response**: Returns data stored under `Public.ModName`.
@@ -226,7 +226,7 @@ Save a player's public mod data.
 **URL Parameters**:
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `GUID` | string | Player's Steam ID |
+| `GUID` | string | Player's GUID |
 | `mod` | string | Mod name (will be prefixed with `Public.`) |
 
 **Request Body**: The data to save as the player's public data for this mod.
@@ -304,7 +304,7 @@ Delete a mod's data from a player document. **Note**: This removes only the mod'
 **URL Parameters**:
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `GUID` | string | Player's 17-digit Steam ID |
+| `GUID` | string | Player's GUID |
 | `mod` | string | Mod name/namespace to delete |
 
 **Request Body**: Empty or ignored (can send `{}`)
@@ -392,14 +392,11 @@ U().db(PLAYER_DB).Delete("Economy", playerGUID, this, "OnPlayerDataDeleted");
 
 ## GUID Normalization
 
-The service automatically normalizes GUIDs:
-- Leading zeros are preserved
-- Non-numeric characters are stripped
-- Steam ID format (76561198...) is expected
+The service automatically normalizes player identifiers:
+- If a raw 17-digit Steam ID is passed, it is hashed to a GUID (SHA-256 base64)
+- If a GUID is passed, it is used as-is
 
-**Valid GUID formats**:
-- `76561198012345678` (standard Steam ID64)
-- `12345678901234567` (17 digits)
+**Best practice**: Always use `GetIdentity().GetId()` from the DayZ mod, which already returns the correct GUID.
 
 ---
 

@@ -58,7 +58,7 @@ void OnQueryUpdate(int cid, int status, string oid, UDBQueryUpdateResponse resp)
 | `oid` | `string` | Object ID - unique identifier for the record |
 | `element` | `string` | Field name (supports dot notation: `"Stats.Kills"`) |
 | `value` | `float`/`string` | Value for transaction or update |
-| `min` / `max` | `float` | Bounds for transaction (clamp result) |
+| `min` / `max` | `float` | Bounds for transaction (rejects if result is outside range) |
 | `operation` | `string` | Update operation constant (see UpdateOpts) |
 | `query` | `UDBQueryBase` | Query object or JSON string |
 

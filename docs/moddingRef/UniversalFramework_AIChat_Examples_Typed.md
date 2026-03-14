@@ -239,7 +239,7 @@ class PersistentTraderAgent extends UFAIChatAgent {
     
     void PersistentTraderAgent(PlayerBase player) {
         m_Player = player;
-        m_PlayerId = player.GetIdentity().GetPlainId();
+        m_PlayerId = player.GetIdentity().GetId();
         
         // Load memory from database
         LoadMemory();

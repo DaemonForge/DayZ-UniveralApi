@@ -77,7 +77,7 @@ Players receive a JWT token issued by the server on connect. Limited access - pr
 
 ### Key Rules
 
-1. **Player DB is per-player isolated** - A player's auth token only allows access to their own GUID. Server can access any player.
+1. **Player DB is per-player isolated** - A player's auth token only allows access to their own GUID. Server can access any player. Always use `player.GetIdentity().GetId()` for `PLAYER_DB` keys, never `GetPlainId()`.
 
 2. **Object DB is shared** - Any authenticated request can read. Only server can write.
 

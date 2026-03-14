@@ -189,7 +189,7 @@ Implement a global ban system:
 ```cpp
 // Check ban on connect
 void OnPlayerConnect(PlayerBase player) {
-    string guid = player.GetIdentity().GetPlainId();
+  string guid = player.GetIdentity().GetId();
     U().db().Load("GlobalBans", guid, this, "OnBanCheck");
 }
 

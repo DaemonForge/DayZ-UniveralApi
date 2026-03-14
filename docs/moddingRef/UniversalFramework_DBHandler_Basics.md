@@ -17,18 +17,20 @@
 |-----------|--------|----------------|
 | **OBJECT_DB** |||
 | Load | [YES] Read + Create | [YES] Read only |
-| Save | [YES] | âŒ |
-| Update/Transaction | [YES] | âŒ |
+| Save | [YES] | [NO] |
+| Update/Transaction | [YES] | [NO] |
 | Query | [YES] | [YES] |
 | **PLAYER_DB** |||
 | Load | [YES] Any player | [YES] Own GUID only |
-| Save | [YES] | âŒ |
-| Update/Transaction | [YES] | âŒ |
-| Query | [YES] | âŒ |
+| Save | [YES] | [NO] |
+| Update/Transaction | [YES] | [NO] |
+| Query | [YES] | [NO] |
 | PublicLoad | [YES] | [YES] (no auth) |
-| PublicSave | [YES] | âŒ |
+| PublicSave | [YES] | [NO] |
 
 > **Note:** Player auth tokens are GUID-specific. A player can only load their own data from `PLAYER_DB`. The server can access any player's data.
+>
+> **Critical for `PLAYER_DB`:** always use the player's GUID from `player.GetIdentity().GetId()` as the object ID. Never use `GetPlainId()` for `PLAYER_DB` records.
 
 ## Creating a Handler
 
@@ -184,6 +186,7 @@ class PlayerStats {
 
 ### Player vs Object DB
 *   **PLAYER_DB**: Use this for **anything** attached to a specific player GUID. It's secure by default (players can't read others' data).
+    Always key records with `player.GetIdentity().GetId()`. Do **not** key `PLAYER_DB` records with `GetPlainId()`.
     *   *Examples:* RPG Stats, Bank Balance, Quest Progress.
 *   **OBJECT_DB**: Use this for shared data that multiple players might need to access or modify.
     *   *Examples:* Clan details, Faction Bases, Territory markers, Global Auction House.
@@ -435,7 +438,7 @@ class PlayerDataManager {
     protected int m_LoadCallId = -1;
     
     void Init(PlayerBase player) {
-        m_PlayerId = player.GetIdentity().GetPlainId();
+        m_PlayerId = player.GetIdentity().GetId();
         m_LoadCallId = g_PlayerHandler.Load(m_PlayerId, this, "OnDataLoaded");
     }
     

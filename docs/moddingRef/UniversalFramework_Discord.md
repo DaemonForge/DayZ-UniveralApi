@@ -39,6 +39,8 @@ UniversalDSEndpoint discord = U().ds();
 string linkUrl = U().ds().Link();
 
 // Get link URL for specific player (server-side)
+// This link flow expects the player's plain Steam ID.
+// Do not pass GetId() here.
 string linkUrl = U().ds().Link(player.GetIdentity().GetPlainId());
 
 // Display to player
@@ -46,6 +48,8 @@ Print("Link your Discord: " + linkUrl);
 ```
 
 ### Check Discord Status
+
+`CheckDiscord()` and `CheckRoleDiscord()` are looked up against the player's GUID in the service. The backend normalizes either a plain Steam ID or an existing GUID, so `GetIdentity().GetId()` is preferred for consistency with the rest of the framework.
 
 ```enforce
 // Check if player has Discord linked
@@ -258,7 +262,7 @@ class VIPManager {
     protected string m_VIPRoleId = "123456789";
     
     void CheckVIP(PlayerBase player) {
-        string guid = player.GetIdentity().GetPlainId();
+        string guid = player.GetIdentity().GetId();
         U().ds().CheckRoleDiscord(guid, m_VIPRoleId, this, "OnVIPCheck");
     }
     

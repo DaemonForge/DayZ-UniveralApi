@@ -80,6 +80,7 @@ modded class MissionGameplay
         if (player)
         {
             string uid = player.GetIdentity().GetId();
+            // PLAYER_DB always uses the GUID from GetId(), never GetPlainId().
             U().db(PLAYER_DB).Load("YourMod", uid, this, "OnPlayerStatsLoaded");
         }
     }
