@@ -292,33 +292,37 @@ async function runValidatedPlayerTransaction(data, mod, GUID) {
     try {
         const query = { GUID };
         const field = `${mod}.${data.Element}`;
+
+        // Atomic bounds-checked update: the filter ensures the current value
+        // is in the range that would keep the result within [Min, Max] after $inc.
+        const minCurrent = data.Min - data.Value;
+        const maxCurrent = data.Max - data.Value;
+        const filter = { ...query, [field]: { $exists: true, $gte: minCurrent, $lte: maxCurrent } };
+        const result = await collection.findOneAndUpdate(
+            filter,
+            { $inc: { [field]: data.Value } },
+            { returnDocument: 'after', projection: { [field]: 1 } }
+        );
+
+        if (result) {
+            const finalValue = result[mod] ? result[mod][data.Element] : undefined;
+            logger.info(`Validated transaction successful for mod: ${mod}, GUID: ${GUID}, element: ${field}, incrementBy: ${data.Value}, newValue: ${finalValue}`, { mod, GUID, element: field });
+            return { Status: "Success", Error: "", ID: GUID, Mod: mod, Value: finalValue, Element: data.Element };
+        }
+
+        // The atomic update didn't match — determine why.
         const doc = await collection.findOne(query, { projection: { [field]: 1 } });
-        let oldValue = (doc && doc[mod] && typeof doc[mod][data.Element] !== "undefined")
+        const oldValue = (doc && doc[mod] && typeof doc[mod][data.Element] !== "undefined")
             ? doc[mod][data.Element]
             : undefined;
 
-        if (typeof oldValue !== "undefined") {
-            const newValue = oldValue + data.Value;
-            if (newValue <= data.Max && newValue >= data.Min) {
-                const update = { $inc: { [field]: data.Value } };
-                const result = await collection.updateOne(query, update, { upsert: false });
-                if (result.matchedCount >= 1 || result.upsertedCount >= 1) {
-                    const updatedDoc = await collection.findOne(query, { projection: { [field]: 1 } });
-                    let finalValue = updatedDoc && updatedDoc[mod] ? updatedDoc[mod][data.Element] : undefined;
-                    logger.info(`Validated transaction successful for mod: ${mod}, GUID: ${GUID}, element: ${field}, incrementBy: ${data.Value}, newValue: ${finalValue}`, { mod, GUID, element: field });
-                    return { Status: "Success", Error: "", ID: GUID, Mod: mod, Value: finalValue, Element: data.Element };
-                } else {
-                    logger.warn(`Validated transaction failed to update for mod: ${mod}, GUID: ${GUID}, element: ${data.Element}`, { mod, GUID, element: data.Element });
-                    return { Status: "Error", Error: "Failed to Update", ID: GUID, Mod: mod, Value: 0, Element: data.Element };
-                }
-            } else {
-                logger.info(`Transaction out of range for mod: ${mod}, GUID: ${GUID}, element: ${data.Element}. oldValue: ${oldValue}, newValue: ${newValue}, range: [${data.Min}, ${data.Max}]`, { mod, GUID, element: data.Element });
-                return { Status: "Error", Error: "Out of Range", ID: GUID, Mod: mod, Value: oldValue, Element: data.Element };
-            }
-        } else {
+        if (typeof oldValue === "undefined") {
             logger.warn(`Validated transaction failed: Invalid ID or element for mod: ${mod}, GUID: ${GUID}, element: ${data.Element}`, { mod, GUID, element: data.Element });
             return { Status: "NotFound", Error: "Element or object not found", ID: GUID, Mod: mod, Value: 0, Element: data.Element };
         }
+
+        logger.info(`Transaction out of range for mod: ${mod}, GUID: ${GUID}, element: ${data.Element}. currentValue: ${oldValue}, attempted: ${data.Value}, range: [${data.Min}, ${data.Max}]`, { mod, GUID, element: data.Element });
+        return { Status: "Error", Error: "Out of Range", ID: GUID, Mod: mod, Value: oldValue, Element: data.Element };
     } catch (err) {
         logger.error(`Validated transaction error for mod: ${mod}, GUID: ${GUID}, element: ${data.Element}: ${err.message}`, { error: err, stack: err.stack });
         return { Status: "Error", Error: `Err: ${err}`, ID: GUID, Mod: mod, Value: 0, Element: data.Element };

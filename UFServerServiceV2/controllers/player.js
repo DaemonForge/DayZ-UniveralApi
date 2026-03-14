@@ -22,7 +22,7 @@ router.post('/Save/:GUID/:mod', requireServerAuth, runSave);
 router.post('/Update/:GUID/:mod', requireServerAuth, runUpdate);
 router.post('/PublicLoad/:GUID/:mod', runGetPublic);
 router.post('/PublicSave/:GUID/:mod', requireServerAuth, runSavePublic);
-router.post('/Transaction/:GUID/:mod', requireServerAuth, runTransaction);
+router.post('/Transaction/:GUID/:mod', requireServerAuth, Transaction);
 router.post('/Delete/:GUID/:mod', requireServerAuth, runDelete);
 
 async function runGet(req, res) {
@@ -230,7 +230,7 @@ async function Transaction(req, res) {
     logger.debug(`Received Transaction call for GUID ${GUID} and mod ${mod}`, { GUID, mod, clientIP: req.ip });
     let RawData = req.body;
     logger.debug('Raw transaction payload', { RawData });
-    if (RawData.Min !== undefined && RawData.Max !== undefined && RawData.Min !== RawData.Max) {
+    if (RawData.Min !== undefined && RawData.Max !== undefined) {
         logger.debug('Routing to validated transaction');
         runValidatedTx(req, res);
     } else {

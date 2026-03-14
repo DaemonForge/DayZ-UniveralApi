@@ -206,7 +206,7 @@ async function runTransaction(req, res) {
     logger.info(`Object transaction request`, { mod, ObjectId });
     try {
         let response;
-        if (data.Min !== undefined && data.Max !== undefined && data.Min !== data.Max) {
+        if (data.Min !== undefined && data.Max !== undefined) {
             logger.debug(`Running validated transaction with Min: ${data.Min} and Max: ${data.Max}`);
             response = await runValidatedObjectTransaction(data, ObjectId, mod);
         } else {

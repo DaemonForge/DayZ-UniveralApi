@@ -441,8 +441,8 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param oid Object ID
 	 * @param element Field name
 	 * @param value Amount to add/subtract
-	 * @param min Minimum allowed value (clamps result)
-	 * @param max Maximum allowed value (clamps result)
+	 * @param min Minimum allowed result value (rejects if below)
+	 * @param max Maximum allowed result value (rejects if above)
 	 * @param cb UFCallbackBase callback
 	 * @return Call ID or -1 on error
 	 * 
@@ -510,8 +510,8 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param oid Object ID
 	 * @param element Field name
 	 * @param value Amount to add/subtract
-	 * @param min Minimum allowed value (clamps result)
-	 * @param max Maximum allowed value (clamps result)
+	 * @param min Minimum allowed result value (rejects if below)
+	 * @param max Maximum allowed result value (rejects if above)
 	 * @param cbInstance Object to call callback on
 	 * @param cbFunction Callback method name
 	 * @return Call ID or -1 on error

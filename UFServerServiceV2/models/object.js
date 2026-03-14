@@ -338,47 +338,51 @@ async function runValidatedObjectTransaction(data, ObjectId, Mod) {
   try {
     const query = { ObjectId, Mod };
     const fieldPath = `data.${data.Element}`;
+
+    // Atomic bounds-checked update: the filter ensures the current value
+    // is in the range that would keep the result within [Min, Max] after $inc.
+    const minCurrent = data.Min - data.Value;
+    const maxCurrent = data.Max - data.Value;
+    const filter = { ...query, [fieldPath]: { $exists: true, $gte: minCurrent, $lte: maxCurrent } };
+    const result = await collection.findOneAndUpdate(
+        filter,
+        { $inc: { [fieldPath]: data.Value } },
+        { returnDocument: 'after', projection: { [fieldPath]: 1 } }
+    );
+
+    if (result) {
+      const finalValue = result.data ? result.data[data.Element] : undefined;
+      logger.info(`Validated transaction successful for field '${data.Element}'`, {
+        ObjectId,
+        Mod,
+        element: fieldPath,
+        incrementBy: data.Value,
+        newValue: finalValue
+      });
+      return { Status: "Success", Error: "", ID: ObjectId, Mod, Value: finalValue, Element: data.Element };
+    }
+
+    // The atomic update didn't match — determine why.
     const doc = await collection.findOne(query, { projection: { [fieldPath]: 1 } });
-    let oldValue = (doc && doc.data && typeof doc.data[data.Element] !== "undefined")
+    const oldValue = (doc && doc.data && typeof doc.data[data.Element] !== "undefined")
       ? doc.data[data.Element]
       : undefined;
-  
-    if (typeof oldValue !== "undefined") {
-      const newValue = oldValue + data.Value;
-      if (newValue <= data.Max && newValue >= data.Min) {
-        const update = { $inc: { [fieldPath]: data.Value } };
-        const result = await collection.updateOne(query, update, { upsert: false });
-        if (result.matchedCount >= 1 || result.upsertedCount >= 1) {
-          const updatedDoc = await collection.findOne(query, { projection: { [fieldPath]: 1 } });
-          let finalValue = updatedDoc && updatedDoc.data ? updatedDoc.data[data.Element] : undefined;
-          logger.info(`Validated transaction successful for field '${data.Element}'`, {
-            ObjectId,
-            Mod,
-            element: fieldPath,
-            incrementBy: data.Value,
-            newValue: finalValue
-          });
-          return { Status: "Success", Error: "", ID: ObjectId, Mod, Value: finalValue, Element: data.Element };
-        } else {
-          logger.warn(`Validated transaction failed to update field '${data.Element}'`, { ObjectId, Mod });
-          return { Status: "Error", Error: "Failed to Update", ID: ObjectId, Mod, Value: 0, Element: data.Element };
-        }
-      } else {
-        logger.info(`Transaction out of range for field '${data.Element}'`, {
-          ObjectId,
-          Mod,
-          element: data.Element,
-          oldValue,
-          newValue,
-          min: data.Min,
-          max: data.Max
-        });
-        return { Status: "Error", Error: "Out of Range", ID: ObjectId, Mod, Value: oldValue, Element: data.Element };
-      }
-    } else {
+
+    if (typeof oldValue === "undefined") {
       logger.warn(`Validated transaction failed: Object or element '${data.Element}' not found`, { ObjectId, Mod });
       return { Status: "NotFound", Error: "Element or object not found", ID: ObjectId, Mod, Value: 0, Element: data.Element };
     }
+
+    logger.info(`Transaction out of range for field '${data.Element}'`, {
+      ObjectId,
+      Mod,
+      element: data.Element,
+      currentValue: oldValue,
+      attempted: data.Value,
+      min: data.Min,
+      max: data.Max
+    });
+    return { Status: "Error", Error: "Out of Range", ID: ObjectId, Mod, Value: oldValue, Element: data.Element };
   } catch (err) {
     logger.error(`Validated transaction error for field '${data.Element}': ${err.message}`, { error: err, ObjectId, Mod });
     return { Status: "Error", Error: `Err: ${err.message}`, ID: ObjectId, Mod, Value: 0, Element: data.Element };
