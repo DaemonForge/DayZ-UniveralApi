@@ -106,7 +106,7 @@ router.post("/Register/:modId", requireServerAuth, async (req, res) => {
     }
 
     const doc = await upsertModSettings(modId, payload);
-    logger.info("Mod settings registered", { modId, modName: doc.modName });
+    logger.info(`Mod settings ${doc.action}: '${doc.modName}' (modId: ${modId}) by server '${req.serverId}'`, { modId, modName: doc.modName, action: doc.action, server: req.serverId });
     res.json({ Status: "Success", Data: { modId: doc.modId, modName: doc.modName } });
   } catch (err) {
     logger.error("Failed to register mod settings", { modId: req.params.modId, error: err.message });

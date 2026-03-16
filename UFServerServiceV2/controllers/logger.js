@@ -45,7 +45,7 @@ async function runLoggerOne(req, res, id, auth) {
             const result = await collection.insertOne(RawData);
             if (result.insertedId != undefined ){
                 res.json({Status: "Success", Error: ""});
-                logger.info('New Log Registered', { clientType: RawData.ClientType, clientId: RawData.ClientId });
+                logger.info(`Log registered [${RawData.ClientType}] server=${id} client=${RawData.ClientId}`);
             } else {
                 logger.warn('Database Write Error', { operation: 'insertOne', collection: 'Logs' });
                 res.status(500);
@@ -89,7 +89,7 @@ async function runLoggerMany(req, res, id, auth) {
             const result = await collection.insertMany(RawData);
             if (result.insertedCount > 0 ){
                 res.json({Status: "Success", Error: "" });
-                logger.info('New Log Array Registered', { clientType: ClientType, clientId: ClientId, count: result.insertedCount });
+                logger.info(`Log batch registered [${ClientType}] server=${id} client=${ClientId} count=${result.insertedCount}`);
             } else {
                 res.status(500);
                 res.json({Status: "Error", Error: "Database Write Error"});

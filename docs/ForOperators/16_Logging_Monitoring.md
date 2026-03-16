@@ -89,7 +89,7 @@ Logs are stored in JSON format for easy parsing:
 
 ```json
 {"level":"info","message":"[WebServer] Server started","timestamp":"1/11/2025, 2:30:45 PM"}
-{"level":"info","message":"New Log Registered","clientType":"Server","clientId":"a1b2...","timestamp":"..."}
+{"level":"info","message":"Log registered [Server] server=MyServer client=a1b2...","timestamp":"..."}
 ```
 
 ### Console Output

@@ -87,8 +87,8 @@ async function upsertModSettings(modId, payload) {
     );
 
     const action = result.upsertedCount > 0 ? "created" : "updated";
-    logger.info(`[ModSettings] ${action} settings page`, { modId, action });
-    return doc;
+    logger.info(`[ModSettings] ${action} settings page '${doc.modName}' (modId: ${modId}, author: ${doc.author || 'none'}, globals: ${doc.globals.length}, template: ${doc.template.length} chars)`, { modId, modName: doc.modName, action });
+    return { ...doc, action };
   } finally {
     await client.close();
   }

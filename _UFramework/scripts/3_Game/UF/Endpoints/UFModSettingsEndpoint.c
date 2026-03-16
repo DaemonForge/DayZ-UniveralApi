@@ -128,6 +128,10 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 			return -1;
 		}
 		
+		string displayName = modName;
+		if (displayName == "") displayName = modId;
+		UFLog.Info("[UF] Registering mod settings page '" + displayName + "' (modId: " + modId + ", template: " + tmpl.Length().ToString() + " chars)");
+		
 		autoptr UFModSettingsPayload payload = CreatePayload(modName, author, tmpl, globals);
 		Post("Register/" + modId, payload.ToJson(), U().RegisterCall(new USilentCallBack(), cid));
 		return cid;
@@ -155,6 +159,10 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 			return -1;
 		}
 		
+		string displayName = modName;
+		if (displayName == "") displayName = modId;
+		UFLog.Info("[UF] Registering mod settings page '" + displayName + "' (modId: " + modId + ", template: " + tmpl.Length().ToString() + " chars)");
+		
 		autoptr UFModSettingsPayload payload = CreatePayload(modName, author, tmpl, globals);
 		Post("Register/" + modId, payload.ToJson(), new UDBCallBack(cbInstance, cbFunction, cid, modId));
 		return cid;
@@ -178,6 +186,10 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 			UFLog.Err("[UFModSettingsEndpoint] Register: modId, template, and callback are required");
 			return -1;
 		}
+		
+		string displayName = modName;
+		if (displayName == "") displayName = modId;
+		UFLog.Info("[UF] Registering mod settings page '" + displayName + "' (modId: " + modId + ", template: " + tmpl.Length().ToString() + " chars)");
 		
 		autoptr UFModSettingsPayload payload = CreatePayload(modName, author, tmpl, globals);
 		cb.SetOID(modId);
