@@ -9,6 +9,7 @@ const { spawn } = require('child_process');
 const OpenAI = require('openai').default;
 const AudioModel = require('../models/tts');
 const { createLogger, ensureDirExsist } = require('../utils');
+const { requirePlayerOrServerAuth } = require('../auth/utils');
 const logger = createLogger(global.logger, 'TTS');
 
 // Conditionally load Electron app module (only available in Electron environment)
@@ -224,26 +225,28 @@ function normalizeVisualMode(input) {
     }
   This endpoint creates a new audio job (via AudioModel.createJob) and starts asynchronous processing.
 */
-router.post('/Generate/:VoiceID', async (req, res) => {
+router.post('/Generate/:VoiceID', requirePlayerOrServerAuth, async (req, res) => {
   try {
     const { VoiceID } = req.params;
+
     const message = req.body.Message ? req.body.Message.trim() :
       `This is a generated audio with voice ${VoiceID}.`;
     const instructions = req.body.Instructions ? req.body.Instructions.trim() : "";
-    
+
     let staticLevel = parseFloat(req.body.StaticNoise);
     if (isNaN(staticLevel) || staticLevel < 0 || staticLevel > 1) {
       staticLevel = 0.0;
     }
-    
+
     const visualMode = normalizeVisualMode(req.body.Visual);
-    
+
     // Create a new job in MongoDB.
     const jobId = await AudioModel.createJob(VoiceID, message, instructions, staticLevel, visualMode);
-    
+
     // Start asynchronous audio processing.
-    processAudioClip(jobId, VoiceID, message, instructions, staticLevel, visualMode);
-    
+    processAudioClip(jobId, VoiceID, message, instructions, staticLevel, visualMode)
+      .catch(err => logger.error(`Error processing audio clip ${jobId}: ${err.message}`, { error: err.message }));
+
     res.json({ TTSId: jobId });
   } catch (error) {
     logger.error("Error in /Generate route", { error: error.message });
@@ -255,7 +258,7 @@ router.post('/Generate/:VoiceID', async (req, res) => {
   GET /Status/:TTSId
   Returns the current job status.
 */
-router.get('/Status/:TTSId', async (req, res) => {
+router.get('/Status/:TTSId', requirePlayerOrServerAuth, async (req, res) => {
   try {
     const { TTSId } = req.params;
     const job = await AudioModel.getJob(TTSId);
@@ -270,7 +273,7 @@ router.get('/Status/:TTSId', async (req, res) => {
   POST /Download/:TTSId
   Returns the Base64 encoded MP4 file if the job succeeded.
 */
-router.post('/Download/:TTSId', async (req, res) => {
+router.post('/Download/:TTSId', requirePlayerOrServerAuth, async (req, res) => {
   try {
     logger.info("TTS Download request", { params: req.params });
     const { TTSId } = req.params;
