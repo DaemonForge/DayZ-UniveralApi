@@ -9,6 +9,7 @@ const { exec, execSync } = require('child_process');
 const https = require('https');
 const http = require('http');
 const { createLogger, NormalizeToGUID, ensureDirExsist } = require('../utils');
+const { requireServerAuth, requirePlayerOrServerAuth } = require('../auth/utils');
 const logger = createLogger(global.logger, 'images');
 
 // Import your Mongoose model for storing images.
@@ -245,7 +246,7 @@ async function convertPngToDdsBase64(imageUrl) {
 /*
     Endpoint: POST /Generate
 */
-router.post('/Generate', async (req, res) => {
+router.post('/Generate', requireServerAuth, async (req, res) => {
      const imageUrl = req.body.ImageURL;
      logger.info(`/Generate: Received request for ${imageUrl}`);
      if (!imageUrl) {
@@ -284,7 +285,7 @@ router.post('/Generate', async (req, res) => {
 /*
     Endpoint: POST /Download/:imageId
 */
-router.post('/Download/:imageId', async (req, res) => {
+router.post('/Download/:imageId', requireServerAuth, async (req, res) => {
      const imageId = req.params.imageId;
      logger.info(`Image download request`, { imageId });
      try {
@@ -309,7 +310,7 @@ router.post('/Download/:imageId', async (req, res) => {
 /*
     Endpoint: POST /Download
 */
-router.post('/Download', async (req, res) => {
+router.post('/Download', requireServerAuth, async (req, res) => {
      const imageUrl = req.body.ImageURL;
      logger.debug(`/Download: Request received for ${imageUrl}`);
      if (!imageUrl) {
@@ -330,7 +331,7 @@ router.post('/Download', async (req, res) => {
 /*
     Endpoint: POST /Discord/:GUID
 */
-router.post('/Discord/:GUID', async (req, res) => {
+router.post('/Discord/:GUID', requirePlayerOrServerAuth, async (req, res) => {
      if (req.params.GUID === "own") {
           req.params.GUID = req.GUID;
      }
