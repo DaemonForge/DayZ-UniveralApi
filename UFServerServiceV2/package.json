@@ -4,6 +4,7 @@
   "description": "Universal Framework Service - Backend service for DayZ modding with Discord, AI, and database integration",
   "main": "main.js",
   "scripts": {
+    "postinstall": "node postinstall.js",
     "start": "electron .",
     "dev": "nodemon app.js",
     "build": "dotenv -e .env.trustedsigning -- electron-builder",

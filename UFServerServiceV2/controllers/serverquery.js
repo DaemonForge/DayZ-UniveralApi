@@ -37,11 +37,17 @@ router.post('/Status/:ip/:port', requirePlayerOrServerAuth, GetServerStatus);
 
 async function QueryServer(ip, port) {
     try {
+        logger.debug(`Querying ${ip}:${port}...`);
         let data = GameDig.query({
             type: 'dayz',
             host: ip,
             port: port,
-            requestRules: true
+            givenPortOnly: true,
+            requestRules: true,
+            socketTimeout: 5000,
+            attemptTimeout: 15000,
+            maxRetries: 2,
+            debug: true
         }).then((state) => {
             let keywords = state.raw.tags;
             return {
@@ -69,13 +75,13 @@ async function QueryServer(ip, port) {
                 ping: state.ping
             }
         }).catch((error) => {
-            logger.error(`Server query failed: ${error.message}`, { error, ip, port });
+            logger.error(`Server query failed for ${ip}:${port}: ${error.message}`, { stack: error.stack });
             return { ip: ip, query_port: parseInt(port), status: "offline", error: "Server is offline or wrong ip/query port" };
         });
         const theData = await data;
         return theData;
     } catch (error) {
-        logger.error(`Server query exception: ${error.message}`, { error, ip, port });
+        logger.error(`Server query exception for ${ip}:${port}: ${error.message}`, { stack: error.stack });
         return { ip: ip, query_port: parseInt(port), status: "offline", error: "Server is offline or wrong ip/query port" };
     }
 };
