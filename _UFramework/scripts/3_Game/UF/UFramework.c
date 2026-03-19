@@ -1473,6 +1473,9 @@ static ref UFramework g_UFramework;
 
 static UFramework U()
 {
+	if (!g_Game)
+		return null;
+
 	if ( !g_UFramework )
 	{
 		g_UFramework = new UFramework;

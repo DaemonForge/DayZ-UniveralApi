@@ -52,7 +52,7 @@ class UFrameworkConfig extends Managed {
 	 * - Creates default config file if none exists
 	 */
 	void Load(){
-		if (g_Game.IsServer()){
+		if (g_Game && g_Game.IsServer()){
 			if (FileExist(ConfigPATH)){ //If config exist load File
 			    JsonFileLoader<UFrameworkConfig>.JsonLoadFile(ConfigPATH, this);
 				if (ServerURL != ""){

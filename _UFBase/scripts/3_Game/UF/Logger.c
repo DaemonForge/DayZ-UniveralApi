@@ -249,7 +249,7 @@ class ULoggerBaseInstance extends Managed {
 		if (m_LogLevel < level && m_LogToApiLevel < level){
 			return;
 		}
-		if (level == 2 && m_LogLevel >= level) {
+		if (level == 2 && m_LogLevel >= level && g_Game) {
 			g_Game.AdminLog("[" + m_LogType + "]" + GetTag(level) + text);
 		}
 		if (m_isInit && m_LogLevel >= level){
