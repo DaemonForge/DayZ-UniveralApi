@@ -57,6 +57,7 @@ class UDBCallBack : UFRestCallBackBase
 	override void OnError(int errorCode) {
 		if (UF().IsCallCanceled(CallId)){
 			UFLog.Debug("Call " + CallId + " not called as it was requested to be canceled - OnError " + UF().ErrorToString(errorCode));
+			super.OnError(errorCode);
 			return;
 		}
 		int rstatus = UF_SERVERERROR;
@@ -66,6 +67,7 @@ class UDBCallBack : UFRestCallBackBase
 		if (GetInstance() && Function != ""){
 			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, rstatus, OID, "{}"));
 		}
+		super.OnError(errorCode);
 	};
 	
 	/**
@@ -77,11 +79,13 @@ class UDBCallBack : UFRestCallBackBase
 	override void OnTimeout() {
 		if (UF().IsCallCanceled(CallId)){
 			UFLog.Debug("Call " + CallId + " not called as it was requested to be canceled - OnTimeout");
+			super.OnTimeout();
 			return;
 		}
 		if (GetInstance() && Function != ""){
 			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, UF_TIMEOUT, OID, "{}"));
 		}
+		super.OnTimeout();
 	};
 	
 	/**
@@ -97,6 +101,7 @@ class UDBCallBack : UFRestCallBackBase
 	override void OnSuccess(string data, int dataSize) {
 		if (UF().IsCallCanceled(CallId)){
 			UFLog.Debug("Call " + CallId + " not called as it was requested to be canceled - OnSuccess");
+			super.OnSuccess(data, dataSize);
 			return;
 		}
 		int rstatus = UF_SUCCESS;
@@ -106,5 +111,6 @@ class UDBCallBack : UFRestCallBackBase
 		if (GetInstance() && Function != ""){
 			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, string>(CallId, rstatus, OID, data));
 		}
+		super.OnSuccess(data, dataSize);
 	};
 };

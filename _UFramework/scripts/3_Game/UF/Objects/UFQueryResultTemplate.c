@@ -4,7 +4,7 @@
  * Template class for database query results. Contains an array of objects of type T
  * that match the query criteria, along with a count of results.
  *
- * This is the return type for UF().db().Query() operations when using typed callbacks.
+ * This is the return type for UF().db(OBJECT_DB).Query() operations when using typed callbacks.
  *
  * Usage Example:
  *   // In callback:
@@ -20,7 +20,7 @@
  *       }
  *   }
  *
- * @see UF().db().Query() for query operations
+ * @see UF().db(OBJECT_DB).Query() for query operations
  * @see UDBQuery for query construction
  */
 class UDBQueryResult<Class T> : StatusObject {

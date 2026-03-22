@@ -21,7 +21,7 @@ modded class MissionBaseWorld
 	 * 
 	 * @usage
 	 * if (GetMission().UFIsInitialized()) {
-	 *     UF().db().Load("MyMod", "data123", callback);
+	 *     UF().db(OBJECT_DB).Load("MyMod", "data123", callback);
 	 * }
 	 */
 	bool UFIsInitialized(){
@@ -55,7 +55,7 @@ modded class MissionBaseWorld
 	 *     override void UFrameworkReady() {
 	 *         super.UFrameworkReady();
 	 *         // Your mod initialization code here
-	 *         UF().db().Load("MyMod", "config", this, "OnConfigLoaded");
+	 *         UF().db(OBJECT_DB).Load("MyMod", "config", this, "OnConfigLoaded");
 	 *     }
 	 * }
 	 */

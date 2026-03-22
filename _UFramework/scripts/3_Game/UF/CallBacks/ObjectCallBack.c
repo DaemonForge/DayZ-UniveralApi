@@ -61,7 +61,7 @@ class UFRestCallBackBase : RestCallback
  * 
  * Usage:
  * @code
- * UF().db().Load("MyMod", "player123", new UFCallback<PlayerData>(this, "OnPlayerLoaded"));
+ * UF().db(OBJECT_DB).Load("MyMod", "player123", new UFCallback<PlayerData>(this, "OnPlayerLoaded"));
  * 
  * void OnPlayerLoaded(int cid, int status, string oid, PlayerData data) {
  *     if (status == UF_SUCCESS) {
@@ -140,7 +140,7 @@ class UFCallback<Class T> extends UFCallbackBase {
  * autoptr PlayerData myData = new PlayerData();
  * autoptr UFCallbackLoader<PlayerData> cb = new UFCallbackLoader<PlayerData>(this, "OnLoaded");
  * cb.SetObject(myData);
- * UF().db().Load("MyMod", "player123", cb);
+ * UF().db(OBJECT_DB).Load("MyMod", "player123", cb);
  * @endcode
  */
 class UFCallbackLoader<Class T> extends UFCallbackBase {

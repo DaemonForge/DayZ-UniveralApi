@@ -152,7 +152,7 @@ modded class MissionServer extends MissionBase
 	 * override void UFrameworkReady() {
 	 *     super.UFrameworkReady();
 	 *     // Load server config from database
-	 *     UF().db().Load("ServerMod", "config", this, "OnServerConfigLoaded");
+	 *     UF().db(OBJECT_DB).Load("ServerMod", "config", this, "OnServerConfigLoaded");
 	 * }
 	 * 
 	 * @note ALWAYS call super.UFrameworkReady() first

@@ -105,8 +105,8 @@ class UFramework extends Managed {
 	 * @return UDBEndpoint instance for database operations, NULL if invalid collection type
 	 * 
 	 * @usage Object Database (accessible to all):
-	 * UF().db().Save("MyMod", "config", jsonData, this, "OnSaved");
-	 * UF().db().Load("MyMod", "playerData_" + guid, this, "OnLoaded");
+	 * UF().db(OBJECT_DB).Save("MyMod", "config", jsonData, this, "OnSaved");
+	 * UF().db(OBJECT_DB).Load("MyMod", "playerData_" + guid, this, "OnLoaded");
 	 * 
 	 * @usage Player Database (client-only, own data):
 	 * UF().db(PLAYER_DB).Save("MyMod", "settings", jsonData, this, "OnSaved");
@@ -116,7 +116,7 @@ class UFramework extends Managed {
 			if (!m_ObjectEndPoint){
 				m_ObjectEndPoint = new UDBEndpoint("Object");
 				if (!m_ObjectEndPoint){
-					Error2("[UF] db()", "CRITICAL: Failed to create Object endpoint!");
+					Error2("[UF] db(OBJECT_DB)", "CRITICAL: Failed to create Object endpoint!");
 				}
 			}
 			return m_ObjectEndPoint;
@@ -125,12 +125,12 @@ class UFramework extends Managed {
 			if (!m_PlayerEndPoint){
 				m_PlayerEndPoint = new UDBEndpoint("Player");
 				if (!m_PlayerEndPoint){
-					Error2("[UF] db()", "CRITICAL: Failed to create Player endpoint!");
+					Error2("[UF] db(OBJECT_DB)", "CRITICAL: Failed to create Player endpoint!");
 				}
 			}
 			return m_PlayerEndPoint;
 		}
-		Error2("[UF] db()", "Invalid collection type: " + collection + " - use OBJECT_DB or PLAYER_DB");
+		Error2("[UF] db(OBJECT_DB)", "Invalid collection type: " + collection + " - use OBJECT_DB or PLAYER_DB");
 		return NULL;
 	}
 	
@@ -891,7 +891,7 @@ class UFramework extends Managed {
 	 * Gets UniversalRest endpoint (legacy RestCallback interface).
 	 * 
 	 * @return UniversalRest for callback-based REST operations
-	 * @deprecated Use db(), ds(), api(), etc. with UFCallbackBase instead
+	 * @deprecated Use db(OBJECT_DB), ds(), api(), etc. with UFCallbackBase instead
 	 */
 	UniversalRest Rest(){
 		if (!m_UniversalRest){
@@ -1473,11 +1473,10 @@ static ref UFramework g_UFramework;
 
 static UFramework UF()
 {
-	if (!g_Game)
-		return null;
-
 	if ( !g_UFramework )
 	{
+		if (!g_Game)
+			return null;
 		g_UFramework = new UFramework;
 		g_UFramework.Init();
 	}

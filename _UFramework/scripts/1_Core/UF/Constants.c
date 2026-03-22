@@ -72,7 +72,7 @@ static const string UF_QUEUE_LIFO = "LIFO";  // Last In, First Out
 /**
  * UpdateOpts Class
  *
- * Defines the available database update operations for UF().db().Update() calls.
+ * Defines the available database update operations for UF().db(OBJECT_DB).Update() calls.
  * These operations modify specific fields within a database document without
  * replacing the entire object.
  *
@@ -86,8 +86,8 @@ static const string UF_QUEUE_LIFO = "LIFO";  // Last In, First Out
  *   - PULLALL: Empties an entire array
  *
  * Example:
- *   UF().db().Update("MyMod", "player123", "coins", "100", UpdateOpts.SET);
- *   UF().db().Update("MyMod", "player123", "items", "\"sword\"", UpdateOpts.PUSH);
+ *   UF().db(OBJECT_DB).Update("MyMod", "player123", "coins", "100", UpdateOpts.SET);
+ *   UF().db(OBJECT_DB).Update("MyMod", "player123", "items", "\"sword\"", UpdateOpts.PUSH);
  */
 class UpdateOpts {
 	static string SET = "set"; // `set` to set the value of an element

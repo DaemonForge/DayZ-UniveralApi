@@ -26,7 +26,7 @@ modded class MissionBase extends MissionBaseWorld
 	 * override void UFrameworkReady() {
 	 *     super.UFrameworkReady();
 	 *     // Load mod data from database
-	 *     UF().db().Load("MyMod", "config", this, "OnConfigLoaded");
+	 *     UF().db(OBJECT_DB).Load("MyMod", "config", this, "OnConfigLoaded");
 	 * }
 	 * 
 	 * @note ALWAYS call super.UFrameworkReady() first
