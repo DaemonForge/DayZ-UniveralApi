@@ -20,7 +20,7 @@ modded class MissionServer extends MissionBase
 	 */
 	void MissionServer()
 	{
-		U();
+		UF();
 		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.UFrameworkReady);
 	}
 	
@@ -35,7 +35,7 @@ modded class MissionServer extends MissionBase
 	 * @param preloadTimeout Output - timeout for preload
 	 * 
 	 * @note Resets retry counter for this player
-	 * @note Requests fresh token via U().PreparePlayerAuth()
+	 * @note Requests fresh token via UF().PreparePlayerAuth()
 	 */
 	override void OnClientPrepareEvent(PlayerIdentity identity, out bool useDB, out vector pos, out float yaw, out int preloadTimeout)
 	{
@@ -45,7 +45,7 @@ modded class MissionServer extends MissionBase
 			// Reset retry counter for new connection
 			m_AuthRetryCount.Set(guid, 0);
 			// Request fresh token - PreparePlayerAuth now tracks pending requests internally
-			U().PreparePlayerAuth(guid);
+			UF().PreparePlayerAuth(guid);
 		}
 		super.OnClientPrepareEvent(identity, useDB, pos, yaw, preloadTimeout);
 	}
@@ -93,7 +93,7 @@ modded class MissionServer extends MissionBase
 		}
 		
 		// Find the player by GUID
-		DayZPlayer player = U().FindPlayer(guid);
+		DayZPlayer player = UF().FindPlayer(guid);
 		if (!player || !player.GetIdentity()){
 			UFLog.Debug("EnsureAuthDelivered - Player " + guid + " no longer connected, skipping");
 			m_AuthRetryCount.Remove(guid);
@@ -101,10 +101,10 @@ modded class MissionServer extends MissionBase
 		}
 		
 		string authtoken = "";
-		if (U().GetPlayerAuth(guid, authtoken)){
+		if (UF().GetPlayerAuth(guid, authtoken)){
 			// Auth is cached, send it to player
 			UFLog.Debug("EnsureAuthDelivered - Sending auth token to " + guid + " (retry #" + retryCount + ")");
-			U().SendAuthToken(player.GetIdentity(), authtoken);
+			UF().SendAuthToken(player.GetIdentity(), authtoken);
 			m_AuthRetryCount.Remove(guid);
 		} else if (retryCount < MAX_AUTH_RETRIES){
 			// Auth not ready yet, schedule another check
@@ -112,7 +112,7 @@ modded class MissionServer extends MissionBase
 			m_AuthRetryCount.Set(guid, retryCount);
 			UFLog.Debug("EnsureAuthDelivered - Auth not ready for " + guid + ", scheduling retry #" + retryCount);
 			// Also try to request auth again in case the first request failed
-			U().PreparePlayerAuth(guid);
+			UF().PreparePlayerAuth(guid);
 			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.EnsureAuthDelivered, AUTH_RETRY_DELAY_MS * retryCount, false, guid);
 		} else {
 			UFLog.Info("EnsureAuthDelivered - Max retries reached for " + guid + ", giving up");
@@ -139,7 +139,7 @@ modded class MissionServer extends MissionBase
 		if (player && player.GetIdentity()){
 			string guid = player.GetIdentity().GetId();
 			UFLog.Debug("Player disconnected: " + guid + ", clearing cached auth token");
-			U().ClearPlayerAuth(guid);
+			UF().ClearPlayerAuth(guid);
 			m_AuthRetryCount.Remove(guid);
 		}
 	}
@@ -152,7 +152,7 @@ modded class MissionServer extends MissionBase
 	 * override void UFrameworkReady() {
 	 *     super.UFrameworkReady();
 	 *     // Load server config from database
-	 *     U().db().Load("ServerMod", "config", this, "OnServerConfigLoaded");
+	 *     UF().db().Load("ServerMod", "config", this, "OnServerConfigLoaded");
 	 * }
 	 * 
 	 * @note ALWAYS call super.UFrameworkReady() first

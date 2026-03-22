@@ -15,7 +15,7 @@ The Global Handler (`UDBGlobalEndpoint`) provides a key-value store for server-w
 ## Accessing the Global Endpoint
 
 ```enforce
-UDBGlobalEndpoint globals = U().globals();
+UDBGlobalEndpoint globals = UF().globals();
 ```
 
 ## Permissions
@@ -53,14 +53,14 @@ state.LastWipeDate = "2024-01-15";
 
 string json;
 if (UJSONHandler<MyModGlobals>.GetString(state, json)) {
-    U().globals().Save("MyMod", json);
+    UF().globals().Save("MyMod", json);
 }
 ```
 
 ### Save with Callback
 
 ```enforce
-U().globals().Save("MyMod", json, this, "OnSaveComplete");
+UF().globals().Save("MyMod", json, this, "OnSaveComplete");
 
 void OnSaveComplete(int cid, int status, string oid, string data) {
     if (status == UF_SUCCESS) {
@@ -72,7 +72,7 @@ void OnSaveComplete(int cid, int status, string oid, string data) {
 ### Save with Typed Callback
 
 ```enforce
-U().globals().Save("MyMod", json, new UFCallback<StatusObject>(this, "OnSaved"));
+UF().globals().Save("MyMod", json, new UFCallback<StatusObject>(this, "OnSaved"));
 
 void OnSaved(int cid, int status, string oid, StatusObject result) {
     if (status == UF_SUCCESS) {
@@ -86,7 +86,7 @@ void OnSaved(int cid, int status, string oid, StatusObject result) {
 ### Load with Callback
 
 ```enforce
-U().globals().Load("MyMod", this, "OnGlobalsLoaded");
+UF().globals().Load("MyMod", this, "OnGlobalsLoaded");
 
 void OnGlobalsLoaded(int cid, int status, string oid, string json) {
     if (status == UF_SUCCESS) {
@@ -95,7 +95,7 @@ void OnGlobalsLoaded(int cid, int status, string oid, string json) {
 ## Best Practices
 
 ### Use Generic Wrappers
-Instead of calling `U().globals()` directly, use the `UFGlobalHandler<T>` wrapper class. This handles JSON serialization/deserialization automatically and provides a cleaner API.
+Instead of calling `UF().globals()` directly, use the `UFGlobalHandler<T>` wrapper class. This handles JSON serialization/deserialization automatically and provides a cleaner API.
 
 ```enforce
 class MyGlobalState {
@@ -137,7 +137,7 @@ Use a global flag to trigger events across all servers simultaneously.
 ### Load with Typed Callback
 
 ```enforce
-U().globals().Load("MyMod", new UFCallback<MyModGlobals>(this, "OnLoaded"));
+UF().globals().Load("MyMod", new UFCallback<MyModGlobals>(this, "OnLoaded"));
 
 void OnLoaded(int cid, int status, string oid, MyModGlobals state) {
     if (status == UF_SUCCESS && state) {
@@ -152,10 +152,10 @@ Atomic increment for numeric fields.
 
 ```enforce
 // Increment by 1 (default)
-U().globals().Increment("MyMod", "TotalDeaths");
+UF().globals().Increment("MyMod", "TotalDeaths");
 
 // Increment by specific amount
-U().globals().Increment("MyMod", "TotalKills", 5);
+UF().globals().Increment("MyMod", "TotalKills", 5);
 ```
 
 ## Transaction Operations
@@ -164,11 +164,11 @@ Atomic numeric operations with optional callbacks.
 
 ```enforce
 // Simple transaction
-U().globals().Transaction("MyMod", "ActivePlayers", 1);
-U().globals().Transaction("MyMod", "ActivePlayers", -1);
+UF().globals().Transaction("MyMod", "ActivePlayers", 1);
+UF().globals().Transaction("MyMod", "ActivePlayers", -1);
 
 // Transaction with callback
-U().globals().Transaction("MyMod", "TotalMoney", 1000, this, "OnTransaction");
+UF().globals().Transaction("MyMod", "TotalMoney", 1000, this, "OnTransaction");
 
 void OnTransaction(int cid, int status, string oid, string data) {
     if (status == UF_SUCCESS) {
@@ -177,7 +177,7 @@ void OnTransaction(int cid, int status, string oid, string data) {
 }
 
 // Typed callback
-U().globals().Transaction("MyMod", "Economy", 500, 
+UF().globals().Transaction("MyMod", "Economy", 500, 
     new UFCallback<UDBTransactionResponse>(this, "OnEconomyUpdate"));
 
 void OnEconomyUpdate(int cid, int status, string oid, UDBTransactionResponse resp) {
@@ -201,19 +201,19 @@ class UpdateOpts {
 }
 
 // Set a value (strings must be quoted)
-U().globals().Update("MyMod", "LastWipeDate", "\"2024-02-01\"", UpdateOpts.SET);
+UF().globals().Update("MyMod", "LastWipeDate", "\"2024-02-01\"", UpdateOpts.SET);
 
 // Set a number
-U().globals().Update("MyMod", "EconomyMultiplier", "2.0", UpdateOpts.SET);
+UF().globals().Update("MyMod", "EconomyMultiplier", "2.0", UpdateOpts.SET);
 
 // Push to array
-U().globals().Update("MyMod", "BannedItems", "\"RPG\"", UpdateOpts.PUSH);
+UF().globals().Update("MyMod", "BannedItems", "\"RPG\"", UpdateOpts.PUSH);
 
 // Pull from array
-U().globals().Update("MyMod", "BannedItems", "\"AWM\"", UpdateOpts.PULL);
+UF().globals().Update("MyMod", "BannedItems", "\"AWM\"", UpdateOpts.PULL);
 
 // Update with callback
-U().globals().Update("MyMod", "ServerStatus", "\"online\"", UpdateOpts.SET, this, "OnUpdate");
+UF().globals().Update("MyMod", "ServerStatus", "\"online\"", UpdateOpts.SET, this, "OnUpdate");
 ```
 
 ## Complete Example
@@ -236,7 +236,7 @@ class ServerStatsManager {
     protected bool m_IsLoaded = false;
     
     void Init() {
-        U().globals().Load("ServerStats", new UFCallback<ServerStats>(this, "OnStatsLoaded"));
+        UF().globals().Load("ServerStats", new UFCallback<ServerStats>(this, "OnStatsLoaded"));
     }
     
     void OnStatsLoaded(int cid, int status, string oid, ServerStats stats) {
@@ -249,34 +249,34 @@ class ServerStatsManager {
         m_IsLoaded = true;
         
         // Update restart timestamp
-        U().globals().Update("ServerStats", "LastRestart", 
+        UF().globals().Update("ServerStats", "LastRestart", 
             "\"" + UUtil.GetDateStamp() + " " + UUtil.GetTimeStamp() + "\"", UpdateOpts.SET);
     }
     
     void RecordDeath(string killerType) {
         if (!m_IsLoaded) return;
         
-        U().globals().Increment("ServerStats", "TotalDeaths");
+        UF().globals().Increment("ServerStats", "TotalDeaths");
         
         if (killerType == "zombie") {
-            U().globals().Increment("ServerStats", "TotalZombieKills");
+            UF().globals().Increment("ServerStats", "TotalZombieKills");
         } else if (killerType == "player") {
-            U().globals().Increment("ServerStats", "TotalKills");
+            UF().globals().Increment("ServerStats", "TotalKills");
         }
     }
     
     void RecordLogin(string playerId) {
         if (!m_IsLoaded) return;
-        U().globals().Increment("ServerStats", "UniqueLogins");
+        UF().globals().Increment("ServerStats", "UniqueLogins");
     }
     
     void AddTopPlayer(string playerName) {
-        U().globals().Update("ServerStats", "TopPlayers", 
+        UF().globals().Update("ServerStats", "TopPlayers", 
             "\"" + playerName + "\"", UpdateOpts.PUSH);
     }
     
     void SavePlaytime(int minutes) {
-        U().globals().Transaction("ServerStats", "TotalPlaytime", minutes);
+        UF().globals().Transaction("ServerStats", "TotalPlaytime", minutes);
     }
 }
 ```

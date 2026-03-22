@@ -29,7 +29,7 @@ modded class DayZGame extends CGame
 		if (IsClient() && status == UF_SUCCESS){
 			if (Class.CastTo(m_discordUser, data)){
 				UFLog.Info("[Discord] Discord is set up and cached " + m_discordUser.GlobalName);
-				U().ds().DownloadAvatar(GetDayZGame().GetSteamId()); //will use auth key to get the GUID
+				UF().ds().DownloadAvatar(GetDayZGame().GetSteamId()); //will use auth key to get the GUID
 				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.UpdateDiscordLoggedInWidget, 1500, false);
 			}
 		}
@@ -61,7 +61,7 @@ modded class DayZGame extends CGame
 	override void OnUpdate(bool doSim, float timeslice){
 		super.OnUpdate(doSim, timeslice);
 		if (UFramework.isGlobalInit()){
-			U().Cron().onUpdate();
+			UF().Cron().onUpdate();
 		}
 	}
 	

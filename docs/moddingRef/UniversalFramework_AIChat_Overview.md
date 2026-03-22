@@ -74,7 +74,7 @@ void OnChatCreated(int cid, int status, string chatId, bool success) {
 ## Best Practices
 
 ### Use Agent Wrappers
-Avoid calling `U().AI()` endpoint methods directly. Always use `UFAIChatAgent` (for string responses) or `UAIChatAgent<T>` (for typed JSON responses). These classes handle polling, tool execution, and error management for you.
+Avoid calling `UF().AI()` endpoint methods directly. Always use `UFAIChatAgent` (for string responses) or `UAIChatAgent<T>` (for typed JSON responses). These classes handle polling, tool execution, and error management for you.
 
 ### Reuse Sessions
 Creating a chat session takes time (roundtrip to OpenAI). Store the `ChatId` and reuse it for subsequent messages from the same player/context.
@@ -337,7 +337,7 @@ void OnResponse(int cid, int status, string oid, string response) {
 For advanced control, use the endpoint directly:
 
 ```enforce
-UFAIChatEndpoint ai = U().AI();
+UFAIChatEndpoint ai = UF().AI();
 
 // Create session - params: systemMessage, format, jsonSchema, model, maxHistory, callback
 int cid = ai.Create("You are a helpful assistant", "string", "", "gpt-4o-mini", 25, new UFCallback<UAIChatCreateResponse>(this, "OnCreated"));
@@ -366,7 +366,7 @@ ai.MessageStatus(messageId, callback); // Check status
 
 ```enforce
 void StartAI() {
-    if (!U().IsOpenAIEnabled()) {
+    if (!UF().IsOpenAIEnabled()) {
         Print("OpenAI service not available");
         return;
     }

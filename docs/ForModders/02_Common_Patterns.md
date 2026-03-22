@@ -10,14 +10,14 @@ All API calls are **asynchronous**. Never assume data is available immediately a
 
 ### [X] WRONG: Blocking/Synchronous Thinking
 ```enforce
-string data = U().db().Load("MyMod", "id"); // ERROR: Load returns void or call ID
+string data = UF().db().Load("MyMod", "id"); // ERROR: Load returns void or call ID
 Print(data); // Will be empty/null
 ```
 
 ### [YES] RIGHT: Async Callback
 ```enforce
 // 1. Initiate Request
-U().db().Load("MyMod", "id", this, "OnLoaded");
+UF().db().Load("MyMod", "id", this, "OnLoaded");
 
 // 2. Handle Response Later
 void OnLoaded(int cid, int status, string oid, string data)
@@ -135,7 +135,7 @@ class MyManager {
     }
     
     void DoLoad() {
-        U().db().Load("MyMod", "key", this, "OnLoaded");  // Pass 'this'
+        UF().db().Load("MyMod", "key", this, "OnLoaded");  // Pass 'this'
     }
 }
 ```
@@ -159,7 +159,7 @@ void GiveReward()
     // Logic that changes DB should only run on server
     if (GetGame().IsServer())
     {
-        U().db().Transaction("MyMod", "key", "coins", 100);
+        UF().db().Transaction("MyMod", "key", "coins", 100);
     }
 }
 ```
@@ -183,7 +183,7 @@ void OnLoad(int cid, int status, string oid, string data)
     if (status == UF_TIMEOUT)
     {
         // Simple retry
-        U().db().Load("MyMod", oid, this, "OnLoad"); 
+        UF().db().Load("MyMod", oid, this, "OnLoad"); 
         return;
     }
     // ... handle other statuses

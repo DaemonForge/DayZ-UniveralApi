@@ -125,11 +125,11 @@ Configure mods to use server-specific prefixes:
 ```cpp
 // On US-East server
 string modName = "US1_Economy";
-U().db().Save(modName, playerId, data, this, "OnSaved");
+UF().db().Save(modName, playerId, data, this, "OnSaved");
 
 // On EU server
 string modName = "EU1_Economy";
-U().db().Save(modName, playerId, data, this, "OnSaved");
+UF().db().Save(modName, playerId, data, this, "OnSaved");
 ```
 
 **MongoDB Result**:
@@ -164,11 +164,11 @@ Include ServerID in stored data for filtering:
 // Store with ServerID
 string serverID = UFConfig().ServerID;
 data.ServerID = serverID;
-U().db().Save("Economy", playerId, data, this, "OnSaved");
+UF().db().Save("Economy", playerId, data, this, "OnSaved");
 
 // Query for specific server
 string query = "{\"ServerID\": \"US-East-1\"}";
-U().db().Query("Economy", query, "{}", this, "OnResults");
+UF().db().Query("Economy", query, "{}", this, "OnResults");
 ```
 
 ---
@@ -190,7 +190,7 @@ Implement a global ban system:
 // Check ban on connect
 void OnPlayerConnect(PlayerBase player) {
   string guid = player.GetIdentity().GetId();
-    U().db().Load("GlobalBans", guid, this, "OnBanCheck");
+    UF().db().Load("GlobalBans", guid, this, "OnBanCheck");
 }
 
 void OnBanCheck(int cid, int status, string oid, string data) {
@@ -207,10 +207,10 @@ Use the Message Queue for cross-server messaging:
 
 ```cpp
 // Server A writes event
-U().Msg().Write("CrossServer", "Events", eventData, this, "OnWritten");
+UF().Msg().Write("CrossServer", "Events", eventData, this, "OnWritten");
 
 // All servers poll for events
-U().Msg().Read("CrossServer", "Events", 10, this, "OnEvents");
+UF().Msg().Read("CrossServer", "Events", 10, this, "OnEvents");
 ```
 
 ---
@@ -320,10 +320,10 @@ string GetInventoryMod() {
 ```cpp
 void OnPlayerJoin(string guid) {
     // Load shared economy
-    U().db().Load(ECONOMY_MOD, guid, this, "OnEconomyLoaded");
+    UF().db().Load(ECONOMY_MOD, guid, this, "OnEconomyLoaded");
     
     // Load server-specific inventory
-    U().db().Load(GetInventoryMod(), guid, this, "OnInventoryLoaded");
+    UF().db().Load(GetInventoryMod(), guid, this, "OnInventoryLoaded");
 }
 ```
 
@@ -331,10 +331,10 @@ void OnPlayerJoin(string guid) {
 ```cpp
 void OnPlayerLeave(string guid) {
     // Save to shared economy
-    U().db().Save(ECONOMY_MOD, guid, economyData, this, "OnSaved");
+    UF().db().Save(ECONOMY_MOD, guid, economyData, this, "OnSaved");
     
     // Save to server-specific inventory
-    U().db().Save(GetInventoryMod(), guid, inventoryData, this, "OnSaved");
+    UF().db().Save(GetInventoryMod(), guid, inventoryData, this, "OnSaved");
 }
 ```
 

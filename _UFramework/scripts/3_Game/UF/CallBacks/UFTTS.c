@@ -89,7 +89,7 @@ class UFDownloadTTS : UFRestCallBackBase
 class UDLTTSNestedCallback : UNestedCallBack
 {
 	override void OnSuccess(string data, int dataSize) {
-		if (U().IsCallCanceled(m_UFid)){
+		if (UF().IsCallCanceled(m_UFid)){
 			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnSuccess");
 			super.OnSuccess(data, dataSize);
 			return;

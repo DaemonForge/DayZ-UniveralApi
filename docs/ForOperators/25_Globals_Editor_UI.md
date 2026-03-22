@@ -151,10 +151,10 @@ To delete a module's global data:
 ```cpp
 // Save global data
 string json = "{\"serverMessage\":\"Welcome!\"}";
-U().globals().Save("MyMod", json, this, "OnGlobalsSaved");
+UF().globals().Save("MyMod", json, this, "OnGlobalsSaved");
 
 // Load global data
-U().globals().Load("MyMod", this, "OnGlobalsLoaded");
+UF().globals().Load("MyMod", this, "OnGlobalsLoaded");
 
 void OnGlobalsLoaded(int cid, int status, string oid, string data) {
     if (status == 200) {

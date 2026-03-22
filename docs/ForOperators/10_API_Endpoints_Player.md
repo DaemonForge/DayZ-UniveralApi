@@ -378,14 +378,14 @@ class MyDeleteCallback extends UFCallbackBase {
 }
 
 // Delete player mod data with callback class
-U().db(PLAYER_DB).Delete("Economy", playerGUID, new MyDeleteCallback());
+UF().db(PLAYER_DB).Delete("Economy", playerGUID, new MyDeleteCallback());
 
 // Or with instance/function callback
 void OnPlayerDataDeleted(int cid, int status, string oid, string data) {
     Print("Player data deleted successfully");
 }
 
-U().db(PLAYER_DB).Delete("Economy", playerGUID, this, "OnPlayerDataDeleted");
+UF().db(PLAYER_DB).Delete("Economy", playerGUID, this, "OnPlayerDataDeleted");
 ```
 
 ---

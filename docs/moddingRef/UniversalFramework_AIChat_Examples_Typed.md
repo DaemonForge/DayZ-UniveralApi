@@ -317,7 +317,7 @@ class PersistentTraderAgent extends UFAIChatAgent {
     
     protected void LoadMemory() {
         // Load from UFramework database
-        U().db().Load("NPCMemory", "viktor_" + m_PlayerId, this, "OnMemoryLoaded");
+        UF().db().Load("NPCMemory", "viktor_" + m_PlayerId, this, "OnMemoryLoaded");
     }
     
     void OnMemoryLoaded(int cid, int status, string oid, string data) {
@@ -343,7 +343,7 @@ class PersistentTraderAgent extends UFAIChatAgent {
             "\"lastVisit\":\"" + m_LastVisit + "\"" +
         "}";
         
-        U().db().Save("NPCMemory", "viktor_" + m_PlayerId, data, NULL);
+        UF().db().Save("NPCMemory", "viktor_" + m_PlayerId, data, NULL);
     }
     
     protected void SaveFact(string fact) {

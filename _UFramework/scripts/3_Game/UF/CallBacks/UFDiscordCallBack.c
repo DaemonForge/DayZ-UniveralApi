@@ -20,7 +20,7 @@
  *       }
  *   }
  *
- * @see U().ds().GetUser() for Discord user lookup
+ * @see UF().ds().GetUser() for Discord user lookup
  */
 class UDiscordCallBack: RestCallback
 {

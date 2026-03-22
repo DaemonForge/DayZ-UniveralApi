@@ -88,7 +88,7 @@
  *
  * General Notes:
  *   - All methods perform input validation and log errors using Error2 when validations fail.
- *   - The methods utilize a global instance (returned by U()) to register callbacks and execute POST requests.
+ *   - The methods utilize a global instance (returned by UF()) to register callbacks and execute POST requests.
  *   - Callback mechanisms vary between silent, nested, and instance/function-based callbacks to support different usage scenarios.
  */
 class UDBEndpoint extends UFBaseEndpoint {
@@ -108,7 +108,12 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @return Base URL with collection appended
 	 */
 	override protected string EndpointBaseUrl(){
-		return UFConfig().GetBaseURL() + m_Collection + "/";
+		UFrameworkConfig ucfg = UFrameworkConfig.Cast(UFConfig());
+		if (!ucfg){
+			UFLog.Err("[UDBEndpoint] EndpointBaseUrl called but UFConfig() is null - RPC not received yet?");
+			return "";
+		}
+		return ucfg.GetBaseURL() + m_Collection + "/";
 	}
 	
 	/**
@@ -119,7 +124,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param jsonString JSON data to save
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Save("MyMod", "config", configData.ToJson());
+	 * @usage UF().db().Save("MyMod", "config", configData.ToJson());
 	 */
 	int Save(string mod, string oid, string jsonString) {	
 		if (mod == "" || oid == "" || jsonString == ""){
@@ -129,7 +134,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		int cid = -1;	
 		string endpoint = "Save/" + oid + "/" + mod;
 		
-		Post(endpoint,jsonString, U().RegisterCall(new USilentCallBack(), cid));
+		Post(endpoint,jsonString, UF().RegisterCall(new USilentCallBack(), cid));
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Save");
@@ -147,7 +152,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param cbFunction Callback method name
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Save("MyMod", "player_" + guid, playerData, this, "OnSaved");
+	 * @usage UF().db().Save("MyMod", "player_" + guid, playerData, this, "OnSaved");
 	 * @note Callback signature: void OnSaved(int cid, int status, string oid, string data)
 	 */
 	int Save(string mod, string oid, string jsonString, Class cbInstance, string cbFunction) {	
@@ -158,7 +163,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		int cid = -1;	
 		string endpoint = "Save/" + oid + "/" + mod;
 
-		Post(endpoint,jsonString, U().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
+		Post(endpoint,jsonString, UF().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Save");
@@ -175,7 +180,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param cb UFCallbackBase-derived callback
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Save("MyMod", "stats", jsonData, new MySaveCallback());
+	 * @usage UF().db().Save("MyMod", "stats", jsonData, new MySaveCallback());
 	 */
 	int Save(string mod, string oid, string jsonString, UFCallbackBase cb) {	
 		if (mod == "" || oid == "" || jsonString == "" || !cb){
@@ -187,7 +192,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid); //Only sets if not set
 		
-		Post(endpoint,jsonString, U().RegisterCall(new UNestedCallBack(cb), cid));
+		Post(endpoint,jsonString, UF().RegisterCall(new UNestedCallBack(cb), cid));
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Save");
@@ -204,7 +209,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param jsonString Optional query parameters (default: "{}")
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Load("MyMod", "config", new MyLoadCallback());
+	 * @usage UF().db().Load("MyMod", "config", new MyLoadCallback());
 	 * @note Callback receives parsed object as typed parameter if using UFCallback<T>
 	 */
 	
@@ -218,7 +223,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid); //Only sets if not set
 		
-		Post(endpoint,jsonString, U().RegisterCall(new UNestedCallBack(cb),cid));
+		Post(endpoint,jsonString, UF().RegisterCall(new UNestedCallBack(cb),cid));
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Load");
@@ -236,7 +241,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param jsonString Optional query parameters (default: "{}")
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Load("MyMod", "player_" + guid, this, "OnLoaded");
+	 * @usage UF().db().Load("MyMod", "player_" + guid, this, "OnLoaded");
 	 * @note Callback signature: void OnLoaded(int cid, int status, string oid, string data)
 	 */
 	int Load(string mod, string oid, Class cbInstance, string cbFunction, string jsonString = "{}") {		
@@ -247,7 +252,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		int cid = -1;
 		string endpoint = "Load/" + oid + "/" + mod;
 		
-		Post(endpoint,jsonString,  U().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
+		Post(endpoint,jsonString,  UF().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Load");
@@ -264,7 +269,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 * 
 	 * @usage auto query = new UDBQuery().Equals("level", "5");
-	 *        U().db().Query("MyMod", query, new MyQueryCallback());
+	 *        UF().db().Query("MyMod", query, new MyQueryCallback());
 	 */
 	int Query(string mod, UDBQueryBase query, UFCallbackBase cb) {
 		UFLog.Debug("[UDBEndpoint::Query] mod=" + mod);
@@ -274,9 +279,9 @@ class UDBEndpoint extends UFBaseEndpoint {
 		}
 		
 		// Safety check: ensure framework is ready
-		UFramework uf = U();
+		UFramework uf = UF();
 		if (!uf){
-			UFLog.Err("[UDBEndpoint::Query] U() returned NULL - framework not ready");
+			UFLog.Err("[UDBEndpoint::Query] UF() returned NULL - framework not ready");
 			return -1;
 		}
 		if (!UFConfig()){
@@ -316,7 +321,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 * 
 	 * @usage auto query = new UDBQuery().GreaterThan("score", "100");
-	 *        U().db().Query("MyMod", query, this, "OnQueryResults");
+	 *        UF().db().Query("MyMod", query, this, "OnQueryResults");
 	 */
 	int Query(string mod, UDBQueryBase query, Class cbInstance, string cbFunction) {
 		UFLog.Debug("[UDBEndpoint::Query] mod=" + mod + " cbFunction=" + cbFunction);
@@ -326,9 +331,9 @@ class UDBEndpoint extends UFBaseEndpoint {
 		}
 		
 		// Safety check: ensure framework is ready
-		UFramework uf = U();
+		UFramework uf = UF();
 		if (!uf){
-			UFLog.Err("[UDBEndpoint::Query] U() returned NULL - framework not ready");
+			UFLog.Err("[UDBEndpoint::Query] UF() returned NULL - framework not ready");
 			return -1;
 		}
 		if (!UFConfig()){
@@ -361,7 +366,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param value Amount to add (default: 1)
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Increment("MyMod", "player_123", "kills", 1);
+	 * @usage UF().db().Increment("MyMod", "player_123", "kills", 1);
 	 */
 	int Increment(string mod, string oid, string element, float value = 1){
 		if (mod == "" || oid == "" || element == ""){
@@ -380,7 +385,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param value Amount to add/subtract
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Transaction("MyMod", "player", "coins", 100);
+	 * @usage UF().db().Transaction("MyMod", "player", "coins", 100);
 	 */
 	int Transaction(string mod, string oid, string element, float value) {
 		if (mod == "" || oid == "" || element == ""){
@@ -393,7 +398,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		
-		Post(endpoint,transaction.ToJson(), U().RegisterCall(new USilentCallBack(), cid));
+		Post(endpoint,transaction.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Transaction");
@@ -411,7 +416,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param cb UFCallbackBase-derived callback
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Transaction("MyMod", "player", "xp", 50, new MyCallback());
+	 * @usage UF().db().Transaction("MyMod", "player", "xp", 50, new MyCallback());
 	 */
 	int Transaction(string mod, string oid, string element, float value, UFCallbackBase cb) {
 		if (mod == "" || oid == "" || element == "" || !cb){
@@ -426,7 +431,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid); //Only sets if not set
 			
-		Post(endpoint,transaction.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
+		Post(endpoint,transaction.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Transaction");
@@ -446,7 +451,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param cb UFCallbackBase callback
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Transaction("MyMod", "player", "health", -10, 0, 100, callback);
+	 * @usage UF().db().Transaction("MyMod", "player", "health", -10, 0, 100, callback);
 	 */
 	int Transaction(string mod, string oid, string element, float value, float min, float max, UFCallbackBase cb) {
 		if (mod == "" || oid == ""  || element == "" || !cb){
@@ -461,7 +466,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid); //Only sets if not set
 		
-		Post(endpoint,transaction.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
+		Post(endpoint,transaction.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Transaction");
@@ -480,7 +485,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param cbFunction Callback method name
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Transaction("MyMod", "player", "coins", 10, this, "OnCoinAdded");
+	 * @usage UF().db().Transaction("MyMod", "player", "coins", 10, this, "OnCoinAdded");
 	 */
 	int Transaction(string mod, string oid, string element, float value, Class cbInstance, string cbFunction) {
 		if (mod == "" || element == "" || oid == ""){
@@ -495,7 +500,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		
-		Post(endpoint,transaction.ToJson(), U().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
+		Post(endpoint,transaction.ToJson(), UF().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Transaction");
@@ -516,7 +521,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param cbFunction Callback method name
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Transaction("MyMod", "player", "health", -25, 0, 100, this, "OnHealthChanged");
+	 * @usage UF().db().Transaction("MyMod", "player", "health", -25, 0, 100, this, "OnHealthChanged");
 	 */
 	int Transaction(string mod, string oid, string element, float value, float min, float max, Class cbInstance, string cbFunction) {
 		if (mod == "" || oid == "" || element == ""){
@@ -531,7 +536,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		autoptr UDBValidatedTransaction transaction = new UDBValidatedTransaction(element, value, min, max);
 		
-		Post(endpoint, transaction.ToJson(), U().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
+		Post(endpoint, transaction.ToJson(), UF().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Transaction");
 		}
@@ -548,7 +553,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param operation Update operation (default: UpdateOpts.SET)
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Update("MyMod", "config", "enabled", "true");
+	 * @usage UF().db().Update("MyMod", "config", "enabled", "true");
 	 * @note For strings, must quote: Update(mod, oid, "name", "\"John\"");
 	 */
 	int Update(string mod, string oid, string element, string value, string operation = UpdateOpts.SET) {	
@@ -562,7 +567,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
-		Post(endpoint, updatedata.ToJson(), U().RegisterCall(new USilentCallBack(), cid));
+		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Update");
@@ -581,7 +586,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param cb UFCallbackBase-derived callback
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Update("MyMod", "player", "status", "\"active\"", UpdateOpts.SET, callback);
+	 * @usage UF().db().Update("MyMod", "player", "status", "\"active\"", UpdateOpts.SET, callback);
 	 */
 	int Update(string mod, string oid, string element, string value, string operation, UFCallbackBase cb) {	
 		if (mod == "" || oid == "" || element == "" || operation == "" || !cb){
@@ -595,7 +600,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		cb.SetOID(oid); //Only sets if not set
-		Post(endpoint, updatedata.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
+		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Update");
@@ -615,7 +620,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param cbFunction Callback method name
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().db().Update("MyMod", "player", "score", "1000", UpdateOpts.SET, this, "OnScoreUpdated");
+	 * @usage UF().db().Update("MyMod", "player", "score", "1000", UpdateOpts.SET, this, "OnScoreUpdated");
 	 */
 	int Update(string mod, string oid, string element, string value, string operation, Class cbInstance, string cbFunction) {	
 		if (mod == "" || oid == "" || element == "" || operation == ""){
@@ -634,7 +639,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
-		Post(endpoint, updatedata.ToJson(), U().RegisterCall(DBCBX, cid));
+		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(DBCBX, cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "Update");
@@ -653,7 +658,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 * 
 	 * @usage auto query = new UDBQuery().Equals("banned", "true");
-	 *        U().db().QueryUpdate(query, "MyMod", "status", "\"suspended\"");
+	 *        UF().db().QueryUpdate(query, "MyMod", "status", "\"suspended\"");
 	 */
 	int QueryUpdate(UDBQueryBase query, string mod, string element, string value, string operation = UpdateOpts.SET) {	
 		if (!query || mod == "" || element == "" || operation == ""){
@@ -666,7 +671,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		autoptr UDBQueryUpdate updatedata = new UDBQueryUpdate(query, element, value, operation);
 		
-		Post(endpoint, updatedata.ToJson(), U().RegisterCall(new USilentCallBack(), cid));
+		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "QueryUpdate");
@@ -686,7 +691,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 * 
 	 * @usage auto query = new UDBQuery().LessThan("level", "5");
-	 *        U().db().QueryUpdate(query, "MyMod", "newbie", "true", UpdateOpts.SET, callback);
+	 *        UF().db().QueryUpdate(query, "MyMod", "newbie", "true", UpdateOpts.SET, callback);
 	 */
 	int QueryUpdate(UDBQueryBase query, string mod, string element, string value, string operation, UFCallbackBase cb) {	
 		if (!query || mod == "" || element == "" || operation == "" || !cb){
@@ -700,7 +705,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		cb.SetOID(mod); //Only sets if not set
-		Post(endpoint, updatedata.ToJson(), U().RegisterCall(new UNestedCallBack(cb),cid));
+		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(new UNestedCallBack(cb),cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "QueryUpdate");
@@ -721,14 +726,14 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 * 
 	 * @usage auto query = new UDBQuery().Equals("active", "false");
-	 *        U().db().QueryUpdate(query, "MyMod", "archived", "true", UpdateOpts.SET, this, "OnArchived");
+	 *        UF().db().QueryUpdate(query, "MyMod", "archived", "true", UpdateOpts.SET, this, "OnArchived");
 	 */
 	int QueryUpdate(UDBQueryBase query, string mod, string element, string value, string operation, Class cbInstance, string cbFunction) {
 		if (!query || mod == "" || element == "" || operation == ""){
 			Error2("[UF] Error on DB Update","OID, Element, operation, and Mod must be valid strings");
 			return -1;
 		}
-		int cid = U().CallId();
+		int cid = UF().CallId();
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != ""){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, mod);
@@ -740,7 +745,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		autoptr UDBQueryUpdate updatedata = new UDBQueryUpdate(query,element, value, operation);
 		
-		Post(endpoint, updatedata.ToJson(), U().RegisterCall(DBCBX, cid));
+		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(DBCBX, cid));
 		
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "QueryUpdate");
@@ -769,7 +774,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid);
 		
-		Post(endpoint, "{}", U().RegisterCall(new UNestedCallBack(cb), cid));
+		Post(endpoint, "{}", UF().RegisterCall(new UNestedCallBack(cb), cid));
 		if (cid == -1) {
 			Error2("[UF] Error failed to register callback with UF", "Delete");
 		}
@@ -802,7 +807,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 			DBCBX = new USilentCallBack();
 		}
 		
-		Post(endpoint, "{}", U().RegisterCall(DBCBX, cid));
+		Post(endpoint, "{}", UF().RegisterCall(DBCBX, cid));
 		if (cid == -1) {
 			Error2("[UF] Error failed to register callback with UF", "Delete");
 		}
@@ -820,7 +825,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param cbFunction Optional callback method name
 	 * @return Call ID or -1 on error or if not Player collection
 	 * 
-	 * @usage U().player().PublicSave("MyMod", playerGUID, publicData.ToJson(), this, "OnSaved");
+	 * @usage UF().player().PublicSave("MyMod", playerGUID, publicData.ToJson(), this, "OnSaved");
 	 * @note Only works when collection is "Player"
 	 */
 	int PublicSave(string mod, string oid, string jsonString, Class cbInstance = NULL, string cbFunction = "") {	
@@ -835,7 +840,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 		}
 		
 		if (jsonString){
-			Post(endpoint,jsonString,U().RegisterCall(DBCBX, cid));
+			Post(endpoint,jsonString,UF().RegisterCall(DBCBX, cid));
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "PublicSave");
 			}
@@ -857,7 +862,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 * @param baseUrl Optional custom base URL
 	 * @return Call ID or -1 on error or if not Player collection
 	 * 
-	 * @usage U().player().PublicLoad("MyMod", playerGUID, this, "OnLoaded");
+	 * @usage UF().player().PublicLoad("MyMod", playerGUID, this, "OnLoaded");
 	 * @note Only works when collection is "Player"
 	 */
 	int PublicLoad(string mod, string oid, Class cbInstance, string cbFunction, string jsonString = "{}", string baseUrl = "") {		
@@ -874,12 +879,12 @@ class UDBEndpoint extends UFBaseEndpoint {
 		if ( baseUrl != "" && DBCBX ){
 			string url = baseUrl + m_Collection + "/" + endpoint;
 			//Print("[UF] Public Load with custom Base: " + url);
-			U().Post(url,jsonString,U().RegisterCall(DBCBX, cid));
+			UF().Post(url,jsonString,UF().RegisterCall(DBCBX, cid));
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "PublicLoad");
 			}
 		} else if (DBCBX){
-			Post(endpoint,jsonString,U().RegisterCall(DBCBX, cid));
+			Post(endpoint,jsonString,UF().RegisterCall(DBCBX, cid));
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "PublicLoad");
 			}

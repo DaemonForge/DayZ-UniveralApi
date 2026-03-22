@@ -64,7 +64,7 @@ store.SaveEntity(item, true);  // true = include cargo recursively
 string json;
 if (UJSONHandler<UEntityStore>.GetString(store, json)) {
     // Save to database
-    U().db().Save("MyMod", "item_" + itemId, json);
+    UF().db().Save("MyMod", "item_" + itemId, json);
 }
 ```
 
@@ -143,7 +143,7 @@ Allow players to save "Presets" of gear.
 ```enforce
 void LoadPlayerInventory(PlayerBase player) {
     string guid = player.GetIdentity().GetId();
-    U().db(PLAYER_DB).Load("Inventory", guid,
+    UF().db(PLAYER_DB).Load("Inventory", guid,
         new UFCallback<array<autoptr UEntityStore>>(this, "OnInventoryLoaded", guid));
 }
 
@@ -230,12 +230,12 @@ class StorageChest {
         
         string json;
         if (UJSONHandler<array<autoptr UEntityStore>>.GetString(contents, json)) {
-            U().db().Save("Storage", m_StorageId, json);
+            UF().db().Save("Storage", m_StorageId, json);
         }
     }
     
     void LoadContents(EntityAI container) {
-        U().db().Load("Storage", m_StorageId, 
+        UF().db().Load("Storage", m_StorageId, 
             new UFCallback<array<autoptr UEntityStore>>(this, "OnContentsLoaded"));
     }
     
@@ -277,7 +277,7 @@ class LoadoutManager {
         string json;
         if (UJSONHandler<array<autoptr UEntityStore>>.GetString(loadout, json)) {
             string guid = player.GetIdentity().GetId();
-            U().db(PLAYER_DB).Save("Loadout_" + loadoutName, 
+            UF().db(PLAYER_DB).Save("Loadout_" + loadoutName, 
                 guid, json);
         }
     }
@@ -288,7 +288,7 @@ class LoadoutManager {
         string guid = player.GetIdentity().GetId();
         
         // Load saved loadout
-        U().db(PLAYER_DB).Load("Loadout_" + loadoutName,
+        UF().db(PLAYER_DB).Load("Loadout_" + loadoutName,
             guid,
             new UFCallback<array<autoptr UEntityStore>>(this, "OnLoadoutLoaded", 
                 guid));

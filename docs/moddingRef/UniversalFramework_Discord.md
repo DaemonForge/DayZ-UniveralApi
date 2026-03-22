@@ -13,7 +13,7 @@ The Discord endpoint (`UniversalDSEndpoint`) provides full Discord integration i
 ## Accessing the Discord Endpoint
 
 ```enforce
-UniversalDSEndpoint discord = U().ds();
+UniversalDSEndpoint discord = UF().ds();
 ```
 
 ## Permissions
@@ -36,12 +36,12 @@ UniversalDSEndpoint discord = U().ds();
 
 ```enforce
 // Get link URL for current player (client-side)
-string linkUrl = U().ds().Link();
+string linkUrl = UF().ds().Link();
 
 // Get link URL for specific player (server-side)
 // This link flow expects the player's plain Steam ID.
 // Do not pass GetId() here.
-string linkUrl = U().ds().Link(player.GetIdentity().GetPlainId());
+string linkUrl = UF().ds().Link(player.GetIdentity().GetPlainId());
 
 // Display to player
 Print("Link your Discord: " + linkUrl);
@@ -53,7 +53,7 @@ Print("Link your Discord: " + linkUrl);
 
 ```enforce
 // Check if player has Discord linked
-U().ds().CheckDiscord(playerId, this, "OnDiscordCheck");
+UF().ds().CheckDiscord(playerId, this, "OnDiscordCheck");
 
 void OnDiscordCheck(int cid, int status, string oid, StatusObject result) {
     if (status == UF_SUCCESS) {
@@ -68,7 +68,7 @@ void OnDiscordCheck(int cid, int status, string oid, StatusObject result) {
 
 ```enforce
 // Check if player has a specific role
-U().ds().CheckRoleDiscord(playerId, "RoleId123", this, "OnRoleCheck");
+UF().ds().CheckRoleDiscord(playerId, "RoleId123", this, "OnRoleCheck");
 
 void OnRoleCheck(int cid, int status, string oid, StatusObject result) {
     if (status == UF_SUCCESS) {
@@ -84,7 +84,7 @@ void OnRoleCheck(int cid, int status, string oid, StatusObject result) {
 ### Get User Info
 
 ```enforce
-U().ds().GetUser(playerId, this, "OnUserInfo");
+UF().ds().GetUser(playerId, this, "OnUserInfo");
 
 void OnUserInfo(int cid, int status, string oid, UDiscordUser user) {
     if (status == UF_SUCCESS && user) {
@@ -99,7 +99,7 @@ void OnUserInfo(int cid, int status, string oid, UDiscordUser user) {
 
 ```enforce
 // Send DM to player
-U().ds().UserSend(playerId, "Welcome to the server!", this, "OnDMSent");
+UF().ds().UserSend(playerId, "Welcome to the server!", this, "OnDMSent");
 
 void OnDMSent(int cid, int status, string oid, UDiscordStatusObject result) {
     if (status == UF_SUCCESS) {
@@ -111,23 +111,23 @@ void OnDMSent(int cid, int status, string oid, UDiscordStatusObject result) {
 ### Set Nickname
 
 ```enforce
-U().ds().SetNickname(playerId, "NewNickname", this, "OnNicknameSet");
+UF().ds().SetNickname(playerId, "NewNickname", this, "OnNicknameSet");
 ```
 
 ### Kick User
 
 ```enforce
-U().ds().KickUser(playerId, "Reason for kick", this, "OnKicked");
+UF().ds().KickUser(playerId, "Reason for kick", this, "OnKicked");
 ```
 
 ### Mute/Unmute User
 
 ```enforce
 // Mute
-U().ds().MuteUser(playerId, true, this, "OnMuteChanged");
+UF().ds().MuteUser(playerId, true, this, "OnMuteChanged");
 
 // Unmute
-U().ds().MuteUser(playerId, false, this, "OnMuteChanged");
+UF().ds().MuteUser(playerId, false, this, "OnMuteChanged");
 ```
 
 ## Role Management
@@ -135,7 +135,7 @@ U().ds().MuteUser(playerId, false, this, "OnMuteChanged");
 ### Add Role
 
 ```enforce
-U().ds().AddRole(playerId, "RoleId123", this, "OnRoleAdded");
+UF().ds().AddRole(playerId, "RoleId123", this, "OnRoleAdded");
 
 void OnRoleAdded(int cid, int status, string oid, UDiscordUser user) {
     if (status == UF_SUCCESS) {
@@ -147,7 +147,7 @@ void OnRoleAdded(int cid, int status, string oid, UDiscordUser user) {
 ### Remove Role
 
 ```enforce
-U().ds().RemoveRole(playerId, "RoleId123", this, "OnRoleRemoved");
+UF().ds().RemoveRole(playerId, "RoleId123", this, "OnRoleRemoved");
 ```
 
 ## Voice Channel Operations
@@ -155,7 +155,7 @@ U().ds().RemoveRole(playerId, "RoleId123", this, "OnRoleRemoved");
 ### Get User's Current Channel
 
 ```enforce
-U().ds().GetUsersChannel(playerId, this, "OnChannelInfo");
+UF().ds().GetUsersChannel(playerId, this, "OnChannelInfo");
 
 void OnChannelInfo(int cid, int status, string oid, UDiscordChannelInfo info) {
     if (status == UF_SUCCESS && info) {
@@ -167,7 +167,7 @@ void OnChannelInfo(int cid, int status, string oid, UDiscordChannelInfo info) {
 ### Move User to Channel
 
 ```enforce
-U().ds().MoveTo(playerId, "VoiceChannelId123", this, "OnMoved");
+UF().ds().MoveTo(playerId, "VoiceChannelId123", this, "OnMoved");
 ```
 
 ## Channel Operations
@@ -181,7 +181,7 @@ options.Parent = "CategoryId123";
 options.Topic = "Channel topic";
 options.Position = 1;
 
-U().ds().ChannelCreate("new-channel-name", options, this, "OnChannelCreated");
+UF().ds().ChannelCreate("new-channel-name", options, this, "OnChannelCreated");
 
 void OnChannelCreated(int cid, int status, string oid, UDiscordStatusObject result) {
     if (status == UF_SUCCESS) {
@@ -193,7 +193,7 @@ void OnChannelCreated(int cid, int status, string oid, UDiscordStatusObject resu
 ### Delete Channel
 
 ```enforce
-U().ds().ChannelDelete("ChannelId123", "Cleanup", this, "OnDeleted");
+UF().ds().ChannelDelete("ChannelId123", "Cleanup", this, "OnDeleted");
 ```
 
 ### Edit Channel
@@ -203,17 +203,17 @@ autoptr UChannelUpdateOptions options = new UChannelUpdateOptions();
 options.Name = "renamed-channel";
 options.Topic = "Updated topic";
 
-U().ds().ChannelEdit("ChannelId123", "Updating channel", options, this, "OnEdited");
+UF().ds().ChannelEdit("ChannelId123", "Updating channel", options, this, "OnEdited");
 ```
 
 ### Send Channel Message
 
 ```enforce
 // Simple text message
-U().ds().ChannelSend("ChannelId123", "Hello from DayZ!");
+UF().ds().ChannelSend("ChannelId123", "Hello from DayZ!");
 
 // With callback
-U().ds().ChannelSend("ChannelId123", "Server is online!", this, "OnMessageSent");
+UF().ds().ChannelSend("ChannelId123", "Server is online!", this, "OnMessageSent");
 ```
 
 ### Send Embed Message
@@ -232,7 +232,7 @@ embed.AddField("Map", "Chernarus", false);
 // Add footer
 embed.Footer = "Updated: " + UUtil.GetTimeStamp();
 
-U().ds().ChannelSendEmbed("ChannelId123", embed, this, "OnEmbedSent");
+UF().ds().ChannelSendEmbed("ChannelId123", embed, this, "OnEmbedSent");
 ```
 
 ### Get Channel Messages
@@ -242,7 +242,7 @@ U().ds().ChannelSendEmbed("ChannelId123", embed, this, "OnEmbedSent");
 autoptr UDiscordChannelFilter filter = new UDiscordChannelFilter();
 filter.Limit = 10;
 
-U().ds().ChannelMessages("ChannelId123", this, "OnMessages", filter);
+UF().ds().ChannelMessages("ChannelId123", this, "OnMessages", filter);
 
 void OnMessages(int cid, int status, string oid, array<autoptr UDiscordMessage> messages) {
     if (status == UF_SUCCESS && messages) {
@@ -263,7 +263,7 @@ class VIPManager {
     
     void CheckVIP(PlayerBase player) {
         string guid = player.GetIdentity().GetId();
-        U().ds().CheckRoleDiscord(guid, m_VIPRoleId, this, "OnVIPCheck");
+        UF().ds().CheckRoleDiscord(guid, m_VIPRoleId, this, "OnVIPCheck");
     }
     
     void OnVIPCheck(int cid, int status, string oid, StatusObject result) {
@@ -276,7 +276,7 @@ class VIPManager {
             UUtil.SendNotification("VIP", "Welcome VIP!", player.GetIdentity());
         } else if (status == UF_NOTSETUP) {
             // Discord not linked
-            string link = U().ds().Link(oid);
+            string link = UF().ds().Link(oid);
             UUtil.SendNotification("Discord", "Link Discord for VIP: " + link, player.GetIdentity());
         }
     }
@@ -309,7 +309,7 @@ class DiscordKillFeed {
         embed.AddField("Distance", GetKillDistance(victim, killer) + "m", true);
         embed.AddField("Time", UUtil.GetTimeStamp(), true);
         
-        U().ds().ChannelSendEmbed(m_KillFeedChannel, embed);
+        UF().ds().ChannelSendEmbed(m_KillFeedChannel, embed);
     }
     
     protected string GetWeaponName(PlayerBase player) {
@@ -354,13 +354,13 @@ Grant in-game perks based on Discord roles.
 ### In-Game Reporting
 Allow players to report issues directly to Discord.
 1. Player types `/report hacker123 aimbot`.
-2. Mod calls `U().ds().ChannelSend("ADMIN_CHANNEL_ID", "Report: ...")`.
+2. Mod calls `UF().ds().ChannelSend("ADMIN_CHANNEL_ID", "Report: ...")`.
 3. Admins get a ping on their phone instantly.
 
 ### Linked Account Verification
 Force players to link accounts to play.
 1. On join, check `CheckDiscord`.
-2. If `UF_NOTSETUP`, show a GUI with a "Link Account" button that calls `OpenURL(U().ds().Link())`.
+2. If `UF_NOTSETUP`, show a GUI with a "Link Account" button that calls `OpenURL(UF().ds().Link())`.
 3. Kick the player after 2 minutes if they haven't linked.
 
 ## Tags

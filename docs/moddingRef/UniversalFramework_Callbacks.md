@@ -14,7 +14,7 @@ Pass an object instance and the name of the callback function as a string:
 
 ```enforce
 // Make the call
-U().db().Load("MyMod", "player123", this, "OnPlayerLoaded");
+UF().db().Load("MyMod", "player123", this, "OnPlayerLoaded");
 
 // Define the callback function on your class
 void OnPlayerLoaded(int cid, int status, string oid, string data) {
@@ -37,7 +37,7 @@ class MyLoadCallback extends UFCallback<MyPlayerData> {
 }
 
 // Use it
-U().db().Load("MyMod", "player123", new MyLoadCallback(this, "OnLoaded"));
+UF().db().Load("MyMod", "player123", new MyLoadCallback(this, "OnLoaded"));
 ```
 
 ---
@@ -193,7 +193,7 @@ autoptr UFCallbackLoader<MyConfig> loader = new UFCallbackLoader<MyConfig>(this,
 loader.SetObject(m_Config);
 
 // Use raw endpoint
-U().db().Load("MyMod", "config", loader);
+UF().db().Load("MyMod", "config", loader);
 ```
 
 ### UJSONCallback - Raw JSON
@@ -225,7 +225,7 @@ class MyManager {
     protected int m_PendingLoadCid = -1;
     
     void LoadData() {
-        m_PendingLoadCid = U().db().Load("MyMod", "data", this, "OnLoaded");
+        m_PendingLoadCid = UF().db().Load("MyMod", "data", this, "OnLoaded");
         Print("Started load with CID: " + m_PendingLoadCid);
     }
     
@@ -247,13 +247,13 @@ class MyEntity extends ItemBase {
     protected int m_LoadCallId = -1;
     
     void LoadMyData() {
-        m_LoadCallId = U().db().Load("MyMod", GetId(), this, "OnDataLoaded");
+        m_LoadCallId = UF().db().Load("MyMod", GetId(), this, "OnDataLoaded");
     }
     
     void ~MyEntity() {
         // CRITICAL: Cancel pending call to prevent crash
         if (m_LoadCallId != -1) {
-            U().RequestCallCancel(m_LoadCallId);
+            UF().RequestCallCancel(m_LoadCallId);
         }
     }
     
@@ -299,7 +299,7 @@ Internal wrapper that bridges `RestCallback` to `UFCallbackBase`. You typically 
 ```enforce
 // How the framework uses it internally
 int cid = -1;
-Post(url, json, U().RegisterCall(new UNestedCallBack(myCallback), cid));
+Post(url, json, UF().RegisterCall(new UNestedCallBack(myCallback), cid));
 ```
 
 The `UNestedCallBack`:
@@ -417,7 +417,7 @@ class MyManager {
     
     void LoadData() {
         // ERROR: Cannot use static method as callback
-        U().db().Load("MyMod", "key", MyManager, "OnDataLoaded");
+        UF().db().Load("MyMod", "key", MyManager, "OnDataLoaded");
     }
 }
 ```
@@ -432,7 +432,7 @@ class MyManager {
     
     void LoadData() {
         // Pass 'this' for the instance
-        U().db().Load("MyMod", "key", this, "OnDataLoaded");
+        UF().db().Load("MyMod", "key", this, "OnDataLoaded");
     }
 }
 ```
@@ -483,7 +483,7 @@ class MyClass {
     }
     
     void MakeRequest() {
-        int cid = U().db().Load("Mod", "id", this, "OnLoaded");
+        int cid = UF().db().Load("Mod", "id", this, "OnLoaded");
         m_PendingCalls.Insert(cid);
     }
     
@@ -494,7 +494,7 @@ class MyClass {
     
     void ~MyClass() {
         foreach (int cid : m_PendingCalls) {
-            U().RequestCallCancel(cid);
+            UF().RequestCallCancel(cid);
         }
     }
 }
@@ -551,14 +551,14 @@ void OnLoaded(int cid, int status, string oid, MyData data) {
 ```enforce
 // BAD - This will never work!
 void LoadAndUse() {
-    U().db().Load("Mod", "id", this, "OnLoaded");
+    UF().db().Load("Mod", "id", this, "OnLoaded");
     // Data is NOT available here - callback hasn't fired yet!
     UseData(m_Data);  // WRONG
 }
 
 // GOOD - Continue in callback
 void LoadAndUse() {
-    U().db().Load("Mod", "id", this, "OnLoaded");
+    UF().db().Load("Mod", "id", this, "OnLoaded");
 }
 
 void OnLoaded(int cid, int status, string oid, MyData data) {
@@ -668,8 +668,8 @@ class PlayerProfileManager {
 
 | Method | Description |
 |--------|-------------|
-| `U().RequestCallCancel(cid)` | Cancel a pending callback |
-| `U().IsCallCanceled(cid)` | Check if call was cancelled |
+| `UF().RequestCallCancel(cid)` | Cancel a pending callback |
+| `UF().IsCallCanceled(cid)` | Check if call was cancelled |
 | `handler.Cancel(cid)` | Cancel via UDBHandler |
 
 ### Status Code Summary

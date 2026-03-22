@@ -18,7 +18,7 @@ This is ideal for mods that store configuration in Globals and want to give oper
 ## Accessing the Endpoint
 
 ```enforce
-UFModSettingsEndpoint modSettings = U().Settings();
+UFModSettingsEndpoint modSettings = UF().Settings();
 ```
 
 ## Permissions
@@ -41,19 +41,19 @@ Only `modId` and the HTML template string are required:
 
 ```enforce
 string html = "<html><body><h1>My Settings</h1>...</body></html>";
-U().Settings().Register("my-mod", html);
+UF().Settings().Register("my-mod", html);
 ```
 
 ### With Display Name
 
 ```enforce
-U().Settings().Register("my-mod", "My Awesome Mod", html);
+UF().Settings().Register("my-mod", "My Awesome Mod", html);
 ```
 
 ### With Instance Callback
 
 ```enforce
-U().Settings().Register("my-mod", "My Awesome Mod", html, this, "OnRegistered");
+UF().Settings().Register("my-mod", "My Awesome Mod", html, this, "OnRegistered");
 
 void OnRegistered(int cid, int status, string oid, string data) {
     if (status == UF_SUCCESS) {
@@ -65,7 +65,7 @@ void OnRegistered(int cid, int status, string oid, string data) {
 ### With UFCallbackBase Callback
 
 ```enforce
-U().Settings().Register("my-mod", "My Awesome Mod", html, new MyCallback());
+UF().Settings().Register("my-mod", "My Awesome Mod", html, new MyCallback());
 ```
 
 ### Full Metadata — With Author and Globals
@@ -75,13 +75,13 @@ autoptr TStringArray globals = new TStringArray;
 globals.Insert("MyMod_Config");
 globals.Insert("MyMod_Factions");
 
-U().Settings().Register("my-mod", "My Awesome Mod", "AuthorName", html, globals);
+UF().Settings().Register("my-mod", "My Awesome Mod", "AuthorName", html, globals);
 ```
 
 ### Full Metadata + Instance Callback
 
 ```enforce
-U().Settings().Register("my-mod", "My Awesome Mod", "AuthorName", html, globals, this, "OnRegistered");
+UF().Settings().Register("my-mod", "My Awesome Mod", "AuthorName", html, globals, this, "OnRegistered");
 
 void OnRegistered(int cid, int status, string oid, string data) {
     if (status == UF_SUCCESS) {
@@ -93,7 +93,7 @@ void OnRegistered(int cid, int status, string oid, string data) {
 ### Full Metadata + UFCallbackBase Callback
 
 ```enforce
-U().Settings().Register("my-mod", "My Awesome Mod", "AuthorName", html, globals, new MyCallback());
+UF().Settings().Register("my-mod", "My Awesome Mod", "AuthorName", html, globals, new MyCallback());
 ```
 
 ---
@@ -275,7 +275,7 @@ modded class MissionServer {
                 autoptr TStringArray globals = new TStringArray;
                 globals.Insert("MyMod_Config");
                 
-                U().Settings().Register(
+                UF().Settings().Register(
                     "my-mod",
                     "My Awesome Mod",
                     "AuthorName",

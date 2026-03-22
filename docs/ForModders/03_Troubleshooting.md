@@ -16,9 +16,9 @@ override void UFrameworkReady()
     super.UFrameworkReady();
     
     Print("[MyMod] Checking Status:");
-    Print("  IsOnline: " + U().IsOnline());
-    Print("  HasAuth: " + U().HasValidAuth());
-    Print("  ServerID: " + U().GetServerID());
+    Print("  IsOnline: " + UF().IsOnline());
+    Print("  HasAuth: " + UF().HasValidAuth());
+    Print("  ServerID: " + UF().GetServerID());
 }
 ```
 
@@ -37,7 +37,7 @@ override void UFrameworkReady()
 ## 2. Common Error Scenarios
 
 ### "My Callback Never Fires"
-You call `U().db().Load(...)`, but your function `OnLoaded` is never executed.
+You call `UF().db().Load(...)`, but your function `OnLoaded` is never executed.
 
 **Likely Causes:**
 1.  **Static Function Used**: Callbacks CANNOT be static methods.
@@ -47,7 +47,7 @@ You call `U().db().Load(...)`, but your function `OnLoaded` is never executed.
 2.  **Garbage Collections**: Did you use a class instance that was deleted?
     *   *Fix*: Ensure the class passing `this` stays alive (e.g., `MissionServer` is safe, a temporary funtion variable is not).
 3.  **Function Name Typo**: The string name must match EXACTLY.
-    *   `U().db().Load(..., this, "OnLoaded")` vs `void OnLoad(...)`.
+    *   `UF().db().Load(..., this, "OnLoaded")` vs `void OnLoad(...)`.
 4.  **Signature Mismatch**: The callback MUST have `int cid, int status, string oid, T data`.
 5.  **Runtime Error in Callback**: If your callback crashes DayZ (null pointer), the log usually truncates before printing the error.
     *   *Fix*: Add `Print("Callback started");` at the very top of your callback.

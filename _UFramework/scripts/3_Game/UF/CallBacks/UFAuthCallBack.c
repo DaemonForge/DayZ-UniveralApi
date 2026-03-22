@@ -10,10 +10,10 @@
  *
  * On Success:
  * - Receives an ApiAuthToken containing GUID and AUTH token
- * - Stores the token via U().AddPlayerAuth() for future API requests
+ * - Stores the token via UF().AddPlayerAuth() for future API requests
  *
  * On Error/Timeout:
- * - Triggers U().AuthError() which schedules a retry attempt
+ * - Triggers UF().AuthError() which schedules a retry attempt
  * - Logs error details for debugging
  *
  * @see ApiAuthToken for token structure
@@ -37,14 +37,14 @@ class UAuthCallBack : UFRestCallBackBase
 	 * OnError
 	 *
 	 * Called when the authentication request fails with an error.
-	 * Triggers a retry mechanism via U().AuthError().
+	 * Triggers a retry mechanism via UF().AuthError().
 	 *
 	 * @param errorCode The REST error code (see UF_* constants)
 	 */
 	override void OnError(int errorCode) {
-		UFLog.Err("[UAuthCallBack] Auth of a Player Failed errorCode: " + U().ErrorToString(errorCode));
+		UFLog.Err("[UAuthCallBack] Auth of a Player Failed errorCode: " + UF().ErrorToString(errorCode));
 		if (m_GUID != ""){
-			U().AuthError(m_GUID);
+			UF().AuthError(m_GUID);
 		}
 		super.OnError(errorCode);
 	};
@@ -52,12 +52,12 @@ class UAuthCallBack : UFRestCallBackBase
 	 * OnTimeout
 	 *
 	 * Called when the authentication request times out.
-	 * Triggers a retry mechanism via U().AuthError().
+	 * Triggers a retry mechanism via UF().AuthError().
 	 */
 	override void OnTimeout() {
 		UFLog.Err("[UAuthCallBack] Auth of a Player Failed errorCode: Timeout");
 		if (m_GUID != ""){
-			U().AuthError(m_GUID);
+			UF().AuthError(m_GUID);
 		}
 		super.OnTimeout();
 	};
@@ -84,10 +84,10 @@ class UAuthCallBack : UFRestCallBackBase
 		}
 		if (authToken.GUID == m_GUID && authToken.AUTH != "ERROR"){
 			UFLog.Debug("[UAuthCallBack] Auth of a Player Success data: GUID " + authToken.GUID);
-			U().AddPlayerAuth(authToken.GUID, authToken.AUTH);
+			UF().AddPlayerAuth(authToken.GUID, authToken.AUTH);
 		} else {
 			if (m_GUID != ""){
-				U().AuthError(m_GUID);
+				UF().AuthError(m_GUID);
 			}
 		}
 		super.OnSuccess(data,dataSize);

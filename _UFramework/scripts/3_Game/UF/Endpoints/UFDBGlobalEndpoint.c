@@ -4,8 +4,8 @@
  * Unlike UDBEndpoint which uses objectIDs, globals are per-mod only (no OID).
  * Useful for server-wide stats, leaderboards, global configuration.
  * 
- * @usage U().globals().Save("MyMod", jsonData);
- * @usage U().globals().Load("MyMod", this, "OnLoaded");
+ * @usage UF().globals().Save("MyMod", jsonData);
+ * @usage UF().globals().Load("MyMod", this, "OnLoaded");
  */
 class UDBGlobalEndpoint extends UFBaseEndpoint {
 	
@@ -14,7 +14,12 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @return Base URL with "Globals/" appended
 	 */
 	override protected string EndpointBaseUrl(){
-		return UFConfig().GetBaseURL() + "Globals/";
+		UFrameworkConfig ucfg = UFrameworkConfig.Cast(UFConfig());
+		if (!ucfg){
+			UFLog.Err("[UFDBGlobalEndpoint] EndpointBaseUrl called but UFConfig() is null - RPC not received yet?");
+			return "";
+		}
+		return ucfg.GetBaseURL() + "Globals/";
 	}
 	
 	/**
@@ -24,13 +29,13 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @param jsonString JSON data to save
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().globals().Save("MyMod", statsData.ToJson());
+	 * @usage UF().globals().Save("MyMod", statsData.ToJson());
 	 */
 	int Save(string mod, string jsonString) {	
 		int cid = -1;	
 		string endpoint = "Save/" + mod;
 		if (mod && jsonString){
-			Post(endpoint,jsonString, U().RegisterCall(new USilentCallBack(), cid));
+			Post(endpoint,jsonString, UF().RegisterCall(new USilentCallBack(), cid));
 		} else {
 			UFLog.Err("[Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
@@ -47,11 +52,11 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @param cbFunction Callback method name
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().globals().Save("MyMod", data.ToJson(), this, "OnSaved");
+	 * @usage UF().globals().Save("MyMod", data.ToJson(), this, "OnSaved");
 	 * @note Callback signature: void OnSaved(int cid, int status, string oid, string data)
 	 */
 	int Save(string mod, string jsonString, Class cbInstance, string cbFunction) {	
-		int cid = U().CallId();	
+		int cid = UF().CallId();	
 		string endpoint = "Save/" + mod;		
 		if (mod && jsonString){
 			Post(endpoint,jsonString, new UDBCallBack(cbInstance, cbFunction, cid, mod));
@@ -75,7 +80,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 
 		if (mod && jsonString && cb){
 			cb.SetOID(mod); //Only sets if not set
-			Post(endpoint,jsonString, U().RegisterCall(new UNestedCallBack(cb), cid));
+			Post(endpoint,jsonString, UF().RegisterCall(new UNestedCallBack(cb), cid));
 		} else {
 			UFLog.Err("[Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
@@ -92,7 +97,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @param jsonString Optional query parameters (default: "{}")
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().globals().Load("MyMod", this, "OnLoaded");
+	 * @usage UF().globals().Load("MyMod", this, "OnLoaded");
 	 * @note Callback signature: void OnLoaded(int cid, int status, string oid, string data)
 	 */
 	int Load(string mod, Class cbInstance, string cbFunction, string jsonString = "{}") {
@@ -101,9 +106,9 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		string endpoint = "Load/" + mod;
 
 		// Safety check: ensure framework is ready
-		UFramework uf = U();
+		UFramework uf = UF();
 		if (!uf){
-			UFLog.Err("[UDBGlobalEndpoint::Load] U() returned NULL - framework not ready");
+			UFLog.Err("[UDBGlobalEndpoint::Load] UF() returned NULL - framework not ready");
 			return -1;
 		}
 		if (!UFConfig()){
@@ -133,7 +138,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @param jsonString Optional query parameters (default: "{}")
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().globals().Load("MyMod", new MyLoadCallback());
+	 * @usage UF().globals().Load("MyMod", new MyLoadCallback());
 	 * @note Callback receives parsed object as typed parameter if using UFCallback<T>
 	 */
 	int Load(string mod, UFCallbackBase cb, string jsonString = "{}") {
@@ -142,9 +147,9 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		string endpoint = "Load/" + mod;
 		
 		// Safety check: ensure framework is ready
-		UFramework uf = U();
+		UFramework uf = UF();
 		if (!uf){
-			UFLog.Err("[UDBGlobalEndpoint::Load] U() returned NULL - framework not ready");
+			UFLog.Err("[UDBGlobalEndpoint::Load] UF() returned NULL - framework not ready");
 			return -1;
 		}
 		if (!UFConfig()){
@@ -175,7 +180,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @param value Amount to add (default: 1)
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().globals().Increment("MyMod", "totalKills", 1);
+	 * @usage UF().globals().Increment("MyMod", "totalKills", 1);
 	 * @note Thread-safe atomic operation
 	 */
 	int Increment(string mod, string element, float value = 1){
@@ -190,7 +195,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @param value Amount to add/subtract
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().globals().Transaction("MyMod", "activePlayers", 1); // Increment
+	 * @usage UF().globals().Transaction("MyMod", "activePlayers", 1); // Increment
 	 * @note Atomic operation - safe for concurrent modifications
 	 */
 	int Transaction(string mod, string element, float value) {
@@ -200,7 +205,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		
 		if ( element && transaction && mod){
-			Post(endpoint,transaction.ToJson(), U().RegisterCall(new USilentCallBack(), cid));
+			Post(endpoint,transaction.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
 		} else {
 			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;
@@ -218,11 +223,11 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @param cbFunction Callback method name
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().globals().Transaction("MyMod", "totalKills", 1, this, "OnUpdated");
+	 * @usage UF().globals().Transaction("MyMod", "totalKills", 1, this, "OnUpdated");
 	 * @note Atomic operation - thread-safe
 	 */
 	int Transaction(string mod, string element, float value, Class cbInstance, string cbFunction) {
-		int cid = U().CallId();
+		int cid = UF().CallId();
 		string endpoint = "Transaction/" + mod;
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
@@ -245,7 +250,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @param cb UFCallbackBase-derived callback
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().globals().Transaction("MyMod", "serverScore", 100, new MyCallback());
+	 * @usage UF().globals().Transaction("MyMod", "serverScore", 100, new MyCallback());
 	 * @note Atomic operation - thread-safe
 	 */
 	int Transaction(string mod, string element, float value, UFCallbackBase cb) {
@@ -256,7 +261,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		
 		if ( element && transaction && mod){
 			cb.SetOID(mod); //Only sets if not set
-			Post(endpoint,transaction.ToJson(),  U().RegisterCall(new UNestedCallBack(cb), cid));
+			Post(endpoint,transaction.ToJson(),  UF().RegisterCall(new UNestedCallBack(cb), cid));
 		} else {
 			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;
@@ -275,11 +280,11 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @param cbFunction Optional callback method name
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().globals().Update("MyMod", "status", "\"active\"", UpdateOpts.SET, this, "OnUpdated");
+	 * @usage UF().globals().Update("MyMod", "status", "\"active\"", UpdateOpts.SET, this, "OnUpdated");
 	 * @note For strings, must quote: Update(mod, "name", "\"ServerName\"");
 	 */	
 	int Update(string mod, string element, string value, string operation = UpdateOpts.SET, Class cbInstance = NULL, string cbFunction = "") {	
-		int cid = U().CallId();
+		int cid = UF().CallId();
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != ""){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, mod);
@@ -292,7 +297,7 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		if ( element && updatedata && DBCBX){
-			Post(endpoint, updatedata.ToJson(), U().RegisterCall(DBCBX, cid));
+			Post(endpoint, updatedata.ToJson(), UF().RegisterCall(DBCBX, cid));
 		} else {
 			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;

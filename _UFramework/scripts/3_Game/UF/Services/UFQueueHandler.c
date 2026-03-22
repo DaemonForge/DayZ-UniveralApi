@@ -14,7 +14,7 @@ class UQueueHandler<Class T> extends UQueueHandlerBase
 	 * @return int Call ID
 	 */
 	override int Read(){
-		return U().Msg().Read(m_mod, m_queue, new UFMsgCallback<T>(this, "readCB", m_queue));
+		return UF().Msg().Read(m_mod, m_queue, new UFMsgCallback<T>(this, "readCB", m_queue));
 	}
 	
 	/**
@@ -23,7 +23,7 @@ class UQueueHandler<Class T> extends UQueueHandlerBase
 	 * @return int Call ID
 	 */
 	int Read(int limit){
-		return U().Msg().Read(m_mod, m_queue, limit, new UFMsgCallback<T>(this, "readCB", m_queue));
+		return UF().Msg().Read(m_mod, m_queue, limit, new UFMsgCallback<T>(this, "readCB", m_queue));
 	}
 	
 	/**
@@ -34,7 +34,7 @@ class UQueueHandler<Class T> extends UQueueHandlerBase
 	 * @return Call ID or -1 on error
 	 */
 	int ReadLatest(int limit){
-		return U().Msg().ReadLatest(m_mod, m_queue, limit, new UFMsgCallback<T>(this, "readCB", m_queue));
+		return UF().Msg().ReadLatest(m_mod, m_queue, limit, new UFMsgCallback<T>(this, "readCB", m_queue));
 	}
 	
 	/**
@@ -49,7 +49,7 @@ class UQueueHandler<Class T> extends UQueueHandlerBase
 		}
 		autoptr UMessage<T> msg = new UMessage<T>(message);
 		string txt = msg.ToJson();
-		return U().Msg().Write(m_mod, m_queue, txt);
+		return UF().Msg().Write(m_mod, m_queue, txt);
 	}
  	
 	/**
@@ -94,7 +94,7 @@ class UStringQueueHandler extends UQueueHandlerBase
 	 * @return int Call ID
 	 */
 	override int Read(){
-		return U().Msg().Read(m_mod, m_queue, new UFMsgStringCallback(this, "readCB", m_queue));
+		return UF().Msg().Read(m_mod, m_queue, new UFMsgStringCallback(this, "readCB", m_queue));
 	}
 	
 	/**
@@ -103,7 +103,7 @@ class UStringQueueHandler extends UQueueHandlerBase
 	 * @return int Call ID
 	 */
 	int Read(int limit){
-		return U().Msg().Read(m_mod, m_queue, limit, new UFMsgStringCallback(this, "readCB", m_queue));
+		return UF().Msg().Read(m_mod, m_queue, limit, new UFMsgStringCallback(this, "readCB", m_queue));
 	}
 	
 	/**
@@ -114,7 +114,7 @@ class UStringQueueHandler extends UQueueHandlerBase
 	 * @return Call ID or -1 on error
 	 */
 	int ReadLatest(int limit){
-		return U().Msg().ReadLatest(m_mod, m_queue, limit, new UFMsgStringCallback(this, "readCB", m_queue));
+		return UF().Msg().ReadLatest(m_mod, m_queue, limit, new UFMsgStringCallback(this, "readCB", m_queue));
 	}
 	
 	/**
@@ -129,7 +129,7 @@ class UStringQueueHandler extends UQueueHandlerBase
 		}
 		autoptr UStringMessage msg = new UStringMessage(message);
 		string txt = msg.ToJson();
-		return U().Msg().Write(m_mod, m_queue, txt);
+		return UF().Msg().Write(m_mod, m_queue, txt);
 	}
 	
 	/**
@@ -217,12 +217,12 @@ class UQueueHandlerBase extends Managed
 	{
 		// Only start polling if we have a valid callback setup
 		if (m_PollingFrequency > 0 && m_obj && m_funcName != ""){
-			U().Cron().runEndless(m_PollingFrequency, this, "CheckQueue", NULL);
+			UF().Cron().runEndless(m_PollingFrequency, this, "CheckQueue", NULL);
 		}
 		
 		// Only set meta from server
 		if (meta && g_Game.IsDedicatedServer()){
-			m_LastWriteCall = U().Msg().SetMeta(m_mod, m_queue, meta);
+			m_LastWriteCall = UF().Msg().SetMeta(m_mod, m_queue, meta);
 		} 
 	}
 
@@ -234,7 +234,7 @@ class UQueueHandlerBase extends Managed
 		m_IsDestroying = true;
 		
 		// Remove from cron scheduler
-		U().Cron().Remove(this, "CheckQueue");
+		UF().Cron().Remove(this, "CheckQueue");
 		
 		// Cancel any pending calls
 		if (m_LastReadCall > 0){
@@ -272,7 +272,7 @@ class UQueueHandlerBase extends Managed
 	 * @return Call ID or -1 on error
 	 */
 	int jsonWrite(string sText){
-		return U().Msg().Write(m_mod, m_queue, sText);
+		return UF().Msg().Write(m_mod, m_queue, sText);
 	}
 	
 	/**
@@ -288,7 +288,7 @@ class UQueueHandlerBase extends Managed
 	 * @return Call ID or -1 on error
 	 */
 	int Reset(){
-		return U().Msg().Reset(m_mod, m_queue);
+		return UF().Msg().Reset(m_mod, m_queue);
 	}
 	
 	/**
@@ -297,7 +297,7 @@ class UQueueHandlerBase extends Managed
 	 * @return Call ID or -1 on error
 	 */
 	int Purge(int olderThanDays = 30){
-		return U().Msg().Purge(m_mod, m_queue, olderThanDays);
+		return UF().Msg().Purge(m_mod, m_queue, olderThanDays);
 	}
 	
 	/**
@@ -305,7 +305,7 @@ class UQueueHandlerBase extends Managed
 	 * @param cid The call ID to cancel
 	 */
 	void Cancel(int cid){
-		U().RequestCallCancel(cid);
+		UF().RequestCallCancel(cid);
 	}
  
 	/**

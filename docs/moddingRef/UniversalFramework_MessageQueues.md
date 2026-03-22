@@ -41,7 +41,7 @@ Use `ReadLatest()` when you want **only the most recent N messages** and want to
 
 ```enforce
 // Example: 100 messages in queue, you want only the latest 15
-U().Msg().ReadLatest("MyMod", "notifications", 15, callback);
+UF().Msg().ReadLatest("MyMod", "notifications", 15, callback);
 // Returns: messages 86-100 (newest 15)
 // Your pointer is updated to skip messages 1-85
 // Next regular Read() would return nothing (all caught up)
@@ -187,7 +187,7 @@ Direct endpoint access for advanced usage.
 ### Read Messages
 
 ```enforce
-UFMsgEndpoint msg = U().Msg();
+UFMsgEndpoint msg = UF().Msg();
 
 // Read all unread messages
 msg.Read("MyMod", "notifications", new UFMsgCallback<MyMessage>(this, "OnMessage", "notifications"));
@@ -201,7 +201,7 @@ msg.Read("MyMod", "notifications", 10, callback);
 Skip older unread messages and read only the most recent N:
 
 ```enforce
-UFMsgEndpoint msg = U().Msg();
+UFMsgEndpoint msg = UF().Msg();
 
 // Read only the latest 15 messages, skip/discard older ones
 msg.ReadLatest("MyMod", "notifications", 15, callback);

@@ -249,7 +249,7 @@ The `ServerID` is available on **both client and server**. On the client, it bec
 
 ```enforce
 // Preferred: Via UFramework singleton (works on client and server)
-string serverId = U().GetServerID();
+string serverId = UF().GetServerID();
 
 // Alternative: Via config directly
 string serverId = UFConfig().GetServerID();
@@ -269,10 +269,10 @@ if (GetGame().IsServer() && UFConfig().PromptDiscordOnConnect == 1) {
 void LogPlayerAction(PlayerIdentity identity, string action) {
     if (!GetGame().IsServer()) return;
     
-    string serverName = U().GetServerID();
+    string serverName = UF().GetServerID();
     string logMsg = "[" + serverName + "] " + identity.GetName() + ": " + action;
     
-    U().Logger().Log(logMsg);
+    UF().Logger().Log(logMsg);
 }
 ```
 
@@ -282,7 +282,7 @@ void LogPlayerAction(PlayerIdentity identity, string action) {
 void OnPlayerConnect(PlayerIdentity identity) {
     if (!GetGame().IsServer()) return;
     
-    string serverName = U().GetServerID();
+    string serverName = UF().GetServerID();
     string welcomeMsg = "Welcome to " + serverName + "!";
     
     UUtil.SendNotification("Welcome", welcomeMsg, identity);
@@ -294,7 +294,7 @@ void OnPlayerConnect(PlayerIdentity identity) {
 ```enforce
 // On client, ServerID is available after auth token is received
 void ShowServerInfo() {
-    string serverId = U().GetServerID();
+    string serverId = UF().GetServerID();
     if (serverId != "") {
         Print("Connected to server: " + serverId);
     }
@@ -311,14 +311,14 @@ void ShowServerInfo() {
 
 ```enforce
 int eventTime = UUtil.GetUnixInt() + 300;  // 5 minutes from now
-U().Cron().runOnce(eventTime, this, "OnEvent");
+UF().Cron().runOnce(eventTime, this, "OnEvent");
 ```
 
 ### Generate Unique Keys
 
 ```enforce
 string saveKey = "item_" + UUtil.GetRandomId(7);  // 8 char suffix
-U().db().Save("MyMod", saveKey, itemJson);
+UF().db().Save("MyMod", saveKey, itemJson);
 ```
 
 ### Notify All Players

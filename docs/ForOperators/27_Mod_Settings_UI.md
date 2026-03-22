@@ -70,7 +70,7 @@ Stores the registered templates and metadata. Indexed on `modId` (unique).
 
 ### Globals Collection
 
-The actual configuration data is stored in the existing `Globals` collection. Mod Settings is a UI layer on top of Globals — it reads/writes the same documents that the Globals Editor and Enforce Script `U().globals()` endpoint use.
+The actual configuration data is stored in the existing `Globals` collection. Mod Settings is a UI layer on top of Globals — it reads/writes the same documents that the Globals Editor and Enforce Script `UF().globals()` endpoint use.
 
 ---
 
@@ -132,7 +132,7 @@ When a mod template attempts to save settings, the Mod Settings UI presents a **
 
 | Problem | Solution |
 |---------|----------|
-| No mods appear in the sidebar | Verify the DayZ server is running and calling `U().Settings().Register()` at startup. Check the service logs for registration errors. |
+| No mods appear in the sidebar | Verify the DayZ server is running and calling `UF().Settings().Register()` at startup. Check the service logs for registration errors. |
 | Template shows blank | Open DevTools (Ctrl+Shift+I in the Mod Settings window) and check the console for errors. The template HTML may have syntax errors. |
 | "Bridge unavailable" error | The preload script failed to load. Restart the Mod Settings window. |
 | Settings don't save | Check that the Global name matches in both the template and the mod's Enforce Script. Verify MongoDB is running. |

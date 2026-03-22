@@ -160,7 +160,7 @@ class UFAIChatAgentSendCB extends UFCallbackBase {
         continueCB.SetToolCallDepth(m_ToolCallDepth);
         
         // Submit the tool result
-        UFAIChatEndpoint ai = U().AI();
+        UFAIChatEndpoint ai = UF().AI();
         ai.SubmitToolResult(messageId, toolCallId, result, continueCB);
     }
     
@@ -199,7 +199,7 @@ class UFAIChatAgentSendCB extends UFCallbackBase {
             return;
         }
         
-        UFAIChatEndpoint ai = U().AI();
+        UFAIChatEndpoint ai = UF().AI();
         // 'this' will be wrapped in UNestedCallBack and deleted after the call completes
         // That's fine - OnSuccess will create a new callback for the next poll if needed
         ai.MessageStatus(m_PendingMessageId, this);

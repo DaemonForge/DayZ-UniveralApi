@@ -2,12 +2,12 @@
 
 ## Overview
 
-The API endpoint (`UApiEndpoint`) via `U().Api()` provides external service integrations including server queries, cryptocurrency prices, random numbers, and text-to-speech.
+The API endpoint (`UApiEndpoint`) via `UF().Api()` provides external service integrations including server queries, cryptocurrency prices, random numbers, and text-to-speech.
 
 ## Accessing the API Endpoint
 
 ```enforce
-UApiEndpoint api = U().Api();
+UApiEndpoint api = UF().Api();
 ```
 
 ## Permissions
@@ -33,7 +33,7 @@ Query DayZ/Steam server status information.
 
 ```enforce
 // Query server status - returns UFServerStatus object
-U().Api().SteamQuery(ip, queryPort, this, "OnServerStatus");
+UF().Api().SteamQuery(ip, queryPort, this, "OnServerStatus");
 
 void OnServerStatus(int cid, int status, string oid, UFServerStatus server) {
     if (status == UF_SUCCESS && server) {
@@ -72,7 +72,7 @@ class ServerMonitor {
     protected string m_QueryPort = "27016";
     
     void CheckStatus() {
-        U().Api().SteamQuery(m_IP, m_QueryPort, this, "OnStatus");
+        UF().Api().SteamQuery(m_IP, m_QueryPort, this, "OnStatus");
     }
     
     void OnStatus(int cid, int status, string oid, UFServerStatus server) {
@@ -101,7 +101,7 @@ Get the current price of one crypto in terms of another:
 
 ```enforce
 // Get BTC price in USD
-U().Api().CryptoPrice("BTC", "USD", this, "OnPrice");
+UF().Api().CryptoPrice("BTC", "USD", this, "OnPrice");
 
 void OnPrice(int cid, int status, string oid, UCryptoConvertResult result) {
     if (status == UF_SUCCESS && result) {
@@ -116,7 +116,7 @@ Convert a specific amount between cryptocurrencies:
 
 ```enforce
 // Convert 0.5 ETH to USD
-U().Api().CryptoConvert("ETH", "USD", 0.5, this, "OnConvert");
+UF().Api().CryptoConvert("ETH", "USD", 0.5, this, "OnConvert");
 
 void OnConvert(int cid, int status, string oid, UCryptoConvertResult result) {
     if (status == UF_SUCCESS && result) {
@@ -132,7 +132,7 @@ Get multiple crypto prices at once:
 ```enforce
 // Get BTC, ETH, LTC prices in USD
 TStringArray coins = {"BTC", "ETH", "LTC"};
-U().Api().Crypto(coins, "USD", this, "OnCryptoPrices");
+UF().Api().Crypto(coins, "USD", this, "OnCryptoPrices");
 
 void OnCryptoPrices(int cid, int status, string oid, UCryptoResults result) {
     if (status == UF_SUCCESS && result) {
@@ -165,7 +165,7 @@ class CryptoEconomy {
     protected float m_BTCPrice;
     
     void UpdatePrices() {
-        U().Api().CryptoPrice("BTC", "USD", this, "OnBTCPrice");
+        UF().Api().CryptoPrice("BTC", "USD", this, "OnBTCPrice");
     }
     
     void OnBTCPrice(int cid, int status, string oid, UCryptoConvertResult result) {
@@ -188,7 +188,7 @@ Get cryptographically random numbers from the service.
 
 ```enforce
 // Get 100 random numbers (max 4096)
-U().Api().RandomNumbers(100, this, "OnRandom");
+UF().Api().RandomNumbers(100, this, "OnRandom");
 
 void OnRandom(int cid, int status, string oid, URandomNumberResponse result) {
     if (status == UF_SUCCESS && result) {
@@ -204,17 +204,17 @@ void OnRandom(int cid, int status, string oid, URandomNumberResponse result) {
 
 ## Text-to-Speech (TTS)
 
-See **AIVoice.md** for TTS documentation. TTS methods are also available via `U().Api()`:
+See **AIVoice.md** for TTS documentation. TTS methods are also available via `UF().Api()`:
 
 ```enforce
 // Generate TTS by creating a message object first
 string text = "This is a test message";
 autoptr UTTSMessage msg = new UTTSMessage(text, UTTSPersonality.RAGED_SURVIVOR);
 
-U().Api().TTSGenerate(voiceId, msg, this, "OnGenerated");
-U().Api().TTSStatus(ttsId, this, "OnStatus");
-U().Api().TTSDownload(ttsId, this, "OnDownloaded");
-U().Api().TTSPlay(ttsId);  // Download and play automatically
+UF().Api().TTSGenerate(voiceId, msg, this, "OnGenerated");
+UF().Api().TTSStatus(ttsId, this, "OnStatus");
+UF().Api().TTSDownload(ttsId, this, "OnDownloaded");
+UF().Api().TTSPlay(ttsId);  // Download and play automatically
 ```
 
 ---
@@ -224,7 +224,7 @@ U().Api().TTSPlay(ttsId);  // Download and play automatically
 Check if the backend service is responding:
 
 ```enforce
-U().Api().Status(this, "OnApiStatus");
+UF().Api().Status(this, "OnApiStatus");
 
 void OnApiStatus(int cid, int status, string oid, UFStatus result) {
     if (status == UF_SUCCESS && result) {

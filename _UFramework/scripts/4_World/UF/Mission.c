@@ -17,11 +17,11 @@ modded class MissionBaseWorld
 	 *
 	 * @return True if UFrameworkReady() has been called, false otherwise.
 	 * 
-	 * @note Use this to check if UF is ready before accessing U() singleton.
+	 * @note Use this to check if UF is ready before accessing UF() singleton.
 	 * 
 	 * @usage
 	 * if (GetMission().UFIsInitialized()) {
-	 *     U().db().Load("MyMod", "data123", callback);
+	 *     UF().db().Load("MyMod", "data123", callback);
 	 * }
 	 */
 	bool UFIsInitialized(){
@@ -48,14 +48,14 @@ modded class MissionBaseWorld
 	 *
 	 * @note Override this in your mod to execute initialization code.
 	 * @note Called once per mission start, after all UF systems are ready.
-	 * @note At this point, U() singleton is safe to use.
+	 * @note At this point, UF() singleton is safe to use.
 	 * 
 	 * @usage
 	 * modded class MissionBaseWorld {
 	 *     override void UFrameworkReady() {
 	 *         super.UFrameworkReady();
 	 *         // Your mod initialization code here
-	 *         U().db().Load("MyMod", "config", this, "OnConfigLoaded");
+	 *         UF().db().Load("MyMod", "config", this, "OnConfigLoaded");
 	 *     }
 	 * }
 	 */

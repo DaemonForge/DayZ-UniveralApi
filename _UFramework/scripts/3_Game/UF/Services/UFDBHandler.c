@@ -135,7 +135,7 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
 		if (Class.CastTo(obj, object) && UJSONHandler<T>.GetString(obj, jsonString)) {
-			return U().db(Database).Save(Mod, oid, jsonString);
+			return UF().db(Database).Save(Mod, oid, jsonString);
 		}
 		Error2("[UF] DB HANDLER Save", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
@@ -153,7 +153,7 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
 		if (Class.CastTo(obj, object) && UJSONHandler<T>.GetString(obj, jsonString)) {
-			return U().db(Database).Save(Mod, oid, jsonString, new UFCallback<T>(cbInstance, cbFunction));
+			return UF().db(Database).Save(Mod, oid, jsonString, new UFCallback<T>(cbInstance, cbFunction));
 		}
 		Error2("[UF] DB HANDLER Save", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
@@ -170,7 +170,7 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 	 * @return int Call ID
 	 */
 	override int Load(string oid, Class cbInstance, string cbFunction) {
-		return U().db(Database).Load(Mod,oid, new UFCallback<T>(cbInstance, cbFunction), "{}");
+		return UF().db(Database).Load(Mod,oid, new UFCallback<T>(cbInstance, cbFunction), "{}");
 	}
 	
 	/**
@@ -182,7 +182,7 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 	 * @return int Call ID
 	 */
 	override int Load(string oid, Class cbInstance, string cbFunction, string defaultJson) {
-		return U().db(Database).Load(Mod,oid, new UFCallback<T>(cbInstance, cbFunction), defaultJson);
+		return UF().db(Database).Load(Mod,oid, new UFCallback<T>(cbInstance, cbFunction), defaultJson);
 	}
 	
 	/**
@@ -199,7 +199,7 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 		if (Class.CastTo(obj, inObject) && UJSONHandler<T>.GetString(obj, jsonString)) {
 			autoptr UFCallbackLoader<T> cb = new UFCallbackLoader<T>(cbInstance, cbFunction);
 			cb.SetObject(obj);
-			return U().db(Database).Load(Mod, oid, cb, jsonString);
+			return UF().db(Database).Load(Mod, oid, cb, jsonString);
 		} 
 		Error2("[UF] DB HANDLER Load", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
@@ -240,7 +240,7 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 	 * @return int Call ID
 	 */
 	override int Query(UDBQueryBase query, Class cbInstance, string cbFunction) {
-		return U().db(Database).Query(Mod,query,new UFCallback<UDBQueryResult<T>>(cbInstance, cbFunction));
+		return UF().db(Database).Query(Mod,query,new UFCallback<UDBQueryResult<T>>(cbInstance, cbFunction));
 	}
 	
 	/**
@@ -251,7 +251,7 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 	 * @return int Call ID
 	 */
 	override int Query(string query, Class cbInstance, string cbFunction) {
-		return U().db(Database).Query(Mod, new UDBQuery(query),new UFCallback<UDBQueryResult<T>>(cbInstance, cbFunction));
+		return UF().db(Database).Query(Mod, new UDBQuery(query),new UFCallback<UDBQueryResult<T>>(cbInstance, cbFunction));
 	}
 }
 
@@ -343,7 +343,7 @@ class UDBHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int LoadJson(string oid, Class cbInstance, string cbFunction, string defaultJson = "{}") {
-		return U().db(Database).Load(Mod, oid, cbInstance, cbFunction, defaultJson);
+		return UF().db(Database).Load(Mod, oid, cbInstance, cbFunction, defaultJson);
 	}
 	
 	/**
@@ -375,7 +375,7 @@ class UDBHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int Transaction(string oid, string element, float value) {
-		return U().db(Database).Transaction(Mod,oid,element,value);
+		return UF().db(Database).Transaction(Mod,oid,element,value);
 	}
 	
 	/**
@@ -388,7 +388,7 @@ class UDBHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int Transaction(string oid, string element, float value, Class cbInstance, string cbFunction) {
-		return U().db(Database).Transaction(Mod, oid, element, value, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
+		return UF().db(Database).Transaction(Mod, oid, element, value, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
 	}
 	
 	/**
@@ -403,7 +403,7 @@ class UDBHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int Transaction(string oid, string element, float value, float min, float max, Class cbInstance, string cbFunction) {
-		return U().db(Database).Transaction(Mod, oid, element, value, min, max, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
+		return UF().db(Database).Transaction(Mod, oid, element, value, min, max, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
 	}
 	
 	
@@ -429,7 +429,7 @@ class UDBHandlerBase extends Managed {
 	 * @see UpdateOpts
 	 */
 	int Update(string oid, string element, string value, string operation = UpdateOpts.SET) {
-		return U().db(Database).Update(Mod, oid, element, value, operation);
+		return UF().db(Database).Update(Mod, oid, element, value, operation);
 	}
 	
 	/**
@@ -443,7 +443,7 @@ class UDBHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int Update(string oid, string element, string value, string operation, Class cbInstance, string cbFunction) {	
-		return U().db(Database).Update(Mod, oid, element, value, operation, new UFCallback<UDBUpdateResponse>(cbInstance, cbFunction) );
+		return UF().db(Database).Update(Mod, oid, element, value, operation, new UFCallback<UDBUpdateResponse>(cbInstance, cbFunction) );
 	}
 	
 	
@@ -456,7 +456,7 @@ class UDBHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int QueryUpdate(UDBQueryBase query, string element, string value, string operation = UpdateOpts.SET) {
-		return U().db(Database).QueryUpdate(query, Mod, element, value, operation);
+		return UF().db(Database).QueryUpdate(query, Mod, element, value, operation);
 	}
 	
 	/**
@@ -470,7 +470,7 @@ class UDBHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int QueryUpdate(UDBQueryBase query, string element, string value, string operation, Class cbInstance, string cbFunction) {	
-		return U().db(Database).QueryUpdate(query, Mod, element, value, operation, new UFCallback<UDBQueryUpdateResponse>(cbInstance, cbFunction) );
+		return UF().db(Database).QueryUpdate(query, Mod, element, value, operation, new UFCallback<UDBQueryUpdateResponse>(cbInstance, cbFunction) );
 	}
 	
 	
@@ -502,6 +502,6 @@ class UDBHandlerBase extends Managed {
 	 * @param cid The call ID to cancel
 	 */
 	void Cancel(int cid){
-		U().RequestCallCancel(cid);
+		UF().RequestCallCancel(cid);
 	}
 }

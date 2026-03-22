@@ -77,7 +77,7 @@ void LoadData(string id)
     #endif
 
     // Real call
-    U().db().Load("MyMod", id, this, "OnLoaded");
+    UF().db().Load("MyMod", id, this, "OnLoaded");
 }
 ```
 

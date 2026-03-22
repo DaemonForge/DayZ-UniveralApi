@@ -74,7 +74,7 @@
 	   - Static method to cancel an ongoing database call callback to prevent potential access violations.
 
 	General Notes:
-	- All operations interact with the global database via the U().globals() interface.
+	- All operations interact with the global database via the UF().globals() interface.
 	- JSON conversion operations utilize helper class UJSONHandler<T>.
 	- Callbacks are implemented through UFCallback<T> and UFCallbackLoader<T> which pass the call ID, status, mod
 	  identifier, and the JSON data or data object to the callback function.
@@ -143,7 +143,7 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
 		if (Class.CastTo(obj, object) && UJSONHandler<T>.GetString(obj, jsonString)) {
-			return U().globals().Save(Mod,jsonString);
+			return UF().globals().Save(Mod,jsonString);
 		}
 		Error2("[UF] DB HANDLER Save", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
@@ -160,7 +160,7 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 		string jsonString = "{}";
 		T obj; //Might not need Casting here but using it anyways
 		if (Class.CastTo(obj, object) && UJSONHandler<T>.GetString(obj, jsonString)) {
-			return U().globals().Save(Mod, jsonString, new UFCallback<T>(cbInstance, cbFunction));
+			return UF().globals().Save(Mod, jsonString, new UFCallback<T>(cbInstance, cbFunction));
 		}
 		Error2("[UF] DB HANDLER Save", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
@@ -175,7 +175,7 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 	 * @return int Call ID
 	 */
 	override int Load(Class cbInstance, string cbFunction) {
-		return U().globals().Load(Mod,new UFCallback<T>(cbInstance, cbFunction), "{}");
+		return UF().globals().Load(Mod,new UFCallback<T>(cbInstance, cbFunction), "{}");
 	}
 	
 	/**
@@ -186,7 +186,7 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 	 * @return int Call ID
 	 */
 	override int Load(Class cbInstance, string cbFunction, string defaultJson) {
-		return U().globals().Load(Mod,new UFCallback<T>(cbInstance, cbFunction), defaultJson);
+		return UF().globals().Load(Mod,new UFCallback<T>(cbInstance, cbFunction), defaultJson);
 	}
 	
 	/**
@@ -202,7 +202,7 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 		if (Class.CastTo(obj, inObject) && UJSONHandler<T>.GetString(obj, jsonString)) {
 			autoptr UFCallbackLoader<T> cb = new UFCallbackLoader<T>(cbInstance, cbFunction);
 			cb.SetObject(obj);
-			return U().globals().Load(Mod, cb, jsonString);
+			return UF().globals().Load(Mod, cb, jsonString);
 		} 
 		Error2("[UF] DB HANDLER Load", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
@@ -221,7 +221,7 @@ class UDBGlobalHandler<Class T> extends UDBGlobalHandlerBase{
 		if (Class.CastTo(obj, cbInstance) && UJSONHandler<T>.GetString(obj, jsonString)) {
 			autoptr UFCallbackLoader<T> cb = new UFCallbackLoader<T>(cbInstance, cbFunction);
 			cb.SetObject(obj);
-			return U().globals().Load(Mod, cb, jsonString);
+			return UF().globals().Load(Mod, cb, jsonString);
 		} 
 		Error2("[UF] DB HANDLER LoadSelf", "Error convertering to JSON or casting make sure you are passing the right class type");
 		return -1;
@@ -302,7 +302,7 @@ class UDBGlobalHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int LoadJson(Class cbInstance, string cbFunction, string defaultJson = "{}") {
-		return U().globals().Load(Mod, cbInstance, cbFunction, defaultJson);
+		return UF().globals().Load(Mod, cbInstance, cbFunction, defaultJson);
 	}
 	
 	/**
@@ -332,7 +332,7 @@ class UDBGlobalHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int Transaction(string element, float value) {
-		return U().globals().Transaction(Mod,element,value);
+		return UF().globals().Transaction(Mod,element,value);
 	}
 	
 	/**
@@ -344,10 +344,10 @@ class UDBGlobalHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int Transaction(string element, float value, Class cbInstance, string cbFunction) {
-		return U().globals().Transaction(Mod, element, value, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
+		return UF().globals().Transaction(Mod, element, value, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
 	}
 	//int Transaction(string element, float value, float min, float max, Class cbInstance, string cbFunction) {
-	//	return U().globals().Transaction(Mod, element, value, min, max, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
+	//	return UF().globals().Transaction(Mod, element, value, min, max, new UFCallback<UDBTransactionResponse>(cbInstance, cbFunction));
 	//}
 	
 	
@@ -372,7 +372,7 @@ class UDBGlobalHandlerBase extends Managed {
 	 * @see UpdateOpts
 	 */
 	int Update(string element, string value, string operation = UpdateOpts.SET) {
-		return U().globals().Update(Mod, element, value, operation);
+		return UF().globals().Update(Mod, element, value, operation);
 	}
 	
 	/**
@@ -385,7 +385,7 @@ class UDBGlobalHandlerBase extends Managed {
 	 * @return int Call ID
 	 */
 	int Update(string element, string value, string operation, Class cbInstance, string cbFunction) {	
-		return U().globals().Update(Mod, element, value, operation, new UFCallback<UDBUpdateResponse>(cbInstance, cbFunction) );
+		return UF().globals().Update(Mod, element, value, operation, new UFCallback<UDBUpdateResponse>(cbInstance, cbFunction) );
 	}
 	
 	
@@ -401,6 +401,6 @@ class UDBGlobalHandlerBase extends Managed {
 	 * @param cid The call ID to cancel
 	 */
 	static void Cancel(int cid){
-		U().RequestCallCancel(cid);
+		UF().RequestCallCancel(cid);
 	}
 }

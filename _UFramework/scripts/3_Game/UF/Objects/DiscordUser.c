@@ -38,7 +38,7 @@ class UDiscordUser extends StatusObject{
 			return -1;
 		}
 		
-		return U().ds().AddRole(id, roleid, this, "OnRoleAdded");
+		return UF().ds().AddRole(id, roleid, this, "OnRoleAdded");
 	}
 	
 	protected void OnRoleAdded(UDiscordUser user, string discordId) {
@@ -68,7 +68,7 @@ class UDiscordUser extends StatusObject{
 			return -1;
 		}
 		
-		return U().ds().RemoveRole(id, roleid, this, "OnRoleRemoved");
+		return UF().ds().RemoveRole(id, roleid, this, "OnRoleRemoved");
 	}
 	
 	protected void OnRoleRemoved(UDiscordUser user, string discordId) {

@@ -57,7 +57,7 @@ static const int UF_DBTOOEARLY = 425;
 
 /**
  * Database Type Identifiers
- * Used to specify which database collection to access via U().db(type)
+ * Used to specify which database collection to access via UF().db(type)
  */
 static const int PLAYER_DB = 100;   // Player-specific data (client can only access their own data)
 static const int OBJECT_DB = 101;   // Object/global data (accessible by all clients)
@@ -72,7 +72,7 @@ static const string UF_QUEUE_LIFO = "LIFO";  // Last In, First Out
 /**
  * UpdateOpts Class
  *
- * Defines the available database update operations for U().db().Update() calls.
+ * Defines the available database update operations for UF().db().Update() calls.
  * These operations modify specific fields within a database document without
  * replacing the entire object.
  *
@@ -86,8 +86,8 @@ static const string UF_QUEUE_LIFO = "LIFO";  // Last In, First Out
  *   - PULLALL: Empties an entire array
  *
  * Example:
- *   U().db().Update("MyMod", "player123", "coins", "100", UpdateOpts.SET);
- *   U().db().Update("MyMod", "player123", "items", "\"sword\"", UpdateOpts.PUSH);
+ *   UF().db().Update("MyMod", "player123", "coins", "100", UpdateOpts.SET);
+ *   UF().db().Update("MyMod", "player123", "items", "\"sword\"", UpdateOpts.PUSH);
  */
 class UpdateOpts {
 	static string SET = "set"; // `set` to set the value of an element
@@ -104,8 +104,8 @@ class UpdateOpts {
  * DSPerms Class
  *
  * Defines Discord permission constants used for channel permission overwrites
- * when creating or editing Discord channels via U().ds().ChannelCreate() and
- * U().ds().ChannelEdit().
+ * when creating or editing Discord channels via UF().ds().ChannelCreate() and
+ * UF().ds().ChannelEdit().
  *
  * Common Permissions:
  *   - VIEW_CHANNEL: Can see the channel
@@ -183,7 +183,7 @@ class DSPerms {
  *   - SHIMMER: Light and pleasant
  *
  * Usage Example:
- *   U().api().GenerateTTS("Hello world", UTTSVoice.ALLOY, this, "OnTTSGenerated");
+ *   UF().api().GenerateTTS("Hello world", UTTSVoice.ALLOY, this, "OnTTSGenerated");
  */
 class UTTSVoice {
 	static const string ALLOY = "alloy";
@@ -226,7 +226,7 @@ class UTTSVisual {
  *   - (Add more as defined below...)
  *
  * Usage Example:
- *   U().api().GenerateTTSWithPersonality("Get out of here!", UTTSPersonality.RAGED_SURVIVOR, UTTSVoice.ONYX, this, "OnTTS");
+ *   UF().api().GenerateTTSWithPersonality("Get out of here!", UTTSPersonality.RAGED_SURVIVOR, UTTSVoice.ONYX, this, "OnTTS");
  */
 class UTTSPersonality {
     static const string RAGED_SURVIVOR = "IMPORTANT: STRONG RUSSIAN ACCENT\nVoice: Ragged and explosive, each word a desperate cry.  \nTone: Frenzied and urgent.  \nDelivery: Rapid bursts with heavy static.  \nPhrasing: Abrupt commands.  \nFeatures: Intense static and a collapsing wasteland vibe."; // RAGED_SURVIVOR: Explosive urgency with a harsh Russian edge.

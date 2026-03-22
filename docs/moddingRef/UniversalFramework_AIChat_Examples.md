@@ -387,12 +387,12 @@ class QuestGiverAgent extends UFAIChatAgent {
     
     protected void LoadPlayerQuests() {
         // Load from UFramework database
-        // U().db().Load(...)
+        // UF().db().Load(...)
     }
     
     protected void SavePlayerQuests() {
         // Save to UFramework database
-        // U().db().Save(...)
+        // UF().db().Save(...)
     }
 }
 

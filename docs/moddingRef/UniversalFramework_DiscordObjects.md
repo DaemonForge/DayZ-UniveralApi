@@ -126,7 +126,7 @@ embed.title = "Player Join";
 embed.description = "Welcome!";
 msg.embeds.Insert(embed);
 
-U().ds().ChannelSendEmbed("channelId", msg);
+UF().ds().ChannelSendEmbed("channelId", msg);
 ```
 
 ## UDiscordBasicMessage
@@ -308,7 +308,7 @@ void SendKillFeed(string killer, string victim, string weapon) {
     msg.embeds = new array<autoptr UDiscordEmbed>;
     msg.embeds.Insert(embed);
     
-    U().ds().ChannelSendEmbed("killfeed-channel-id", msg);
+    UF().ds().ChannelSendEmbed("killfeed-channel-id", msg);
 }
 ```
 

@@ -40,7 +40,7 @@ Because `UFramework` loads its core definitions in `1_Core`, `3_Game`, and `4_Wo
 
 ### Best Practice: `UFrameworkReady`
 
-Do **NOT** attempt to use `U()` or make API calls in `Init()`, `Constructor()`, or `Start()`. The framework needs time to authenticate with the backend.
+Do **NOT** attempt to use `UF()` or make API calls in `Init()`, `Constructor()`, or `Start()`. The framework needs time to authenticate with the backend.
 
 Instead, override `UFrameworkReady()` in your Mission class.
 
@@ -53,10 +53,10 @@ modded class MissionServer
     {
         super.UFrameworkReady(); // ALWAYS call super!
         
-        Print("[YourMod] Framework is ready! Server ID: " + U().GetServerID());
+        Print("[YourMod] Framework is ready! Server ID: " + UF().GetServerID());
         
         // Safe to start loading data
-        U().globals().Load("YourMod", "Config", this, "OnConfigLoaded");
+        UF().globals().Load("YourMod", "Config", this, "OnConfigLoaded");
     }
 }
 
@@ -81,7 +81,7 @@ modded class MissionGameplay
         {
             string uid = player.GetIdentity().GetId();
             // PLAYER_DB always uses the GUID from GetId(), never GetPlainId().
-            U().db(PLAYER_DB).Load("YourMod", uid, this, "OnPlayerStatsLoaded");
+            UF().db(PLAYER_DB).Load("YourMod", uid, this, "OnPlayerStatsLoaded");
         }
     }
 }
@@ -109,14 +109,14 @@ You can enable verbal logging during development:
 
 ```enforce
 // In your initialization
-U().SetDebug(true); 
+UF().SetDebug(true); 
 ```
 
 ### Checking Status
 Always verify the connection status before critical operations:
 
 ```enforce
-if (!U().IsOnline())
+if (!UF().IsOnline())
 {
     Print("Warning: Universal Framework is offline!");
     return;

@@ -3,7 +3,7 @@
 /**
  * UFRestCallBackBase
  * Base callback class for all REST API calls in Universal Framework.
- * Automatically clears callbacks via U().ClearCallback() to prevent memory leaks.
+ * Automatically clears callbacks via UF().ClearCallback() to prevent memory leaks.
  * All child callbacks inherit automatic cleanup behavior.
  */
 class UFRestCallBackBase : RestCallback
@@ -18,7 +18,7 @@ class UFRestCallBackBase : RestCallback
 		//Always call super to prevent memory leaks
 		string debugtrace;
 		DumpStackString(debugtrace);
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UF().ClearCallback,m_UFid, debugtrace);
 	};
 	
 	/**
@@ -28,7 +28,7 @@ class UFRestCallBackBase : RestCallback
 		//Always call super to prevent memory leaks
 		string debugtrace;
 		DumpStackString(debugtrace);
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback,m_UFid, debugtrace);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UF().ClearCallback,m_UFid, debugtrace);
 	};
 	
 	/**
@@ -40,7 +40,7 @@ class UFRestCallBackBase : RestCallback
 		//Always call super to prevent memory leaks
 		string debugtrace;
 		DumpStackString(debugtrace);
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(U().ClearCallback, m_UFid, debugtrace);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UF().ClearCallback, m_UFid, debugtrace);
 	};
 	
 	/**
@@ -61,7 +61,7 @@ class UFRestCallBackBase : RestCallback
  * 
  * Usage:
  * @code
- * U().db().Load("MyMod", "player123", new UFCallback<PlayerData>(this, "OnPlayerLoaded"));
+ * UF().db().Load("MyMod", "player123", new UFCallback<PlayerData>(this, "OnPlayerLoaded"));
  * 
  * void OnPlayerLoaded(int cid, int status, string oid, PlayerData data) {
  *     if (status == UF_SUCCESS) {
@@ -109,11 +109,11 @@ class UFCallback<Class T> extends UFCallbackBase {
 							break;
 						case "NoAuth":
 							rstatus = UF_UNAUTHORIZED;
-							U().OnAuthFailure(); // Trigger token renewal
+							UF().OnAuthFailure(); // Trigger token renewal
 							break;
 						case "InvalidAuth":
 							rstatus = UF_UNAUTHORIZED;
-							U().OnAuthFailure(); // Trigger token renewal
+							UF().OnAuthFailure(); // Trigger token renewal
 							break;
 						case "NotSetup":
 							rstatus = UF_NOTSETUP;
@@ -140,7 +140,7 @@ class UFCallback<Class T> extends UFCallbackBase {
  * autoptr PlayerData myData = new PlayerData();
  * autoptr UFCallbackLoader<PlayerData> cb = new UFCallbackLoader<PlayerData>(this, "OnLoaded");
  * cb.SetObject(myData);
- * U().db().Load("MyMod", "player123", cb);
+ * UF().db().Load("MyMod", "player123", cb);
  * @endcode
  */
 class UFCallbackLoader<Class T> extends UFCallbackBase {
@@ -194,11 +194,11 @@ class UFCallbackLoader<Class T> extends UFCallbackBase {
 						break;
 					case "NoAuth":
 						rstatus = UF_UNAUTHORIZED;
-						U().OnAuthFailure(); // Trigger token renewal
+						UF().OnAuthFailure(); // Trigger token renewal
 						break;
 					case "InvalidAuth":
 						rstatus = UF_UNAUTHORIZED;
-						U().OnAuthFailure(); // Trigger token renewal
+						UF().OnAuthFailure(); // Trigger token renewal
 						break;
 					case "NotSetup":
 						rstatus = UF_NOTSETUP;
@@ -358,8 +358,8 @@ class UNestedCallBack : UFRestCallBackBase
 	 */
 	override void OnError(int errorCode) {
 		UFLog.Debug("[UNestedCallBack] OnError - CID: " + m_UFid + ", ErrorCode: " + errorCode);
-		if (U().IsCallCanceled(m_UFid)){
-			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnError " + U().ErrorToString(errorCode));
+		if (UF().IsCallCanceled(m_UFid)){
+			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnError " + UF().ErrorToString(errorCode));
 			super.OnError(errorCode);
 			return;
 		}
@@ -378,7 +378,7 @@ class UNestedCallBack : UFRestCallBackBase
 	 */
 	override void OnTimeout() {
 		UFLog.Debug("[UNestedCallBack] OnTimeout - CID: " + m_UFid);
-		if (U().IsCallCanceled(m_UFid)){
+		if (UF().IsCallCanceled(m_UFid)){
 			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnTimeout");
 			super.OnTimeout();
 			return;
@@ -397,7 +397,7 @@ class UNestedCallBack : UFRestCallBackBase
 	 */
 	override void OnSuccess(string data, int dataSize) {
 		UFLog.Debug("[UNestedCallBack] OnSuccess - CID: " + m_UFid + ", DataSize: " + dataSize);
-		if (U().IsCallCanceled(m_UFid)){
+		if (UF().IsCallCanceled(m_UFid)){
 			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnSuccess");
 			super.OnSuccess(data, dataSize);
 			return;

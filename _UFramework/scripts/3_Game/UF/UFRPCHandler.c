@@ -78,7 +78,7 @@ class UFRPCHandler
 		UFLog.Debug("[RPC] [" + rpcContext + "] Received RPC " + rpc_type + " from sender=" + senderInfo + " target=" + targetInfo);
 		
 		// Get UFramework singleton - if not available, we can't handle RPCs
-		UFramework uf = U();
+		UFramework uf = UF();
 		if (!uf)
 		{
 			UFLog.Info("[RPC] UFramework not initialized, cannot handle RPC " + rpc_type);

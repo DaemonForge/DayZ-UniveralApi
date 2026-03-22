@@ -143,7 +143,7 @@ class DataManager {
     
     void LoadData() {
         // ERROR: Cannot pass static method
-        U().db().Load("MyMod", "key", DataManager, "OnLoaded");
+        UF().db().Load("MyMod", "key", DataManager, "OnLoaded");
     }
 }
 ```
@@ -157,7 +157,7 @@ class DataManager {
     
     void LoadData() {
         // Pass 'this' instance
-        U().db().Load("MyMod", "key", this, "OnLoaded");
+        UF().db().Load("MyMod", "key", this, "OnLoaded");
     }
 }
 ```
@@ -394,7 +394,7 @@ Prevent callbacks on destroyed objects. **CRITICAL:** If an object is deleted wh
 ### Method Signature
 
 ```enforce
-// UDBHandler<T>.Cancel - wraps U().RequestCallCancel(cid)
+// UDBHandler<T>.Cancel - wraps UF().RequestCallCancel(cid)
 void Cancel(int cid);
 
 // Parameter:
@@ -427,7 +427,7 @@ class MyManager {
 }
 ```
 
-> **Note:** You can also use `U().RequestCallCancel(cid)` directly instead of going through the handler.
+> **Note:** You can also use `UF().RequestCallCancel(cid)` directly instead of going through the handler.
 
 ## Complete Example
 

@@ -22,7 +22,7 @@ class UTTSMessage extends UFObject_Base {
 
 ## API Endpoint Methods
 
-Access via `U().Api()`:
+Access via `UF().Api()`:
 
 ```enforce
 // Generate TTS audio (returns audio ID in callback)
@@ -44,19 +44,19 @@ int TTSPlay(string ttsId);
 ```enforce
 // Generate TTS
 UTTSMessage msg = new UTTSMessage("Hello survivor!");
-U().Api().TTSGenerate(UTTSVoice.ALLOY, msg, this, "OnTTSGenerated");
+UF().Api().TTSGenerate(UTTSVoice.ALLOY, msg, this, "OnTTSGenerated");
 
 void OnTTSGenerated(int cid, int status, string audioId, string result) {
     if (status == UF_SUCCESS) {
         // Audio ID ready - poll status or download
-        U().Api().TTSStatus(audioId, this, "OnTTSStatus");
+        UF().Api().TTSStatus(audioId, this, "OnTTSStatus");
     }
 }
 
 void OnTTSStatus(int cid, int status, string oid, string statusText) {
     if (status == UF_SUCCESS) {
         // Ready to download
-        U().Api().TTSDownload(oid, this, "OnTTSDownloaded");
+        UF().Api().TTSDownload(oid, this, "OnTTSDownloaded");
     }
 }
 

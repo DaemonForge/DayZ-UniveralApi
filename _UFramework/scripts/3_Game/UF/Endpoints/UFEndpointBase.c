@@ -53,9 +53,9 @@ class UFBaseEndpoint extends Managed {
 	 * @return The authentication token string
 	 */
 	protected string AuthToken(){
-		UFramework uf = U();
+		UFramework uf = UF();
 		if (!uf){
-			UFLog.Err("[UFBaseEndpoint] AuthToken called but U() is null!");
+			UFLog.Err("[UFBaseEndpoint] AuthToken called but UF() is null!");
 			return "";
 		}
 		return uf.GetAuthToken();
@@ -122,6 +122,11 @@ class UFBaseEndpoint extends Managed {
 		RestContext ctx = Api();
 		if (!ctx){
 			Error2("[UF] UFBaseEndpoint::Post()", "Api() returned null - cannot make request to: " + route);
+			// Fire the error callback so the caller gets notified and the 
+			// callback is properly cleaned up (not leaked in m_UCallBacks)
+			if (UCBX){
+				UCBX.OnError(ERestResultState.EREST_ERROR);
+			}
 			return;
 		}
 		ctx.POST(UCBX, route, jsonString);

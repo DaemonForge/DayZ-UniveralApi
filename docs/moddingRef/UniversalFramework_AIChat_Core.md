@@ -93,7 +93,7 @@ clientHandler.SendMessage("Hello from client!");
 Best for **advanced scenarios** requiring direct API control.
 
 ```enforce
-UFAIChatEndpoint ai = U().AI();
+UFAIChatEndpoint ai = UF().AI();
 
 // Create session - params: systemMessage, format, jsonSchema, model, maxHistory, callback, kbId
 int cid = ai.Create("System message", "string", "", "gpt-4o-mini", 25, callback, "");

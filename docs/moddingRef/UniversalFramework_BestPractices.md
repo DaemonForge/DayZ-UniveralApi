@@ -20,10 +20,10 @@ modded class MissionServer
         Print("[MyMod] Server UFrameworkReady - Starting data sync");
         
         // Example: Load global config
-        U().globals().Load("MyMod", "serverConfig", this, "OnConfigLoaded");
+        UF().globals().Load("MyMod", "serverConfig", this, "OnConfigLoaded");
         
         // Example: Start scheduled tasks
-        U().Cron().runEndless(300, this, "PeriodicSync", NULL); // Every 5 minutes
+        UF().Cron().runEndless(300, this, "PeriodicSync", NULL); // Every 5 minutes
     }
 }
 ```
@@ -43,7 +43,7 @@ modded class MissionGameplay
         PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
         if (player && player.GetIdentity()){
             string guid = player.GetIdentity().GetId();
-            U().db(PLAYER_DB).Load("MyMod", guid, this, "OnPlayerDataLoaded");
+            UF().db(PLAYER_DB).Load("MyMod", guid, this, "OnPlayerDataLoaded");
         }
     }
 }
@@ -92,7 +92,7 @@ modded class MissionServer
 {
     void OnPlayerRequestData(PlayerIdentity identity, string dataId){
         // Server makes the call, then has to RPC result back
-        U().db().Load("MyMod", dataId, this, "OnDataLoaded");
+        UF().db().Load("MyMod", dataId, this, "OnDataLoaded");
         // ... then send to player via RPC
     }
 }
@@ -110,7 +110,7 @@ modded class MissionGameplay
         super.UFrameworkReady();
         
         // Client makes direct API call - no server involvement
-        U().db().Load("MyMod", "publicData", this, "OnDataLoaded");
+        UF().db().Load("MyMod", "publicData", this, "OnDataLoaded");
     }
     
     void OnDataLoaded(int cid, int status, string oid, string data){
@@ -152,7 +152,7 @@ modded class ShopMenu
 {
     void LoadShopPrices(){
         // Client makes direct call to API
-        U().db().Load("ShopMod", "prices", this, "OnPricesLoaded");
+        UF().db().Load("ShopMod", "prices", this, "OnPricesLoaded");
     }
     
     void OnPricesLoaded(int cid, int status, string oid, string data){
@@ -177,12 +177,12 @@ modded class ShopMenu
 ```enforce
 // OBJECT_DB - General data accessible by all clients
 // Good for: shared configs, public data, item definitions
-U().db(OBJECT_DB).Load("MyMod", "globalConfig", this, "OnLoaded");
-U().db().Load("MyMod", "globalConfig", this, "OnLoaded"); // Same as above (default)
+UF().db(OBJECT_DB).Load("MyMod", "globalConfig", this, "OnLoaded");
+UF().db().Load("MyMod", "globalConfig", this, "OnLoaded"); // Same as above (default)
 
 // PLAYER_DB - Player-specific data, client can only read their own
 // Good for: player profiles, stats, inventories (read-only from client)
-U().db(PLAYER_DB).Load("MyMod", playerGuid, this, "OnLoaded");
+UF().db(PLAYER_DB).Load("MyMod", playerGuid, this, "OnLoaded");
 
 // PLAYER_DB ids must be the player's GUID
 // Use: player.GetIdentity().GetId()
@@ -194,11 +194,11 @@ U().db(PLAYER_DB).Load("MyMod", playerGuid, this, "OnLoaded");
 ```enforce
 // globals() - Server-wide key-value store
 // Clients can read, only server can write
-U().globals().Load("MyMod", "serverStatus", this, "OnLoaded");
+UF().globals().Load("MyMod", "serverStatus", this, "OnLoaded");
 
 // Server-only write:
 if (GetGame().IsServer()){
-    U().globals().Save("MyMod", "serverStatus", "{\"online\":true}");
+    UF().globals().Save("MyMod", "serverStatus", "{\"online\":true}");
 }
 ```
 
@@ -210,7 +210,7 @@ if (GetGame().IsServer()){
 
 ```enforce
 void LoadData(){
-    U().db().Load("MyMod", "data123", this, "OnDataLoaded");
+    UF().db().Load("MyMod", "data123", this, "OnDataLoaded");
 }
 
 void OnDataLoaded(int cid, int status, string oid, string data){
@@ -300,21 +300,21 @@ modded class MissionServer
         
         // runEndless: Run every 60 seconds, forever
         // Params: (int freqSeconds, Class obj, string fnName, Param params)
-        U().Cron().runEndless(60, this, "PeriodicTask", NULL);
+        UF().Cron().runEndless(60, this, "PeriodicTask", NULL);
         
         // runEndTime: Run every 30 seconds until Unix time is reached
         // Params: (int freqSeconds, int endCallUnix, Class obj, string fnName, Param params)
         int oneHourFromNow = UUtil.GetUnixInt() + 3600;  // Current time + 3600 seconds
-        U().Cron().runEndTime(30, oneHourFromNow, this, "HourlyTask", NULL);
+        UF().Cron().runEndTime(30, oneHourFromNow, this, "HourlyTask", NULL);
         
         // runEndCount: Run every 10 seconds, exactly 5 times total
         // Params: (int freqSeconds, int maxCount, Class obj, string fnName, Param params)
-        U().Cron().runEndCount(10, 5, this, "LimitedTask", NULL);
+        UF().Cron().runEndCount(10, 5, this, "LimitedTask", NULL);
         
         // runOnce: Run once at specific Unix timestamp
         // Params: (int nextRunUnix, Class obj, string fnName, Param params)
         int twoMinutesFromNow = UUtil.GetUnixInt() + 120;
-        U().Cron().runOnce(twoMinutesFromNow, this, "DelayedStartup", NULL);
+        UF().Cron().runOnce(twoMinutesFromNow, this, "DelayedStartup", NULL);
     }
     
     void PeriodicTask(){
@@ -343,13 +343,13 @@ modded class MissionServer
 // Check execution context before making calls
 if (GetGame().IsServer()){
     // Server-only code
-    U().db().Save("MyMod", "data", jsonString); // Writes require server auth
-    U().ds().AddRole(playerGuid, "roleId");     // Discord operations
+    UF().db().Save("MyMod", "data", jsonString); // Writes require server auth
+    UF().ds().AddRole(playerGuid, "roleId");     // Discord operations
 }
 
 if (GetGame().IsClient()){
     // Client-only code  
-    U().db().Load("MyMod", "publicData", this, "OnLoaded"); // Reads work
+    UF().db().Load("MyMod", "publicData", this, "OnLoaded"); // Reads work
     // UI updates, local effects
 }
 
@@ -382,8 +382,8 @@ override void OnMissionFinish(){
     super.OnMissionFinish();
     
     // Remove scheduled tasks to prevent memory leaks
-    U().Cron().Remove(this, "PeriodicTask");
-    U().Cron().Remove(this, "OtherTask");
+    UF().Cron().Remove(this, "PeriodicTask");
+    UF().Cron().Remove(this, "OtherTask");
 }
 ```
 
@@ -401,7 +401,7 @@ If an object is deleted while an API call is pending, the callback will try to i
 // âŒ DANGEROUS: Object deleted before callback returns
 class MyTemporaryUI {
     void LoadData(){
-        U().db().Load("MyMod", "data", this, "OnLoaded"); // Pending...
+        UF().db().Load("MyMod", "data", this, "OnLoaded"); // Pending...
     }
     // If UI is closed/deleted before OnLoaded fires â†’ CRASH
 }
@@ -414,14 +414,14 @@ class MySafeHandler {
     protected ref array<int> m_PendingCalls = new array<int>;
     
     void LoadData(){
-        int cid = U().db().Load("MyMod", "data", this, "OnLoaded");
+        int cid = UF().db().Load("MyMod", "data", this, "OnLoaded");
         if (cid != -1){
             m_PendingCalls.Insert(cid);
         }
     }
     
     void LoadMoreData(){
-        int cid = U().db().Load("MyMod", "moreData", this, "OnMoreLoaded");
+        int cid = UF().db().Load("MyMod", "moreData", this, "OnMoreLoaded");
         if (cid != -1){
             m_PendingCalls.Insert(cid);
         }
@@ -449,7 +449,7 @@ class MySafeHandler {
     
     void CancelPendingCalls(){
         foreach (int cid : m_PendingCalls){
-            U().RequestCallCancel(cid);
+            UF().RequestCallCancel(cid);
         }
         m_PendingCalls.Clear();
     }
@@ -463,7 +463,7 @@ modded class ItemBase {
     protected ref array<int> m_UFPendingCalls = new array<int>;
     
     void LoadItemData(){
-        int cid = U().db().Load("MyMod", GetUFOID(), this, "OnItemDataLoaded");
+        int cid = UF().db().Load("MyMod", GetUFOID(), this, "OnItemDataLoaded");
         if (cid != -1){
             m_UFPendingCalls.Insert(cid);
         }
@@ -481,7 +481,7 @@ modded class ItemBase {
     override void EEDelete(EntityAI parent){
         // Cancel pending API calls before deletion
         foreach (int cid : m_UFPendingCalls){
-            U().RequestCallCancel(cid);
+            UF().RequestCallCancel(cid);
         }
         m_UFPendingCalls.Clear();
         
@@ -506,7 +506,7 @@ modded class ItemBase {
     protected bool m_HasCronJobs = false;
     
     void StartPeriodicSync(){
-        U().Cron().runEndless(30, this, "SyncItemData", NULL);
+        UF().Cron().runEndless(30, this, "SyncItemData", NULL);
         m_HasCronJobs = true;
     }
     
@@ -517,7 +517,7 @@ modded class ItemBase {
     override void EEDelete(EntityAI parent){
         // CRITICAL: Remove cron jobs before deletion
         if (m_HasCronJobs){
-            U().Cron().Remove(this, "SyncItemData");
+            UF().Cron().Remove(this, "SyncItemData");
             m_HasCronJobs = false;
         }
         
@@ -534,7 +534,7 @@ modded class PlayerBase {
     
     void StartPlayerSync(){
         if (!m_UFCronActive){
-            U().Cron().runEndless(60, this, "PeriodicPlayerSync", NULL);
+            UF().Cron().runEndless(60, this, "PeriodicPlayerSync", NULL);
             m_UFCronActive = true;
         }
     }
@@ -558,7 +558,7 @@ modded class PlayerBase {
     
     void CleanupCronJobs(){
         if (m_UFCronActive){
-            U().Cron().Remove(this, "PeriodicPlayerSync");
+            UF().Cron().Remove(this, "PeriodicPlayerSync");
             m_UFCronActive = false;
         }
     }
@@ -574,18 +574,18 @@ class MyCustomMenu extends UIScriptedMenu {
     override void OnShow(){
         super.OnShow();
         // Start periodic refresh while menu is open
-        U().Cron().runEndless(5, this, "RefreshData", NULL);
+        UF().Cron().runEndless(5, this, "RefreshData", NULL);
         m_RefreshActive = true;
     }
     
     void RefreshData(){
-        U().db().Load("MyMod", "liveData", this, "OnRefreshLoaded");
+        UF().db().Load("MyMod", "liveData", this, "OnRefreshLoaded");
     }
     
     override void OnHide(){
         // CRITICAL: Stop cron when menu closes
         if (m_RefreshActive){
-            U().Cron().Remove(this, "RefreshData");
+            UF().Cron().Remove(this, "RefreshData");
             m_RefreshActive = false;
         }
         super.OnHide();
@@ -594,7 +594,7 @@ class MyCustomMenu extends UIScriptedMenu {
     void ~MyCustomMenu(){
         // Safety net - also clean up in destructor
         if (m_RefreshActive){
-            U().Cron().Remove(this, "RefreshData");
+            UF().Cron().Remove(this, "RefreshData");
         }
     }
 }
@@ -607,14 +607,14 @@ modded class MissionServer {
     override void UFrameworkReady(){
         super.UFrameworkReady();
         
-        U().Cron().runEndless(60, this, "SyncGlobalData", NULL);
-        U().Cron().runEndless(300, this, "CleanupOldRecords", NULL);
+        UF().Cron().runEndless(60, this, "SyncGlobalData", NULL);
+        UF().Cron().runEndless(300, this, "CleanupOldRecords", NULL);
     }
     
     override void OnMissionFinish(){
         // Clean up ALL cron jobs registered to this mission
-        U().Cron().Remove(this, "SyncGlobalData");
-        U().Cron().Remove(this, "CleanupOldRecords");
+        UF().Cron().Remove(this, "SyncGlobalData");
+        UF().Cron().Remove(this, "CleanupOldRecords");
         
         super.OnMissionFinish();
     }
@@ -634,16 +634,16 @@ class MyManagedObject {
     
     void Initialize(){
         // Register cron job
-        U().Cron().runEndless(30, this, "PeriodicUpdate", NULL);
+        UF().Cron().runEndless(30, this, "PeriodicUpdate", NULL);
         m_CronMethods.Insert("PeriodicUpdate");
         
         // Make initial API call
-        int cid = U().db().Load("MyMod", "config", this, "OnConfigLoaded");
+        int cid = UF().db().Load("MyMod", "config", this, "OnConfigLoaded");
         if (cid != -1) m_PendingCalls.Insert(cid);
     }
     
     void PeriodicUpdate(){
-        int cid = U().db().Load("MyMod", "liveData", this, "OnLiveDataLoaded");
+        int cid = UF().db().Load("MyMod", "liveData", this, "OnLiveDataLoaded");
         if (cid != -1) m_PendingCalls.Insert(cid);
     }
     
@@ -665,13 +665,13 @@ class MyManagedObject {
     void Cleanup(){
         // Cancel all pending API calls
         foreach (int cid : m_PendingCalls){
-            U().RequestCallCancel(cid);
+            UF().RequestCallCancel(cid);
         }
         m_PendingCalls.Clear();
         
         // Remove all cron jobs
         foreach (string method : m_CronMethods){
-            U().Cron().Remove(this, method);
+            UF().Cron().Remove(this, method);
         }
         m_CronMethods.Clear();
     }
@@ -769,7 +769,7 @@ if (status != UF_SUCCESS){
 ```enforce
 // âŒ Making API calls before UFrameworkReady
 void MissionBase(){
-    U().db().Load(...); // Auth not ready yet!
+    UF().db().Load(...); // Auth not ready yet!
 }
 
 // âŒ Forgetting super call
@@ -780,7 +780,7 @@ override void UFrameworkReady(){
 
 // âŒ Client trying to write
 if (GetGame().IsClient()){
-    U().db().Save(...); // Will fail - clients can't write
+    UF().db().Save(...); // Will fail - clients can't write
 }
 
 // âŒ Not checking status codes
@@ -794,7 +794,7 @@ MyHandler h = new MyHandler(); // No autoptr = leak
 // âŒ Deleting object with pending API calls - CRASH!
 class BadExample {
     void LoadData(){
-        U().db().Load("Mod", "id", this, "OnLoaded"); // Pending...
+        UF().db().Load("Mod", "id", this, "OnLoaded"); // Pending...
     }
     // Object deleted before callback â†’ crash when callback tries to fire
 }
@@ -802,7 +802,7 @@ class BadExample {
 // âŒ Deleting object with active cron jobs - CRASH!
 class AnotherBadExample {
     void Start(){
-        U().Cron().runEndless(10, this, "Update", NULL);
+        UF().Cron().runEndless(10, this, "Update", NULL);
     }
     // Object deleted but cron still tries to call Update() â†’ crash
 }
@@ -810,7 +810,7 @@ class AnotherBadExample {
 // âŒ Not removing cron in EEDelete
 modded class ItemBase {
     void StartSync(){
-        U().Cron().runEndless(30, this, "Sync", NULL);
+        UF().Cron().runEndless(30, this, "Sync", NULL);
     }
     // Missing cleanup in EEDelete â†’ crash when item is deleted
 }
@@ -825,23 +825,23 @@ class GoodExample {
     protected bool m_HasCron = false;
     
     void LoadData(){
-        int cid = U().db().Load("Mod", "id", this, "OnLoaded");
+        int cid = UF().db().Load("Mod", "id", this, "OnLoaded");
         if (cid != -1) m_Pending.Insert(cid);
     }
     
     void StartCron(){
-        U().Cron().runEndless(10, this, "Update", NULL);
+        UF().Cron().runEndless(10, this, "Update", NULL);
         m_HasCron = true;
     }
     
     void ~GoodExample(){
         // Cancel pending API calls
         foreach (int cid : m_Pending){
-            U().RequestCallCancel(cid);
+            UF().RequestCallCancel(cid);
         }
         // Remove cron jobs
         if (m_HasCron){
-            U().Cron().Remove(this, "Update");
+            UF().Cron().Remove(this, "Update");
         }
     }
 }
@@ -851,13 +851,13 @@ modded class ItemBase {
     protected bool m_HasCron = false;
     
     void StartSync(){
-        U().Cron().runEndless(30, this, "Sync", NULL);
+        UF().Cron().runEndless(30, this, "Sync", NULL);
         m_HasCron = true;
     }
     
     override void EEDelete(EntityAI parent){
         if (m_HasCron){
-            U().Cron().Remove(this, "Sync");
+            UF().Cron().Remove(this, "Sync");
             m_HasCron = false;
         }
         super.EEDelete(parent);

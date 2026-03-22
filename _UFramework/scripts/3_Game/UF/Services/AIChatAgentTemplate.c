@@ -241,7 +241,7 @@ class UAIChatAgent<Class T> extends Managed {
             return;
         }
 
-        if (!U().IsOpenAIEnabled()){
+        if (!UF().IsOpenAIEnabled()){
             Error2("[UF][UAIChatAgent<T>] Chat", "OpenAI service is not online");
             CallHandlerError(handler, handlerFn, -1);
             return;
@@ -264,7 +264,7 @@ class UAIChatAgent<Class T> extends Managed {
 
     protected void CreateSession(){
         UFLog.Debug("[UAIChatAgent<T>] CreateSession - KBId: " + m_KBId);
-        UFAIChatEndpoint ai = U().AI();
+        UFAIChatEndpoint ai = UF().AI();
         string schema = GetSchemaForAPI();
         // Use "JSON" response format with schema
         int cid = ai.Create(SystemInstructions(), "JSON", schema, GetModel(), m_MaxHistory, new UAIChatAgentCreateCB<T>(this, ""), m_KBId);
@@ -317,7 +317,7 @@ class UAIChatAgent<Class T> extends Managed {
             UFLog.Debug("[UAIChatAgent<T>] SendMessage - Tools: " + tools.Count().ToString());
         }
 
-        UFAIChatEndpoint ai = U().AI();
+        UFAIChatEndpoint ai = UF().AI();
         autoptr UAIChatAgentSendCB<T> cb = new UAIChatAgentSendCB<T>(this, "");
         cb.Init(handler, handlerFn);
         int cid = ai.Send(m_ChatId, input, cb, ctx, tools);

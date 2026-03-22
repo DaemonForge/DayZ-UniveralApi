@@ -16,7 +16,7 @@ class UFConfigBase : UFRestCallBackBase {
 		
 		/*
 		Global Configs
-		U().Rest().GlobalsLoad("MODNAME", this, this.ToJson());
+		UF().Rest().GlobalsLoad("MODNAME", this, this.ToJson());
 		*/
 	}
 	
@@ -26,10 +26,10 @@ class UFConfigBase : UFRestCallBackBase {
 		
 		/*
 		Player Configs
-		U().Rest().PlayerLoad("MODNAME", ID, this, this.ToJson());
+		UF().Rest().PlayerLoad("MODNAME", ID, this, this.ToJson());
 		
 		Item Configs / Party Configs / anything that could have an ID Number
-		U().Rest().ItemLoad("MODNAME", ID, this, this.ToJson());
+		UF().Rest().ItemLoad("MODNAME", ID, this, this.ToJson());
 		*/
 	}
 	
@@ -40,13 +40,13 @@ class UFConfigBase : UFRestCallBackBase {
 		if (g_Game.IsServer()){	//By Default the API is configure to only allow save operations from the server AUTH
 		
 			Global Configs
-			U().Rest().GlobalsSave("MODNAME", this.ToJson());
+			UF().Rest().GlobalsSave("MODNAME", this.ToJson());
 		
 			Player Configs
-			U().Rest().PlayerSave("MODNAME", PlayerGUID, this.ToJson());
+			UF().Rest().PlayerSave("MODNAME", PlayerGUID, this.ToJson());
 		
 			Item Configs / Party Configs / anything that could have an ID Number
-			U().Rest().ItemSave("MODNAME", ItemId, this.ToJson());
+			UF().Rest().ItemSave("MODNAME", ItemId, this.ToJson());
 		
 		}
 		*/
@@ -106,7 +106,7 @@ class UFConfigBase : UFRestCallBackBase {
 		
 	// This Are Called by the API System on errors from the API System
 	override void OnError(int errorCode) {
-		UFLog.Err("CallBack Failed errorCode: " + U().ErrorToString(errorCode));
+		UFLog.Err("CallBack Failed errorCode: " + UF().ErrorToString(errorCode));
 	};
 	
 	override void OnTimeout() {

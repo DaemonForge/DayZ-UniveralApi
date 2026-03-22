@@ -8,7 +8,7 @@
  * @usage float chance = Math.QRandomFloat(0.0, 1.0);
  * @usage bool flip = Math.QRandomFlip();
  * 
- * @note Pool auto-refills via U().CheckAndRenewQRandom()
+ * @note Pool auto-refills via UF().CheckAndRenewQRandom()
  * @note Use QRandom methods instead of vanilla Random for better randomness
  */
 modded class Math
@@ -22,7 +22,7 @@ modded class Math
 	 * @param numbers Array of random integers from API
 	 * 
 	 * @note Internal use - called by UFramework automatically
-	 * @note Do not call manually - use U().CheckAndRenewQRandom() instead
+	 * @note Do not call manually - use UF().CheckAndRenewQRandom() instead
 	 */
 	static void AddQRandomNumber(TIntArray numbers){
 		if (!m_QRandomNumbers){
@@ -36,7 +36,7 @@ modded class Math
 	 * 
 	 * @return Number of random integers available
 	 * 
-	 * @usage if (Math.QRandomRemaining() < 1000) { U().CheckAndRenewQRandom(); }
+	 * @usage if (Math.QRandomRemaining() < 1000) { UF().CheckAndRenewQRandom(); }
 	 */
 	static int QRandomRemaining(){
 		if (!m_QRandomNumbers){

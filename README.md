@@ -46,7 +46,7 @@ Add `UFramework` to your `requiredAddons[]` in `config.cpp`.
 // Wait for framework to be ready before making calls
 override void UFrameworkReady() {
     // Example: Load player data from MongoDB
-    U().Player().Load(playerIdentity, this, "OnLoadParams");
+    UF().Player().Load(playerIdentity, this, "OnLoadParams");
 }
 ```
 

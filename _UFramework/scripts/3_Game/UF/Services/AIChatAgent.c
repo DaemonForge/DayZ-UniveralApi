@@ -213,7 +213,7 @@ class UFAIChatAgent extends Managed {
     void Chat(string input, Class handler, string handlerFn){
         UFLog.Debug("[AIChatAgent] Chat - Input length: " + input.Length().ToString() + ", Ready: " + m_Ready.ToString() + ", KBId: " + m_KBId);
         
-        if (!U().IsOpenAIEnabled()){
+        if (!UF().IsOpenAIEnabled()){
             Error2("[UF][AIChatAgent] Chat", "OpenAI service is not online");
             CallHandlerError(handler, handlerFn, -1, "OpenAI service is not online");
             return;
@@ -236,7 +236,7 @@ class UFAIChatAgent extends Managed {
 
     protected void CreateSession(){
         UFLog.Debug("[AIChatAgent] CreateSession - Starting, KBId: " + m_KBId);
-        UFAIChatEndpoint ai = U().AI();
+        UFAIChatEndpoint ai = UF().AI();
         int cid = ai.Create(SystemInstructions(), "string", "", GetModel(), m_MaxHistory, new UFAIChatAgentCreateCB(this, ""), m_KBId);
         if (cid == -1){
             Error2("[UF][AIChatAgent] CreateSession", "Failed to create AI chat session");
@@ -287,7 +287,7 @@ class UFAIChatAgent extends Managed {
             UFLog.Debug("[AIChatAgent] SendMessage - Tools: " + tools.Count().ToString());
         }
 
-        UFAIChatEndpoint ai = U().AI();
+        UFAIChatEndpoint ai = UF().AI();
         autoptr UFAIChatAgentSendCB cb = new UFAIChatAgentSendCB(this, "");
         cb.Init(handler, handlerFn);
         int cid = ai.Send(m_ChatId, input, cb, ctx, tools);

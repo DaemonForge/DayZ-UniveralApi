@@ -166,7 +166,7 @@ void OnPlayerDeath(DayZPlayer player, Object killer) {
     string message = player.GetIdentity().GetName() + " died near " + location;
     
     // Send to Discord
-    U().ds().ChannelSend("deaths-channel-id", message);
+    UF().ds().ChannelSend("deaths-channel-id", message);
 }
 ```
 

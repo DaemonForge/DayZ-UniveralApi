@@ -41,7 +41,7 @@ modded class MissionGameplay extends MissionBase
 		
 		// Request initial token
 		UFLog.Debug("[Auth] Sending initial auth token request");
-		U().RequestAuthToken(m_UFFirstRequest);
+		UF().RequestAuthToken(m_UFFirstRequest);
 		m_UFFirstRequest = false;
 		
 		// Token renewal strategy (3 layers of protection):
@@ -49,10 +49,10 @@ modded class MissionGameplay extends MissionBase
 		// 2. PROACTIVE: GetAuthToken() checks if <4 min remaining, triggers renewal (catches cron failures)
 		// 3. FAILURE RECOVERY: OnAuthFailure() triggers renewal when API returns auth errors
 		// All renewal requests are rate-limited to 30s to prevent spam
-		U().Cron().runEndless(600, this, "RequestNewAuthToken", NULL);
+		UF().Cron().runEndless(600, this, "RequestNewAuthToken", NULL);
 		
 		// DEBUG: Log token status every 60 seconds to watch token age
-		U().Cron().runEndless(60, this, "LogTokenStatus", NULL);
+		UF().Cron().runEndless(60, this, "LogTokenStatus", NULL);
 		
 		// Aggressive startup retry: Check at 5s, 15s, 30s, 60s if no token received
 		// Initial connection can have packet loss or timing issues with server
@@ -75,8 +75,8 @@ modded class MissionGameplay extends MissionBase
 	override void OnMissionFinish(){
 		UFLog.Info("MissionGameplay OnMissionFinish");
 		super.OnMissionFinish();
-		U().Cron().Remove(this, "RequestNewAuthToken");
-		U().Cron().Remove(this, "LogTokenStatus");
+		UF().Cron().Remove(this, "RequestNewAuthToken");
+		UF().Cron().Remove(this, "LogTokenStatus");
 		if (m_UFVideoPlayer){
 			delete m_UFVideoPlayer;
 		}
@@ -93,7 +93,7 @@ modded class MissionGameplay extends MissionBase
 		super.UFrameworkReady();
 		UFLog.Info("MissionGameplay UFrameworkReady");
 		// Dump cron jobs after framework is ready so we can see initial state
-		U().Cron().DebugDump();
+		UF().Cron().DebugDump();
 	}
 	
 	/**
@@ -110,12 +110,12 @@ modded class MissionGameplay extends MissionBase
 			UFLog.Debug("[Cron] ========================================");
 			UFLog.Debug("[Cron] RequestNewAuthToken CRON JOB FIRED");
 			UFLog.Debug("[Cron] ========================================");
-			if (U().HasValidAuth()){
-				UFLog.Debug("[Cron] Current token: Valid, SecsLeft=" + U().GetTokenSecondsRemaining() + ", Suffix=..." + U().GetTokenSuffix());
+			if (UF().HasValidAuth()){
+				UFLog.Debug("[Cron] Current token: Valid, SecsLeft=" + UF().GetTokenSecondsRemaining() + ", Suffix=..." + UF().GetTokenSuffix());
 			} else {
 				UFLog.Debug("[Cron] Current token: INVALID or missing");
 			}
-			U().RequestAuthToken(false);
+			UF().RequestAuthToken(false);
 		}
 	}
 	
@@ -141,23 +141,23 @@ modded class MissionGameplay extends MissionBase
 	 */
 	void LogTokenStatus(){
 		if (!g_Game.IsServer()){
-			if (U().HasValidAuth()){
-				int secsLeft = U().GetTokenSecondsRemaining();
+			if (UF().HasValidAuth()){
+				int secsLeft = UF().GetTokenSecondsRemaining();
 				string status = "OK";
 				if (secsLeft < 60) status = "CRITICAL";
 				else if (secsLeft < 240) status = "EXPIRING_SOON";
 				else if (secsLeft < 300) status = "LOW";
-				UFLog.Debug("[Auth] [STATUS] " + status + " SecsLeft=" + secsLeft + " Suffix=..." + U().GetTokenSuffix());
+				UFLog.Debug("[Auth] [STATUS] " + status + " SecsLeft=" + secsLeft + " Suffix=..." + UF().GetTokenSuffix());
 				
 				// WATCHDOG: If token has <5 min left, the 10-min cron should have renewed by now
 				// Something likely went wrong (dropped RPC, clock drift, etc.) - trigger renewal
 				if (secsLeft < 300 && secsLeft > 0) {
 					UFLog.Info("[Auth] [WATCHDOG] Token has " + secsLeft + "s left - primary cron may have failed, triggering renewal");
-					U().RequestAuthToken(false);
+					UF().RequestAuthToken(false);
 				}
 			} else {
 				UFLog.Debug("[Auth] [STATUS] NO_VALID_TOKEN - requesting new token");
-				U().RequestAuthToken(true);
+				UF().RequestAuthToken(true);
 			}
 		}
 	}
@@ -174,13 +174,13 @@ modded class MissionGameplay extends MissionBase
 		if (!g_Game.IsServer()){
 			m_StartupAuthRetries++;
 			
-			if (U().HasValidAuth()){
-				UFLog.Debug("[Auth] StartupAuthRetry #" + m_StartupAuthRetries + " - Token is valid, no retry needed. Suffix: ..." + U().GetTokenSuffix());
+			if (UF().HasValidAuth()){
+				UFLog.Debug("[Auth] StartupAuthRetry #" + m_StartupAuthRetries + " - Token is valid, no retry needed. Suffix: ..." + UF().GetTokenSuffix());
 				return;
 			}
 			
 			UFLog.Debug("[Auth] StartupAuthRetry #" + m_StartupAuthRetries + " - No valid token, requesting...");
-			U().RequestAuthToken(true);
+			UF().RequestAuthToken(true);
 		}
 	}
     
@@ -193,7 +193,7 @@ modded class MissionGameplay extends MissionBase
 	 * 
 	 * @param timeslice Time in seconds since last update
 	 * 
-	 * @note Only functions if U().IsDiscordEnabled() returns true
+	 * @note Only functions if UF().IsDiscordEnabled() returns true
 	 * @note After link tap, schedules ReCheckDiscord CRON job (20 iterations, 30s interval)
 	 */
     override void OnUpdate(float timeslice)
@@ -221,7 +221,7 @@ modded class MissionGameplay extends MissionBase
             m_DiscordKeyDownTime += timeslice * 1000;
             
             // If the hold duration exceeds the threshold, hide the avatar.
-            if (!m_HoldActionTriggered && m_DiscordKeyDownTime >= m_DiscordHoldThreshold && U().IsDiscordEnabled())
+            if (!m_HoldActionTriggered && m_DiscordKeyDownTime >= m_DiscordHoldThreshold && UF().IsDiscordEnabled())
             {
                 if (GetDiscordLoggedInWidget())
                     GetDiscordLoggedInWidget().ToggleAvatar();
@@ -236,8 +236,8 @@ modded class MissionGameplay extends MissionBase
             if (m_DiscordKeyDownTime < m_DiscordHoldThreshold && !GetDiscordLoggedInWidget().IsSet())
             {
                 // Open the URL. This will not execute if the hotkey was held.
-                g_Game.OpenURL(U().ds().Link());
-				U().Cron().runEndCount(30, 20, this, "ReCheckDiscord", NULL);
+                g_Game.OpenURL(UF().ds().Link());
+				UF().Cron().runEndCount(30, 20, this, "ReCheckDiscord", NULL);
             }
             // Reset the key state tracking.
             m_DiscordKeyDown = false;
@@ -253,11 +253,11 @@ modded class MissionGameplay extends MissionBase
 	 * @note Scheduled by OnUpdate after CTRL+L tap
 	 * @note Runs 20 times at 30-second intervals (total 10 minutes)
 	 * @note Auto-stops if Discord user is detected
-	 * @note Queries API for updated Discord info via U().ds().GetUser()
+	 * @note Queries API for updated Discord info via UF().ds().GetUser()
 	 */
 	void ReCheckDiscord(){
 		if (GetDayZGame().DiscordUser()) return;
-		U().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
+		UF().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
 	}
 	
 }

@@ -55,8 +55,8 @@ class UDBCallBack : UFRestCallBackBase
 	 * @param errorCode The REST error code (ERestResultState)
 	 */
 	override void OnError(int errorCode) {
-		if (U().IsCallCanceled(CallId)){
-			UFLog.Debug("Call " + CallId + " not called as it was requested to be canceled - OnError " + U().ErrorToString(errorCode));
+		if (UF().IsCallCanceled(CallId)){
+			UFLog.Debug("Call " + CallId + " not called as it was requested to be canceled - OnError " + UF().ErrorToString(errorCode));
 			return;
 		}
 		int rstatus = UF_SERVERERROR;
@@ -75,7 +75,7 @@ class UDBCallBack : UFRestCallBackBase
 	 * Checks if the call was canceled before invoking the callback.
 	 */
 	override void OnTimeout() {
-		if (U().IsCallCanceled(CallId)){
+		if (UF().IsCallCanceled(CallId)){
 			UFLog.Debug("Call " + CallId + " not called as it was requested to be canceled - OnTimeout");
 			return;
 		}
@@ -95,7 +95,7 @@ class UDBCallBack : UFRestCallBackBase
 	 * @param dataSize Size of the response data
 	 */
 	override void OnSuccess(string data, int dataSize) {
-		if (U().IsCallCanceled(CallId)){
+		if (UF().IsCallCanceled(CallId)){
 			UFLog.Debug("Call " + CallId + " not called as it was requested to be canceled - OnSuccess");
 			return;
 		}

@@ -372,14 +372,14 @@ class MyDeleteCallback extends UFCallbackBase {
 }
 
 // Delete with callback class
-U().db().Delete("MyMod", "storage_001", new MyDeleteCallback());
+UF().db().Delete("MyMod", "storage_001", new MyDeleteCallback());
 
 // Or with instance/function callback
 void OnObjectDeleted(int cid, int status, string oid, string data) {
     Print("Object deleted successfully");
 }
 
-U().db().Delete("MyMod", "storage_001", this, "OnObjectDeleted");
+UF().db().Delete("MyMod", "storage_001", this, "OnObjectDeleted");
 ```
 
 ---

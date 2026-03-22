@@ -10,7 +10,7 @@ class CheckIfHasDiscord extends UDiscordCallBack {
 		//Do Stuff Here
 		UFLog.Info("[CheckIfHasDiscord] User not found");
 		if (g_Game.IsClient()){
-			g_Game.OpenURL(U().ds().Link());
+			g_Game.OpenURL(UF().ds().Link());
 		}
 	}
 

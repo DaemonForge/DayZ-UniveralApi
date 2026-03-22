@@ -144,7 +144,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @param ReturnString If true, returns raw string instead of UFServerStatus object
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().api().SteamQuery("127.0.0.1", "27016", this, "OnServerStatus");
+	 * @usage UF().api().SteamQuery("127.0.0.1", "27016", this, "OnServerStatus");
 	 * @note Callback signature: void OnServerStatus(int cid, int status, string oid, UFServerStatus data)
 	 */
 	int SteamQuery(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
@@ -159,7 +159,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		}
 		
 		if (  ip && ip != "" && queryPort && queryPort != "" && DBCBX){
-			Post(endpoint,"{}", U().RegisterCall(DBCBX, cid));
+			Post(endpoint,"{}", UF().RegisterCall(DBCBX, cid));
 		} else {
 			UFLog.Err("[Api] Error ServerQuery IP:" + ip + " Port:" + queryPort);
 			cid = -1;
@@ -193,7 +193,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		
 		
 		if (  ip && ip != "" && queryPort && queryPort != "" && DBCBX){
-			Post(endpoint,"{}",U().RegisterCall(DBCBX, cid));
+			Post(endpoint,"{}",UF().RegisterCall(DBCBX, cid));
 		} else {
 			UFLog.Err("[Api] Error ServerQuery IP:" + ip + " Port:" + queryPort);
 			cid = -1;
@@ -211,7 +211,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @param oid Optional object ID for callback context
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().api().ServerQueryObj("127.0.0.1", "27016", this, "OnServerData");
+	 * @usage UF().api().ServerQueryObj("127.0.0.1", "27016", this, "OnServerData");
 	 * @note Callback signature: void OnServerData(int cid, int status, string oid, UFServerStatus data)
 	 * @note Prefer using SteamQuery() for consistency
 	 */
@@ -220,7 +220,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
 		
 		if (  ip && ip != "" && queryPort && queryPort != "" ){
-			Post(endpoint,"{}",U().RegisterCall(new UNestedCallBack(new UFCallback<UFServerStatus>(cbInstance, cbFunction, oid)), cid));
+			Post(endpoint,"{}",UF().RegisterCall(new UNestedCallBack(new UFCallback<UFServerStatus>(cbInstance, cbFunction, oid)), cid));
 		} else {
 			UFLog.Err("[Api] Error ServerQuery IP:" + ip + " Port:" + queryPort);
 			cid = -1;
@@ -238,7 +238,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @param ReturnString If true, returns raw string instead of URandomNumberResponse
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().api().RandomNumbers(1000, this, "OnRandoms");
+	 * @usage UF().api().RandomNumbers(1000, this, "OnRandoms");
 	 * @note Callback signature: void OnRandoms(int cid, int status, string oid, URandomNumberResponse data)
 	 */
 	int RandomNumbers(int count, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
@@ -257,7 +257,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		autoptr URandomNumberRequest randomreq = new URandomNumberRequest(count);
 		
 		if (  count > 0 && count <= 4096 && randomreq && DBCBX){
-			Post(endpoint, randomreq.ToJson(), U().RegisterCall(DBCBX, cid));
+			Post(endpoint, randomreq.ToJson(), UF().RegisterCall(DBCBX, cid));
 		} else {
 			Error2("[UF] [Api] Error Random", "Count: " +  count + " CID:" + cid);
 			cid = -1;
@@ -276,7 +276,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @param ReturnString If true, returns raw string instead of UCryptoConvertResult
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().api().CryptoPrice("BTC", "USD", this, "OnPrice");
+	 * @usage UF().api().CryptoPrice("BTC", "USD", this, "OnPrice");
 	 * @note Callback signature: void OnPrice(int cid, int status, string oid, UCryptoConvertResult data)
 	 */
 	int CryptoPrice(string from, string to, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
@@ -290,7 +290,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		}
 		
 		if ( from && to && DBCBX){
-			Post(endpoint, "{}", U().RegisterCall(DBCBX, cid));
+			Post(endpoint, "{}", UF().RegisterCall(DBCBX, cid));
 		} else {
 			Error2("[UF] [Api] Error Crypto Price", "From: " +  from + " To: " +  to + " CID:" + cid);
 			cid = -1;
@@ -310,7 +310,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @param ReturnString If true, returns raw string instead of UCryptoConvertResult
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().api().CryptoConvert("BTC", "USD", 1.5, this, "OnConverted");
+	 * @usage UF().api().CryptoConvert("BTC", "USD", 1.5, this, "OnConverted");
 	 * @note Callback signature: void OnConverted(int cid, int status, string oid, UCryptoConvertResult data)
 	 */
 	int CryptoConvert(string from, string to, float value, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
@@ -326,7 +326,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		autoptr UCryptoConvertRequest req = new UCryptoConvertRequest(value);
 		
 		if ( from && to && value > 0 && DBCBX){
-			Post(endpoint, req.ToJson(), U().RegisterCall(DBCBX, cid));
+			Post(endpoint, req.ToJson(), UF().RegisterCall(DBCBX, cid));
 		} else {
 			Error2("[UF] [Api] Error Crypto Convert", "From: " +  from + " To: " +  to + " Value: " + value + " CID:" + cid);
 			cid = -1;
@@ -346,7 +346,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 * 
 	 * @usage TStringArray cryptos = {"BTC", "ETH", "DOGE"};
-	 *        U().api().Crypto(cryptos, "USD", this, "OnPrices");
+	 *        UF().api().Crypto(cryptos, "USD", this, "OnPrices");
 	 * @note Callback signature: void OnPrices(int cid, int status, string oid, UCryptoResults data)
 	 */
 	int Crypto(TStringArray from, string to, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
@@ -362,7 +362,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		autoptr UCryptoRequest req = new UCryptoRequest(from);
 		
 		if ( from && from.Count() > 0 && to && DBCBX){
-			Post(endpoint, req.ToJson(), U().RegisterCall(DBCBX, cid));
+			Post(endpoint, req.ToJson(), UF().RegisterCall(DBCBX, cid));
 		} else {
 			Error2("[UF] [Api] Error Crypto", "From: " +  from.Count() + " To: " +  to + " CID:" + cid);
 			cid = -1;
@@ -380,7 +380,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 * 
 	 * @usage auto msg = new UTTSMessage("Hello world");
-	 *        U().api().TTSGenerate(UTTSVoice.NOVA, msg, this, "OnTTSReady");
+	 *        UF().api().TTSGenerate(UTTSVoice.NOVA, msg, this, "OnTTSReady");
 	 * @note See UTTSVoice constants for valid voice IDs
 	 */
 	int TTSGenerate(string voiceID, UTTSMessage msg, Class cbInstance, string cbFunction  ){
@@ -388,7 +388,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		string endpoint = "TTS/Generate/" + voiceID;
 		
 		if (voiceID != "" && msg){
-			Post(endpoint, msg.ToJson(), U().RegisterCall(new UNestedCallBack(new UGenTTSCallback(cbInstance, cbFunction, voiceID)), cid));
+			Post(endpoint, msg.ToJson(), UF().RegisterCall(new UNestedCallBack(new UGenTTSCallback(cbInstance, cbFunction, voiceID)), cid));
 		} else {
 			Error2("[UF] [Api] TTSGenerate - Play Audio", " voiceID: " +  voiceID);
 			cid = -1;
@@ -404,14 +404,14 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @param cbFunction Callback method name
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().api().TTSStatus(ttsId, this, "OnTTSStatus");
+	 * @usage UF().api().TTSStatus(ttsId, this, "OnTTSStatus");
 	 */
 	int TTSStatus(string ttsId, Class cbInstance, string cbFunction ){
 		int cid = -1;
 		string endpoint = "TTS/Status/" + ttsId;
 		
 		if (ttsId != ""){
-			Post(endpoint, "{}", U().RegisterCall(new UNestedCallBack(new UTTSStatusCallback(cbInstance, cbFunction, ttsId)), cid));
+			Post(endpoint, "{}", UF().RegisterCall(new UNestedCallBack(new UTTSStatusCallback(cbInstance, cbFunction, ttsId)), cid));
 		} else {
 			Error2("[UF] [Api] TTSStatus", " ttsId: " +  ttsId);
 			cid = -1;
@@ -425,7 +425,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @param ttsId The TTS ID from successful TTSGenerate
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().api().TTSDownload(ttsId);
+	 * @usage UF().api().TTSDownload(ttsId);
 	 * @note Client-only - returns -1 on server
 	 */
 	int TTSDownload(string ttsId){
@@ -437,7 +437,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		string endpoint = "TTS/Download/" + ttsId;
 		
 		if (ttsId != ""){
-			Post(endpoint, "{}", U().RegisterCall(new UFDownloadTTS(ttsId), cid));
+			Post(endpoint, "{}", UF().RegisterCall(new UFDownloadTTS(ttsId), cid));
 		} else {
 			Error2("[UF] [Api] TTSDownload - Play Audio", " ttsId: " +  ttsId);
 			cid = -1;
@@ -453,7 +453,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @param cbFunction Callback method name
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().api().TTSDownload(ttsId, this, "OnDownloaded");
+	 * @usage UF().api().TTSDownload(ttsId, this, "OnDownloaded");
 	 * @note Client-only - returns -1 on server
 	 */
 	int TTSDownload(string ttsId, Class cbInstance, string cbFunction){
@@ -465,7 +465,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 		string endpoint = "TTS/Download/" + ttsId;
 		
 		if (ttsId != ""){
-			Post(endpoint, "{}", U().RegisterCall(new UDLTTSNestedCallback(new UDLTTSCallback(cbInstance, cbFunction, ttsId)), cid));
+			Post(endpoint, "{}", UF().RegisterCall(new UDLTTSNestedCallback(new UDLTTSCallback(cbInstance, cbFunction, ttsId)), cid));
 		} else {
 			Error2("[UF] [Api] TTSDownload - Play Audio", " ttsId: " +  ttsId);
 			cid = -1;
@@ -479,7 +479,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @param ttsId The TTS ID from successful TTSGenerate
 	 * @return Call ID or -1 on error/already playing
 	 * 
-	 * @usage U().api().TTSPlay(ttsId);
+	 * @usage UF().api().TTSPlay(ttsId);
 	 * @note Client-only - returns -1 on server
 	 * @note Auto-downloads if file not already cached
 	 */
@@ -509,7 +509,7 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @param ReturnString If true, returns raw string instead of UFStatus object
 	 * @return Call ID or -1 on error
 	 * 
-	 * @usage U().api().Status(this, "OnStatus");
+	 * @usage UF().api().Status(this, "OnStatus");
 	 * @note Callback signature: void OnStatus(int cid, int status, string oid, UFStatus data)
 	 * @note UFStatus contains version, Discord/OpenAI availability, error status
 	 */
@@ -524,9 +524,9 @@ class UApiEndpoint extends UFBaseEndpoint {
 			return -1;
 		}
 		
-		UFramework uf = U();
+		UFramework uf = UF();
 		if (!uf){
-			UFLog.Err("[UApiEndpoint::Status] U() is NULL - framework not initialized!");
+			UFLog.Err("[UApiEndpoint::Status] UF() is NULL - framework not initialized!");
 			return -1;
 		}
 		

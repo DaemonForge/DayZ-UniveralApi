@@ -85,7 +85,7 @@ class UniversalRest extends Managed
 			vUCBX = new USilentCallBack;
 		}
 		RestContext ctx =  Api().GetRestContext(url);
-		string token = U().GetAuthToken();
+		string token = UF().GetAuthToken();
 		if (token == "" || token == "null"){
 			// Use Print() NOT UFLog to avoid infinite loop (UFLog.SendToApi -> Post -> UFLog -> SendToApi...)
 			Print("[UF] [Api] UniversalRest.Post called with invalid token: '" + token + "'");
@@ -127,7 +127,7 @@ class UniversalRest extends Managed
 		string url = BaseUrl() + "GetAuth/" + guid;
 		
 		int cid = -1;
-		Post(url, "{}", U().RegisterCall(new UAuthCallBack(guid), cid));
+		Post(url, "{}", UF().RegisterCall(new UAuthCallBack(guid), cid));
 		Print("Get Auth Called got CID: " + cid);
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "GetAuth");
@@ -135,13 +135,13 @@ class UniversalRest extends Managed
 	}
 	
 	/**
-	 * Saves global data (legacy method - prefer U().globals().Save()).
+	 * Saves global data (legacy method - prefer UF().globals().Save()).
 	 * 
 	 * @param mod Mod identifier
 	 * @param jsonString JSON data to save
 	 * @param UCBX Optional RestCallback
 	 * 
-	 * @deprecated Use U().globals().Save() instead for better callback support
+	 * @deprecated Use UF().globals().Save() instead for better callback support
 	 */
 	static void GlobalsSave(string mod, string jsonString, UFRestCallBackBase UCBX = NULL) {
 
@@ -159,13 +159,13 @@ class UniversalRest extends Managed
 	}
 	
 	/**
-	 * Loads global data (legacy method - prefer U().globals().Load()).
+	 * Loads global data (legacy method - prefer UF().globals().Load()).
 	 * 
 	 * @param mod Mod identifier
 	 * @param UCBX RestCallback for response
 	 * @param jsonString Optional query parameters
 	 * 
-	 * @deprecated Use U().globals().Load() instead for better callback support
+	 * @deprecated Use UF().globals().Load() instead for better callback support
 	 */
 	static void GlobalsLoad(string mod, UFRestCallBackBase UCBX, string jsonString = "{}") {
 
@@ -183,27 +183,27 @@ class UniversalRest extends Managed
 	}
 	
 	/**
-	 * Increments global field (legacy - prefer U().globals().Increment()).
+	 * Increments global field (legacy - prefer UF().globals().Increment()).
 	 * 
 	 * @param mod Mod identifier
 	 * @param element Field name
 	 * @param value Amount to add
 	 * 
-	 * @deprecated Use U().globals().Increment() instead
+	 * @deprecated Use UF().globals().Increment() instead
 	 */
 	static void GlobalsIncrement(string mod, string element, float value = 1){
 		GlobalsTransaction(mod, element, value, NULL);
 	}
 	
 	/**
-	 * Global transaction (legacy - prefer U().globals().Transaction()).
+	 * Global transaction (legacy - prefer UF().globals().Transaction()).
 	 * 
 	 * @param mod Mod identifier
 	 * @param element Field name
 	 * @param value Amount to add/subtract
 	 * @param UCBX Optional RestCallback
 	 * 
-	 * @deprecated Use U().globals().Transaction() instead
+	 * @deprecated Use UF().globals().Transaction() instead
 	 */
 	static void GlobalsTransaction(string mod, string element, float value = 1, UFRestCallBackBase UCBX = NULL) {
 		
@@ -217,7 +217,7 @@ class UniversalRest extends Managed
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		int cid = -1;
 		if ( element && transaction && vUCBX){
-			Post(url,transaction.ToJson(), U().RegisterCall(vUCBX, cid));
+			Post(url,transaction.ToJson(), UF().RegisterCall(vUCBX, cid));
 		} else {
 			UFLog.Err("[Api] Error Transaction " +  mod);
 		}
@@ -240,7 +240,7 @@ class UniversalRest extends Managed
 		autoptr UUpdateData updatedata = new UUpdateData(element, value);
 		
 		if ( element && updatedata && vUCBX){
-			Post(url,updatedata.ToJson(),U().RegisterCall(vUCBX, cid));
+			Post(url,updatedata.ToJson(),UF().RegisterCall(vUCBX, cid));
 		} else {
 			UFLog.Err("[Api] Error Transaction " +  mod);
 		}
@@ -260,7 +260,7 @@ class UniversalRest extends Managed
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		if ( element && updatedata && vUCBX){
-			Post(url,updatedata.ToJson(),U().RegisterCall(vUCBX, cid));
+			Post(url,updatedata.ToJson(),UF().RegisterCall(vUCBX, cid));
 		} else {
 			UFLog.Err("[Api] Error Transaction " +  mod);
 		}
@@ -278,7 +278,7 @@ class UniversalRest extends Managed
 		string url = BaseUrl() + "Forward";
 		
 		if ( data && vUCBX){
-			Post(url,data.ToJson(),U().RegisterCall(vUCBX, cid));
+			Post(url,data.ToJson(),UF().RegisterCall(vUCBX, cid));
 		} else {
 			UFLog.Err("[Api] Error Forwarding");
 		}
@@ -295,7 +295,7 @@ class UniversalRest extends Managed
 		string url = BaseUrl() + "Logger/One/" + UFConfig().ServerID;
 		
 		if ( jsonString && vUCBX){
-			Post(url,jsonString,U().RegisterCall(vUCBX, cid));
+			Post(url,jsonString,UF().RegisterCall(vUCBX, cid));
 		} else {
 			// Use Print() NOT UFLog to avoid infinite loop (UFLog -> SendToApi -> Log -> UFLog...)
 			Print("[UF] [Api] Error Forwarding Log");
@@ -313,7 +313,7 @@ class UniversalRest extends Managed
 		
 		string url = BaseUrl() + "Logger/Many/" + UFConfig().ServerID;
 		if (jsonString && vUCBX){
-			Post(url,jsonString,U().RegisterCall(vUCBX, cid));
+			Post(url,jsonString,UF().RegisterCall(vUCBX, cid));
 		} else {
 			// Use Print() NOT UFLog to avoid infinite loop
 			Print("[UF] [Api] Error Forwarding LogBulk");

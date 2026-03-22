@@ -14,7 +14,7 @@ The Cron Manager (`UCronManager`) provides scheduled task execution using Unix t
 ## Accessing the Cron Manager
 
 ```enforce
-UCronManager cron = U().Cron();
+UCronManager cron = UF().Cron();
 ```
 
 ---
@@ -73,11 +73,11 @@ Execute a function repeatedly at a fixed interval forever.
 ```enforce
 // Run every 60 seconds forever
 // Params: (int freqSeconds, Class obj, string fnName, Param params)
-U().Cron().runEndless(60, this, "OnMinuteTick", NULL);
+UF().Cron().runEndless(60, this, "OnMinuteTick", NULL);
 
 // With parameters
 Param1<string> params = new Param1<string>("hello");
-U().Cron().runEndless(30, this, "OnHalfMinute", params);
+UF().Cron().runEndless(30, this, "OnHalfMinute", params);
 
 void OnMinuteTick() {
     Print("One minute has passed");
@@ -98,11 +98,11 @@ Execute repeatedly until a specific Unix timestamp.
 
 // Run every 5 seconds until midnight UTC
 int midnight = GetMidnightUnix();
-U().Cron().runEndTime(5, midnight, this, "OnPoll", NULL);
+UF().Cron().runEndTime(5, midnight, this, "OnPoll", NULL);
 
 // Run every 10 seconds for the next hour
 int oneHourFromNow = UUtil.GetUnixInt() + 3600;  // Current time + 3600 seconds
-U().Cron().runEndTime(10, oneHourFromNow, this, "HourlyTask", NULL);
+UF().Cron().runEndTime(10, oneHourFromNow, this, "HourlyTask", NULL);
 
 void OnPoll() {
     Print("Polling...");
@@ -117,11 +117,11 @@ Execute a specific number of times then stop.
 // Params: (int freqSeconds, int maxCount, Class obj, string fnName, Param params)
 
 // Run 5 times total, every 10 seconds
-U().Cron().runEndCount(10, 5, this, "OnCountedRun", NULL);
+UF().Cron().runEndCount(10, 5, this, "OnCountedRun", NULL);
 
 // Run 3 times with params
 Param2<int, string> params = new Param2<int, string>(100, "bonus");
-U().Cron().runEndCount(60, 3, this, "GiveBonus", params);
+UF().Cron().runEndCount(60, 3, this, "GiveBonus", params);
 
 void OnCountedRun() {
     Print("Counted execution");
@@ -142,11 +142,11 @@ Execute a function once at a specific Unix timestamp.
 
 // Run 5 minutes from now
 int fiveMinutes = UUtil.GetUnixInt() + 300;  // Current time + 300 seconds
-U().Cron().runOnce(fiveMinutes, this, "DelayedAction", NULL);
+UF().Cron().runOnce(fiveMinutes, this, "DelayedAction", NULL);
 
 // Schedule for specific time
 int targetTime = CalculateNextEventTime();
-U().Cron().runOnce(targetTime, this, "ScheduledEvent", NULL);
+UF().Cron().runOnce(targetTime, this, "ScheduledEvent", NULL);
 
 void DelayedAction() {
     Print("Delayed action executed");
@@ -157,11 +157,11 @@ void DelayedAction() {
 
 ```enforce
 // Remove a specific scheduled function
-U().Cron().Remove(this, "OnMinuteTick");
+UF().Cron().Remove(this, "OnMinuteTick");
 
 // Always clean up in destructor
 void ~MyClass() {
-    U().Cron().Remove(this, "DoWork");
+    UF().Cron().Remove(this, "DoWork");
 }
 ```
 
@@ -175,11 +175,11 @@ class AutoSaveManager {
     
     void Init() {
         // Save all players every 5 minutes
-        U().Cron().runEndless(300, this, "SaveAllPlayers");
+        UF().Cron().runEndless(300, this, "SaveAllPlayers");
     }
     
     void ~AutoSaveManager() {
-        U().Cron().Remove(this, "SaveAllPlayers");
+        UF().Cron().Remove(this, "SaveAllPlayers");
     }
     
     void SaveAllPlayers() {
@@ -209,11 +209,11 @@ class EventScheduler {
         int executeAt = UUtil.GetUnixInt() + delaySeconds;
         
         Param1<vector> params = new Param1<vector>(position);
-        U().Cron().runOnce(executeAt, this, "SpawnAirdrop", params);
+        UF().Cron().runOnce(executeAt, this, "SpawnAirdrop", params);
         
         // Announce 1 minute before
         int announceAt = executeAt - 60;
-        U().Cron().runOnce(announceAt, this, "AnnounceAirdrop", params);
+        UF().Cron().runOnce(announceAt, this, "AnnounceAirdrop", params);
     }
     
     void AnnounceAirdrop(vector position) {
@@ -243,19 +243,19 @@ If the object (`this`) passed to the cron manager is deleted (like a player disc
 ### Server Announcements
 Send a message to chat every 15 minutes.
 ```enforce
-U().Cron().runEndless(900, this, "SendAutoMessage");
+UF().Cron().runEndless(900, this, "SendAutoMessage");
 ```
 
 ### Delayed Teleport
 Teleport a player 10 seconds after they use an item.
 ```enforce
-U().Cron().runOnce(UUtil.GetUnixInt() + 10, this, "TeleportPlayer", new Param1<PlayerBase>(player));
+UF().Cron().runOnce(UUtil.GetUnixInt() + 10, this, "TeleportPlayer", new Param1<PlayerBase>(player));
 ```
 
 ### Event Countdown
 Start a server event at a specific real-world time (e.g., Friday 20:00 UTC).
 1. Calculate unix timestamp of Friday 20:00.
-2. `U().Cron().runOnce(eventUnix, ...)`
+2. `UF().Cron().runOnce(eventUnix, ...)`
 
 ## Tags
 `cron`, `scheduling`, `timers`, `automation`, `events`, `periodic-tasks`, `UCronManager`, `how-to`, `reference`, `doc-usage`, `modder`

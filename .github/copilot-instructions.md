@@ -21,7 +21,7 @@ The mod uses DayZ's built-in `RestApi` to make HTTP calls to the service. All re
 ### Mod Structure (`_UFramework/scripts/`)
 - **`1_Core/`** - Core engine scripts
 - **`3_Game/UF/`** - Main framework (game layer)
-  - **`UFramework.c`** - Singleton hub (`U()`) providing access to all endpoints
+  - **`UFramework.c`** - Singleton hub (`UF()`) providing access to all endpoints
   - **`UniversalRest.c`** - Static REST utilities for HTTP calls
   - **`Misc/ConfigLoader.c`** - `UFConfig()` singleton for mod configuration
   - **`Endpoints/`** - API endpoint wrappers:
@@ -73,21 +73,21 @@ npm run tunnel       # Run cloudflared tunnel for dev
 All async operations use callbacks. Two styles:
 ```enforce
 // Style 1: Class instance + function name
-U().db().Load("MyMod", "player123", this, "OnPlayerLoaded");
+UF().db().Load("MyMod", "player123", this, "OnPlayerLoaded");
 void OnPlayerLoaded(int cid, int status, string oid, string data){ ... }
 
 // Style 2: UFCallbackBase subclass
-U().db().Load("MyMod", "player123", new MyCallback());
+UF().db().Load("MyMod", "player123", new MyCallback());
 ```
 
 ### Endpoint Access (Mod Side)
 ```enforce
-U().db()      // Database operations (OBJECT_DB or PLAYER_DB)
-U().ds()      // Discord operations
-U().AI()      // AI Chat endpoint
-U().Msg()     // Messaging
-U().globals() // Global state
-U().Cron()    // Scheduled tasks
+UF().db()      // Database operations (OBJECT_DB or PLAYER_DB)
+UF().ds()      // Discord operations
+UF().AI()      // AI Chat endpoint
+UF().Msg()     // Messaging
+UF().globals() // Global state
+UF().Cron()    // Scheduled tasks
 ```
 
 ### Authentication
@@ -122,16 +122,16 @@ U().Cron()    // Scheduled tasks
 
 ### Database (Mod)
 ```enforce
-U().db().Save("ModName", "objectId", jsonString, this, "OnSaved");
-U().db().Load("ModName", "objectId", this, "OnLoaded");
-U().db().Transaction("ModName", "objectId", "field", 1.0); // atomic increment
+UF().db().Save("ModName", "objectId", jsonString, this, "OnSaved");
+UF().db().Load("ModName", "objectId", this, "OnLoaded");
+UF().db().Transaction("ModName", "objectId", "field", 1.0); // atomic increment
 ```
 
 ### Discord (Mod)
 ```enforce
-U().ds().AddRole(playerGUID, "RoleId", this, "OnRoleDone");
-U().ds().UserSend(playerGUID, "Hello!", this, "OnSent");
-U().ds().ChannelSend("channelId", "Server message");
+UF().ds().AddRole(playerGUID, "RoleId", this, "OnRoleDone");
+UF().ds().UserSend(playerGUID, "Hello!", this, "OnSent");
+UF().ds().ChannelSend("channelId", "Server message");
 ```
 
 ### AI Chat (Mod)

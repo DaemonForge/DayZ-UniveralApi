@@ -16,7 +16,12 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 	 * @return Base URL with "Messages/" appended
 	 */
 	override protected string EndpointBaseUrl(){
-		return UFConfig().GetBaseURL() + "Messages/";
+		UFrameworkConfig ucfg = UFrameworkConfig.Cast(UFConfig());
+		if (!ucfg){
+			UFLog.Err("[UFMsgEndpoint] EndpointBaseUrl called but UFConfig() is null - RPC not received yet?");
+			return "";
+		}
+		return ucfg.GetBaseURL() + "Messages/";
 	}
 	
 	/**
@@ -51,7 +56,7 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 		int cid = -1;	
 		string endpoint = "Read/" + mod + "/" + queue;
 		autoptr UMsgReadObj obj = new UMsgReadObj(limit, false);
-		Post(endpoint, obj.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
+		Post(endpoint, obj.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
 		
 		if (cid == -1){
 			Error2("[UF] Message Queue Read", "Error registering callback");
@@ -84,9 +89,9 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 		}
 		
 		// Safety check: ensure framework is ready
-		UFramework uf = U();
+		UFramework uf = UF();
 		if (!uf){
-			UFLog.Err("[UFMsgEndpoint::ReadLatest] U() returned NULL - framework not ready");
+			UFLog.Err("[UFMsgEndpoint::ReadLatest] UF() returned NULL - framework not ready");
 			return -1;
 		}
 		if (!UFConfig()){
@@ -148,9 +153,9 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 		string endpoint = "Write/" + mod + "/" + queue;
 		int cid = -1;
 		if (cb){
-			Post(endpoint, jsonString, U().RegisterCall(new UNestedCallBack(cb), cid));
+			Post(endpoint, jsonString, UF().RegisterCall(new UNestedCallBack(cb), cid));
 		} else {
-			Post(endpoint, jsonString, U().RegisterCall(new USilentCallBack(), cid));
+			Post(endpoint, jsonString, UF().RegisterCall(new USilentCallBack(), cid));
 		}
 		
 		if (cid == -1){
@@ -175,9 +180,9 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 		string endpoint = "Reset/" + mod + "/" + queue;
 		int cid = -1;
 		if (cb){
-			Post(endpoint, "{}", U().RegisterCall(new UNestedCallBack(cb), cid));
+			Post(endpoint, "{}", UF().RegisterCall(new UNestedCallBack(cb), cid));
 		} else {
-			Post(endpoint, "{}", U().RegisterCall(new USilentCallBack(), cid));
+			Post(endpoint, "{}", UF().RegisterCall(new USilentCallBack(), cid));
 		}
 		
 		if (cid == -1){
@@ -207,9 +212,9 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 		string endpoint = "Meta/" + mod + "/" + queue;
 		int cid = -1;
 		if (cb){
-			Post(endpoint, obj.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
+			Post(endpoint, obj.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
 		} else {
-			Post(endpoint, obj.ToJson(), U().RegisterCall(new USilentCallBack(), cid));
+			Post(endpoint, obj.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
 		}
 		
 		if (cid == -1){
@@ -236,9 +241,9 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 		string body = "{\"OlderThanDays\":" + olderThanDays.ToString() + "}";
 		int cid = -1;
 		if (cb){
-			Post(endpoint, body, U().RegisterCall(new UNestedCallBack(cb), cid));
+			Post(endpoint, body, UF().RegisterCall(new UNestedCallBack(cb), cid));
 		} else {
-			Post(endpoint, body, U().RegisterCall(new USilentCallBack(), cid));
+			Post(endpoint, body, UF().RegisterCall(new USilentCallBack(), cid));
 		}
 		
 		if (cid == -1){

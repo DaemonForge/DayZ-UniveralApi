@@ -221,7 +221,7 @@ data.PlayerName = "John";
 data.Score = 1000;
 
 string json = UJSONHandler<MyModData>.ToString(data);
-U().db().Save("MyMod", playerGUID, json, this, "OnSaved");
+UF().db().Save("MyMod", playerGUID, json, this, "OnSaved");
 
 // Load from database
 void OnLoaded(int cid, int status, string oid, string data) {

@@ -43,7 +43,7 @@
  *         - DiscordMessage() and DiscordObject(): Provide simple static interfaces to send messages or objects to Discord channels via webhooks.
  *
  * 7. Global Initialization:
- *    - The static U() function ensures that there is a singleton instance of UFramework and initializes global settings and RPC listeners.
+ *    - The static UF() function ensures that there is a singleton instance of UFramework and initializes global settings and RPC listeners.
  *
  * Additional Notes:
  *    - Designed to work in both client and server contexts with conditional behavior based on the execution environment.
@@ -105,11 +105,11 @@ class UFramework extends Managed {
 	 * @return UDBEndpoint instance for database operations, NULL if invalid collection type
 	 * 
 	 * @usage Object Database (accessible to all):
-	 * U().db().Save("MyMod", "config", jsonData, this, "OnSaved");
-	 * U().db().Load("MyMod", "playerData_" + guid, this, "OnLoaded");
+	 * UF().db().Save("MyMod", "config", jsonData, this, "OnSaved");
+	 * UF().db().Load("MyMod", "playerData_" + guid, this, "OnLoaded");
 	 * 
 	 * @usage Player Database (client-only, own data):
-	 * U().db(PLAYER_DB).Save("MyMod", "settings", jsonData, this, "OnSaved");
+	 * UF().db(PLAYER_DB).Save("MyMod", "settings", jsonData, this, "OnSaved");
 	 */
 	UDBEndpoint db(int collection = OBJECT_DB){
 		if (collection == OBJECT_DB){
@@ -140,9 +140,9 @@ class UFramework extends Managed {
 	 * @return UniversalDSEndpoint for Discord operations (roles, DMs, channels, voice)
 	 * 
 	 * @usage
-	 * U().ds().AddRole(playerGUID, "RoleID", this, "OnRoleDone");
-	 * U().ds().UserSend(playerGUID, "Welcome message!", this, "OnSent");
-	 * string linkUrl = U().ds().Link();  // Get Discord OAuth link
+	 * UF().ds().AddRole(playerGUID, "RoleID", this, "OnRoleDone");
+	 * UF().ds().UserSend(playerGUID, "Welcome message!", this, "OnSent");
+	 * string linkUrl = UF().ds().Link();  // Get Discord OAuth link
 	 */
 	UniversalDSEndpoint ds(){
 		if (!m_UniversalDSEndpoint){
@@ -157,9 +157,9 @@ class UFramework extends Managed {
 	 * @return UDBGlobalEndpoint for global mod data (no object ID, shared across all instances)
 	 * 
 	 * @usage
-	 * U().globals().Save("MyMod", jsonData, this, "OnSaved");
-	 * U().globals().Increment("MyMod", "playerCount", 1);  // Atomic increment
-	 * U().globals().Update("MyMod", "serverStatus", "\"online\"");  // Must quote strings
+	 * UF().globals().Save("MyMod", jsonData, this, "OnSaved");
+	 * UF().globals().Increment("MyMod", "playerCount", 1);  // Atomic increment
+	 * UF().globals().Update("MyMod", "serverStatus", "\"online\"");  // Must quote strings
 	 */
 	UDBGlobalEndpoint globals(){
 		if (!m_UDBGlobalEndpoint){
@@ -174,9 +174,9 @@ class UFramework extends Managed {
 	 * @return UApiEndpoint for utility operations
 	 * 
 	 * @usage
-	 * U().api().Status(this, "OnStatusCheck");  // Check API status
-	 * U().api().RandomNumbers(1000, this, "OnRandoms");  // Get random numbers
-	 * U().api().SteamQuery(ip, port, this, "OnServerStatus");  // Query game server
+	 * UF().api().Status(this, "OnStatusCheck");  // Check API status
+	 * UF().api().RandomNumbers(1000, this, "OnRandoms");  // Get random numbers
+	 * UF().api().SteamQuery(ip, port, this, "OnServerStatus");  // Query game server
 	 */
 	UApiEndpoint api(){
 		if (!m_UApiEndpoint){
@@ -191,9 +191,9 @@ class UFramework extends Managed {
 	 * @return UCronManager for task scheduling
 	 * 
 	 * @usage
-	 * U().Cron().runEndless(60, this, "OnEveryMinute", NULL);  // Every 60 seconds
-	 * U().Cron().runEndCount(10, 5, this, "OnFiveTimes", NULL);  // 5 times, 10s apart
-	 * U().Cron().Remove(this, "OnEveryMinute");  // Cancel scheduled task
+	 * UF().Cron().runEndless(60, this, "OnEveryMinute", NULL);  // Every 60 seconds
+	 * UF().Cron().runEndCount(10, 5, this, "OnFiveTimes", NULL);  // 5 times, 10s apart
+	 * UF().Cron().Remove(this, "OnEveryMinute");  // Cancel scheduled task
 	 */
 	UCronManager Cron(){
 		if (!m_UCronManager){
@@ -209,9 +209,9 @@ class UFramework extends Managed {
 	 * @return UFMsgEndpoint for message queue operations
 	 * 
 	 * @usage
-	 * U().Msg().Write("MyMod", "notifications", msgObject, callback);
-	 * U().Msg().Read("MyMod", "notifications", callback);  // Read all unread
-	 * U().Msg().ReadLatest("MyMod", "notifications", 10, callback);  // Latest 10
+	 * UF().Msg().Write("MyMod", "notifications", msgObject, callback);
+	 * UF().Msg().Read("MyMod", "notifications", callback);  // Read all unread
+	 * UF().Msg().ReadLatest("MyMod", "notifications", 10, callback);  // Latest 10
 	 */
 	UFMsgEndpoint Msg(){
 		if (!m_UFMsgEndpoint){
@@ -229,11 +229,11 @@ class UFramework extends Managed {
 	 * @return UFAIChatEndpoint for AI chat session operations
 	 * 
 	 * @usage
-	 * U().AI().Create(systemPrompt, "string", "", "", -1, callback);
-	 * U().AI().Send(chatId, userMessage, callback);
-	 * U().AI().History(chatId, callback);  // Get chat history
+	 * UF().AI().Create(systemPrompt, "string", "", "", -1, callback);
+	 * UF().AI().Send(chatId, userMessage, callback);
+	 * UF().AI().History(chatId, callback);  // Get chat history
 	 * 
-	 * @note Check U().IsOpenAIEnabled() before using
+	 * @note Check UF().IsOpenAIEnabled() before using
 	 */
 	UFAIChatEndpoint AI(){
 		if (!m_UFAIChatEndpoint){
@@ -251,8 +251,8 @@ class UFramework extends Managed {
 	 * @return UFModSettingsEndpoint for settings page registration
 	 * 
 	 * @usage
-	 * U().Settings().Register("my-mod", htmlTemplate);
-	 * U().Settings().Register("my-mod", "My Mod", htmlTemplate);
+	 * UF().Settings().Register("my-mod", htmlTemplate);
+	 * UF().Settings().Register("my-mod", "My Mod", htmlTemplate);
 	 */
 	UFModSettingsEndpoint Settings(){
 		if (!m_UFModSettingsEndpoint){
@@ -276,7 +276,7 @@ class UFramework extends Managed {
 	 * @param url Target endpoint URL
 	 * @return Always returns 0
 	 * 
-	 * @usage U().Post("https://api.example.com/log");
+	 * @usage UF().Post("https://api.example.com/log");
 	 */
 	static int Post(string url)
 	{
@@ -295,7 +295,7 @@ class UFramework extends Managed {
 	 * @param contentType MIME type for Content-Type header (default: "application/json")
 	 * @return Always returns 0
 	 * 
-	 * @usage U().Post("https://api.example.com/data", jsonString, new MyCallback());
+	 * @usage UF().Post("https://api.example.com/data", jsonString, new MyCallback());
 	 */
 	static int Post(string url, string jsonString, RestCallback UCBX = NULL, string contentType = "application/json")
 	{
@@ -319,8 +319,8 @@ class UFramework extends Managed {
 	 * @return Call ID for tracking/cancellation, or -1 if cb is NULL
 	 * 
 	 * @usage
-	 * int callId = U().Post("https://api.example.com/save", jsonData, new MySaveCallback());
-	 * // Later: U().RequestCallCancel(callId);
+	 * int callId = UF().Post("https://api.example.com/save", jsonData, new MySaveCallback());
+	 * // Later: UF().RequestCallCancel(callId);
 	 */
 	static int Post(string url, string jsonString, UFCallbackBase cb, string contentType = "application/json")
 	{
@@ -328,7 +328,7 @@ class UFramework extends Managed {
 		if (cb){
 			RestContext ctx = RestCore().GetRestContext(url);
 			ctx.SetHeader(contentType);
-			ctx.POST(U().RegisterCall(new UNestedCallBack(cb),cid), "", jsonString);
+			ctx.POST(UF().RegisterCall(new UNestedCallBack(cb),cid), "", jsonString);
 			return cid;
 		}
 		return -1;
@@ -340,7 +340,7 @@ class UFramework extends Managed {
 	 * @param url Target endpoint URL
 	 * @return Always returns 0
 	 * 
-	 * @usage U().Get("https://api.example.com/status");
+	 * @usage UF().Get("https://api.example.com/status");
 	 */
 	static int Get(string url)
 	{
@@ -355,7 +355,7 @@ class UFramework extends Managed {
 	 * @param UCBX RestCallback to handle response (uses silent callback if NULL)
 	 * @return Always returns 0
 	 * 
-	 * @usage U().Get("https://api.example.com/data", new MyDataCallback());
+	 * @usage UF().Get("https://api.example.com/data", new MyDataCallback());
 	 */
 	static int Get(string url, RestCallback UCBX)
 	{
@@ -375,14 +375,14 @@ class UFramework extends Managed {
 	 * @return Call ID for tracking/cancellation, or -1 if cb is NULL
 	 * 
 	 * @usage
-	 * int callId = U().Get("https://api.example.com/config", new MyConfigCallback());
+	 * int callId = UF().Get("https://api.example.com/config", new MyConfigCallback());
 	 */
 	static int Get(string url, UFCallbackBase cb)
 	{
 		int cid = -1;
 		if (cb){
 			RestContext ctx =  RestCore().GetRestContext(url);
-			ctx.GET(U().RegisterCall(new UNestedCallBack(cb), cid), "");
+			ctx.GET(UF().RegisterCall(new UNestedCallBack(cb), cid), "");
 			return cid;
 		}
 		return -1;
@@ -413,7 +413,7 @@ class UFramework extends Managed {
 	 * 
 	 * @return True if mod is fully initialized and service is operational
 	 * 
-	 * @usage if (!U().IsOnline()) { Print("API not ready yet"); return; }
+	 * @usage if (!UF().IsOnline()) { Print("API not ready yet"); return; }
 	 */
 	bool IsOnline(){
 		return m_UFOnline;
@@ -440,7 +440,7 @@ class UFramework extends Managed {
 	 *  - ±2: Minor version difference (some features may be missing)
 	 *  - ±3: Major version difference (mod likely broken)
 	 * 
-	 * @usage if (U().VersionOffset() >= 2) { Error("Version mismatch!"); }
+	 * @usage if (UF().VersionOffset() >= 2) { Error("Version mismatch!"); }
 	 */
 	int VersionOffset(){
 		return m_UFVersionOffset;
@@ -473,7 +473,7 @@ class UFramework extends Managed {
 	 * @return DayZPlayer if found, NULL otherwise
 	 * 
 	 * @note Only works on server (returns NULL on client)
-	 * @usage DayZPlayer player = U().FindPlayer(identity.GetId());
+	 * @usage DayZPlayer player = UF().FindPlayer(identity.GetId());
 	 */
 	static DayZPlayer FindPlayer(string GUID){
 		if (g_Game.IsServer()){
@@ -825,7 +825,7 @@ class UFramework extends Managed {
 	 * 
 	 * @return True if token exists and is valid (not expired, not error state)
 	 * 
-	 * @usage if (!U().HasValidAuth()) { Error("Cannot make API call - no auth"); return; }
+	 * @usage if (!UF().HasValidAuth()) { Error("Cannot make API call - no auth"); return; }
 	 */
 	bool HasValidAuth(){
 		if (!m_UFauthToken) return false;
@@ -931,7 +931,7 @@ class UFramework extends Managed {
 					if (baseUrl == "" || baseUrl == "null"){
 						UFLog.Err("[Init] CRITICAL: BaseURL is empty or null! Check UFramework.json config file.");
 					} else {
-						U().api().Status(this, "CBStatusCheck");
+						UF().api().Status(this, "CBStatusCheck");
 					}
 				}
 				CheckAndRenewQRandom();
@@ -1008,8 +1008,8 @@ class UFramework extends Managed {
 		if (!m_InitialTokenReceived){
 			m_InitialTokenReceived = true;
 			UFLog.Info("[UAPI] Initial token received, initializing services");
-			U().api().Status(this, "CBStatusCheck");
-			U().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
+			UF().api().Status(this, "CBStatusCheck");
+			UF().ds().GetUser(GetDayZGame().GetSteamId(), GetDayZGame(), "CBCacheDiscordInfo");
 			// NOTE: UFrameworkReadyTokenReceived is now fired from CBStatusCheck after we know the OpenAI/Discord status
 		} else {
 			UFLog.Info("[UAPI] Token renewed successfully");
@@ -1249,7 +1249,7 @@ class UFramework extends Managed {
 		} else {
 			UFLog.Err("[Auth] [SERVER] SendAuthToken ERROR - identity=" + (identity != null) + " auth.len=" + auth.Length());
 			if (identity){
-				U().AuthError(identity.GetId());
+				UF().AuthError(identity.GetId());
 			}
 		}
 	}
@@ -1261,7 +1261,7 @@ class UFramework extends Managed {
 			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuth, 180 * 1000, false, guid);
 		} 
 		if (!m_IsServer && !IsOnline()){
-			U().api().Status(this, "CBStatusCheck");
+			UF().api().Status(this, "CBStatusCheck");
 			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.AuthError, 300 * 1000, false, guid);
 		}
 	}
@@ -1341,7 +1341,7 @@ class UFramework extends Managed {
 		cid = this.CallId();
 		cb.SetId(cid);
 		m_UCallBacks.Insert(cid, UFRestCallBackBase.Cast(cb));
-		return UFRestCallBackBase.Cast(cb);
+		return RestCallback.Cast(cb);
 	}
 			
 	/**
@@ -1460,7 +1460,7 @@ class UFramework extends Managed {
 		}
 		
 		// Fire ready event even on failure so mods aren't left waiting forever
-		// They can check U().IsOpenAIEnabled() to see if AI is available
+		// They can check UF().IsOpenAIEnabled() to see if AI is available
 		if (!m_IsServer && m_InitialTokenReceived){
 			UFLog.Debug("[UAPI] Firing UFrameworkReadyTokenReceived event (status check failed, OpenAI=" + m_UOpenAIEnabled + ")");
 			g_Game.GameScript.CallFunction(g_Game.GetMission(), "UFrameworkReadyTokenReceived", NULL, NULL);
@@ -1471,7 +1471,7 @@ class UFramework extends Managed {
 
 static ref UFramework g_UFramework;
 
-static UFramework U()
+static UFramework UF()
 {
 	if (!g_Game)
 		return null;

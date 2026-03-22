@@ -110,7 +110,7 @@ class MyModMission extends MissionServer {
         
         if (GetGame().IsServer()) {
             string html = "<html><body><h1>My Settings</h1>...</body></html>";
-            U().Settings().Register("my-mod", html);
+            UF().Settings().Register("my-mod", html);
         }
     }
 }
@@ -124,7 +124,7 @@ class MyModMission extends MissionServer {
         
         if (GetGame().IsServer()) {
             string html = "<html><body><h1>My Settings</h1>...</body></html>";
-            U().Settings().Register("my-mod", "My Awesome Mod", html);
+            UF().Settings().Register("my-mod", "My Awesome Mod", html);
         }
     }
 }
@@ -148,7 +148,7 @@ class MyModMission extends MissionServer {
             }
             
             if (html != "") {
-                U().Settings().Register(
+                UF().Settings().Register(
                     "my-mod",
                     "My Awesome Mod",
                     html,
@@ -173,7 +173,7 @@ class MyModMission extends MissionServer {
 
 ## SDK Reference
 
-### `U().Settings().Register()`
+### `UF().Settings().Register()`
 
 Several overloads are available, from minimal to full metadata:
 

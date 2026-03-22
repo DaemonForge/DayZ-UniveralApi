@@ -9,13 +9,13 @@
  *
  * @usage
  *   // Minimal — just modId + template
- *   U().Settings().Register("my-mod", htmlTemplate);
+ *   UF().Settings().Register("my-mod", htmlTemplate);
  *
  *   // With a display name
- *   U().Settings().Register("my-mod", "My Mod", htmlTemplate);
+ *   UF().Settings().Register("my-mod", "My Mod", htmlTemplate);
  *
  *   // With callback
- *   U().Settings().Register("my-mod", "My Mod", htmlTemplate, this, "OnRegistered");
+ *   UF().Settings().Register("my-mod", "My Mod", htmlTemplate, this, "OnRegistered");
  *
  * @note Templates should be self-contained single-page HTML files with inline CSS & JS.
  *       The service injects a bridge script providing window.UF API for loading/saving globals.
@@ -32,7 +32,12 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 	 * Returns the base URL for the Mod Settings endpoint.
 	 */
 	override protected string EndpointBaseUrl(){
-		return UFConfig().GetBaseURL() + "ModSettings/";
+		UFrameworkConfig ucfg = UFrameworkConfig.Cast(UFConfig());
+		if (!ucfg){
+			UFLog.Err("[UFModSettingsEndpoint] EndpointBaseUrl called but UFConfig() is null - RPC not received yet?");
+			return "";
+		}
+		return ucfg.GetBaseURL() + "ModSettings/";
 	}
 	
 	/**
@@ -133,7 +138,7 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 		UFLog.Info("[UF] Registering mod settings page '" + displayName + "' (modId: " + modId + ", template: " + tmpl.Length().ToString() + " chars)");
 		
 		autoptr UFModSettingsPayload payload = CreatePayload(modName, author, tmpl, globals);
-		Post("Register/" + modId, payload.ToJson(), U().RegisterCall(new USilentCallBack(), cid));
+		Post("Register/" + modId, payload.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
 		return cid;
 	}
 	
@@ -152,7 +157,7 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 	 * @note Callback signature: void OnRegistered(int cid, int status, string oid, string data)
 	 */
 	int Register(string modId, string modName, string author, string tmpl, TStringArray globals, Class cbInstance, string cbFunction) {
-		int cid = U().CallId();
+		int cid = UF().CallId();
 		
 		if (!modId || modId == "" || !tmpl || tmpl == ""){
 			UFLog.Err("[UFModSettingsEndpoint] Register: modId and template are required");
@@ -193,7 +198,7 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 		
 		autoptr UFModSettingsPayload payload = CreatePayload(modName, author, tmpl, globals);
 		cb.SetOID(modId);
-		Post("Register/" + modId, payload.ToJson(), U().RegisterCall(new UNestedCallBack(cb), cid));
+		Post("Register/" + modId, payload.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
 		return cid;
 	}
 }

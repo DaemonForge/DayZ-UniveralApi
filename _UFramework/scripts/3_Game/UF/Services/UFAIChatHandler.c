@@ -52,7 +52,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 		
 		UFLog.Debug("[UAIChatHandler<T>] Calling Create endpoint, SchemaLen: " + jsonSchema.Length().ToString());
 		// Create the chat with JSON response format
-		m_LastCallId = U().AI().Create(systemMessage, "JSON", jsonSchema, model, maxHistory, new UFCallback<UAIChatCreateResponse>(this, "OnChatCreated"));
+		m_LastCallId = UF().AI().Create(systemMessage, "JSON", jsonSchema, model, maxHistory, new UFCallback<UAIChatCreateResponse>(this, "OnChatCreated"));
 		UFLog.Debug("[UAIChatHandler<T>] Create request sent, CID: " + m_LastCallId);
 	}
 	
@@ -82,7 +82,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 		}
 		
 		// Send the message immediately
-		m_LastCallId = U().AI().Send(m_ChatId, message, new UFAIMessageCallback<T>(this, "OnMessageResponse"), context);
+		m_LastCallId = UF().AI().Send(m_ChatId, message, new UFAIMessageCallback<T>(this, "OnMessageResponse"), context);
 		
 		// Start polling timer for this message
 		if (m_PollingEnabled) {
@@ -228,7 +228,7 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 		
 		UFLog.Debug("[UStringAIChatHandler] Calling Create endpoint");
 		// Create the chat with string response format
-		m_LastCallId = U().AI().Create(systemMessage, "string", "", model, maxHistory, new UFCallback<StatusObject>(this, "OnChatCreated"));
+		m_LastCallId = UF().AI().Create(systemMessage, "string", "", model, maxHistory, new UFCallback<StatusObject>(this, "OnChatCreated"));
 		UFLog.Debug("[UStringAIChatHandler] Create request sent, CID: " + m_LastCallId);
 	}
 	
@@ -258,7 +258,7 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 		}
 		
 		// Send the message immediately
-		m_LastCallId = U().AI().Send(m_ChatId, message, new UFAIMessageCallback<string>(this, "OnMessageResponse"), context);
+		m_LastCallId = UF().AI().Send(m_ChatId, message, new UFAIMessageCallback<string>(this, "OnMessageResponse"), context);
 		
 		// Start polling timer for this message
 		if (m_PollingEnabled) {
@@ -478,7 +478,7 @@ class UAIChatHandlerBase extends Managed
 		
 		// Register with the cron system to poll periodically
 		UFLog.Debug("[UAIChatHandlerBase] Starting polling with frequency: " + m_PollingFrequency);
-		U().Cron().runEndless(m_PollingFrequency, this, "PollPendingOperations", NULL);
+		UF().Cron().runEndless(m_PollingFrequency, this, "PollPendingOperations", NULL);
 		m_IsPollingActive = true;
 	}
 	
@@ -490,7 +490,7 @@ class UAIChatHandlerBase extends Managed
 		if (!m_IsPollingActive) return;
 		
 		UFLog.Debug("[UAIChatHandlerBase] Stopping polling");
-		U().Cron().Remove(this, "PollPendingOperations");
+		UF().Cron().Remove(this, "PollPendingOperations");
 		m_IsPollingActive = false;
 	}
 	
@@ -560,7 +560,7 @@ class UAIChatHandlerBase extends Managed
 		if (m_PendingMessageId == "") return;
 		
 		UFLog.Debug("[UAIChatHandlerBase] CheckPendingMessage - MessageId: " + m_PendingMessageId + ", Elapsed: " + ((g_Game.GetTime() / 1000) - m_PendingMessageStartTime) + "s");
-		m_LastCallId = U().AI().MessageStatus(m_PendingMessageId, new UFCallback<UAIChatMessageResponse>(this, "OnMessageStatusUpdate"));
+		m_LastCallId = UF().AI().MessageStatus(m_PendingMessageId, new UFCallback<UAIChatMessageResponse>(this, "OnMessageStatusUpdate"));
 	}
 	
 	/**
@@ -626,7 +626,7 @@ class UAIChatHandlerBase extends Managed
 	{
 		if (m_PendingSummaryId == "") return -1;
 		
-		m_LastCallId = U().AI().SummaryStatus(m_PendingSummaryId, new UFCallback<UAIChatSummaryResponse>(this, "OnSummaryStatusUpdate"));
+		m_LastCallId = UF().AI().SummaryStatus(m_PendingSummaryId, new UFCallback<UAIChatSummaryResponse>(this, "OnSummaryStatusUpdate"));
 		return m_LastCallId;
 	}
 	
@@ -699,7 +699,7 @@ class UAIChatHandlerBase extends Managed
 			return -1;
 		}
 		
-		m_LastCallId = U().AI().MessageStatus(messageId, new UFCallback<UAIChatMessageResponse>(this, "OnMessageStatusUpdate"));
+		m_LastCallId = UF().AI().MessageStatus(messageId, new UFCallback<UAIChatMessageResponse>(this, "OnMessageStatusUpdate"));
 		return m_LastCallId;
 	}
 	
@@ -715,7 +715,7 @@ class UAIChatHandlerBase extends Managed
 			return -1;
 		}
 		
-		m_LastCallId = U().AI().SummaryStatus(summaryId, new UFCallback<UAIChatSummaryResponse>(this, "OnSummaryStatusUpdate"));
+		m_LastCallId = UF().AI().SummaryStatus(summaryId, new UFCallback<UAIChatSummaryResponse>(this, "OnSummaryStatusUpdate"));
 		return m_LastCallId;
 	}
 	
@@ -796,7 +796,7 @@ class UAIChatHandlerBase extends Managed
 		
 		StopPolling();
 		
-		m_LastCallId = U().AI().Reset(m_ChatId);
+		m_LastCallId = UF().AI().Reset(m_ChatId);
 		return m_LastCallId;
 	}
 	
@@ -822,7 +822,7 @@ class UAIChatHandlerBase extends Managed
 		
 		StopPolling();
 		
-		m_LastCallId = U().AI().Delete(m_ChatId);
+		m_LastCallId = UF().AI().Delete(m_ChatId);
 		return m_LastCallId;
 	}
 	
@@ -839,10 +839,10 @@ class UAIChatHandlerBase extends Managed
 		
 		if (callback) {
 			// External callback provided, just pass it through
-			m_LastCallId = U().AI().Summarize(m_ChatId, callback);
+			m_LastCallId = UF().AI().Summarize(m_ChatId, callback);
 		} else {
 			// Use internal callback and polling
-			m_LastCallId = U().AI().Summarize(m_ChatId, new UFCallback<UAIChatSummaryResponse>(this, "OnSummarizeResponse"));
+			m_LastCallId = UF().AI().Summarize(m_ChatId, new UFCallback<UAIChatSummaryResponse>(this, "OnSummarizeResponse"));
 		}
 		
 		return m_LastCallId;
@@ -903,7 +903,7 @@ class UAIChatHandlerBase extends Managed
 			return -1;
 		}
 		
-		m_LastCallId = U().AI().Read(m_ChatId, callback);
+		m_LastCallId = UF().AI().Read(m_ChatId, callback);
 		return m_LastCallId;
 	}
 	
@@ -934,7 +934,7 @@ class UAIChatHandlerBase extends Managed
 	void Cancel()
 	{
 		if (m_LastCallId > 0) {
-			U().RequestCallCancel(m_LastCallId);
+			UF().RequestCallCancel(m_LastCallId);
 			m_LastCallId = -1;
 		}
 		
@@ -987,7 +987,7 @@ class UAIChatHandlerBase extends Managed
 		
 		// Cancel any pending requests
 		if (m_LastCallId > 0) {
-			U().RequestCallCancel(m_LastCallId);
+			UF().RequestCallCancel(m_LastCallId);
 			m_LastCallId = -1;
 		}
 		

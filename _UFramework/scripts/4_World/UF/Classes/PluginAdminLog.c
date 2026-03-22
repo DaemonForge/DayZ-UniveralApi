@@ -32,7 +32,7 @@ modded class PluginAdminLog extends PluginBase
 			}
 			
 			if (logobj){
-				U().Rest().Log(logobj.ToJson());
+				UF().Rest().Log(logobj.ToJson());
 			}
 		}
 	}
@@ -162,7 +162,7 @@ modded class PluginAdminLog extends PluginBase
 				
 				ULogMisc logobj = new ULogMisc("OnPlacementComplete", thePlayer.GetIdentity().GetId(), thePlayer.GetPosition(), "PlaceItem", Item);
 				if (logobj){
-					U().Rest().Log(logobj.ToJson());
+					UF().Rest().Log(logobj.ToJson());
 				}
 			}
 		}
@@ -195,7 +195,7 @@ modded class PluginAdminLog extends PluginBase
 				}
 				ULogMisc logobj = new ULogMisc("OnContinouousAction", player.GetIdentity().GetId(), player.GetPosition(), ActionName, Item, Target);
 				if (logobj){
-					U().Rest().Log(logobj.ToJson());
+					UF().Rest().Log(logobj.ToJson());
 				}
 			}
 		}
@@ -218,7 +218,7 @@ modded class PluginAdminLog extends PluginBase
 				logobj.AddStats(p_StatWater.Get(),p_StatEnergy.Get());	
 			}
 			if (logobj){
-				U().Rest().Log(logobj.ToJson());
+				UF().Rest().Log(logobj.ToJson());
 			}
 		}
 	}
@@ -241,7 +241,7 @@ modded class PluginAdminLog extends PluginBase
 				logobj.AddStats(p_StatWater.Get(),p_StatEnergy.Get());	
 			}
 			if (logobj){
-				U().Rest().Log(logobj.ToJson());
+				UF().Rest().Log(logobj.ToJson());
 			}
 		}
 	}
@@ -272,7 +272,7 @@ modded class PluginAdminLog extends PluginBase
 			}
 		}
 		if (thePlayerList && thePlayerList.Count() > 0){
-			U().Rest().LogBulk(GetLogPlayerPosArray(thePlayerList));
+			UF().Rest().LogBulk(GetLogPlayerPosArray(thePlayerList));
 		}
 	}
 }

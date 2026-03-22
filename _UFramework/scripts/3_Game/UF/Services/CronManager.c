@@ -114,7 +114,7 @@ class UCronManager extends Managed {
 			
 			// Check if the scheduled time for the function is due.
 			if (cronFunc.shouldAttemptCall(curTime, obj, funcName, params, shouldDelete)){
-				UFLog.Debug("[Cron] Running Function " + funcName + " @ " + curTime);
+				//UFLog.Debug("[Cron] Running Function " + funcName + " @ " + curTime);
 				// Enqueue the function call via the system call queue.
 				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallByName(obj, funcName, params);
 			}

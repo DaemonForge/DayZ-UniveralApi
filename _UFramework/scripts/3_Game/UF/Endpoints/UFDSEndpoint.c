@@ -112,7 +112,12 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	 * @return string The base URL with "Discord/" appended
 	 */
 	override protected string EndpointBaseUrl(){
-		return UFConfig().GetBaseURL() + "Discord/";
+		UFrameworkConfig ucfg = UFrameworkConfig.Cast(UFConfig());
+		if (!ucfg){
+			UFLog.Err("[UFDSEndpoint] EndpointBaseUrl called but UFConfig() is null - RPC not received yet?");
+			return "";
+		}
+		return ucfg.GetBaseURL() + "Discord/";
 	}
 	
 	/**
@@ -156,7 +161,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordRoleReq roleReq = new UDiscordRoleReq(RoleId);
 		
-		Post(url,roleReq.ToJson(),U().RegisterCall(DBCBX, cid));
+		Post(url,roleReq.ToJson(),UF().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}
@@ -189,7 +194,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordRoleReq roleReq = new UDiscordRoleReq(RoleId);
 		
-		Post(url,roleReq.ToJson(),U().RegisterCall(DBCBX, cid));
+		Post(url,roleReq.ToJson(),UF().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}
@@ -222,7 +227,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		string url = "Send/" + GUID;
 		
 		autoptr UDiscordBasicMessage obj = new UDiscordBasicMessage(message);
-		Post(url,obj.ToJson(),U().RegisterCall(DBCBX, cid));	
+		Post(url,obj.ToJson(),UF().RegisterCall(DBCBX, cid));	
 		return cid;	
 	}
 
@@ -251,7 +256,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Get/" + GUID;
 		
-		Post(url,"{}",U().RegisterCall(DBCBX, cid));
+		Post(url,"{}",UF().RegisterCall(DBCBX, cid));
 		return cid;
 	}	
 	
@@ -280,7 +285,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "GetChannel/" + GUID;
 		
-		Post(url,"{}",U().RegisterCall(DBCBX, cid));
+		Post(url,"{}",UF().RegisterCall(DBCBX, cid));
 		return cid;
 	}	
 	
@@ -310,7 +315,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Move/" + GUID + "/" + ChannelId;
 		
-		Post(url, "{}", U().RegisterCall(DBCBX, cid));
+		Post(url, "{}", UF().RegisterCall(DBCBX, cid));
 		return cid;
 	}
 	
@@ -341,7 +346,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		string url = "Kick/" + GUID;
 		autoptr UTextObject txtObj = new UTextObject(Reason);
 		
-		Post(url, txtObj.ToJson(), U().RegisterCall(DBCBX, cid));
+		Post(url, txtObj.ToJson(), UF().RegisterCall(DBCBX, cid));
 		return cid;
 	}
 	
@@ -373,7 +378,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordMute muteObject = new UDiscordMute(ToMute);
 		
-		Post(url, muteObject.ToJson(), U().RegisterCall(DBCBX, cid));
+		Post(url, muteObject.ToJson(), UF().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}		
@@ -406,7 +411,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordNickname nickObject = new UDiscordNickname(Nickname);
 		
-		Post(url, nickObject.ToJson(), U().RegisterCall(DBCBX, cid));
+		Post(url, nickObject.ToJson(), UF().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}	
@@ -440,7 +445,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Create";
 			
-		Post(url,obj.ToJson(),U().RegisterCall(DBCBX, cid));	
+		Post(url,obj.ToJson(),UF().RegisterCall(DBCBX, cid));	
 		
 		return cid;	
 	}
@@ -476,7 +481,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Delete/" + id;
 		
-		Post(url,obj.ToJson(),U().RegisterCall(DBCBX, cid));
+		Post(url,obj.ToJson(),UF().RegisterCall(DBCBX, cid));
 		return cid;	
 	}
 	
@@ -511,7 +516,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Edit/" + id;
 			
-		Post(url,obj.ToJson(),U().RegisterCall(DBCBX, cid));	
+		Post(url,obj.ToJson(),UF().RegisterCall(DBCBX, cid));	
 		return cid;		
 	}
 	
@@ -545,7 +550,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Send/" + id;
 			
-		Post(url,obj.ToJson(),U().RegisterCall(DBCBX, cid));		
+		Post(url,obj.ToJson(),UF().RegisterCall(DBCBX, cid));		
 		return cid;	
 	}
 	
@@ -578,7 +583,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Send/" + id;
 			
-		Post(url,message.ToJson(),U().RegisterCall(DBCBX, cid));	
+		Post(url,message.ToJson(),UF().RegisterCall(DBCBX, cid));	
 		return cid;	
 	}
 	
@@ -615,7 +620,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Messages/" + id;
 		
-		Post(url,vFilter.ToJson(),U().RegisterCall(DBCBX, cid));	
+		Post(url,vFilter.ToJson(),UF().RegisterCall(DBCBX, cid));	
 		return cid;	
 	}
 	
@@ -647,7 +652,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = baseUrl + "Discord/CheckRole/" + PlainId + "/" + RoleId;
 		
-		U().Post(url,"{}",U().RegisterCall(DBCBX, cid));
+		UF().Post(url,"{}",UF().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}
@@ -679,7 +684,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = baseUrl + "Discord/Check/" + PlainId;
 		
-		U().Post(url,"{}",U().RegisterCall(DBCBX, cid));
+		UF().Post(url,"{}",UF().RegisterCall(DBCBX, cid));
 		
 		return cid;
 	}
@@ -699,7 +704,7 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			return -1;
 		}
 		
-		U().Post(url,"{}",U().RegisterCall(new UFDLDiscordAvatarCallback(filename), cid));
+		UF().Post(url,"{}",UF().RegisterCall(new UFDLDiscordAvatarCallback(filename), cid));
 	
 		return cid;
 	}

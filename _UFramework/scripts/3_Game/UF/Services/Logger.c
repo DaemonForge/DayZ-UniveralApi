@@ -52,7 +52,7 @@ modded class ULoggerBaseInstance extends Managed {
 		
 		// Don't try to log to API if framework isn't initialized or API is offline
 		// Silently skip - file logging still works, no need to spam console
-		if (!UFramework.isGlobalInit() || !U().IsOnline()) {
+		if (!UFramework.isGlobalInit() || !UF().IsOnline()) {
 			m_SendingToApi = false;
 			return;
 		}
@@ -77,13 +77,13 @@ modded class ULoggerBaseInstance extends Managed {
 			}
 		} else {
 			// On client, verify we have received auth token from server via RPC
-			if (!U().HasValidAuth()) {
+			if (!UF().HasValidAuth()) {
 				m_SendingToApi = false;
 				return;
 			}
 		}
 		
-		U().Rest().Log(jsonString);
+		UF().Rest().Log(jsonString);
 		m_SendingToApi = false;
 	}
 }
