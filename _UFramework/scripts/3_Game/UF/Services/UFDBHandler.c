@@ -271,7 +271,6 @@ class UDBHandlerBase extends Managed {
 	}
 	
 	/**
-	 * Checks whether the framework is ready to make API calls.
 	 * Destructor - cancels last pending call
 	 */
 	void ~UDBHandlerBase(){
