@@ -1476,7 +1476,12 @@ static UFramework UF()
 	if ( !g_UFramework )
 	{
 		if (!g_Game)
+		{
+			string st;
+			DumpStackString(st);
+			Error2("[UF] CRITICAL", "UF() called but g_Game is null and singleton was never created!\n" + st);
 			return null;
+		}
 		g_UFramework = new UFramework;
 		g_UFramework.Init();
 	}
