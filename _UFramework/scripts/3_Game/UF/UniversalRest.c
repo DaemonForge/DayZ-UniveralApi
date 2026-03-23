@@ -124,10 +124,16 @@ class UniversalRest extends Managed
 	 * @note Uses UAuthCallBack to handle response
 	 */
 	static void GetAuth( string guid ){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return;
+		}
 		string url = BaseUrl() + "GetAuth/" + guid;
 		
 		int cid = -1;
-		Post(url, "{}", UF().RegisterCall(new UAuthCallBack(guid), cid));
+		autoptr UFRestCallBackBase ncb = new UAuthCallBack(guid);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(url, "{}", rcb);
 		Print("Get Auth Called got CID: " + cid);
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "GetAuth");
@@ -206,6 +212,10 @@ class UniversalRest extends Managed
 	 * @deprecated Use UF().globals().Transaction() instead
 	 */
 	static void GlobalsTransaction(string mod, string element, float value = 1, UFRestCallBackBase UCBX = NULL) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return;
+		}
 		
 		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
@@ -217,7 +227,8 @@ class UniversalRest extends Managed
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		int cid = -1;
 		if ( element && transaction && vUCBX){
-			Post(url,transaction.ToJson(), UF().RegisterCall(vUCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(vUCBX, cid));
+			Post(url, transaction.ToJson(), rcb);
 		} else {
 			UFLog.Err("[Api] Error Transaction " +  mod);
 		}
@@ -228,6 +239,10 @@ class UniversalRest extends Managed
 	
 	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
 	static void GlobalsUpdate(string mod, string element, string value, UFRestCallBackBase UCBX = NULL) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return;
+		}
 		
 		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
@@ -240,7 +255,8 @@ class UniversalRest extends Managed
 		autoptr UUpdateData updatedata = new UUpdateData(element, value);
 		
 		if ( element && updatedata && vUCBX){
-			Post(url,updatedata.ToJson(),UF().RegisterCall(vUCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(vUCBX, cid));
+			Post(url, updatedata.ToJson(), rcb);
 		} else {
 			UFLog.Err("[Api] Error Transaction " +  mod);
 		}
@@ -248,6 +264,10 @@ class UniversalRest extends Managed
 	
 	//String Values must be wrapped with Quotes example string newValue = "\"NewValue\""
 	static void GlobalsUpdateAdv(string mod, string element, string value, string operation, UFRestCallBackBase UCBX = NULL) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return;
+		}
 		
 		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
@@ -260,13 +280,18 @@ class UniversalRest extends Managed
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		if ( element && updatedata && vUCBX){
-			Post(url,updatedata.ToJson(),UF().RegisterCall(vUCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(vUCBX, cid));
+			Post(url, updatedata.ToJson(), rcb);
 		} else {
 			UFLog.Err("[Api] Error Transaction " +  mod);
 		}
 	}
 	
 	static void Request(UApiForwarder data, UFRestCallBackBase UCBX = NULL){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return;
+		}
 				
 		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
@@ -278,13 +303,17 @@ class UniversalRest extends Managed
 		string url = BaseUrl() + "Forward";
 		
 		if ( data && vUCBX){
-			Post(url,data.ToJson(),UF().RegisterCall(vUCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(vUCBX, cid));
+			Post(url, data.ToJson(), rcb);
 		} else {
 			UFLog.Err("[Api] Error Forwarding");
 		}
 	}
 
 	static void Log(string jsonString, UFRestCallBackBase UCBX = NULL){
+		if (!g_UFramework){
+			return;
+		}
 		
 		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
@@ -295,7 +324,8 @@ class UniversalRest extends Managed
 		string url = BaseUrl() + "Logger/One/" + UFConfig().ServerID;
 		
 		if ( jsonString && vUCBX){
-			Post(url,jsonString,UF().RegisterCall(vUCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(vUCBX, cid));
+			Post(url, jsonString, rcb);
 		} else {
 			// Use Print() NOT UFLog to avoid infinite loop (UFLog -> SendToApi -> Log -> UFLog...)
 			Print("[UF] [Api] Error Forwarding Log");
@@ -304,6 +334,9 @@ class UniversalRest extends Managed
 	
 	//JsonFileLoader<array<autoptr LogObject>>.JsonMakeData(AnArrayOfYourObjects);
 	static void LogBulk(string jsonString, UFRestCallBackBase UCBX = NULL){
+		if (!g_UFramework){
+			return;
+		}
 		
 		autoptr UFRestCallBackBase vUCBX = UCBX;
 		if (!vUCBX){
@@ -313,7 +346,8 @@ class UniversalRest extends Managed
 		
 		string url = BaseUrl() + "Logger/Many/" + UFConfig().ServerID;
 		if (jsonString && vUCBX){
-			Post(url,jsonString,UF().RegisterCall(vUCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(vUCBX, cid));
+			Post(url, jsonString, rcb);
 		} else {
 			// Use Print() NOT UFLog to avoid infinite loop
 			Print("[UF] [Api] Error Forwarding LogBulk");

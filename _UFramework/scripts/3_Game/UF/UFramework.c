@@ -324,11 +324,17 @@ class UFramework extends Managed {
 	 */
 	static int Post(string url, string jsonString, UFCallbackBase cb, string contentType = "application/json")
 	{
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		if (cb){
 			RestContext ctx = RestCore().GetRestContext(url);
 			ctx.SetHeader(contentType);
-			ctx.POST(UF().RegisterCall(new UNestedCallBack(cb),cid), "", jsonString);
+			autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			ctx.POST(rcb, "", jsonString);
 			return cid;
 		}
 		return -1;
@@ -379,10 +385,16 @@ class UFramework extends Managed {
 	 */
 	static int Get(string url, UFCallbackBase cb)
 	{
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		if (cb){
 			RestContext ctx =  RestCore().GetRestContext(url);
-			ctx.GET(UF().RegisterCall(new UNestedCallBack(cb), cid), "");
+			autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			ctx.GET(rcb, "");
 			return cid;
 		}
 		return -1;
