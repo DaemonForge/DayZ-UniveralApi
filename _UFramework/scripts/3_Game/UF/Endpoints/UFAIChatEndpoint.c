@@ -33,6 +33,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int Create(string systemMessage, string responseFormat, string jsonSchema = "", string model = "", int maxHistory = -1, UFCallbackBase cb = NULL, string kbId = "") {
+		if (!g_UFramework){
+			UFLog.Err("[UF] AI Chat Create - g_UFramework is NULL");
+			return -1;
+		}
 		if (!UF().IsOpenAIEnabled()){
 			Error2("[UF] AI Chat Create", "OpenAI service is not online");
 			return -1;
@@ -42,28 +46,21 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			return -1;
 		}
 		
-		// Debug logging for KB integration
-		if (kbId != "") {
-			UFLog.Debug("[AI Chat] Creating session with KB: " + kbId);
-		} else {
-			UFLog.Debug("[AI Chat] Creating session without KB");
-		}
-		
 		int cid = -1;
 		autoptr UAIChatCreateRequest req = new UAIChatCreateRequest(systemMessage, responseFormat, jsonSchema, model, maxHistory, kbId);
 		
-		UFLog.Debug("[AI Chat] Create request body: " + req.ToJson());
-		
+		autoptr UFRestCallBackBase ncb;
 		if (cb) {
-			Post("Create", req.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
+			ncb = new UNestedCallBack(cb);
 		} else {
-			Post("Create", req.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
+			ncb = new USilentCallBack();
 		}
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post("Create", req.ToJson(), rcb);
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat Create", "Error Registering Callback");
-		} else {
-			UFLog.Debug("[AI Chat] Create registered with CID: " + cid);
 		}
 		return cid;
 	}
@@ -78,6 +75,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int Send(string chatId, string message, UFCallbackBase cb, array<autoptr UAIChatContext> context = NULL, array<autoptr UAIToolDef> tools = NULL) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] AI Chat Send - g_UFramework is NULL");
+			return -1;
+		}
 		if (!UF().IsOpenAIEnabled()){
 			Error2("[UF] AI Chat Send", "OpenAI service is not online");
 			return -1;
@@ -86,32 +87,20 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			Error2("[UF] AI Chat Send", "chatId and message must be valid strings");
 			return -1;
 		}
-		
 		if (!cb) {
 			Error2("[UF] AI Chat Send", "Callback is required");
 			return -1;
 		}
 		
-		// Debug logging
-		UFLog.Debug("[AI Chat] Sending message to chat: " + chatId);
-		UFLog.Debug("[AI Chat] Message length: " + message.Length().ToString());
-		if (context) {
-			UFLog.Debug("[AI Chat] Context items: " + context.Count().ToString());
-		}
-		if (tools) {
-			UFLog.Debug("[AI Chat] Tools count: " + tools.Count().ToString());
-		}
-		
 		int cid = -1;
-		// Pass tools directly in the message - service handles OpenAI native function calling
 		autoptr UAIChatMessage req = new UAIChatMessage(message, context, tools);
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
 		
-		Post("Send/" + chatId, req.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
+		Post("Send/" + chatId, req.ToJson(), rcb);
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat Send", "Error Registering Callback");
-		} else {
-			UFLog.Debug("[AI Chat] Send registered with CID: " + cid);
 		}
 		return cid;
 	}
@@ -130,6 +119,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int MessageStatus(string messageId, UFCallbackBase cb) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] AI Chat MessageStatus - g_UFramework is NULL");
+			return -1;
+		}
 		if (!UF().IsOpenAIEnabled()){
 			Error2("[UF] AI Chat MessageStatus", "OpenAI service is not online");
 			return -1;
@@ -138,15 +131,16 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			Error2("[UF] AI Chat MessageStatus", "messageId must be a valid string");
 			return -1;
 		}
-		
 		if (!cb) {
 			Error2("[UF] AI Chat MessageStatus", "Callback is required");
 			return -1;
 		}
 		
-		UFLog.Debug("[AI Chat] Checking message status: " + messageId);
 		int cid = -1;
-		Post("MessageStatus/" + messageId, "{}", UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post("MessageStatus/" + messageId, "{}", rcb);
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat MessageStatus", "Error Registering Callback");
@@ -161,6 +155,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int Read(string chatId, UFCallbackBase cb) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] AI Chat Read - g_UFramework is NULL");
+			return -1;
+		}
 		if (!UF().IsOpenAIEnabled()){
 			Error2("[UF] AI Chat Read", "OpenAI service is not online");
 			return -1;
@@ -169,14 +167,16 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			Error2("[UF] AI Chat Read", "chatId must be a valid string");
 			return -1;
 		}
-		
 		if (!cb) {
 			Error2("[UF] AI Chat Read", "Callback is required");
 			return -1;
 		}
 		
 		int cid = -1;
-		Post("Read/" + chatId, "{}", UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post("Read/" + chatId, "{}", rcb);
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat Read", "Error Registering Callback");
@@ -191,6 +191,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int Reset(string chatId, UFCallbackBase cb = NULL) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] AI Chat Reset - g_UFramework is NULL");
+			return -1;
+		}
 		if (!UF().IsOpenAIEnabled()){
 			Error2("[UF] AI Chat Reset", "OpenAI service is not online");
 			return -1;
@@ -201,12 +205,15 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 		}
 		
 		int cid = -1;
-		
+		autoptr UFRestCallBackBase ncb;
 		if (cb) {
-			Post("Reset/" + chatId, "{}", UF().RegisterCall(new UNestedCallBack(cb), cid));
+			ncb = new UNestedCallBack(cb);
 		} else {
-			Post("Reset/" + chatId, "{}", UF().RegisterCall(new USilentCallBack(), cid));
+			ncb = new USilentCallBack();
 		}
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post("Reset/" + chatId, "{}", rcb);
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat Reset", "Error Registering Callback");
@@ -221,6 +228,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int Delete(string chatId, UFCallbackBase cb = NULL) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] AI Chat Delete - g_UFramework is NULL");
+			return -1;
+		}
 		if (!UF().IsOpenAIEnabled()){
 			Error2("[UF] AI Chat Delete", "OpenAI service is not online");
 			return -1;
@@ -231,12 +242,15 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 		}
 		
 		int cid = -1;
-		
+		autoptr UFRestCallBackBase ncb;
 		if (cb) {
-			Post("Delete/" + chatId, "{}", UF().RegisterCall(new UNestedCallBack(cb), cid));
+			ncb = new UNestedCallBack(cb);
 		} else {
-			Post("Delete/" + chatId, "{}", UF().RegisterCall(new USilentCallBack(), cid));
+			ncb = new USilentCallBack();
 		}
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post("Delete/" + chatId, "{}", rcb);
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat Delete", "Error Registering Callback");
@@ -251,6 +265,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int Summarize(string chatId, UFCallbackBase cb) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] AI Chat Summarize - g_UFramework is NULL");
+			return -1;
+		}
 		if (!UF().IsOpenAIEnabled()){
 			Error2("[UF] AI Chat Summarize", "OpenAI service is not online");
 			return -1;
@@ -259,14 +277,16 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			Error2("[UF] AI Chat Summarize", "chatId must be a valid string");
 			return -1;
 		}
-		
 		if (!cb) {
 			Error2("[UF] AI Chat Summarize", "Callback is required");
 			return -1;
 		}
 		
 		int cid = -1;
-		Post("Summarize/" + chatId, "{}", UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post("Summarize/" + chatId, "{}", rcb);
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat Summarize", "Error Registering Callback");
@@ -281,6 +301,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int SummaryStatus(string summaryId, UFCallbackBase cb) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] AI Chat SummaryStatus - g_UFramework is NULL");
+			return -1;
+		}
 		if (!UF().IsOpenAIEnabled()){
 			Error2("[UF] AI Chat SummaryStatus", "OpenAI service is not online");
 			return -1;
@@ -289,14 +313,16 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			Error2("[UF] AI Chat SummaryStatus", "summaryId must be a valid string");
 			return -1;
 		}
-		
 		if (!cb) {
 			Error2("[UF] AI Chat SummaryStatus", "Callback is required");
 			return -1;
 		}
 		
 		int cid = -1;
-		Post("SummaryStatus/" + summaryId, "{}", UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post("SummaryStatus/" + summaryId, "{}", rcb);
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat SummaryStatus", "Error Registering Callback");
@@ -314,6 +340,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int SubmitToolResult(string messageId, string toolCallId, string result, UFCallbackBase cb) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] AI Chat SubmitToolResult - g_UFramework is NULL");
+			return -1;
+		}
 		if (!UF().IsOpenAIEnabled()){
 			Error2("[UF] AI Chat SubmitToolResult", "OpenAI service is not online");
 			return -1;
@@ -322,7 +352,6 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 			Error2("[UF] AI Chat SubmitToolResult", "messageId and toolCallId must be valid strings");
 			return -1;
 		}
-		
 		if (!cb) {
 			Error2("[UF] AI Chat SubmitToolResult", "Callback is required");
 			return -1;
@@ -330,8 +359,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 		
 		int cid = -1;
 		autoptr UAIChatToolResultRequest req = new UAIChatToolResultRequest(toolCallId, result);
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
 		
-		Post("ToolResult/" + messageId, req.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
+		Post("ToolResult/" + messageId, req.ToJson(), rcb);
 		
 		if (cid == -1) {
 			Error2("[UF] AI Chat SubmitToolResult", "Error Registering Callback");

@@ -148,6 +148,10 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @note Callback signature: void OnServerStatus(int cid, int status, string oid, UFServerStatus data)
 	 */
 	int SteamQuery(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
 		
@@ -159,7 +163,8 @@ class UApiEndpoint extends UFBaseEndpoint {
 		}
 		
 		if (  ip && ip != "" && queryPort && queryPort != "" && DBCBX){
-			Post(endpoint,"{}", UF().RegisterCall(DBCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+			Post(endpoint, "{}", rcb);
 		} else {
 			UFLog.Err("[Api] Error ServerQuery IP:" + ip + " Port:" + queryPort);
 			cid = -1;
@@ -181,6 +186,10 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @note Returns raw callback string instead of typed object
 	 */
 	int ServerQuery(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = ""){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
 		
@@ -191,9 +200,9 @@ class UApiEndpoint extends UFBaseEndpoint {
 			DBCBX = new USilentCallBack();
 		}
 		
-		
 		if (  ip && ip != "" && queryPort && queryPort != "" && DBCBX){
-			Post(endpoint,"{}",UF().RegisterCall(DBCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+			Post(endpoint, "{}", rcb);
 		} else {
 			UFLog.Err("[Api] Error ServerQuery IP:" + ip + " Port:" + queryPort);
 			cid = -1;
@@ -216,11 +225,17 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @note Prefer using SteamQuery() for consistency
 	 */
 	int ServerQueryObj(string ip, string queryPort, Class cbInstance, string cbFunction, string oid = ""){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "ServerQuery/Status/" + ip + "/" + queryPort;
 		
 		if (  ip && ip != "" && queryPort && queryPort != "" ){
-			Post(endpoint,"{}",UF().RegisterCall(new UNestedCallBack(new UFCallback<UFServerStatus>(cbInstance, cbFunction, oid)), cid));
+			autoptr UNestedCallBack ncb = new UNestedCallBack(new UFCallback<UFServerStatus>(cbInstance, cbFunction, oid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, "{}", rcb);
 		} else {
 			UFLog.Err("[Api] Error ServerQuery IP:" + ip + " Port:" + queryPort);
 			cid = -1;
@@ -242,6 +257,10 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @note Callback signature: void OnRandoms(int cid, int status, string oid, URandomNumberResponse data)
 	 */
 	int RandomNumbers(int count, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "Random";
 		if (count == -1){
@@ -257,7 +276,8 @@ class UApiEndpoint extends UFBaseEndpoint {
 		autoptr URandomNumberRequest randomreq = new URandomNumberRequest(count);
 		
 		if (  count > 0 && count <= 4096 && randomreq && DBCBX){
-			Post(endpoint, randomreq.ToJson(), UF().RegisterCall(DBCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+			Post(endpoint, randomreq.ToJson(), rcb);
 		} else {
 			Error2("[UF] [Api] Error Random", "Count: " +  count + " CID:" + cid);
 			cid = -1;
@@ -280,6 +300,10 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @note Callback signature: void OnPrice(int cid, int status, string oid, UCryptoConvertResult data)
 	 */
 	int CryptoPrice(string from, string to, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "Crypto/Price/" + from + "/" + to;
 		autoptr UFRestCallBackBase DBCBX;
@@ -290,7 +314,8 @@ class UApiEndpoint extends UFBaseEndpoint {
 		}
 		
 		if ( from && to && DBCBX){
-			Post(endpoint, "{}", UF().RegisterCall(DBCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+			Post(endpoint, "{}", rcb);
 		} else {
 			Error2("[UF] [Api] Error Crypto Price", "From: " +  from + " To: " +  to + " CID:" + cid);
 			cid = -1;
@@ -314,6 +339,10 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @note Callback signature: void OnConverted(int cid, int status, string oid, UCryptoConvertResult data)
 	 */
 	int CryptoConvert(string from, string to, float value, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "Crypto/Convert/" + from + "/" + to;
 		autoptr UFRestCallBackBase DBCBX;
@@ -326,7 +355,8 @@ class UApiEndpoint extends UFBaseEndpoint {
 		autoptr UCryptoConvertRequest req = new UCryptoConvertRequest(value);
 		
 		if ( from && to && value > 0 && DBCBX){
-			Post(endpoint, req.ToJson(), UF().RegisterCall(DBCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+			Post(endpoint, req.ToJson(), rcb);
 		} else {
 			Error2("[UF] [Api] Error Crypto Convert", "From: " +  from + " To: " +  to + " Value: " + value + " CID:" + cid);
 			cid = -1;
@@ -350,6 +380,10 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @note Callback signature: void OnPrices(int cid, int status, string oid, UCryptoResults data)
 	 */
 	int Crypto(TStringArray from, string to, Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "Crypto/" + to;
 		autoptr UFRestCallBackBase DBCBX;
@@ -362,7 +396,8 @@ class UApiEndpoint extends UFBaseEndpoint {
 		autoptr UCryptoRequest req = new UCryptoRequest(from);
 		
 		if ( from && from.Count() > 0 && to && DBCBX){
-			Post(endpoint, req.ToJson(), UF().RegisterCall(DBCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+			Post(endpoint, req.ToJson(), rcb);
 		} else {
 			Error2("[UF] [Api] Error Crypto", "From: " +  from.Count() + " To: " +  to + " CID:" + cid);
 			cid = -1;
@@ -384,11 +419,17 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @note See UTTSVoice constants for valid voice IDs
 	 */
 	int TTSGenerate(string voiceID, UTTSMessage msg, Class cbInstance, string cbFunction  ){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "TTS/Generate/" + voiceID;
 		
 		if (voiceID != "" && msg){
-			Post(endpoint, msg.ToJson(), UF().RegisterCall(new UNestedCallBack(new UGenTTSCallback(cbInstance, cbFunction, voiceID)), cid));
+			autoptr UNestedCallBack ncb = new UNestedCallBack(new UGenTTSCallback(cbInstance, cbFunction, voiceID));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, msg.ToJson(), rcb);
 		} else {
 			Error2("[UF] [Api] TTSGenerate - Play Audio", " voiceID: " +  voiceID);
 			cid = -1;
@@ -407,11 +448,17 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @usage UF().api().TTSStatus(ttsId, this, "OnTTSStatus");
 	 */
 	int TTSStatus(string ttsId, Class cbInstance, string cbFunction ){
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "TTS/Status/" + ttsId;
 		
 		if (ttsId != ""){
-			Post(endpoint, "{}", UF().RegisterCall(new UNestedCallBack(new UTTSStatusCallback(cbInstance, cbFunction, ttsId)), cid));
+			autoptr UNestedCallBack ncb = new UNestedCallBack(new UTTSStatusCallback(cbInstance, cbFunction, ttsId));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, "{}", rcb);
 		} else {
 			Error2("[UF] [Api] TTSStatus", " ttsId: " +  ttsId);
 			cid = -1;
@@ -433,11 +480,17 @@ class UApiEndpoint extends UFBaseEndpoint {
 			Error2("[UF] TTSDownload Called from Server", " TTSid: " + ttsId);
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "TTS/Download/" + ttsId;
 		
 		if (ttsId != ""){
-			Post(endpoint, "{}", UF().RegisterCall(new UFDownloadTTS(ttsId), cid));
+			autoptr UFRestCallBackBase ncb = new UFDownloadTTS(ttsId);
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, "{}", rcb);
 		} else {
 			Error2("[UF] [Api] TTSDownload - Play Audio", " ttsId: " +  ttsId);
 			cid = -1;
@@ -461,11 +514,17 @@ class UApiEndpoint extends UFBaseEndpoint {
 			Error2("[UF] TTSDownload Called from Server", " TTSid: " + ttsId);
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "TTS/Download/" + ttsId;
 		
 		if (ttsId != ""){
-			Post(endpoint, "{}", UF().RegisterCall(new UDLTTSNestedCallback(new UDLTTSCallback(cbInstance, cbFunction, ttsId)), cid));
+			autoptr UFRestCallBackBase ncb = new UDLTTSNestedCallback(new UDLTTSCallback(cbInstance, cbFunction, ttsId));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, "{}", rcb);
 		} else {
 			Error2("[UF] [Api] TTSDownload - Play Audio", " ttsId: " +  ttsId);
 			cid = -1;
@@ -514,34 +573,23 @@ class UApiEndpoint extends UFBaseEndpoint {
 	 * @note UFStatus contains version, Discord/OpenAI availability, error status
 	 */
 	int Status(Class cbInstance, string cbFunction, string oid = "", bool ReturnString = false){
-		UFLog.Debug("[UApiEndpoint::Status] Called with cbFunction=" + cbFunction);
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
-		// Pre-check: ensure we can actually make the call
-		UFrameworkConfig cfg = UFConfig();
-		if (!cfg){
-			UFLog.Err("[UApiEndpoint::Status] UFConfig() is NULL - cannot make API call!");
-			return -1;
-		}
-		
-		UFramework uf = UF();
-		if (!uf){
-			UFLog.Err("[UApiEndpoint::Status] UF() is NULL - framework not initialized!");
-			return -1;
-		}
-		
-		UFLog.Debug("[UApiEndpoint::Status] Pre-checks passed, making POST request...");
-		if (ReturnString){	
-			Post("Status", "{}", new UDBCallBack(cbInstance, cbFunction, cid, oid));
+		autoptr UFRestCallBackBase DBCBX;
+		if (cbInstance && cbFunction != "" && ReturnString){
+			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else if (cbInstance && cbFunction != ""){
+			DBCBX = new UNestedCallBack(new UFCallback<UFStatus>(cbInstance, cbFunction, oid));
 		} else {
-			RestCallback cb = uf.RegisterCall(new UNestedCallBack(new UFCallback<UFStatus>(cbInstance, cbFunction, oid)), cid);
-			if (!cb){
-				UFLog.Err("[UApiEndpoint::Status] RegisterCall returned NULL!");
-				return -1;
-			}
-			Post("Status", "{}", cb);
+			DBCBX = new USilentCallBack();
 		}
-		UFLog.Debug("[UApiEndpoint::Status] Request sent, cid=" + cid);
+		
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post("Status", "{}", rcb);
 		return cid;
 	}
 }

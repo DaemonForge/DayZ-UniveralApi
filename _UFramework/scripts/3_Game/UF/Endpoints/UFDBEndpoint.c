@@ -132,10 +132,16 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Save","OID, jsonString and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;	
 		string endpoint = "Save/" + oid + "/" + mod;
 		
-		Post(endpoint,jsonString, UF().RegisterCall(new USilentCallBack(), cid));
+		autoptr UFRestCallBackBase ncb = new USilentCallBack();
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, jsonString, rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Save");
@@ -161,10 +167,16 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Save","OID, jsonString and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;	
 		string endpoint = "Save/" + oid + "/" + mod;
 
-		Post(endpoint,jsonString, UF().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
+		autoptr UFRestCallBackBase ncb = new UDBCallBack(cbInstance, cbFunction, cid, oid);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, jsonString, rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Save");
@@ -188,12 +200,18 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Save","OID and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;	
 		string endpoint = "Save/" + oid + "/" + mod;
 		
 		cb.SetOID(oid); //Only sets if not set
 		
-		Post(endpoint,jsonString, UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, jsonString, rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Save");
@@ -219,12 +237,18 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Load","OID and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "Load/" + oid + "/" + mod;
 		
 		cb.SetOID(oid); //Only sets if not set
 		
-		Post(endpoint,jsonString, UF().RegisterCall(new UNestedCallBack(cb),cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, jsonString, rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Load");
@@ -250,10 +274,16 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Load","OID, jsonString and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "Load/" + oid + "/" + mod;
 		
-		Post(endpoint,jsonString,  UF().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
+		autoptr UFRestCallBackBase ncb = new UDBCallBack(cbInstance, cbFunction, cid, oid);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, jsonString, rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Load");
@@ -273,41 +303,25 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 *        UF().db(OBJECT_DB).Query("MyMod", query, new MyQueryCallback());
 	 */
 	int Query(string mod, UDBQueryBase query, UFCallbackBase cb) {
-		UFLog.Debug("[UDBEndpoint::Query] mod=" + mod);
 		if (mod == "" || !query || !cb){
 			Error2("[UF] Error on DB Query","Mod, query and callback must be valid");
 			return -1;
 		}
-		
-		// Safety check: ensure framework is ready
-		UFramework uf = UF();
-		if (!uf){
-			UFLog.Err("[UDBEndpoint::Query] UF() returned NULL - framework not ready");
-			return -1;
-		}
-		if (!UFConfig()){
-			UFLog.Err("[UDBEndpoint::Query] UFConfig() is NULL - config not loaded");
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
 			return -1;
 		}
 		
 		int cid = -1;
 		string endpoint = "Query/" + mod;
 				
-		if ( query && mod && cb){
-			cb.SetOID(mod); //Only sets if not set
-			RestCallback regCb = uf.RegisterCall(new UNestedCallBack(cb), cid);
-			if (!regCb){
-				UFLog.Err("[UDBEndpoint::Query] RegisterCall returned NULL");
-				return -1;
-			}
-			Post(endpoint, query.ToJson(), regCb);
-			
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "Query");
-			}
-		} else {
-			UFLog.Err("[Api] Error Querying " + mod);
-			cid = -1;
+		cb.SetOID(mod);
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, query.ToJson(), rcb);
+		
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "Query");
 		}
 		return cid;
 	}
@@ -325,32 +339,21 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 *        UF().db(OBJECT_DB).Query("MyMod", query, this, "OnQueryResults");
 	 */
 	int Query(string mod, UDBQueryBase query, Class cbInstance, string cbFunction) {
-		UFLog.Debug("[UDBEndpoint::Query] mod=" + mod + " cbFunction=" + cbFunction);
 		if ( mod == "" || !query ){
 			Error2("[UF] Error on DB Query","Mod and query must be valid");
 			return -1;
 		}
-		
-		// Safety check: ensure framework is ready
-		UFramework uf = UF();
-		if (!uf){
-			UFLog.Err("[UDBEndpoint::Query] UF() returned NULL - framework not ready");
-			return -1;
-		}
-		if (!UFConfig()){
-			UFLog.Err("[UDBEndpoint::Query] UFConfig() is NULL - config not loaded");
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
 			return -1;
 		}
 		
 		int cid = -1;
 		string endpoint = "Query/" + mod;
 				
-		RestCallback regCb = uf.RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, ""), cid);
-		if (!regCb){
-			UFLog.Err("[UDBEndpoint::Query] RegisterCall returned NULL");
-			return -1;
-		}
-		Post(endpoint, query.ToJson(), regCb);
+		autoptr UFRestCallBackBase ncb = new UDBCallBack(cbInstance, cbFunction, cid, "");
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, query.ToJson(), rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Query");
@@ -393,17 +396,23 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Transaction","OID, element and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 				
 		string endpoint = "Transaction/" + oid   + "/" + mod;
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		
-		Post(endpoint,transaction.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
+		autoptr UFRestCallBackBase ncb = new USilentCallBack();
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, transaction.ToJson(), rcb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "Transaction");
-			}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "Transaction");
+		}
 		return cid;
 	}
 	
@@ -424,6 +433,10 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Transaction","OID, element, callback and Mod must be valid");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		string endpoint = "Transaction/" + oid   + "/" + mod;
@@ -432,12 +445,14 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid); //Only sets if not set
 			
-		Post(endpoint,transaction.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, transaction.ToJson(), rcb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "Transaction");
-			}
-	return cid;
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "Transaction");
+		}
+		return cid;
 	}
 	
 	/**
@@ -459,6 +474,10 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Transaction","OID, element, callback and Mod must be valid");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		string endpoint = "Transaction/" + oid   + "/" + mod;
@@ -467,11 +486,13 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		cb.SetOID(oid); //Only sets if not set
 		
-		Post(endpoint,transaction.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, transaction.ToJson(), rcb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "Transaction");
-			}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "Transaction");
+		}
 		return cid;
 	}
 	
@@ -493,19 +514,23 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Transaction","OID, element and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
-		
-		autoptr RestCallback DBCBX = ;
 		
 		string endpoint = "Transaction/" + oid   + "/"+ mod;
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		
-		Post(endpoint,transaction.ToJson(), UF().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
+		autoptr UFRestCallBackBase ncb = new UDBCallBack(cbInstance, cbFunction, cid, oid);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, transaction.ToJson(), rcb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "Transaction");
-			}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "Transaction");
+		}
 		return cid;
 	}
 	
@@ -529,15 +554,19 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Transaction","OID, element, and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
-		
-		autoptr UFRestCallBackBase DBCBX = ;
 		
 		string endpoint = "Transaction/" + oid   + "/"+ mod;
 		
 		autoptr UDBValidatedTransaction transaction = new UDBValidatedTransaction(element, value, min, max);
 		
-		Post(endpoint, transaction.ToJson(), UF().RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, oid), cid));
+		autoptr UFRestCallBackBase ncb = new UDBCallBack(cbInstance, cbFunction, cid, oid);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, transaction.ToJson(), rcb);
 		if (cid == -1){
 			Error2("[UF] Error failed to register callback with UF", "Transaction");
 		}
@@ -562,17 +591,23 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Update","OID, Element, operation, and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		string endpoint = "Update/" + oid   + "/"+ mod;
 		
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
-		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
+		autoptr UFRestCallBackBase ncb = new USilentCallBack();
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, updatedata.ToJson(), rcb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "Update");
-			}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "Update");
+		}
 		return cid;
 	}
 		
@@ -594,6 +629,10 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Update","OID, callback, operation, Element and Mod must be valid");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 
 		string endpoint = "Update/" + oid   + "/"+ mod;
@@ -601,11 +640,13 @@ class UDBEndpoint extends UFBaseEndpoint {
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		cb.SetOID(oid); //Only sets if not set
-		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, updatedata.ToJson(), rcb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "Update");
-			}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "Update");
+		}
 		return cid;
 	}
 	
@@ -628,6 +669,10 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Update","OID, Element, operation, and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != ""){
@@ -640,11 +685,12 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
-		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(endpoint, updatedata.ToJson(), rcb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "Update");
-			}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "Update");
+		}
 		return cid;
 	}
 	
@@ -666,17 +712,23 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Update","OID, Element, operation, and Mod must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		string endpoint = "Query/Update/" + mod;
 		
 		autoptr UDBQueryUpdate updatedata = new UDBQueryUpdate(query, element, value, operation);
 		
-		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
+		autoptr UFRestCallBackBase ncb = new USilentCallBack();
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, updatedata.ToJson(), rcb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "QueryUpdate");
-			}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "QueryUpdate");
+		}
 		return cid;
 	}
 	
@@ -699,6 +751,10 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Update","OID, callback, operation, Element and Mod must be valid");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 
 		string endpoint = "Query/Update/" + mod;
@@ -706,11 +762,13 @@ class UDBEndpoint extends UFBaseEndpoint {
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		cb.SetOID(mod); //Only sets if not set
-		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(new UNestedCallBack(cb),cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, updatedata.ToJson(), rcb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "QueryUpdate");
-			}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "QueryUpdate");
+		}
 		return cid;
 	}
 	
@@ -734,7 +792,11 @@ class UDBEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Error on DB Update","OID, Element, operation, and Mod must be valid strings");
 			return -1;
 		}
-		int cid = UF().CallId();
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
+		int cid = -1;
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != ""){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, mod);
@@ -746,13 +808,13 @@ class UDBEndpoint extends UFBaseEndpoint {
 		
 		autoptr UDBQueryUpdate updatedata = new UDBQueryUpdate(query,element, value, operation);
 		
-		Post(endpoint, updatedata.ToJson(), UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(endpoint, updatedata.ToJson(), rcb);
 		
-			if (cid == -1){
-				Error2("[UF] Error failed to register callback with UF", "QueryUpdate");
-			}
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "QueryUpdate");
+		}
 		return cid;
-		
 	}
 	
 	
@@ -769,13 +831,19 @@ class UDBEndpoint extends UFBaseEndpoint {
 			UFLog.Err("[Delete] Invalid parameters - mod, oid, and callback are required");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		
 		int cid = -1;
 		string endpoint = "Delete/" + oid + "/" + mod;
 		
 		cb.SetOID(oid);
 		
-		Post(endpoint, "{}", UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, "{}", rcb);
 		if (cid == -1) {
 			Error2("[UF] Error failed to register callback with UF", "Delete");
 		}
@@ -797,6 +865,10 @@ class UDBEndpoint extends UFBaseEndpoint {
 			UFLog.Err("[Delete] Invalid parameters - mod and oid are required");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		
 		int cid = -1;
 		string endpoint = "Delete/" + oid + "/" + mod;
@@ -808,7 +880,8 @@ class UDBEndpoint extends UFBaseEndpoint {
 			DBCBX = new USilentCallBack();
 		}
 		
-		Post(endpoint, "{}", UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(endpoint, "{}", rcb);
 		if (cid == -1) {
 			Error2("[UF] Error failed to register callback with UF", "Delete");
 		}
@@ -831,6 +904,10 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 */
 	int PublicSave(string mod, string oid, string jsonString, Class cbInstance = NULL, string cbFunction = "") {	
 		if (m_Collection != "Player") return -1;
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;	
 		string endpoint = "PublicSave/" + oid + "/" + mod;
 		autoptr UFRestCallBackBase DBCBX;
@@ -841,7 +918,8 @@ class UDBEndpoint extends UFBaseEndpoint {
 		}
 		
 		if (jsonString){
-			Post(endpoint,jsonString,UF().RegisterCall(DBCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+			Post(endpoint, jsonString, rcb);
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "PublicSave");
 			}
@@ -868,6 +946,10 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 */
 	int PublicLoad(string mod, string oid, Class cbInstance, string cbFunction, string jsonString = "{}", string baseUrl = "") {		
 		if (m_Collection != "Player") return -1;
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "PublicLoad/" + oid + "/" + mod;
 		
@@ -877,15 +959,16 @@ class UDBEndpoint extends UFBaseEndpoint {
 		} else {
 			DBCBX = new USilentCallBack();
 		}
-		if ( baseUrl != "" && DBCBX ){
+		
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		if ( baseUrl != "" && rcb ){
 			string url = baseUrl + m_Collection + "/" + endpoint;
-			//Print("[UF] Public Load with custom Base: " + url);
-			UF().Post(url,jsonString,UF().RegisterCall(DBCBX, cid));
+			g_UFramework.Post(url, jsonString, rcb);
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "PublicLoad");
 			}
-		} else if (DBCBX){
-			Post(endpoint,jsonString,UF().RegisterCall(DBCBX, cid));
+		} else if (rcb){
+			Post(endpoint, jsonString, rcb);
 			if (cid == -1){
 				Error2("[UF] Error failed to register callback with UF", "PublicLoad");
 			}

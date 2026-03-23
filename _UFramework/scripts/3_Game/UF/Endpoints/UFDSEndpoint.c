@@ -146,6 +146,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Adding Role from User","GUID and RoleId must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		autoptr UFRestCallBackBase DBCBX;
@@ -161,7 +165,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordRoleReq roleReq = new UDiscordRoleReq(RoleId);
 		
-		Post(url,roleReq.ToJson(),UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, roleReq.ToJson(), rcb);
 		
 		return cid;
 	}
@@ -180,6 +185,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Removing Role from User","GUID and RoleId must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
@@ -194,7 +203,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordRoleReq roleReq = new UDiscordRoleReq(RoleId);
 		
-		Post(url,roleReq.ToJson(),UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, roleReq.ToJson(), rcb);
 		
 		return cid;
 	}
@@ -213,6 +223,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Sending DM to User","GUID must be valid string");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		autoptr UFRestCallBackBase DBCBX;
@@ -227,7 +241,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		string url = "Send/" + GUID;
 		
 		autoptr UDiscordBasicMessage obj = new UDiscordBasicMessage(message);
-		Post(url,obj.ToJson(),UF().RegisterCall(DBCBX, cid));	
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, obj.ToJson(), rcb);	
 		return cid;	
 	}
 
@@ -244,6 +259,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Getting Users Object","GUID must be valid string");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
@@ -256,7 +275,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Get/" + GUID;
 		
-		Post(url,"{}",UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, "{}", rcb);
 		return cid;
 	}	
 	
@@ -273,6 +293,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Getting Users Channel","GUID must be valid string");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
@@ -285,7 +309,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "GetChannel/" + GUID;
 		
-		Post(url,"{}",UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, "{}", rcb);
 		return cid;
 	}	
 	
@@ -303,6 +328,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error moving user","GUID and ChannelId must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
@@ -315,7 +344,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Move/" + GUID + "/" + ChannelId;
 		
-		Post(url, "{}", UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, "{}", rcb);
 		return cid;
 	}
 	
@@ -333,6 +363,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error kicking user","GUID must be valid string");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
@@ -346,7 +380,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		string url = "Kick/" + GUID;
 		autoptr UTextObject txtObj = new UTextObject(Reason);
 		
-		Post(url, txtObj.ToJson(), UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, txtObj.ToJson(), rcb);
 		return cid;
 	}
 	
@@ -364,6 +399,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Muteing user","GUID must be valid string");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
@@ -378,7 +417,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordMute muteObject = new UDiscordMute(ToMute);
 		
-		Post(url, muteObject.ToJson(), UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, muteObject.ToJson(), rcb);
 		
 		return cid;
 	}		
@@ -397,6 +437,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Setting Nickname","GUID and Nickname must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != "" && ReturnString){
@@ -411,7 +455,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		autoptr UDiscordNickname nickObject = new UDiscordNickname(Nickname);
 		
-		Post(url, nickObject.ToJson(), UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, nickObject.ToJson(), rcb);
 		
 		return cid;
 	}	
@@ -430,6 +475,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Creating channel","Channel ID must be valid string");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		autoptr UFRestCallBackBase DBCBX;
@@ -445,7 +494,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Create";
 			
-		Post(url,obj.ToJson(),UF().RegisterCall(DBCBX, cid));	
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, obj.ToJson(), rcb);	
 		
 		return cid;	
 	}
@@ -465,6 +515,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Deleting channel","Both Channel ID and reason must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		
@@ -481,7 +535,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Delete/" + id;
 		
-		Post(url,obj.ToJson(),UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, obj.ToJson(), rcb);
 		return cid;	
 	}
 	
@@ -500,6 +555,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Editing channel","Both Channel ID and reason must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		
@@ -516,7 +575,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Edit/" + id;
 			
-		Post(url,obj.ToJson(),UF().RegisterCall(DBCBX, cid));	
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, obj.ToJson(), rcb);	
 		return cid;		
 	}
 	
@@ -532,6 +592,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	int ChannelSend(string id, string message, Class cbInstance = NULL, string cbFunction = "", bool ReturnString = false){
 		if (id == "" || message == ""){
 			Error2("[UF] Error Sending message to channel","Both Channel ID and message must be valid strings");
+			return -1;
+		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
 			return -1;
 		}
 		int cid = -1;
@@ -550,7 +614,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Send/" + id;
 			
-		Post(url,obj.ToJson(),UF().RegisterCall(DBCBX, cid));		
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, obj.ToJson(), rcb);		
 		return cid;	
 	}
 	
@@ -569,6 +634,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 			Error2("[UF] Error Sending Embed to channel","Both Channel ID and message must be valid");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		
@@ -583,7 +652,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Send/" + id;
 			
-		Post(url,message.ToJson(),UF().RegisterCall(DBCBX, cid));	
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, message.ToJson(), rcb);	
 		return cid;	
 	}
 	
@@ -600,6 +670,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	int ChannelMessages(string id,  Class cbInstance, string cbFunction, UDiscordChannelFilter filter = NULL, bool ReturnString = false){
 		if (id == ""){
 			Error2("[UF] Error Getting messages from channel","Channel ID must be valid");
+			return -1;
+		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
 			return -1;
 		}
 		int cid = -1;
@@ -620,7 +694,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = "Channel/Messages/" + id;
 		
-		Post(url,vFilter.ToJson(),UF().RegisterCall(DBCBX, cid));	
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		Post(url, vFilter.ToJson(), rcb);	
 		return cid;	
 	}
 	
@@ -636,6 +711,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	 * @return int Call ID
 	 */
 	int CheckRoleDiscord(string PlainId, string RoleId, Class cbInstance, string cbFunction,  string baseUrl = "", bool ReturnString = false){		
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		if (baseUrl == ""){
 			baseUrl = UFConfig().GetBaseURL();
@@ -652,7 +731,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = baseUrl + "Discord/CheckRole/" + PlainId + "/" + RoleId;
 		
-		UF().Post(url,"{}",UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		g_UFramework.Post(url, "{}", rcb);
 		
 		return cid;
 	}
@@ -668,6 +748,10 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	 * @return int Call ID
 	 */
 	int CheckDiscord(string PlainId, Class cbInstance, string cbFunction,  string baseUrl = "", bool ReturnString = false){		
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		if (baseUrl == ""){
 			baseUrl = UFConfig().GetBaseURL();
@@ -684,7 +768,8 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 		
 		string url = baseUrl + "Discord/Check/" + PlainId;
 		
-		UF().Post(url,"{}",UF().RegisterCall(DBCBX, cid));
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+		g_UFramework.Post(url, "{}", rcb);
 		
 		return cid;
 	}
@@ -697,14 +782,20 @@ class UniversalDSEndpoint extends UFBaseEndpoint
 	 * @return int Call ID, or -1 on error
 	 */
 	int DownloadAvatar(string guid, string filename = "discordme"){
-		int cid = -1;		
-		string url = UFConfig().GetBaseURL() + "Images/Discord/" + guid;
 		if (guid == "" || filename == ""){
 			Error2("[UF] DownloadAvatar", "guid or filename is null guid: " + guid + " filename: " + filename);
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
+		int cid = -1;		
+		string url = UFConfig().GetBaseURL() + "Images/Discord/" + guid;
 		
-		UF().Post(url,"{}",UF().RegisterCall(new UFDLDiscordAvatarCallback(filename), cid));
+		autoptr UFRestCallBackBase ncb = new UFDLDiscordAvatarCallback(filename);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		g_UFramework.Post(url, "{}", rcb);
 	
 		return cid;
 	}

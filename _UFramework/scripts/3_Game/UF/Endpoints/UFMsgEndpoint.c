@@ -52,11 +52,16 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Message Queue Read", "Callback is NULL");
 			return -1;
 		}
-		
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;		}
 		int cid = -1;	
 		string endpoint = "Read/" + mod + "/" + queue;
 		autoptr UMsgReadObj obj = new UMsgReadObj(limit, false);
-		Post(endpoint, obj.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+
+		Post(endpoint, obj.ToJson(), rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Message Queue Read", "Error registering callback");
@@ -87,28 +92,18 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Message Queue ReadLatest", "limit must be greater than 0");
 			return -1;
 		}
-		
-		// Safety check: ensure framework is ready
-		UFramework uf = UF();
-		if (!uf){
-			UFLog.Err("[UFMsgEndpoint::ReadLatest] UF() returned NULL - framework not ready");
-			return -1;
-		}
-		if (!UFConfig()){
-			UFLog.Err("[UFMsgEndpoint::ReadLatest] UFConfig() is NULL - config not loaded");
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
 			return -1;
 		}
 		
 		int cid = -1;	
 		string endpoint = "Read/" + mod + "/" + queue;
 		autoptr UMsgReadObj obj = new UMsgReadObj(limit, true);
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
 		
-		RestCallback regCb = uf.RegisterCall(new UNestedCallBack(cb), cid);
-		if (!regCb){
-			UFLog.Err("[UFMsgEndpoint::ReadLatest] RegisterCall returned NULL");
-			return -1;
-		}
-		Post(endpoint, obj.ToJson(), regCb);
+		Post(endpoint, obj.ToJson(), rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Message Queue ReadLatest", "Error registering callback");
@@ -149,14 +144,22 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Message Queue Write", "jsonString must not be empty");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		
 		string endpoint = "Write/" + mod + "/" + queue;
 		int cid = -1;
+		autoptr UFRestCallBackBase ncb;
 		if (cb){
-			Post(endpoint, jsonString, UF().RegisterCall(new UNestedCallBack(cb), cid));
+			ncb = new UNestedCallBack(cb);
 		} else {
-			Post(endpoint, jsonString, UF().RegisterCall(new USilentCallBack(), cid));
+			ncb = new USilentCallBack();
 		}
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post(endpoint, jsonString, rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Message Queue Write", "Error registering callback");
@@ -176,14 +179,22 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Message Queue Reset", "mod and queue must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		
 		string endpoint = "Reset/" + mod + "/" + queue;
 		int cid = -1;
+		autoptr UFRestCallBackBase ncb;
 		if (cb){
-			Post(endpoint, "{}", UF().RegisterCall(new UNestedCallBack(cb), cid));
+			ncb = new UNestedCallBack(cb);
 		} else {
-			Post(endpoint, "{}", UF().RegisterCall(new USilentCallBack(), cid));
+			ncb = new USilentCallBack();
 		}
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post(endpoint, "{}", rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Message Queue Reset", "Error registering callback");
@@ -208,14 +219,22 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Message Queue SetMeta", "UQueueMeta object is NULL");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		
 		string endpoint = "Meta/" + mod + "/" + queue;
 		int cid = -1;
+		autoptr UFRestCallBackBase ncb;
 		if (cb){
-			Post(endpoint, obj.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
+			ncb = new UNestedCallBack(cb);
 		} else {
-			Post(endpoint, obj.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
+			ncb = new USilentCallBack();
 		}
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post(endpoint, obj.ToJson(), rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Message Queue SetMeta", "Error registering callback");
@@ -236,15 +255,23 @@ class UFMsgEndpoint extends UFBaseEndpoint {
 			Error2("[UF] Message Queue Purge", "mod and queue must be valid strings");
 			return -1;
 		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		
 		string endpoint = "Purge/" + mod + "/" + queue;
 		string body = "{\"OlderThanDays\":" + olderThanDays.ToString() + "}";
 		int cid = -1;
+		autoptr UFRestCallBackBase ncb;
 		if (cb){
-			Post(endpoint, body, UF().RegisterCall(new UNestedCallBack(cb), cid));
+			ncb = new UNestedCallBack(cb);
 		} else {
-			Post(endpoint, body, UF().RegisterCall(new USilentCallBack(), cid));
+			ncb = new USilentCallBack();
 		}
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		
+		Post(endpoint, body, rcb);
 		
 		if (cid == -1){
 			Error2("[UF] Message Queue Purge", "Error registering callback");

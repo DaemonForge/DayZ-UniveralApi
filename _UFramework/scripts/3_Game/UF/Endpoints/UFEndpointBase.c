@@ -119,14 +119,14 @@ class UFBaseEndpoint extends Managed {
 	 */
 	protected void Post(string route, string jsonString, RestCallback UCBX)
 	{
+		if (!UCBX){
+			UFLog.Err("[UFBaseEndpoint] Post called with null callback for route: " + route + " - callback registration likely failed");
+			return;
+		}
 		RestContext ctx = Api();
 		if (!ctx){
 			Error2("[UF] UFBaseEndpoint::Post()", "Api() returned null - cannot make request to: " + route);
-			// Fire the error callback so the caller gets notified and the 
-			// callback is properly cleaned up (not leaked in m_UCallBacks)
-			if (UCBX){
-				UCBX.OnError(ERestResultState.EREST_ERROR);
-			}
+			UCBX.OnError(ERestResultState.EREST_ERROR);
 			return;
 		}
 		ctx.POST(UCBX, route, jsonString);

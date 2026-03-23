@@ -126,6 +126,10 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int Register(string modId, string modName, string author, string tmpl, TStringArray globals) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		if (!modId || modId == "" || !tmpl || tmpl == ""){
@@ -138,7 +142,9 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 		UFLog.Info("[UF] Registering mod settings page '" + displayName + "' (modId: " + modId + ", template: " + tmpl.Length().ToString() + " chars)");
 		
 		autoptr UFModSettingsPayload payload = CreatePayload(modName, author, tmpl, globals);
-		Post("Register/" + modId, payload.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
+		autoptr UFRestCallBackBase ncb = new USilentCallBack();
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post("Register/" + modId, payload.ToJson(), rcb);
 		return cid;
 	}
 	
@@ -157,7 +163,11 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 	 * @note Callback signature: void OnRegistered(int cid, int status, string oid, string data)
 	 */
 	int Register(string modId, string modName, string author, string tmpl, TStringArray globals, Class cbInstance, string cbFunction) {
-		int cid = UF().CallId();
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
+		int cid = g_UFramework.CallId();
 		
 		if (!modId || modId == "" || !tmpl || tmpl == ""){
 			UFLog.Err("[UFModSettingsEndpoint] Register: modId and template are required");
@@ -169,7 +179,9 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 		UFLog.Info("[UF] Registering mod settings page '" + displayName + "' (modId: " + modId + ", template: " + tmpl.Length().ToString() + " chars)");
 		
 		autoptr UFModSettingsPayload payload = CreatePayload(modName, author, tmpl, globals);
-		Post("Register/" + modId, payload.ToJson(), new UDBCallBack(cbInstance, cbFunction, cid, modId));
+		autoptr UFRestCallBackBase ncb = new UDBCallBack(cbInstance, cbFunction, cid, modId);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post("Register/" + modId, payload.ToJson(), rcb);
 		return cid;
 	}
 	
@@ -185,6 +197,10 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int Register(string modId, string modName, string author, string tmpl, TStringArray globals, UFCallbackBase cb) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		
 		if (!modId || modId == "" || !tmpl || tmpl == "" || !cb){
@@ -198,7 +214,9 @@ class UFModSettingsEndpoint extends UFBaseEndpoint {
 		
 		autoptr UFModSettingsPayload payload = CreatePayload(modName, author, tmpl, globals);
 		cb.SetOID(modId);
-		Post("Register/" + modId, payload.ToJson(), UF().RegisterCall(new UNestedCallBack(cb), cid));
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post("Register/" + modId, payload.ToJson(), rcb);
 		return cid;
 	}
 }

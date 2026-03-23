@@ -32,10 +32,16 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @usage UF().globals().Save("MyMod", statsData.ToJson());
 	 */
 	int Save(string mod, string jsonString) {	
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;	
 		string endpoint = "Save/" + mod;
 		if (mod && jsonString){
-			Post(endpoint,jsonString, UF().RegisterCall(new USilentCallBack(), cid));
+			autoptr UFRestCallBackBase ncb = new USilentCallBack();
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, jsonString, rcb);
 		} else {
 			UFLog.Err("[Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
@@ -56,10 +62,16 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @note Callback signature: void OnSaved(int cid, int status, string oid, string data)
 	 */
 	int Save(string mod, string jsonString, Class cbInstance, string cbFunction) {	
-		int cid = UF().CallId();	
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
+		int cid = -1;	
 		string endpoint = "Save/" + mod;		
 		if (mod && jsonString){
-			Post(endpoint,jsonString, new UDBCallBack(cbInstance, cbFunction, cid, mod));
+			autoptr UFRestCallBackBase ncb = new UDBCallBack(cbInstance, cbFunction, cid, mod);
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, jsonString, rcb);
 		} else {
 			UFLog.Err("[Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
@@ -75,12 +87,18 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @return Call ID or -1 on error
 	 */
 	int Save(string mod, string jsonString, UFCallbackBase cb) {	
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;	
 		string endpoint = "Save/" + mod;
 
 		if (mod && jsonString && cb){
 			cb.SetOID(mod); //Only sets if not set
-			Post(endpoint,jsonString, UF().RegisterCall(new UNestedCallBack(cb), cid));
+			autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, jsonString, rcb);
 		} else {
 			UFLog.Err("[Api] Error Saving " + endpoint + " Data for " + mod);
 			cid = -1;
@@ -101,28 +119,17 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @note Callback signature: void OnLoaded(int cid, int status, string oid, string data)
 	 */
 	int Load(string mod, Class cbInstance, string cbFunction, string jsonString = "{}") {
-		UFLog.Debug("[UDBGlobalEndpoint::Load] mod=" + mod + " cbFunction=" + cbFunction);
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "Load/" + mod;
 
-		// Safety check: ensure framework is ready
-		UFramework uf = UF();
-		if (!uf){
-			UFLog.Err("[UDBGlobalEndpoint::Load] UF() returned NULL - framework not ready");
-			return -1;
-		}
-		if (!UFConfig()){
-			UFLog.Err("[UDBGlobalEndpoint::Load] UFConfig() is NULL - config not loaded");
-			return -1;
-		}
-
 		if (mod && jsonString){
-			RestCallback regCb = uf.RegisterCall(new UDBCallBack(cbInstance, cbFunction, cid, mod), cid);
-			if (!regCb){
-				UFLog.Err("[UDBGlobalEndpoint::Load] RegisterCall returned NULL");
-				return -1;
-			}
-			Post(endpoint, jsonString, regCb);
+			autoptr UFRestCallBackBase ncb = new UDBCallBack(cbInstance, cbFunction, cid, mod);
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, jsonString, rcb);
 		} else {
 			UFLog.Err("[Api] Error Loading Player Data for " + mod);
 			cid = -1;
@@ -142,29 +149,18 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @note Callback receives parsed object as typed parameter if using UFCallback<T>
 	 */
 	int Load(string mod, UFCallbackBase cb, string jsonString = "{}") {
-		UFLog.Debug("[UDBGlobalEndpoint::Load] mod=" + mod + " with UFCallbackBase");
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "Load/" + mod;
 		
-		// Safety check: ensure framework is ready
-		UFramework uf = UF();
-		if (!uf){
-			UFLog.Err("[UDBGlobalEndpoint::Load] UF() returned NULL - framework not ready");
-			return -1;
-		}
-		if (!UFConfig()){
-			UFLog.Err("[UDBGlobalEndpoint::Load] UFConfig() is NULL - config not loaded");
-			return -1;
-		}
-		
 		if (mod && cb && jsonString){
 			cb.SetOID(mod); //Only sets if not set
-			RestCallback regCb = uf.RegisterCall(new UNestedCallBack(cb), cid);
-			if (!regCb){
-				UFLog.Err("[UDBGlobalEndpoint::Load] RegisterCall returned NULL");
-				return -1;
-			}
-			Post(endpoint, jsonString, regCb);
+			autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, jsonString, rcb);
 		} else {
 			UFLog.Err("[Api] Error Loading Player Data for " + mod);
 			cid = -1;
@@ -199,13 +195,19 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @note Atomic operation - safe for concurrent modifications
 	 */
 	int Transaction(string mod, string element, float value) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "Transaction/" + mod;
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		
 		if ( element && transaction && mod){
-			Post(endpoint,transaction.ToJson(), UF().RegisterCall(new USilentCallBack(), cid));
+			autoptr UFRestCallBackBase ncb = new USilentCallBack();
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, transaction.ToJson(), rcb);
 		} else {
 			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;
@@ -227,13 +229,19 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @note Atomic operation - thread-safe
 	 */
 	int Transaction(string mod, string element, float value, Class cbInstance, string cbFunction) {
-		int cid = UF().CallId();
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
+		int cid = -1;
 		string endpoint = "Transaction/" + mod;
 		
 		autoptr UDBTransaction transaction = new UDBTransaction(element, value);
 		
 		if ( element && transaction && mod){
-			Post(endpoint,transaction.ToJson(), new UDBCallBack(cbInstance, cbFunction, cid, mod));
+			autoptr UFRestCallBackBase ncb = new UDBCallBack(cbInstance, cbFunction, cid, mod);
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, transaction.ToJson(), rcb);
 		} else {
 			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;
@@ -254,6 +262,10 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @note Atomic operation - thread-safe
 	 */
 	int Transaction(string mod, string element, float value, UFCallbackBase cb) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
 		int cid = -1;
 		string endpoint = "Transaction/" + mod;
 		
@@ -261,7 +273,9 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		
 		if ( element && transaction && mod){
 			cb.SetOID(mod); //Only sets if not set
-			Post(endpoint,transaction.ToJson(),  UF().RegisterCall(new UNestedCallBack(cb), cid));
+			autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+			Post(endpoint, transaction.ToJson(), rcb);
 		} else {
 			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;
@@ -284,7 +298,11 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 	 * @note For strings, must quote: Update(mod, "name", "\"ServerName\"");
 	 */	
 	int Update(string mod, string element, string value, string operation = UpdateOpts.SET, Class cbInstance = NULL, string cbFunction = "") {	
-		int cid = UF().CallId();
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
+		int cid = -1;
 		autoptr UFRestCallBackBase DBCBX;
 		if (cbInstance && cbFunction != ""){
 			DBCBX = new UDBCallBack(cbInstance, cbFunction, cid, mod);
@@ -297,7 +315,8 @@ class UDBGlobalEndpoint extends UFBaseEndpoint {
 		autoptr UUpdateData updatedata = new UUpdateData(element, value, operation);
 		
 		if ( element && updatedata && DBCBX){
-			Post(endpoint, updatedata.ToJson(), UF().RegisterCall(DBCBX, cid));
+			autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(DBCBX, cid));
+			Post(endpoint, updatedata.ToJson(), rcb);
 		} else {
 			UFLog.Err("[Api] Error Transaction " + mod);
 			cid = -1;
