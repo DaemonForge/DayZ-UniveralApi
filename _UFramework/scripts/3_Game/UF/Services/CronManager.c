@@ -107,6 +107,8 @@ class UCronManager extends Managed {
 		
 		// Iterate through all registered cron functions.
 		foreach(UCronFunction cronFunc : m_CronFunctions){
+			if (!cronFunc) continue; // Skip null entries
+			
 			Class obj;           // Object on which the function will be executed.
 			string funcName;     // Name of the function to execute.
 			Param params;        // Parameters for the function call.
@@ -400,6 +402,15 @@ class UCronFunction extends Managed {
 	 */
 	bool shouldAttemptCall(int curTime, out Class obj, out string funcName, out Param params, out bool shouldDelete){
 		shouldDelete = false;
+		
+		// Early validity check - catches nulled weak refs BEFORE any dereference
+		// This runs every tick so dangling refs are caught immediately
+		if (!m_obj){
+			UFLog.Info("[Cron] Object for function " + m_funcName + " is null, removing cron job");
+			shouldDelete = true;
+			return false;
+		}
+		
 		// If the next scheduled call time is reached
 		if (m_nextCall <= curTime){
 			funcName = m_funcName;

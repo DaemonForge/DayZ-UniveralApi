@@ -77,6 +77,7 @@ modded class MissionGameplay extends MissionBase
 		super.OnMissionFinish();
 		UF().Cron().Remove(this, "RequestNewAuthToken");
 		UF().Cron().Remove(this, "LogTokenStatus");
+		UF().Cron().Remove(this, "ReCheckDiscord");
 		if (m_UFVideoPlayer){
 			delete m_UFVideoPlayer;
 		}
