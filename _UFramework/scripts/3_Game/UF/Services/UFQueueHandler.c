@@ -278,7 +278,7 @@ class UQueueHandlerBase extends Managed
 	/**
 	 * Override in subclass to perform the read operation
 	 */
-	protected int Read(){
+	int Read(){
 		Error2("[UF] UFQueueHandlerBase", "Using unimplemented Read");
 		return -1;
 	}

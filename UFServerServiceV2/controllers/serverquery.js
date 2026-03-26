@@ -38,16 +38,17 @@ router.post('/Status/:ip/:port', requirePlayerOrServerAuth, GetServerStatus);
 async function QueryServer(ip, port) {
     try {
         logger.debug(`Querying ${ip}:${port}...`);
-        let data = GameDig.query({
-            type: 'dayz',
-            host: ip,
-            port: port,
-            givenPortOnly: true,
-            requestRules: true,
+        const digInstance = new GameDig({
             socketTimeout: 5000,
             attemptTimeout: 15000,
             maxRetries: 2,
-            debug: true
+            givenPortOnly: true,
+            requestRules: true,
+        });
+        let data = digInstance.query({
+            type: 'dayz',
+            host: ip,
+            port: port,
         }).then((state) => {
             let keywords = state.raw.tags;
             return {
