@@ -5,6 +5,13 @@
  * as a reference for execution timing. It supports registering functions that execute endlessly, 
  * until a specified Unix end time, until a maximum execution count is reached, or just once.
  *
+ * API:
+ *   - runEndless(int freqSeconds, Class obj, string fnName, Param params = NULL)
+ *   - runEndTime(int freqSeconds, int endCallUnix, Class obj, string fnName, Param params = NULL)
+ *   - runEndCount(int freqSeconds, int maxCount, Class obj, string fnName, Param params = NULL)
+ *   - runOnce(int nextRunUnix, Class obj, string fnName, Param params = NULL)
+ *   - Remove(Class obj, string fnName)
+ *
  * Methods:
  *   - Init():
  *       Initializes the UCronManager by setting the starting Unix time reference, instantiating
@@ -41,6 +48,9 @@
  *
  *   - RemoveNull():
  *       Periodically checks and removes cron functions that are no longer valid.
+ *
+ *   - DebugDump():
+ *       Prints all currently registered cron jobs for debugging purposes.
  */
 
 //This allows for me to better ensure timing of calls by using the unix time as a refrence
@@ -116,9 +126,12 @@ class UCronManager extends Managed {
 			
 			// Check if the scheduled time for the function is due.
 			if (cronFunc.shouldAttemptCall(curTime, obj, funcName, params, shouldDelete)){
-				//UFLog.Debug("[Cron] Running Function " + funcName + " @ " + curTime);
-				// Enqueue the function call via the system call queue.
-				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallByName(obj, funcName, params);
+				// Safety: verify obj is still valid before invoking (weak ref may have been nulled)
+				if (obj){
+					g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallByName(obj, funcName, params);
+				} else {
+					shouldDelete = true;
+				}
 			}
 			// If flagged for removal, collect it for removal after iteration.
 			if (shouldDelete){
