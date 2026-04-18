@@ -917,7 +917,15 @@ class UFramework extends Managed {
 		if (m_IsServer && UF_Init && g_Game){
 			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.CheckAndRenewQRandom);
 		}
-		delete m_UFauthToken;
+		// Clean up all pending callbacks to prevent memory leaks on shutdown/disconnect
+		if (m_UCallBacks){
+			int count = m_UCallBacks.Count();
+			if (count > 0){
+				UFLog.Info("[UFramework] Cleaning up " + count + " pending callback(s) on shutdown");
+			}
+			m_UCallBacks.Clear();
+		}
+		m_UFauthToken = NULL;
 	}
 	
 	void Init(){
@@ -1350,6 +1358,11 @@ class UFramework extends Managed {
 			UFLog.Err("[UFramework] RegisterCall - callback is null!");
 			return null;
 		}
+		// Safeguard: warn if callback count is growing excessively (mod leak detection)
+		int cbCount = m_UCallBacks.Count();
+		if (cbCount > 500 && cbCount % 100 == 0){
+			UFLog.Info("[UFramework] WARNING: " + cbCount + " pending callbacks! A mod may be leaking callbacks. Consider checking cron intervals or ensuring REST service is reachable.");
+		}
 		cid = this.CallId();
 		cb.SetId(cid);
 		m_UCallBacks.Insert(cid, UFRestCallBackBase.Cast(cb));
@@ -1368,12 +1381,17 @@ class UFramework extends Managed {
 	void ClearCallback(int cid, string traceDebug){
 		if (!m_UCallBacks) return;
 		if (cid == -1) return;
-		autoptr UFRestCallBackBase cb;
+		UFRestCallBackBase cb;
 		if (m_UCallBacks.Find(cid, cb)){
 			delete cb;
 			m_UCallBacks.Remove(cid);
 		} else {
 			Error2("[UF] Error couldn't find call back", "CallId: " + cid + "\n--------\n " + traceDebug + "\n--------\n");
+		}
+		// Clean up canceled call tracking for this cid
+		int cancelIdx = m_CanceledCalls.Find(cid);
+		if (cancelIdx != -1){
+			m_CanceledCalls.Remove(cancelIdx);
 		}
 	}
 	
