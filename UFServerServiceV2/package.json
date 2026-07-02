@@ -16,7 +16,7 @@
   },
   "author": "",
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19.0"
   },
   "repository": {
     "type": "git",
@@ -45,7 +45,7 @@
     "greenlock-express": "^4.0.3",
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.11.0",
-    "mongodb": "^6.14.0",
+    "mongodb": "^7.4.0",
     "multer": "^2.0.2",
     "node-windows": "^1.0.0-beta.8",
     "openai": "^4.86.2",
