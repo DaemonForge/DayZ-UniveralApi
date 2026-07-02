@@ -106,7 +106,9 @@ This document details all configuration options in the UF Server Service `config
     "RequestLimitTranslate": 200,
     "RequestLimitLogger": 500,
     "RequestLimitCrypto": 150,
-    "RateLimitWhiteList": ["127.0.0.1"]
+    "RateLimitWhiteList": ["127.0.0.1"],
+    "TrustProxyHeaders": false,
+    "MaxBodySize": "32mb"
 }
 ```
 
@@ -120,11 +122,14 @@ This document details all configuration options in the UF Server Service `config
 | `RequestLimitLogger` | number | `500` | Max logging requests per 10-second window |
 | `RequestLimitCrypto` | number | `150` | Max crypto requests per 10-second window |
 | `RateLimitWhiteList` | string[] | `["127.0.0.1"]` | IP addresses exempt from rate limiting |
+| `TrustProxyHeaders` | boolean | `false` | Trust `CF-Connecting-IP`/`X-Forwarded-For` for the client IP. Set `true` **only** when the service runs behind the Cloudflare tunnel or a reverse proxy — otherwise clients can spoof the header to bypass rate limits |
+| `MaxBodySize` | string | `"32mb"` | Maximum request body size (e.g. `"64mb"` to restore the old limit) |
 
 **When to Adjust:**
 - Increase limits for high-population servers
 - Add your DayZ server's IP to `RateLimitWhiteList` if hitting rate limits
 - The service logs a warning when rate limits are reached
+- **Behind the Cloudflare tunnel or any reverse proxy?** Set `TrustProxyHeaders: true`, or every request appears to come from the proxy's IP and rate limiting throttles all players together
 
 ### SSL/TLS Certificates
 
@@ -141,8 +146,9 @@ This document details all configuration options in the UF Server Service `config
 | `CertificateKey` | string | `""` | Path to SSL private key file (.key) |
 
 **Notes:**
-- If both are empty, the service uses a bundled self-signed certificate
+- If both are empty, the service generates a per-install self-signed certificate
 - Self-signed certificates work fine for DayZ server communication
+- If the two paths are accidentally swapped, the service detects which file is the private key and corrects for it
 - For custom certificates, provide absolute paths to both files
 - See [SSL/HTTPS Configuration](06_SSL_HTTPS.md) for Let's Encrypt setup
 

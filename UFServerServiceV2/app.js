@@ -288,14 +288,18 @@ function ensureSelfSignedCertificate() {
  * @returns {Object} Object containing key and cert for HTTPS server
  */
 function loadCertificates() {
-  // 1. Operator-provided certificate files take priority. (Mapping preserved
-  //    from the original implementation for backward compatibility.)
+  // 1. Operator-provided certificate files take priority. The original code
+  //    read Certificate as the key and CertificateKey as the cert (swapped
+  //    vs. the docs), so existing configs exist both ways around — detect the
+  //    private key by PEM content so either orientation works.
   if (global.config.Certificate != "" && global.config.CertificateKey != ""){
     if (existsSync(global.config.Certificate) && existsSync(global.config.CertificateKey)){
-      return {
-        key: readFileSync(global.config.Certificate),
-        cert: readFileSync(global.config.CertificateKey)
-      };
+      const certField = readFileSync(global.config.Certificate);
+      const keyField = readFileSync(global.config.CertificateKey);
+      if (certField.includes('PRIVATE KEY') && !keyField.includes('PRIVATE KEY')) {
+        return { key: certField, cert: keyField };
+      }
+      return { key: keyField, cert: certField };
     }
   }
 
