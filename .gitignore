@@ -20,3 +20,5 @@ DesktopManager/.greenlockrc
 .env.trustedsigning
 debug.log
 /ufctl/dist
+
+.mcp.json

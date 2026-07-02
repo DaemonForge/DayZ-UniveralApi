@@ -9,7 +9,7 @@
     "test": "node test-ai-client.js && node test-messages-cursor.js && node test-query-guard.js",
     "dev": "nodemon app.js",
     "build": "dotenv -e .env.trustedsigning -- electron-builder",
-    "build:unsigned": "electron-builder -c.win.azureSignOptions=null",
+    "build:unsigned": "electron-builder -c unsigned.config.js",
     "build:linux": "pkg . --no-bytecode --public --public-packages \"*\" --compress GZip --target node22-linux-x64 --output ../Build/Service/ufserverservice-linux && node -e \"const fs=require('fs');const p=require('path');const{execSync}=require('child_process');fs.writeFileSync('../Build/Service/install.sh',fs.readFileSync('install-linux.sh','utf8').replace(/\\r\\n/g,'\\n'),'utf8');const bd='../Build/Service/bin';fs.mkdirSync(bd,{recursive:true});['ffmpeg','magick'].forEach(f=>{const s=p.join('bin',f);if(fs.existsSync(s))fs.copyFileSync(s,p.join(bd,f))});console.log('Building ufctl...');execSync('npm install && npx @yao-pkg/pkg . --no-bytecode --public --public-packages \\\"*\\\" --compress GZip --targets node22-linux-x64 --output ../Build/Service/ufctl-linux',{stdio:'inherit',cwd:p.resolve(__dirname,'../ufctl')});console.log('ufctl built successfully.');\"",
     "build:all": "npm run build && npm run build:linux",
     "tunnel": "cloudflared tunnel --config .cloudflared/config.yaml run ufdev"
@@ -58,7 +58,7 @@
   "devDependencies": {
     "@yao-pkg/pkg": "^6.10.1",
     "dotenv-cli": "^11.0.0",
-    "electron": "^35.0.0",
+    "electron": "^43.0.0",
     "electron-builder": "^26.4.0",
     "nodemon": "^3.1.9"
   },
