@@ -7,12 +7,12 @@ class UFDLDiscordAvatarCallback : UFRestCallBackBase
 	}
 	
 	override void OnError(int errorCode) {
-		UFLog.Info("[UFDLDiscordAvatarCallback] Save of a File Failed errorCode: " + UUtil.RestErrorToString(errorCode) + "(" + errorCode + ")");
+		UFLog.Err("[UFDLDiscordAvatarCallback] Save of a File Failed errorCode: " + UUtil.RestErrorToString(errorCode) + "(" + errorCode + ")");
 		
 		super.OnError(errorCode);
 	};
 	override void OnTimeout() {
-		UFLog.Info("[UFDLDiscordAvatarCallback] Save of a File Timeout");
+		UFLog.Err("[UFDLDiscordAvatarCallback] Save of a File Timeout");
 		super.OnTimeout();
 	};
 	
