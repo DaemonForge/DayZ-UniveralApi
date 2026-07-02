@@ -1,6 +1,8 @@
 # Dependency Upgrade Plan
 
-Status of the tree after the last maintenance pass:
+**STATUS: COMPLETE (2026-07-02).** All items below are done — `npm outdated` is clean, `npm audit` reports 0 vulnerabilities. Items 0–7 landed as individual commits (see git log: lockfile, express-rate-limit 8, ejs 6, mongodb 7, openai 6, express 5, electron 43). selfsigned 2 → 5 landed last: v5's `generate()` is async-only and `days` became `notAfterDate`, so `ensureSelfSignedCertificate`/`loadCertificates`/`startWebServer` in `app.js` are now async; v5 also replaced node-forge with `@peculiar/x509`, so the stale node-forge entry was dropped from the `pkg.scripts` config. The per-item verification steps below remain useful as a manual smoke-test checklist.
+
+Original plan follows for reference:
 
 - All safe **within-major** updates applied (`npm update`) and `npm audit fix` run.
 - `node-fetch` removed — the service uses Node's built-in global `fetch` (requires Node >= 18, now enforced via `engines` in `package.json`).

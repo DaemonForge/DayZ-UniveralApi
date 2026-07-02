@@ -246,7 +246,7 @@ function createExpressApp() {
  * @throws if generation fails (e.g. the 'selfsigned' package is unavailable),
  *         so the caller can fall back to the bundled keys.
  */
-function ensureSelfSignedCertificate() {
+async function ensureSelfSignedCertificate() {
   const certDir = ensureDirectory(path.join(path.resolve(global.SAVEPATH || process.cwd()), 'certs'));
   const keyPath = path.join(certDir, 'self-signed-key.pem');
   const certPath = path.join(certDir, 'self-signed-cert.pem');
@@ -258,11 +258,11 @@ function ensureSelfSignedCertificate() {
   // Lazy require so a missing dependency degrades to the bundled fallback
   // rather than crashing startup.
   const selfsigned = require('selfsigned');
-  const pems = selfsigned.generate(
+  const pems = await selfsigned.generate(
     [{ name: 'commonName', value: 'localhost' }],
     {
       keySize: 2048,
-      days: 3650,
+      notAfterDate: new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000),
       algorithm: 'sha256',
       extensions: [{
         name: 'subjectAltName',
@@ -287,7 +287,7 @@ function ensureSelfSignedCertificate() {
  * (generated on first run) -> bundled defaultkeys.json (last-ditch fallback).
  * @returns {Object} Object containing key and cert for HTTPS server
  */
-function loadCertificates() {
+async function loadCertificates() {
   // 1. Operator-provided certificate files take priority. The original code
   //    read Certificate as the key and CertificateKey as the cert (swapped
   //    vs. the docs), so existing configs exist both ways around — detect the
@@ -305,7 +305,7 @@ function loadCertificates() {
 
   // 2. Per-install self-signed certificate (unique private key per install).
   try {
-    return ensureSelfSignedCertificate();
+    return await ensureSelfSignedCertificate();
   } catch (err) {
     // 3. Last-ditch fallback to the shared bundled keys so the server still
     //    starts (e.g. before `npm install` pulls in the selfsigned package).
@@ -317,7 +317,7 @@ function loadCertificates() {
 /**
  * Start the web server with appropriate SSL configuration
  */
-function startWebServer() {
+async function startWebServer() {
   const webapp = createExpressApp();
   const port = process.env.PORT || global.config.Port || 8443;
   const ip = global.config.IP || "0.0.0.0";
@@ -451,9 +451,9 @@ function startWebServer() {
       cluster: false
     }).ready(setupGreenlockServer);
 
-    function setupGreenlockServer(glx) {
+    async function setupGreenlockServer(glx) {
       // Load fallback certificates for localhost/non-configured hostnames
-      const fallbackCerts = loadCertificates();
+      const fallbackCerts = await loadCertificates();
       const letsEncryptHostsSet = new Set(letsEncryptHosts.map(h => h.toLowerCase()));
 
       // Greenlock's httpsServer() mutates the secureOpts we pass in, installing its
@@ -524,7 +524,7 @@ function startWebServer() {
       });
     }
   } else {
-    const certificates = loadCertificates();
+    const certificates = await loadCertificates();
     logger.info('[WebServer] Starting HTTPS server with bundled certificates', { port, address: ip });
     const server = https.createServer(certificates, webapp)
       .listen(port, function() {
@@ -591,7 +591,9 @@ function Start(isElectron = false) {
     }, 5000);
   } else {
     // Single process mode (worker or single-CPU)
-    startWebServer();
+    startWebServer().catch(err => {
+      logger.error('[WebServer] Failed to start web server', { error: err.message, stack: err.stack });
+    });
     
     if (totalCPUs <= 1) {
       if (global.config?.CheckForNewVersion) {

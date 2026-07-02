@@ -50,7 +50,7 @@
     "node-windows": "^1.0.0-beta.8",
     "openai": "^6.45.0",
     "pdf-parse": "^2.4.5",
-    "selfsigned": "^2.4.1",
+    "selfsigned": "^5.5.0",
     "serve-favicon": "^2.5.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
@@ -71,8 +71,7 @@
       "discord/**/*.js",
       "node_modules/gamedig/dist/**/*.cjs",
       "node_modules/gamedig/dist/index.cjs",
-      "node_modules/selfsigned/**/*.js",
-      "node_modules/node-forge/**/*.js"
+      "node_modules/selfsigned/**/*.js"
     ],
     "assets": [
       "package.json",
