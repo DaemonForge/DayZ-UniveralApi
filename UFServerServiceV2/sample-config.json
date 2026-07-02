@@ -35,7 +35,6 @@
     "EmbeddingModel": "",
     "enablePromptProtection": true
   },
-  "Functions": {},
   "LogToFile": false,
   "CheckForNewVersion": false,
   "LetsEncypt": {

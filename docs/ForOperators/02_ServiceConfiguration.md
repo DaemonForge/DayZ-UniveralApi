@@ -308,8 +308,7 @@ Compatible-provider limitations:
     "AllowClientWrite": false,
     "LogToFile": true,
     "CheckForNewVersion": true,
-    "cpuCount": 1,
-    "Functions": {}
+    "cpuCount": 1
 }
 ```
 
@@ -319,7 +318,6 @@ Compatible-provider limitations:
 | `LogToFile` | boolean | `true` | Enable logging to daily rotating log files |
 | `CheckForNewVersion` | boolean | `true` | Check GitHub for new versions on startup |
 | `cpuCount` | number | `1` | Number of worker processes for clustering (Linux only) |
-| `Functions` | object | `{}` | Reserved for custom function configurations |
 
 **Security Warning:**
 - `AllowClientWrite: true` allows player clients to directly modify database records
@@ -374,7 +372,6 @@ Compatible-provider limitations:
         "ApiKey": "",
         "enablePromptProtection": true
     },
-    "Functions": {},
     "LetsEncypt": {
         "Enabled": false,
         "Domain": "",

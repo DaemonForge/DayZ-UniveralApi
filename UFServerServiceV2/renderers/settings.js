@@ -3,7 +3,7 @@
  * 
  * This script handles the dynamic behavior of the settings page:
  * - Toggling certificate fields (and disabling hidden ones).
- * - Dynamic addition/removal of list items for ServerAuth, RateLimitWhiteList, and Functions.
+ * - Dynamic addition/removal of list items for ServerAuth and RateLimitWhiteList.
  * - Generation of complex auth tokens.
  * - Loading/saving configuration via IPC.
  * - Updated: Auth keys now include an inline text input to allow labeling each auth key. 
@@ -458,53 +458,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('floatingSaveBtn').hidden = false;
   });
 
-  // Event listener for adding a new Function entry.
-  document.getElementById('addFunction').addEventListener('click', () => {
-    const container = document.getElementById('functionsContainer');
-    const div = document.createElement('div');
-    div.className = 'functionEntry';
-    // Horizontal layout for function entry, including delete button.
-    div.innerHTML = `
-      <input type="text" placeholder="Mod Name" class="modNameInput" required title="Enter module name">
-      <div class="toggle-container" title="Allow DB operations">
-        <label class="toggle-switch">
-          <input type="checkbox" class="allowDB">
-          <span class="slider"></span>
-        </label>
-        <span>DB</span>
-      </div>
-
-      <div class="toggle-container" title="Allow Discord Bot functions">
-        <label class="toggle-switch">
-          <input type="checkbox" class="allowDiscordBot">
-          <span class="slider"></span>
-        </label>
-        <span>Discord</span>
-      </div>
-      <div class="toggle-container" title="Allow Message Queue">
-        <label class="toggle-switch">
-          <input type="checkbox" class="allowMsgQueue">
-          <span class="slider"></span>
-        </label>
-        <span>MsgQueue</span>
-      </div>
-      <button type="button" class="delete-btn" title="Delete this function">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
-          <path d="M0 0h24v24H0z" fill="none"/>
-          <path d="M7 11v2h10v-2H7zm5-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-        </svg>
-      </button>
-    `;
-    div.querySelector('.delete-btn').addEventListener('click', () => { 
-      unsavedChanges = true;
-      document.getElementById('saveBtn').hidden = false;
-      document.getElementById('cancelBtn').hidden = false;
-      document.getElementById('floatingSaveBtn').hidden = false;
-      div.remove(); 
-    });
-    container.appendChild(div);
-  });
-
   function makeAuthToken() {
     let result = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.!~';
@@ -544,13 +497,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         DefaultModel: "",
         EmbeddingModel: "",
         enablePromptProtection: true
-      },
-      Functions: {
-        "ExampleMod": {
-          AllowDB: false,
-          AllowDiscordBot: false,
-          AllowMsgQueue: false
-        }
       },
       LogToFile: true,
       CheckForNewVersion: true,
@@ -638,52 +584,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('OpenAIApi_DefaultModel').value = cfg.OpenAIApi.DefaultModel || "";
     document.getElementById('OpenAIApi_EmbeddingModel').value = cfg.OpenAIApi.EmbeddingModel || "";
     document.getElementById('OpenAIApi_enablePromptProtection').checked = cfg.OpenAIApi.enablePromptProtection;
-
-    const funcContainer = document.getElementById('functionsContainer');
-    funcContainer.innerHTML = "";
-    for (const mod in cfg.Functions) {
-      const div = document.createElement('div');
-      div.className = 'functionEntry';
-      const fun = cfg.Functions[mod];
-      div.innerHTML = `
-        <input type="text" value="${mod}" class="modNameInput" required title="Module Name">
-        <div class="toggle-container" title="Allow DB operations">
-          <label class="toggle-switch">
-            <input type="checkbox" ${fun.AllowDB ? 'checked' : ''} class="allowDB">
-            <span class="slider"></span>
-          </label>
-          <span>DB</span>
-        </div>
-        <div class="toggle-container" title="Allow Discord Bot functions">
-          <label class="toggle-switch">
-            <input type="checkbox" ${fun.AllowDiscordBot ? 'checked' : ''} class="allowDiscordBot">
-            <span class="slider"></span>
-          </label>
-          <span>Discord</span>
-        </div>
-        <div class="toggle-container" title="Allow Message Queue">
-          <label class="toggle-switch">
-            <input type="checkbox" ${fun.AllowMsgQueue ? 'checked' : ''} class="allowMsgQueue">
-            <span class="slider"></span>
-          </label>
-          <span>MsgQueue</span>
-        </div>
-        <button type="button" class="delete-btn" title="Delete this function">
-          <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
-            <path d="M0 0h24v24H0z" fill="none"/>
-            <path d="M7 11v2h10v-2H7zm5-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-          </svg>
-        </button>
-      `;
-      div.querySelector('.delete-btn').addEventListener('click', () => { 
-        unsavedChanges = true;
-        document.getElementById('saveBtn').hidden = false;
-        document.getElementById('cancelBtn').hidden = false;
-        document.getElementById('floatingSaveBtn').hidden = false;
-        div.remove(); 
-      });
-      funcContainer.appendChild(div);
-    }
 
     // Populate Proxy configuration fields.
     if (cfg.Proxy) {
@@ -1025,7 +925,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         EmbeddingModel: document.getElementById('OpenAIApi_EmbeddingModel').value.trim(),
         enablePromptProtection: document.getElementById('OpenAIApi_enablePromptProtection').checked
       },
-      Functions: {},
       LogToFile: document.getElementById('LogToFile').checked,
       CheckForNewVersion: document.getElementById('CheckForNewVersion').checked,
       LetsEncypt: {
@@ -1062,21 +961,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         autoStart: document.getElementById('Tunnel_autoStart').checked
       }
     };
-
-    const functionEntries = document.querySelectorAll('.functionEntry');
-    functionEntries.forEach(entry => {
-      const modName = entry.querySelector('.modNameInput').value;
-      const allowDB = entry.querySelector('.allowDB').checked;
-      const allowDiscordBot = entry.querySelector('.allowDiscordBot').checked;
-      const allowMsgQueue = entry.querySelector('.allowMsgQueue').checked;
-      if (modName) {
-        newConfig.Functions[modName] = {
-          AllowDB: allowDB,
-          AllowDiscordBot: allowDiscordBot,
-          AllowMsgQueue: allowMsgQueue
-        };
-      }
-    });
 
     const result = await window.api.saveConfig(newConfig);
     if (result.success) {

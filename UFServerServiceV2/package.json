@@ -6,7 +6,7 @@
   "scripts": {
     "postinstall": "node postinstall.js",
     "start": "electron .",
-    "test": "node test-ai-client.js && node test-functions-security.js && node test-messages-cursor.js && node test-query-guard.js",
+    "test": "node test-ai-client.js && node test-messages-cursor.js && node test-query-guard.js",
     "dev": "nodemon app.js",
     "build": "dotenv -e .env.trustedsigning -- electron-builder",
     "build:unsigned": "electron-builder -c.win.azureSignOptions=null",

@@ -366,9 +366,6 @@ function getClientIp(req) {
   return req.socket?.remoteAddress || req.ip;
 }
 
-// Matches a safe, bindable JavaScript identifier.
-const SAFE_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
-
 // MongoDB operators that execute server-side JavaScript. Legitimate mod queries
 // never need these; $where in particular can run arbitrary JS on the database
 // and bypasses the per-mod field prefixing applied by the query layer.
@@ -399,21 +396,6 @@ function findDangerousQueryOperator(value, depth = 0) {
     if (found) return found;
   }
   return null;
-}
-
-/**
- * Returns only the keys of an object that are safe JavaScript identifiers.
- * Used by the Functions sandbox, where input keys are interpolated into the
- * wrapper source: an unsafe key (e.g. "a } = input; <code>; const { b") would
- * be a code injection, so such keys must never be bound. Non-identifier keys
- * couldn't be destructured as bare variables anyway, so dropping them does not
- * change behavior for any legitimate input.
- * @param {Object} input - The object whose keys to filter
- * @returns {string[]} - The subset of keys that are safe identifiers
- */
-function safeInputKeys(input) {
-  if (!input || typeof input !== 'object') return [];
-  return Object.keys(input).filter(k => SAFE_IDENTIFIER.test(k));
 }
 
 /**
@@ -559,7 +541,6 @@ module.exports = {
   NormalizeToGUID,
   ExtractAuthKey,
   CleanRegEx,
-  safeInputKeys,
   findDangerousQueryOperator,
   getClientIp,
   GenerateLimiter

@@ -51,7 +51,6 @@ const BASE_DEFAULT_CONFIG = {
     EmbeddingModel: "",
     enablePromptProtection: true
   },
-  Functions: {},
   LetsEncypt: {
     Enabled: false,
     Domain: "",
@@ -182,8 +181,6 @@ function normalizeConfig(raw, { ensureAuthToken = false } = {}) {
     ...BASE_DEFAULT_CONFIG.OpenAIApi,
     ...ensureObject(result.OpenAIApi)
   };
-
-  result.Functions = ensureObject(result.Functions, {});
 
   result.LetsEncypt = {
     ...BASE_DEFAULT_CONFIG.LetsEncypt,

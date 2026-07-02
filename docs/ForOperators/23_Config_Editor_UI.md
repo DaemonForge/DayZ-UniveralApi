@@ -129,20 +129,6 @@ Configure OpenAI API for AI-powered features.
 
 ---
 
-### Functions
-
-Configure custom functions that can be called from the DayZ mod.
-
-**Actions:**
-- **Add Function**: Add a new function entry
-- **Delete**: Remove a function
-
-Each function has:
-- **Name**: Function identifier used in API calls
-- **URL**: External URL to call when the function is invoked
-
----
-
 ### Advanced
 
 Advanced settings for fine-tuning the service.
