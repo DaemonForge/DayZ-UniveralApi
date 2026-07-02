@@ -544,7 +544,8 @@ async function handleFunctionReturn(req, res) {
       }];
       logger.debug('[handleFunctionReturn] Submitting tool outputs', { toolOutputs });
       // Submit function outputs to resume the run.
-      openai.beta.threads.runs.submitToolOutputsAndPoll(ThreadId, contentObj.ActiveRunId, { tool_outputs: toolOutputs })
+      // openai v6 signature: (runId, { thread_id, ...params })
+      openai.beta.threads.runs.submitToolOutputsAndPoll(contentObj.ActiveRunId, { thread_id: ThreadId, tool_outputs: toolOutputs })
         .then((runAfter) => {
           logger.debug('[handleFunctionReturn] Run resumed after tool output submission', { runAfter });
           if (runAfter.status === "completed") {

@@ -48,7 +48,7 @@
     "mongodb": "^7.4.0",
     "multer": "^2.0.2",
     "node-windows": "^1.0.0-beta.8",
-    "openai": "^4.86.2",
+    "openai": "^6.45.0",
     "pdf-parse": "^2.4.5",
     "selfsigned": "^2.4.1",
     "serve-favicon": "^2.5.0",

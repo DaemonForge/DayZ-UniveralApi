@@ -29,7 +29,9 @@ function getEmbeddingModel() {
 function createClient() {
     const cfg = aiConfig();
     return new OpenAI({
-        apiKey: cfg.ApiKey,
+        // openai v6 throws on a missing/empty apiKey; compat providers
+        // (Ollama, vLLM) often need none, so send a placeholder they ignore.
+        apiKey: cfg.ApiKey || (cfg.BaseURL ? 'not-needed' : cfg.ApiKey),
         ...(cfg.BaseURL ? { baseURL: cfg.BaseURL } : {})
     });
 }
