@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const fetch  = require('node-fetch');
+// fetch is a Node global (>=18) - no node-fetch import needed.
 const { requirePlayerOrServerAuth } = require('../auth/utils');
 const { GenerateLimiter, createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'translate'); // Winston based logger
@@ -9,7 +9,7 @@ const router = Router();
 
 router.use(GenerateLimiter(global.config.RequestLimitTranslate || 200, 10));
 
-router.post('', requirePlayerOrServerAuth, (req, res) => {
+router.post('/', requirePlayerOrServerAuth, (req, res) => {
     if (global.config.Translate !== undefined &&
         global.config.Translate.Type === "Microsoft" &&
         global.config.Translate.SubscriptionKey !== "") {
@@ -51,7 +51,11 @@ async function runTranslate(req, res, auth) {
                 Status: "Success",
                 Error: "",
                 Translations: json[0].translations,
-                Detected: json[0].detectedLanguage.language
+                // detectedLanguage is only returned when the source language is
+                // auto-detected (no "From" supplied); fall back to the requested
+                // source language otherwise so a successful translation isn't
+                // turned into an error.
+                Detected: json[0].detectedLanguage?.language || lang || ""
             }
         } else {
             let errorDetail = "Not a valid response from the API";

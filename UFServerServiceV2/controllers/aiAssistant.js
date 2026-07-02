@@ -3,7 +3,9 @@ const express = require('express');
 const router = express.Router();
 const aiAssistantModel = require('../models/aiAssistant');
 const { getSummaryById, updateChatSummaryStatus, createChatSummary } = require('../models/aiChat');
-const { OpenAI } = require('openai').default;
+// Note: the Assistants API is OpenAI-proprietary. With a custom
+// OpenAIApi.BaseURL (compat provider) these endpoints will not work.
+const { createClient } = require('../aiClient');
 
 const Ajv = require('ajv');
 const { createLogger } = require('../utils');
@@ -15,7 +17,7 @@ const ajv = new Ajv({ allErrors: true });
 // Initialize OpenAI API client.
 let openai;
 if (global.config.OpenAIApi?.ApiKey && global.config.OpenAIApi.ApiKey !== "") {
-  openai = new OpenAI({ apiKey: global.config.OpenAIApi.ApiKey });
+  openai = createClient();
   logger.debug(`OpenAI client initialized with provided API key.`);
 } else {
   logger.debug(`No OpenAI API key found.`);

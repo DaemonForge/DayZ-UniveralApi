@@ -70,18 +70,8 @@ function getKBController() {
 }
 
 
-const fetch = (() => {
-  if (typeof globalThis.fetch === 'function') {
-    return globalThis.fetch.bind(globalThis);
-  }
-  try {
-    const nodeFetch = require('node-fetch');
-    return nodeFetch.default || nodeFetch;
-  } catch (error) {
-    console.error('Failed to load fetch implementation:', error);
-    return undefined;
-  }
-})();
+// fetch is a Node global (>=18); use it directly. No node-fetch fallback.
+const fetch = typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : undefined;
 
 function resolveAssetPath(...segments) {
   const fallback = path.join(__dirname, ...segments);

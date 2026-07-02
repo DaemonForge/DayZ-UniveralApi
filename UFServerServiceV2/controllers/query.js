@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const { MongoClient } = require("mongodb");
 
-const { isArray, isObject, CleanRegEx, GenerateLimiter, createLogger } = require('../utils');
+const { isArray, isObject, CleanRegEx, GenerateLimiter, createLogger, findDangerousQueryOperator } = require('../utils');
 const logger = createLogger(global.logger, 'DB.query');
 const { getAnalyzer } = require('../models/queryAnalyzer');
 
@@ -68,6 +68,14 @@ async function runQuery(req, res, mod, auth, COLL) {
             } catch (e) {
                 logger.error(`Invalid JSON in RawData.OrderBy: ${e.message}`, { error: e });
                 res.status(400).json({ Status: "Error", Error: "Invalid JSON in OrderBy", Count: 0, Results: [] });
+                return;
+            }
+            // Reject server-side-JavaScript operators ($where etc.) before the
+            // query reaches MongoDB.
+            const badOp = findDangerousQueryOperator(query) || findDangerousQueryOperator(orderBy);
+            if (badOp) {
+                logger.warn(`Rejected query containing disallowed operator`, { mod, collection: COLL, operator: badOp });
+                res.status(400).json({ Status: "Error", Error: `Query operator ${badOp} is not allowed`, Count: 0, Results: [] });
                 return;
             }
             let fixQuery = RawData.FixQuery || 0;
@@ -183,7 +191,7 @@ async function runQuery(req, res, mod, auth, COLL) {
             await client.close();
         }
     } else {
-        logger.warn("Authentication failed during query", { mod, auth });
+        logger.warn("Authentication failed during query", { mod });
         res.status(401).json({ Status: "Error", Error: "Invalid Auth", Count: 0, Results: [] });
     }
 };
@@ -207,6 +215,14 @@ async function runUpdateFromQuery(req, res, mod, auth, COLL) {
             } catch (e) {
                 logger.error(`Invalid JSON in RawData.Query.OrderBy: ${e.message}`, { error: e });
                 res.status(400).json({ Status: "Error", Error: "Invalid JSON in OrderBy", Count: 0, Results: [] });
+                return;
+            }
+            // Reject server-side-JavaScript operators ($where etc.) before the
+            // query reaches MongoDB.
+            const badOp = findDangerousQueryOperator(query) || findDangerousQueryOperator(orderBy);
+            if (badOp) {
+                logger.warn(`Rejected update query containing disallowed operator`, { mod, operator: badOp });
+                res.status(400).json({ Status: "Error", Error: `Query operator ${badOp} is not allowed`, Count: 0, Results: [] });
                 return;
             }
             let fixQuery = RawData.Query.FixQuery || 0;
@@ -266,7 +282,9 @@ async function runUpdateFromQuery(req, res, mod, auth, COLL) {
                 updateDoc = { $pullAll: updateDocValue };
             }
 
-            const result = await collection.updateOne(query, updateDoc, options);
+            // Query-based update: apply to ALL documents matching the query,
+            // not just the first one.
+            const result = await collection.updateMany(query, updateDoc, options);
             if (result.matchedCount >= 1 || result.upsertedCount >= 1) {
                 logger.info(`Update operation succeeded. ${result.matchedCount} document(s) affected. Query: ${JSON.stringify(query)}`, {
                     element,
@@ -287,7 +305,7 @@ async function runUpdateFromQuery(req, res, mod, auth, COLL) {
             await client.close();
         }
     } else {
-        logger.warn("Authentication failed during update", { mod, auth, url: req.url });
+        logger.warn("Authentication failed during update", { mod, url: req.url });
         res.status(401).json({ Status: "Error", Error: "Invalid Auth", Element: "", Mod: mod });
     }
 };

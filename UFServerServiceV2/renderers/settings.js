@@ -540,6 +540,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       },
       OpenAIApi: {
         ApiKey: "",
+        BaseURL: "",
+        DefaultModel: "",
+        EmbeddingModel: "",
         enablePromptProtection: true
       },
       Functions: {
@@ -631,6 +634,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       : cfg.Discord.Restrict_Sign_Up_Countries;
 
     document.getElementById('OpenAIApi_ApiKey').value = cfg.OpenAIApi.ApiKey;
+    document.getElementById('OpenAIApi_BaseURL').value = cfg.OpenAIApi.BaseURL || "";
+    document.getElementById('OpenAIApi_DefaultModel').value = cfg.OpenAIApi.DefaultModel || "";
+    document.getElementById('OpenAIApi_EmbeddingModel').value = cfg.OpenAIApi.EmbeddingModel || "";
     document.getElementById('OpenAIApi_enablePromptProtection').checked = cfg.OpenAIApi.enablePromptProtection;
 
     const funcContainer = document.getElementById('functionsContainer');
@@ -1014,6 +1020,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       },
       OpenAIApi: {
         ApiKey: document.getElementById('OpenAIApi_ApiKey').value,
+        BaseURL: document.getElementById('OpenAIApi_BaseURL').value.trim(),
+        DefaultModel: document.getElementById('OpenAIApi_DefaultModel').value.trim(),
+        EmbeddingModel: document.getElementById('OpenAIApi_EmbeddingModel').value.trim(),
         enablePromptProtection: document.getElementById('OpenAIApi_enablePromptProtection').checked
       },
       Functions: {},

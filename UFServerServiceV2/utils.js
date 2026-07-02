@@ -342,6 +342,81 @@ function ExtractAuthKey(req, res, next) {
 }
 
 /**
+ * Resolves the client IP for rate-limiting / whitelisting.
+ *
+ * Forwarding headers (CF-Connecting-IP, X-Forwarded-For) are trivially
+ * spoofable by a direct client, so they are ONLY honored when the operator
+ * has set TrustProxyHeaders (i.e. the service actually sits behind Cloudflare
+ * or a reverse proxy). Otherwise we key off the real socket peer. This stops a
+ * direct client from sending "X-Forwarded-For: 127.0.0.1" to land on the
+ * whitelist and bypass rate limiting entirely.
+ *
+ * Note: Node lowercases all header names, so headers must be read lowercase.
+ * @param {Object} req - Express request object
+ * @returns {string} - The client IP used as the rate-limit key
+ */
+function getClientIp(req) {
+  if (global.config && global.config.TrustProxyHeaders) {
+    const fwd = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'];
+    if (fwd) {
+      // X-Forwarded-For may be a comma-separated list; the client is the first entry.
+      return String(fwd).split(',')[0].trim();
+    }
+  }
+  return req.socket?.remoteAddress || req.ip;
+}
+
+// Matches a safe, bindable JavaScript identifier.
+const SAFE_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
+// MongoDB operators that execute server-side JavaScript. Legitimate mod queries
+// never need these; $where in particular can run arbitrary JS on the database
+// and bypasses the per-mod field prefixing applied by the query layer.
+const DANGEROUS_QUERY_OPERATORS = new Set(['$where', '$function', '$accumulator']);
+
+/**
+ * Recursively scans a parsed query/orderBy object for MongoDB operators that
+ * execute server-side JavaScript, returning the offending operator name or null.
+ * Depth-limited to guard against pathologically nested input. Ordinary
+ * operators ($or, $gt, $in, $regex, $expr, ...) are left untouched so normal
+ * queries keep working.
+ * @param {*} value - The parsed query value.
+ * @param {number} [depth] - Current recursion depth (internal).
+ * @returns {string|null} The disallowed operator, or null if the query is clean.
+ */
+function findDangerousQueryOperator(value, depth = 0) {
+  if (depth > 100 || value === null || typeof value !== 'object') return null;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findDangerousQueryOperator(item, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+  for (const key of Object.keys(value)) {
+    if (DANGEROUS_QUERY_OPERATORS.has(key)) return key;
+    const found = findDangerousQueryOperator(value[key], depth + 1);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
+ * Returns only the keys of an object that are safe JavaScript identifiers.
+ * Used by the Functions sandbox, where input keys are interpolated into the
+ * wrapper source: an unsafe key (e.g. "a } = input; <code>; const { b") would
+ * be a code injection, so such keys must never be bound. Non-identifier keys
+ * couldn't be destructured as bare variables anyway, so dropping them does not
+ * change behavior for any legitimate input.
+ * @param {Object} input - The object whose keys to filter
+ * @returns {string[]} - The subset of keys that are safe identifiers
+ */
+function safeInputKeys(input) {
+  if (!input || typeof input !== 'object') return [];
+  return Object.keys(input).filter(k => SAFE_IDENTIFIER.test(k));
+}
+
+/**
  * Escapes special characters in a string for use in regular expressions
  * @param {string} value - String to clean
  * @returns {string} - Escaped string safe for RegEx
@@ -361,32 +436,18 @@ function GenerateLimiter(limitRate, seconds) {
   let LimitRate = limitRate || 300;
   return RateLimit({
     windowMs: Seconds * 1000,
-    max: LimitRate,
+    limit: LimitRate,
     message: '{ "Status": "Error", "Error": "RateLimited" }',
-    keyGenerator: (req) => {
-      // Identify clients by IP, checking various header options
-      return req.headers['CF-Connecting-IP'] || 
-              req.headers['x-forwarded-for'] || 
-              req.socket.remoteAddress || 
-              req.ip;
-    },
+    keyGenerator: (req) => getClientIp(req),
     handler: (request, response, next, options) => {
       if (request.rateLimit.used === request.rateLimit.limit + 1) {
-        // Original onLimitReached code
-        const ip = request.headers['CF-Connecting-IP'] || 
-                    request.headers['x-forwarded-for'] || 
-                    request.socket.remoteAddress || 
-                    request.ip;
-        logger.warn('RateLimit reached - possible DDoS attack or need to increase request limit', { ip });
+        logger.warn('RateLimit reached - possible DDoS attack or need to increase request limit', { ip: getClientIp(request) });
       }
       response.status(options.statusCode).send(options.message);
     },
     skip: (req) => {
       // Skip rate limiting for whitelisted IPs
-      const ip = req.headers['CF-Connecting-IP'] || 
-                  req.headers['x-forwarded-for'] || 
-                  req.socket.remoteAddress || 
-                  req.ip;
+      const ip = getClientIp(req);
       const whitelist = global.config.RateLimitWhiteList;
       return ip && whitelist && isArray(whitelist) && whitelist.includes(ip);
     }
@@ -498,5 +559,8 @@ module.exports = {
   NormalizeToGUID,
   ExtractAuthKey,
   CleanRegEx,
+  safeInputKeys,
+  findDangerousQueryOperator,
+  getClientIp,
   GenerateLimiter
 };  

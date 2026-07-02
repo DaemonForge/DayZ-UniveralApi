@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { spawn } = require('child_process');
-const OpenAI = require('openai').default;
+const { createClient } = require('../aiClient');
 const AudioModel = require('../models/tts');
 const { createLogger, ensureDirExsist } = require('../utils');
 const { requirePlayerOrServerAuth } = require('../auth/utils');
@@ -309,7 +309,7 @@ async function processAudioClip(jobId, voiceId, message, instructions, staticLev
 
     if (!fs.existsSync(standardizedAudioPath)) {
       logger.info("Audio File not found in cache. Calling OpenAI TTS API.", { hash });
-      const openai = new OpenAI({ apiKey: global.config.OpenAIApi.ApiKey });
+      const openai = createClient();
       const mp3Response = await openai.audio.speech.create({
         model: "gpt-4o-mini-tts",
         voice: voiceId,

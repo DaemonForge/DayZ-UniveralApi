@@ -702,14 +702,32 @@ async function vectorSearch(kbId, queryEmbedding, limit = 5) {
         }
 
         // Compute cosine similarity for each document
-        const scoredDocs = docs.map(doc => ({
-            documentId: doc.documentId,
-            name: doc.name,
-            content: doc.content,
-            contextHint: doc.contextHint,
-            chunkIndex: doc.chunkIndex,
-            score: cosineSimilarity(queryEmbedding, doc.embedding)
-        }));
+        let dimensionMismatches = 0;
+        const scoredDocs = docs.map(doc => {
+            if (Array.isArray(queryEmbedding) && Array.isArray(doc.embedding) && doc.embedding.length !== queryEmbedding.length) {
+                dimensionMismatches++;
+            }
+            return {
+                documentId: doc.documentId,
+                name: doc.name,
+                content: doc.content,
+                contextHint: doc.contextHint,
+                chunkIndex: doc.chunkIndex,
+                score: cosineSimilarity(queryEmbedding, doc.embedding)
+            };
+        });
+
+        // Mismatched documents score 0, so results are effectively random for
+        // them. Happens when EmbeddingModel changed after documents were
+        // embedded - the KB documents must be re-uploaded or re-embedded.
+        if (dimensionMismatches > 0) {
+            logger.warn('[KB] Embedding dimension mismatch: documents were embedded with a different model than the current EmbeddingModel. Re-upload or re-embed the KB documents.', {
+                kbId,
+                mismatchedChunks: dimensionMismatches,
+                totalChunks: docs.length,
+                queryDimensions: queryEmbedding?.length
+            });
+        }
 
         // Sort by score descending
         scoredDocs.sort((a, b) => b.score - a.score);

@@ -120,6 +120,57 @@ const defaultMeta = {
 };
 
 /**
+ * Builds a query matching messages strictly after a (createdAt, _id) cursor.
+ *
+ * The read pointer is a compound cursor rather than a bare timestamp: multiple
+ * messages can share the same createdAt millisecond, and a plain
+ * `createdAt > time` comparison would skip any that a previous read's limit
+ * left behind at that exact timestamp (silent message loss). Tiebreaking on
+ * _id makes reads resume exactly where they stopped.
+ *
+ * When cursorId is null - a legacy pointer written before this field existed,
+ * or a queue-reset boundary that has no associated message - it falls back to
+ * the historical `createdAt > time` behavior.
+ *
+ * @param {string} Mod
+ * @param {string} Queue
+ * @param {Date} time - The cursor's createdAt.
+ * @param {ObjectId|null} cursorId - The cursor's _id, or null for no tiebreak.
+ * @returns {Object} A MongoDB filter.
+ */
+function buildAfterCursorQuery(Mod, Queue, time, cursorId) {
+  if (!cursorId) {
+    return { Mod, Queue, createdAt: { $gt: time } };
+  }
+  return {
+    Mod,
+    Queue,
+    $or: [
+      { createdAt: { $gt: time } },
+      { createdAt: time, _id: { $gt: cursorId } }
+    ]
+  };
+}
+
+/**
+ * Resolves the effective read cursor from a player's stored status and the
+ * queue's reset time. The reset boundary (which has no _id) wins when it is
+ * newer than the player's last read.
+ *
+ * @param {Object|null} status - The PlayerMessagesStatus doc.
+ * @param {Date} resetAt - The queue reset timestamp.
+ * @returns {{ time: Date, id: (ObjectId|null) }}
+ */
+function resolveCursor(status, resetAt) {
+  const lastRead = status && status.lastRead ? new Date(status.lastRead) : new Date(0);
+  const lastReadId = status && status.lastReadId ? status.lastReadId : null;
+  if (resetAt > lastRead) {
+    return { time: resetAt, id: null };
+  }
+  return { time: lastRead, id: lastReadId };
+}
+
+/**
  * Retrieves the meta document for a given Mod and Queue.
  * 
  * @async
@@ -207,9 +258,11 @@ async function getPlayerStatus(Mod, Queue, playerGuid) {
 async function updatePlayerStatus(Mod, Queue, playerGuid, lastRead) {
   const { playerStatus } = await getCollections();
   try {
+    // Clear lastReadId: this setter is used for "catch up to now" with a
+    // synthetic timestamp that has no associated message to tiebreak on.
     await playerStatus.updateOne(
       { Mod, Queue, playerGuid },
-      { $set: { lastRead } },
+      { $set: { lastRead, lastReadId: null } },
       { upsert: true }
     );
     logger.debug(`updatePlayerStatus: Updated status for player ${playerGuid} in Mod: ${Mod} Queue: ${Queue} to ${lastRead}`);
@@ -300,50 +353,39 @@ async function readMessagesAndUpdatePointer(Mod, Queue, playerGuid, resetAt, sor
   const { messages, playerStatus } = await getCollections();
   
   try {
-    // Get the current player status
+    // Get the current player status and resolve the compound (time, _id) cursor.
     const status = await playerStatus.findOne({ Mod, Queue, playerGuid });
-    const lastRead = status && status.lastRead ? new Date(status.lastRead) : new Date(0);
-    
-    // Use the later of resetAt or lastRead as the effective time
-    const effectiveTime = resetAt > lastRead ? resetAt : lastRead;
-    
-    // Query for messages
-    const query = {
-      Mod,
-      Queue,
-      createdAt: { $gt: effectiveTime }
-    };
-    
-    let cursor = messages.find(query).sort({ createdAt: sortOrder });
+    const cursor0 = resolveCursor(status, resetAt);
+
+    // Query for messages strictly after the cursor. Sort tiebreaks on _id in
+    // the same direction so the pointer advance below is unambiguous.
+    const query = buildAfterCursorQuery(Mod, Queue, cursor0.time, cursor0.id);
+
+    let cursor = messages.find(query).sort({ createdAt: sortOrder, _id: sortOrder });
     const effectiveLimit = limit === -1 ? 1000 : Math.min(limit, 1000);
     cursor = cursor.limit(effectiveLimit);
     const msgs = await cursor.toArray();
-    
+
     if (msgs.length === 0) {
       return { messages: [], newPointer: null };
     }
-    
-    // Determine the new pointer based on the NEWEST message timestamp
-    // For FIFO (sortOrder=1), messages are oldest-first, so newest is at the end
-    // For LIFO (sortOrder=-1), messages are newest-first, so newest is at the beginning
-    let newestMessageTime;
-    if (sortOrder === 1) {
-      // FIFO: last message in array is the newest
-      newestMessageTime = msgs[msgs.length - 1].createdAt;
-    } else {
-      // LIFO: first message in array is the newest
-      newestMessageTime = msgs[0].createdAt;
-    }
-    
-    // Update the player's pointer to the newest message time
+
+    // The batch's newest message in (createdAt, _id) order becomes the new
+    // pointer. FIFO (sortOrder=1, ascending) -> last element; LIFO
+    // (sortOrder=-1, descending) -> first element. Both are the (createdAt,_id)
+    // maximum of the batch.
+    const newest = sortOrder === 1 ? msgs[msgs.length - 1] : msgs[0];
+    const newestMessageTime = newest.createdAt;
+
+    // Update the player's pointer to the newest message's compound cursor.
     await playerStatus.updateOne(
       { Mod, Queue, playerGuid },
-      { $set: { lastRead: newestMessageTime } },
+      { $set: { lastRead: newestMessageTime, lastReadId: newest._id } },
       { upsert: true }
     );
-    
+
     logger.debug(`readMessagesAndUpdatePointer: Read ${msgs.length} messages and updated pointer to ${newestMessageTime} for ${playerGuid}`);
-    
+
     return { messages: msgs, newPointer: newestMessageTime };
   } catch (error) {
     logger.error(`readMessagesAndUpdatePointer: Error for Mod: ${Mod} Queue: ${Queue} player: ${playerGuid}: ${error.message}`, { error });
@@ -369,45 +411,42 @@ async function readLatestMessagesAndUpdatePointer(Mod, Queue, playerGuid, resetA
   const { messages, playerStatus } = await getCollections();
   
   try {
-    // Get the current player status
+    // Get the current player status and resolve the compound (time, _id) cursor.
     const status = await playerStatus.findOne({ Mod, Queue, playerGuid });
-    const lastRead = status && status.lastRead ? new Date(status.lastRead) : new Date(0);
-    
-    // Use the later of resetAt or lastRead as the effective time
-    const effectiveTime = resetAt > lastRead ? resetAt : lastRead;
-    
-    // Query for unread messages after the effective time, sorted newest first
-    const query = {
-      Mod,
-      Queue,
-      createdAt: { $gt: effectiveTime }
-    };
-    
-    // Get the latest N messages (sorted by createdAt descending = newest first)
+    const cursor0 = resolveCursor(status, resetAt);
+
+    // Query for unread messages after the cursor, sorted newest first.
+    const query = buildAfterCursorQuery(Mod, Queue, cursor0.time, cursor0.id);
+
+    // Get the latest N messages (sorted by createdAt/_id descending = newest first)
     const effectiveLimit = Math.min(limit, 1000);
     const latestMsgs = await messages.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .limit(effectiveLimit)
       .toArray();
-    
+
     if (latestMsgs.length === 0) {
-      // No messages, but update pointer to current time to skip any future old messages
+      // No messages, but update pointer to current time to skip any future old
+      // messages. Clear lastReadId: the synthetic "now" timestamp has no
+      // associated message, so there is nothing to tiebreak on.
+      const now = new Date();
       await playerStatus.updateOne(
         { Mod, Queue, playerGuid },
-        { $set: { lastRead: new Date() } },
+        { $set: { lastRead: now, lastReadId: null } },
         { upsert: true }
       );
-      return { messages: [], newPointer: new Date() };
+      return { messages: [], newPointer: now };
     }
-    
+
     // The newest message is at index 0 (since sorted descending)
-    const newestMessageTime = latestMsgs[0].createdAt;
-    
-    // Update the player's pointer to the newest message time
-    // This effectively marks all older messages as "read"
+    const newestMessage = latestMsgs[0];
+    const newestMessageTime = newestMessage.createdAt;
+
+    // Update the player's pointer to the newest message's compound cursor.
+    // This effectively marks all older messages as "read".
     await playerStatus.updateOne(
       { Mod, Queue, playerGuid },
-      { $set: { lastRead: newestMessageTime } },
+      { $set: { lastRead: newestMessageTime, lastReadId: newestMessage._id } },
       { upsert: true }
     );
     
@@ -507,5 +546,8 @@ module.exports = {
   readMessagesAndUpdatePointer,
   readLatestMessagesAndUpdatePointer,
   purgeOldMessages,
-  getQueueStats
+  getQueueStats,
+  // Exported for unit testing of the compound-cursor pagination logic.
+  buildAfterCursorQuery,
+  resolveCursor
 };

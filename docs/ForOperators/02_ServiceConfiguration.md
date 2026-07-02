@@ -216,6 +216,9 @@ See [Discord Setup](05_Discord.md) for complete setup instructions.
 {
     "OpenAIApi": {
         "ApiKey": "",
+        "BaseURL": "",
+        "DefaultModel": "",
+        "EmbeddingModel": "",
         "enablePromptProtection": true
     }
 }
@@ -223,13 +226,35 @@ See [Discord Setup](05_Discord.md) for complete setup instructions.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `ApiKey` | string | `""` | OpenAI API key for AI chat features |
+| `ApiKey` | string | `""` | API key for OpenAI (or the compatible provider when `BaseURL` is set) |
+| `BaseURL` | string | `""` | Optional OpenAI-compatible API base URL. Empty = OpenAI |
+| `DefaultModel` | string | `""` | Default chat model. Empty = `gpt-4o-mini`. Set this when using `BaseURL` |
+| `EmbeddingModel` | string | `""` | Embedding model for Knowledge Bases. Empty = `text-embedding-3-large` |
 | `enablePromptProtection` | boolean | `true` | Enable safeguards against prompt injection |
 
 **Notes:**
 - Get an API key from https://platform.openai.com/api-keys
 - API usage incurs costs based on token usage
 - Leave empty to disable AI features
+
+#### OpenAI-Compatible Providers (Open-Source Models)
+
+Set `BaseURL` to use any OpenAI-compatible provider (Vultr Serverless Inference, Cloudflare Workers AI, Ollama, vLLM, etc.). When `BaseURL` is set, the service talks to the provider via the standard Chat Completions API instead of OpenAI's Responses API.
+
+Examples:
+
+| Provider | BaseURL | Example DefaultModel |
+|----------|---------|----------------------|
+| Vultr | `https://api.vultrinference.com/v1` | `llama-3.3-70b-instruct-fp8` |
+| Cloudflare Workers AI | `https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/ai/v1` | `@cf/meta/llama-3.3-70b-instruct-fp8-fast` |
+| Ollama (local) | `http://localhost:11434/v1` | `llama3.1` (ApiKey can be any placeholder) |
+
+Compatible-provider limitations:
+- `DefaultModel` must be set to a model your provider serves (OpenAI model names won't exist there). Chats can still override the model per-chat.
+- Knowledge Bases require the provider to offer an `/embeddings` endpoint; set `EmbeddingModel` accordingly. Changing the embedding model makes existing KB embeddings unusable until documents are re-embedded (embedding dimensions must match).
+- JSON response format is enforced via prompting and validation retries rather than provider-side structured output.
+- AI Assistants and OpenAI TTS voices require real OpenAI — they use proprietary APIs that compatible providers do not implement.
+- Tool/function calling requires a model that supports it.
 
 ### ElevenLabs Integration (TTS)
 

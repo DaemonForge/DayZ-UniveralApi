@@ -50,7 +50,7 @@ async function QueryServer(ip, port) {
             host: ip,
             port: port,
         }).then((state) => {
-            let keywords = state.raw.tags;
+            let keywords = state.raw.tags || [];
             return {
                 ip: state.connect.split(':')[0],
                 query_port: parseInt(port),
@@ -59,7 +59,7 @@ async function QueryServer(ip, port) {
                 name: state.name,
                 version: state.raw.version,
                 players: state.raw.numplayers,
-                queue: parseInt(keywords.find(tag => tag.includes('lqs')).replace('lqs', '')),
+                queue: parseInt((keywords.find(tag => tag.includes('lqs')) || 'lqs0').replace('lqs', '')),
                 max_players: state.maxplayers,
                 time: keywords.find(tag => tag.includes(':')),
                 first_person: keywords.some(tag => tag.includes('no3rd')),

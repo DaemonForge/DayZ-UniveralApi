@@ -29,17 +29,36 @@ async function SendLoginPage(res, id, guid){
     
 }
 
+// A SteamID64 is a 17-digit number (first digit non-zero).
+const STEAMID64_REGEX = /^[1-9][0-9]{16}$/;
+
+/**
+ * Resolves the public host for the OAuth redirect_uri. Prefers the operator's
+ * configured LetsEncrypt domain so the callback isn't derived from a
+ * client-supplied Host header; falls back to the request Host otherwise.
+ */
+function getCallbackHost(req) {
+    const leDomain = global.config.LetsEncypt?.Enabled ? global.config.LetsEncypt?.Domain : "";
+    return leDomain || req.headers.host;
+}
+
 async function RenderLogin(req, res){
     let id = req.params.id;
-    let GUID = NormalizeToGUID(id);
     if (ErrorTemplate === undefined) LoadErrorTemplate();
+    // Validate the Steam ID before it is reflected into the OAuth state / login
+    // URL. Rejects malformed input rather than echoing it back.
+    if (!STEAMID64_REGEX.test(id)) {
+        logger.warn("Discord login attempted with an invalid Steam ID", { id });
+        return res.send(render(ErrorTemplate, {TheError: "Invalid URL", Type: "BadURL"}));
+    }
+    let GUID = NormalizeToGUID(id);
     let userObj = await GetDiscordObj(GUID);
-    let ip = req.headers['CF-Connecting-IP'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    let ip = req.headers['cf-connecting-ip'] ||  req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     if (userObj !== undefined && (global.config.Discord?.AllowToReRegister !== true) === false){
         return res.send(render(ErrorTemplate, {TheError: "Trying to connect to a Steam ID that already has a Discord connected.", Type: "AlreadyLinked"}))
     }
 
-    let url = encodeURIComponent(`https://${req.headers.host}/discord/callback`); 
+    let url = encodeURIComponent(`https://${getCallbackHost(req)}/discord/callback`);
     if ( global.config.Discord.Client_Id === "" || global.config.Discord.Client_Secret === ""  || global.config.Discord.Bot_Token === ""  || global.config.Discord.Guild_Id === "" || global.config.Discord.Client_Id === undefined || global.config.Discord.Client_Secret === undefined  || global.config.Discord.Bot_Token === undefined  || global.config.Discord.Guild_Id === undefined ){
         logger.warn("User tried to sign up for discord but Intergration is not setup for this server");
         return res.send(render(ErrorTemplate, {TheError: "Discord Intergration is not setup for this server", Type: "NotSetup"}))
@@ -140,7 +159,8 @@ async function HandleCallBack(req, res){
                 client_secret: global.config.Discord.Client_Secret,
                 grant_type: 'authorization_code',
                 code: code,
-                redirect_uri: `https://${req.headers.host}/discord/callback`
+                // Must match the redirect_uri used in RenderLogin's authorize step.
+                redirect_uri: `https://${getCallbackHost(req)}/discord/callback`
             }),
         });
         const json = await response.json();
@@ -156,7 +176,7 @@ async function HandleCallBack(req, res){
         discordjson.steamid = state;
         let guild = await client.guilds.fetch(global.config.Discord.Guild_Id);
         logger.debug("Fetched discord guild", { guildId: global.config.Discord.Guild_Id });
-        let msg = `Unknown Error, possible that call back isn't configured correctly should be "https://${req.headers.host}/discord/callback"`;
+        let msg = `Unknown Error, possible that call back isn't configured correctly should be "https://${getCallbackHost(req)}/discord/callback"`;
         let errType = "System";
         let player;
         try {

@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { Agent, setGlobalDispatcher } = require('undici');
+const { Agent } = require('undici');
 const { GenerateLimiter, createLogger } = require('../utils');
 const logger = createLogger(global.logger, 'random');
 const { requirePlayerOrServerAuth } = require("../auth/utils");
@@ -7,16 +7,15 @@ const cluster = require('cluster');
 const fs = require('fs').promises;
 const path = require('path');
 
-// Agent for fetch() that ignores SSL errors (ANU's cert is expired)
+// Agent for fetch() that ignores SSL errors (ANU's cert is expired).
+// Scoped to the ANU quantum fetch ONLY (passed as a per-request dispatcher) -
+// NOT installed globally, so it never weakens TLS verification for any other
+// outbound request in the process.
 const insecureAgent = new Agent({
     connect: {
         rejectUnauthorized: false
     }
 });
-
-// Set this as the global dispatcher for all fetch calls in this module
-// This makes all fetch() calls use the insecure agent
-setGlobalDispatcher(insecureAgent);
 
 // Quantum source parameters and fallbacks.
 const FETCH_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
@@ -304,7 +303,8 @@ async function fetchQuantum(length, bitsize) {
     
     try {
         const response = await fetch(url, {
-            signal: controller.signal
+            signal: controller.signal,
+            dispatcher: insecureAgent
         });
         
         clearTimeout(timeout);

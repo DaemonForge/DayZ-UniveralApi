@@ -1,5 +1,5 @@
 // controllers/aiChat.js
-const { OpenAI } = require('openai').default;
+const { createClient, createResponse, isCompatMode, getDefaultModel } = require('../aiClient');
 const {saveChatSummary,createChatSummary, getSummaryById, updateChatSummaryStatus, createChat,  getChat,  addMessageToChat, updateMessageStatus, updateMessageWithToolCall, getMessageWithToolCall, getMessageById, getChatHistory, resetChat, deleteChat} = require('../models/aiChat');
 const Ajv = require('ajv');
 const {createLogger} = require('../utils');
@@ -313,7 +313,7 @@ async function executeWithKBInterception(chatReqBody, kbId, updatedChat, maxKBLo
                 toolCount: reqBody.tools?.length || 0,
                 hasInstructions: !!reqBody.instructions
             });
-            response = await openai.responses.create(reqBody);
+            response = await createResponse(openai, reqBody);
             logger.debug('executeWithKBInterception: OpenAI Responses API response received', {
                 status: response.status,
                 hasOutput: !!(response.output && response.output.length > 0),
@@ -496,13 +496,18 @@ async function testOpenAI() {
             global.OPENAISTATUS = "Disabled";
         }
     } else {
-        openai = new OpenAI({apiKey: global.config.OpenAIApi.ApiKey});
+        if (isCompatMode() && !global.config.OpenAIApi.DefaultModel) {
+            logger.warn("OpenAIApi.BaseURL is set but DefaultModel is empty - set OpenAIApi.DefaultModel to a model your provider serves. AI features are disabled until it is configured.");
+            global.OPENAISTATUS = "Error";
+            return;
+        }
+        openai = createClient();
         try{
             logger.debug("API Key exists, testing AI response with Responses API");
             const questions = ['How do I find food?', 'How do I find water?', 'How do I fish?', 'How do I hunt?', 'How do I build a base?'];
             const qidx = Math.floor(Math.random()*questions.length);
-            const testRes = await openai.responses.create({
-                model: 'gpt-5-nano',
+            const testRes = await createResponse(openai, {
+                model: isCompatMode() ? getDefaultModel() : 'gpt-5-nano',
                 instructions: 'You are a helpful but very sassy & sarcastic NPC who knows everything there is to know about the video game DayZ Standalone, provide the shortest possible answer to the questions, less than 20 words. use only plain text responses',
                 input: questions[qidx]
             });
@@ -946,7 +951,7 @@ async function sendMessage(req, res){
                     }
                 }
                 let chatReqBody = {
-                    model: updatedChat.Model || "gpt-4o-mini",
+                    model: updatedChat.Model || getDefaultModel(),
                     messages,
                     ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
                     ...(openaiTools.length > 0 ? { tools: openaiTools, tool_choice: "auto" } : {})
@@ -1211,8 +1216,8 @@ async function runSummarizeChat(req, res){
                     conversationText += `${msg.role}: ${msg.content}\n`;
                 });
                 logger.debug("Built conversation text for summarization", { ChatId, SummaryId });
-                const summaryResponse = await openai.responses.create({
-                    model: 'o3-mini',
+                const summaryResponse = await createResponse(openai, {
+                    model: isCompatMode() ? getDefaultModel() : 'o3-mini',
                     reasoning: { effort: "medium" },
                     instructions: 'You are tasked with summarizing a conversation between an NPC (an AI in DayZ Standalone) and a player to create a concise, historically accurate record for internal memory management. This summary will replace storing the full conversation, so it must capture essential details while preserving the unique tone and immersion of the interaction. Follow these guidelines:\n\n- Focus on Interaction History:\n  Capture key decisions, significant moments, and notable dialogue from both the AI and the player.\n\n- Player-Centric Detailing:\n  Emphasize the player\'s contributions, including specific statements and nuances of their demeanor, while also noting any relevant information provided by the AI. If previous key details (such as mentions of specific items like an M4A1) are available, include a note for continuity.\n\n- Concise and Fact-Based:\n  Deliver a succinct summary that is factual and strictly based on the conversation transcript. Avoid extraneous details or interpretations beyond what is explicitly stated.\n\n- Immersion and Tone Preservation:\n  Retain elements that enhance immersion, such as game-specific terms, jargon, and categories (for example, gear suggestions, safety warnings). Also, briefly describe the overall mood of the conversation (for example, friendly, formal, tense) as evident from the transcript.\n\n- Structured Format:\n  Organize the summary into bullet points or short paragraphs to clearly separate topics (for example, player identification, gear suggestions, safety warnings). Do not include any headers, titles, or introductory labels.\n\n- Use Safe Characters:\n  Ensure the summary uses only safe characters; avoid emojis and any special characters that DayZ cannot handle.\n\n- Memory Consistency and Updates:\n  If this conversation references or updates previous interactions, integrate these details to maintain a consistent historical record. Record any changes in the player\'s state (such as inventory or gear updates) and flag new information that modifies or adds to previous memory entries.\nIMPORTANT use basic ASCII Chaters, for example don\'t use • use -',
                     input: `Summarize the following conversation:\n\n"${conversationText}"`
@@ -1405,7 +1410,7 @@ async function submitToolResult(req, res) {
                 }
                 
                 let chatReqBody = {
-                    model: updatedChat.Model || "gpt-4o-mini",
+                    model: updatedChat.Model || getDefaultModel(),
                     messages,
                     ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
                     ...(openaiTools.length > 0 ? { tools: openaiTools, tool_choice: "auto" } : {})

@@ -7,6 +7,8 @@
   "RateLimitWhiteList": [
     "127.0.0.1"
   ],
+  "TrustProxyHeaders": false,
+  "MaxBodySize": "32mb",
   "ServerAuth": [
   ],
   "ServerAuthLabels": [
@@ -28,6 +30,9 @@
   },
   "OpenAIApi": {
     "ApiKey": "",
+    "BaseURL": "",
+    "DefaultModel": "",
+    "EmbeddingModel": "",
     "enablePromptProtection": true
   },
   "Functions": {},

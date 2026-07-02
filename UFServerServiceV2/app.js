@@ -30,6 +30,24 @@ const logger = require('./log').initializeLogger();
 global.logger = logger;
 logger.debug('[App] Logger initialized, loading config...'); // ADDED LOG
 
+// Process-level safety nets. Without these, a stray rejection or thrown error
+// in async code is silent (unhandledRejection) or aborts the process with no
+// log (uncaughtException). We always log; for a headless server we then exit so
+// the supervisor/cluster restarts a clean worker (a process left running after
+// an uncaught exception is in an undefined state). In the Electron desktop app
+// we keep running so a background error doesn't kill the tray UI.
+process.on('unhandledRejection', (reason) => {
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error('[App] Unhandled promise rejection', { error: err.message, stack: err.stack });
+});
+process.on('uncaughtException', (err) => {
+  logger.error('[App] Uncaught exception', { error: err.message, stack: err.stack });
+  if (!global.isElectron) {
+    // Give the log a tick to flush, then exit for a clean restart.
+    setTimeout(() => process.exit(1), 250);
+  }
+});
+
 // Load configuration
 global.config = require('./configLoader');
 logger.debug('[App] Config loaded, importing dependencies...'); // ADDED LOG
@@ -44,20 +62,16 @@ const DefaultCert = require('./defaultkeys.json');
 const cluster = require('cluster');
 const path = require('path');
 const os = require('os');
-const nodeFetchModule = require('node-fetch');
 const RateLimit = require('express-rate-limit');
 
 
 // Import utility functions
-const { isArray, CheckRecentVersion, CheckIndexes, ExtractAuthKey } = require('./utils');
+const { isArray, CheckRecentVersion, CheckIndexes, ExtractAuthKey, getClientIp } = require('./utils');
 
-// Resolve node-fetch CommonJS/ESM default and set global fetch if needed
-const resolvedFetch = (nodeFetchModule && typeof nodeFetchModule === 'object' && 'default' in nodeFetchModule)
-  ? nodeFetchModule.default
-  : nodeFetchModule;
-
+// fetch is a Node global (>=18); no polyfill needed. Fail loudly if run on an
+// unsupported runtime rather than silently missing HTTP capability.
 if (typeof global.fetch !== 'function') {
-  global.fetch = resolvedFetch;
+  throw new Error('global fetch is unavailable - Node.js 18+ is required');
 }
 
 // Determine CPU count for clustering
@@ -82,6 +96,7 @@ const AudioRouter = require('./controllers/tts');
 const ImageRouter = require('./controllers/images');
 const KBRouter = require('./controllers/kb');
 const ModSettingsRouter = require('./controllers/modSettings');
+const TranslateRouter = require('./controllers/TranslateConnector');
 
 const HOSTNAME_REGEX = /^(?=.{1,253}$)(?!-)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.(?!-)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
 
@@ -128,33 +143,19 @@ function collectValidHostnames(primary, extras = []) {
  */
 const limiter = RateLimit({
   windowMs: 10 * 1000, // 10 seconds window
-  max: global.config.RequestLimit || 500, // Max requests per window
+  limit: global.config.RequestLimit || 500, // Max requests per window
   message: '{ "Status": "Error", "Error": "RateLimited" }',
   standardHeaders: 'draft-7', // Use recommended draft-7 standard headers
-  keyGenerator: (req) => {
-    // Identify clients by IP, checking various header options
-    return req.headers['CF-Connecting-IP'] || 
-           req.headers['x-forwarded-for'] || 
-           req.socket.remoteAddress || 
-           req.ip;
-  },
+  keyGenerator: (req) => getClientIp(req),
   handler: (request, response, next, options) => {
     if (request.rateLimit.used === request.rateLimit.limit + 1) {
-      // Original onLimitReached code
-      const ip = request.headers['CF-Connecting-IP'] || 
-                 request.headers['x-forwarded-for'] || 
-                 request.socket.remoteAddress || 
-                 request.ip;
-      logger.warn('[WebServer] RateLimit reached - possible DDoS attack or need to increase request limit', { ip });
+      logger.warn('[WebServer] RateLimit reached - possible DDoS attack or need to increase request limit', { ip: getClientIp(request) });
     }
     response.status(options.statusCode).send(options.message);
   },
   skip: (req) => {
     // Skip rate limiting for whitelisted IPs
-    const ip = req.headers['CF-Connecting-IP'] || 
-               req.headers['x-forwarded-for'] || 
-               req.socket.remoteAddress || 
-               req.ip;
+    const ip = getClientIp(req);
     const whitelist = global.config.RateLimitWhiteList;
     return ip && whitelist && isArray(whitelist) && whitelist.includes(ip);
   }
@@ -174,7 +175,7 @@ function createExpressApp() {
   // Configure JSON parser with extended size limit
   app.use((req, res, next) => {
     json({
-      limit: '64mb'
+      limit: global.config.MaxBodySize || '32mb'
     })(req, res, (err) => {
       if (err) {
         logger.error('[WebServer] Bad Request', { url: req.url, error: err.message });
@@ -208,6 +209,7 @@ function createExpressApp() {
   app.use('/Images', ImageRouter);
   app.use('/KB', KBRouter);
   app.use('/ModSettings', ModSettingsRouter);
+  app.use('/Translate', TranslateRouter);
   
   const iconFile = path.join(global.SAVEPATH, 'templates', 'icon.png');
   const defaultIcon = path.join(__dirname, 'public', 'icon.png');
@@ -236,20 +238,76 @@ function createExpressApp() {
 }
 
 /**
- * Load SSL certificates for HTTPS
+ * Ensures a per-install self-signed certificate exists, generating one on first
+ * run and persisting it under the data directory. This replaces the shared
+ * bundled defaultkeys.json as the fallback so no two installs share a private
+ * key. Returns { key, cert } PEM strings.
+ *
+ * @throws if generation fails (e.g. the 'selfsigned' package is unavailable),
+ *         so the caller can fall back to the bundled keys.
+ */
+function ensureSelfSignedCertificate() {
+  const certDir = ensureDirectory(path.join(path.resolve(global.SAVEPATH || process.cwd()), 'certs'));
+  const keyPath = path.join(certDir, 'self-signed-key.pem');
+  const certPath = path.join(certDir, 'self-signed-cert.pem');
+
+  if (existsSync(keyPath) && existsSync(certPath)) {
+    return { key: readFileSync(keyPath), cert: readFileSync(certPath) };
+  }
+
+  // Lazy require so a missing dependency degrades to the bundled fallback
+  // rather than crashing startup.
+  const selfsigned = require('selfsigned');
+  const pems = selfsigned.generate(
+    [{ name: 'commonName', value: 'localhost' }],
+    {
+      keySize: 2048,
+      days: 3650,
+      algorithm: 'sha256',
+      extensions: [{
+        name: 'subjectAltName',
+        altNames: [
+          { type: 2, value: 'localhost' }, // DNS
+          { type: 7, ip: '127.0.0.1' }     // IP
+        ]
+      }]
+    }
+  );
+
+  // 0o600 so the private key isn't world-readable (no-op on Windows ACLs).
+  writeFileSync(keyPath, pems.private, { mode: 0o600 });
+  writeFileSync(certPath, pems.cert);
+  logger.info('[WebServer] Generated a unique self-signed certificate for this install', { certDir });
+  return { key: pems.private, cert: pems.cert };
+}
+
+/**
+ * Load SSL certificates for HTTPS.
+ * Priority: operator-provided cert/key files -> per-install self-signed cert
+ * (generated on first run) -> bundled defaultkeys.json (last-ditch fallback).
  * @returns {Object} Object containing key and cert for HTTPS server
  */
 function loadCertificates() {
-  let serverKey = DefaultCert.Key;
-  let serverCert = DefaultCert.Cert;
-  
+  // 1. Operator-provided certificate files take priority. (Mapping preserved
+  //    from the original implementation for backward compatibility.)
   if (global.config.Certificate != "" && global.config.CertificateKey != ""){
     if (existsSync(global.config.Certificate) && existsSync(global.config.CertificateKey)){
-      serverKey = readFileSync(global.config.Certificate);
-      serverCert = readFileSync(global.config.CertificateKey);
+      return {
+        key: readFileSync(global.config.Certificate),
+        cert: readFileSync(global.config.CertificateKey)
+      };
     }
   }
-  return { key: serverKey, cert: serverCert };
+
+  // 2. Per-install self-signed certificate (unique private key per install).
+  try {
+    return ensureSelfSignedCertificate();
+  } catch (err) {
+    // 3. Last-ditch fallback to the shared bundled keys so the server still
+    //    starts (e.g. before `npm install` pulls in the selfsigned package).
+    logger.warn('[WebServer] Self-signed certificate unavailable, using bundled fallback keys', { error: err.message });
+    return { key: DefaultCert.Key, cert: DefaultCert.Cert };
+  }
 }
 
 /**

@@ -8,7 +8,7 @@ const router = Router();
 
 router.use(GenerateLimiter(global.config.RequestLimitStatus || 100, 10));
 
-router.post('', (req, res)=>{
+router.post('/', (req, res)=>{
     runStatusCheck(req, res, req.headers['auth-key']);
 });
 

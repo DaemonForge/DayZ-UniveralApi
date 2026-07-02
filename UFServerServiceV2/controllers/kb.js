@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { OpenAI } = require('openai').default;
+const { createClient, createResponse, isCompatMode, getDefaultModel, getEmbeddingModel } = require('../aiClient');
 const mammoth = require('mammoth');
 // pdf-parse is lazy-loaded to avoid pdfjs-dist DOMMatrix polyfill crash at startup
 let pdf;
@@ -68,7 +68,7 @@ const upload = multer({
 let openai = null;
 function getOpenAI() {
     if (!openai && global.config.OpenAIApi?.ApiKey) {
-        openai = new OpenAI({ apiKey: global.config.OpenAIApi.ApiKey });
+        openai = createClient();
     }
     return openai;
 }
@@ -116,10 +116,13 @@ async function generateEmbeddings(texts, maxRetries = 3) {
     let lastError;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
+            const embeddingModel = getEmbeddingModel();
             const response = await ai.embeddings.create({
-                model: 'text-embedding-3-large',
+                model: embeddingModel,
                 input: validTexts,
-                dimensions: EMBEDDING_DIMENSIONS
+                // 'dimensions' is only valid for OpenAI's text-embedding-3 models;
+                // custom/compat models return their native dimensions.
+                ...(embeddingModel === 'text-embedding-3-large' ? { dimensions: EMBEDDING_DIMENSIONS } : {})
             });
 
             logger.info('generateEmbeddings: Embeddings generated successfully', { 
@@ -201,28 +204,30 @@ async function extractTextFromFile(buffer, filename, mimetype) {
  * Uses OpenAI Responses API
  * @param {string} query - The search query
  * @param {array} results - Search results with content
- * @param {string} model - Model to use for extraction
+ * @param {string} model - Model to use for extraction (falls back to gpt-5-mini,
+ *                         or the configured DefaultModel on compatible providers)
  */
-async function extractRelevantExcerpts(query, results, model = 'gpt-5-mini') {
+async function extractRelevantExcerpts(query, results, model) {
     const ai = getOpenAI();
     if (!ai) {
         throw new Error('OpenAI API not configured');
     }
+    const useModel = model || (isCompatMode() ? getDefaultModel() : 'gpt-5-mini');
 
-    const combinedContent = results.map((r, i) => 
+    const combinedContent = results.map((r, i) =>
         `[Document ${i + 1}: ${r.name}]\n${r.contextHint ? `Context: ${r.contextHint}\n` : ''}${r.content}`
     ).join('\n\n---\n\n');
 
-    logger.debug('extractRelevantExcerpts: Starting AI extraction with Responses API', { 
-        query, 
-        model, 
+    logger.debug('extractRelevantExcerpts: Starting AI extraction', {
+        query,
+        model: useModel,
         documentCount: results.length,
-        combinedLength: combinedContent.length 
+        combinedLength: combinedContent.length
     });
-    
+
     try {
-        const response = await ai.responses.create({
-            model,
+        const response = await createResponse(ai, {
+            model: useModel,
             instructions: `You are a precise information extractor. Given a query and multiple document excerpts, extract ONLY the most relevant sentences or paragraphs that directly answer or relate to the query. Keep your response concise and focused. Include document names for attribution. If no relevant information is found, say "No relevant information found."`,
             input: `Query: ${query}\n\nDocuments:\n${combinedContent}`,
             temperature: 0.3,

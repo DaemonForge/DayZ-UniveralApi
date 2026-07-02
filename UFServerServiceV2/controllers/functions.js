@@ -4,6 +4,7 @@ const vm = require('vm');
 const { requirePlayerOrServerAuth, requireServerAuth } = require('../auth/utils');
 const discordClient = require('../discord/bot.js');
 const { saveFunction, getFunction, deleteFunction } = require('../models/functions');
+const { safeInputKeys } = require('../utils');
 const messagesModel = require('../models/messages');
 const logger = global.logger;
 const { Message, MessageEmbed, MessageActionRow, MessageButton, MessageSelectMenu, Interaction, CommandInteraction, Guild, GuildMember, Role, Channel, TextChannel, DMChannel, VoiceChannel, StageChannel, Permissions, Collection, Constants, SnowflakeUtil, Util, MessageCollector, ReactionCollector, User } = require('discord.js');
@@ -89,7 +90,10 @@ function createPrefixedLogger(logger, mod, functionName) {
  * // This wrapped function can then be evaluated and executed in your sandbox.
  */
 function wrapUserCode(input, userSnippet) {
-    const keys = Object.keys(input);
+    // Only bind keys that are safe JS identifiers - keys are interpolated into
+    // the wrapper source, so an unsafe key would be a code injection. See
+    // safeInputKeys in utils.
+    const keys = safeInputKeys(input);
     return `
       (async function(input, env) {
         // Create a spread object from input.
@@ -109,8 +113,9 @@ function wrapUserCode(input, userSnippet) {
  * @returns {object} The sandbox environment containing restricted resources and the function input.
  */
 function getSandboxEnv(req, mod) {
-    // Retrieve mod-specific configuration from global settings (if available)
-    const modConfig = (global.config.functions && global.config.functions[mod]) || {};
+    // Retrieve mod-specific configuration from global settings (if available).
+    // NOTE: the config key is "Functions" (capital F) - see configLoader.js.
+    const modConfig = (global.config.Functions && global.config.Functions[mod]) || {};
     const allowDB = modConfig.AllowDB;
     const allowDSBot = modConfig.AllowDiscordBot;
     const allowMsg = modConfig.AllowMsgQueue;
@@ -144,15 +149,15 @@ function getSandboxEnv(req, mod) {
             }
           }, allowDB, 'DB'),
         // Indicates whether the request comes from a server (set by authentication middleware)
-        isServer: req.params?.isServer,
+        isServer: req.isServer,
         // GUID identifies the caller; it is null for server requests.
-        GUID: req.params?.GUID || null,
+        GUID: req.GUID || req.params?.GUID || null,
         // Global logger for logging purposes.
         logger: createPrefixedLogger(global.logger, mod, functionName),
         // Provide restricted access to the Discord bot.
         dsbot: createRestrictedResource(discordClient, allowDSBot, 'Discord Bot'),
         msg: createRestrictedResource(async function(queue, message) {
-                const actor = req.params?.isServer ? "Server" : req.params?.GUID;
+                const actor = req.isServer ? "Server" : (req.GUID || req.params?.GUID);
                 return await messagesModel.insertMessage(mod, queue, actor, message);
             }, allowMsg, 'Message Queue'),
         // Input provided by the caller, available to the executed function.

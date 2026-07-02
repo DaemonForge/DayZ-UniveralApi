@@ -220,8 +220,14 @@
     <!-- OpenAI -->
     <details>
       <summary>OpenAI</summary>
-      <label for="OpenAIApi_ApiKey" title="Enter your OpenAI API Key">API Key:</label>
+      <label for="OpenAIApi_ApiKey" title="Enter your OpenAI (or compatible provider) API Key">API Key:</label>
       <input type="password" id="OpenAIApi_ApiKey" name="OpenAIApi_ApiKey">
+      <label for="OpenAIApi_BaseURL" title="Optional. OpenAI-compatible API base URL (e.g. Vultr, Cloudflare Workers AI, Ollama). Leave empty to use OpenAI.">Base URL (optional):</label>
+      <input type="text" id="OpenAIApi_BaseURL" name="OpenAIApi_BaseURL" placeholder="https://api.vultrinference.com/v1">
+      <label for="OpenAIApi_DefaultModel" title="Optional. Default chat model. Required when using a custom Base URL. Leave empty for gpt-4o-mini.">Default Model (optional):</label>
+      <input type="text" id="OpenAIApi_DefaultModel" name="OpenAIApi_DefaultModel" placeholder="gpt-4o-mini">
+      <label for="OpenAIApi_EmbeddingModel" title="Optional. Embedding model for Knowledge Bases. Leave empty for text-embedding-3-large.">Embedding Model (optional):</label>
+      <input type="text" id="OpenAIApi_EmbeddingModel" name="OpenAIApi_EmbeddingModel" placeholder="text-embedding-3-large">
       <div class="toggle-container">
         <label title="Enable prompt Protection on system prompts" class="toggle-switch">
           <input type="checkbox" id="OpenAIApi_enablePromptProtection" name="OpenAIApi_enablePromptProtection">

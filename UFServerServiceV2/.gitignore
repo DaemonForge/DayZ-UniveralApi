@@ -1,6 +1,5 @@
 config.json
 node_modules
-package-lock.json
 dayzwebservice-linux
 dayzwebservice-macos
 dayzwebservice-win.exe

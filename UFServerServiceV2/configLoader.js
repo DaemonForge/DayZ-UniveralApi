@@ -27,6 +27,8 @@ const BASE_DEFAULT_CONFIG = {
   RequestLimitLogger: 500,
   RequestLimitCrypto: 150,
   RateLimitWhiteList: ["127.0.0.1"],
+  TrustProxyHeaders: false,
+  MaxBodySize: "32mb",
   ServerAuth: [],
   ServerAuthLabels: [],
   Certificate: "",
@@ -44,6 +46,9 @@ const BASE_DEFAULT_CONFIG = {
   },
   OpenAIApi: {
     ApiKey: "",
+    BaseURL: "",
+    DefaultModel: "",
+    EmbeddingModel: "",
     enablePromptProtection: true
   },
   Functions: {},
@@ -143,6 +148,10 @@ function normalizeConfig(raw, { ensureAuthToken = false } = {}) {
   result.RequestLimitCrypto = Number(result.RequestLimitCrypto) || BASE_DEFAULT_CONFIG.RequestLimitCrypto;
 
   result.RateLimitWhiteList = ensureArray(result.RateLimitWhiteList, BASE_DEFAULT_CONFIG.RateLimitWhiteList).map(String);
+  result.TrustProxyHeaders = Boolean(result.TrustProxyHeaders);
+  result.MaxBodySize = (typeof result.MaxBodySize === 'string' && result.MaxBodySize.trim())
+    ? result.MaxBodySize.trim()
+    : BASE_DEFAULT_CONFIG.MaxBodySize;
 
   result.ServerAuth = ensureArray(result.ServerAuth);
   if (ensureAuthToken) {

@@ -30,7 +30,7 @@ const requireServerAuth = async (req, res, next) => {
         logger.debug('Server auth successful', { mod: req.params.mod });
         return next();
     }
-    logger.warn(`Unauthorized player data access attempt requireServerAuth ${req.url}`, { mod: req.params.mod, auth });
+    logger.warn(`Unauthorized player data access attempt requireServerAuth ${req.url}`, { mod: req.params.mod });
     return res.status(401).json({ Status: "NoAuth", Error: 'Unauthorized' });
 };
 

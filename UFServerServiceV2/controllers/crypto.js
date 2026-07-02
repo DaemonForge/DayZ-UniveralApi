@@ -20,7 +20,7 @@ router.post('/Convert/:from/:to', requirePlayerOrServerAuth, (req, res)=>{
 });
 
 router.post('/Price/:from/:to', requirePlayerOrServerAuth, (req, res)=>{
-    DoCryptoConvert(res, req.params.from, req.params.to, 1);
+    DoCryptoConvert(res, req, req.params.from, req.params.to, 1);
 });
 
 router.post('/:from', requirePlayerOrServerAuth, (req, res)=>{

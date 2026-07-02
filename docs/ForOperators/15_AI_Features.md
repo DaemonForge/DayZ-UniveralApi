@@ -5,6 +5,7 @@ This document provides a comprehensive reference for AI-powered features: AI Cha
 **Prerequisites**: 
 - OpenAI API key in `config.json` (`OpenAIApi.ApiKey`)
 - Sufficient credits/quota on OpenAI platform
+- Or an OpenAI-compatible provider (Vultr, Cloudflare Workers AI, Ollama, etc.) via `OpenAIApi.BaseURL` — see [Service Configuration](02_ServiceConfiguration.md#openai-compatible-providers-open-source-models). AI Chat and Knowledge Bases work with compatible providers; Assistants and OpenAI TTS require real OpenAI.
 
 ---
 
