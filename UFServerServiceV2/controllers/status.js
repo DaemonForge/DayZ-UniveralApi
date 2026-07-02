@@ -12,7 +12,7 @@ router.post('/', (req, res)=>{
     runStatusCheck(req, res, req.headers['auth-key']);
 });
 
-router.get('', (req, res)=>{
+router.get('/', (req, res)=>{
     runStatusCheck(req, res, req.headers['auth-key']);
 });
 
