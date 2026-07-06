@@ -1,58 +1,17 @@
 // models/indexManager.js
 // Manages MongoDB indexes - retrieving current indexes, creating new ones, and analyzing coverage
 
-const { MongoClient } = require('mongodb');
-const config = global.config;  // Expects: { DBServer, DB }
 const { createLogger } = require('../utils');
+const { getDb } = require('./db');
 const { getAnalyzer } = require('./queryAnalyzer');
 const logger = createLogger(global.logger, 'IndexManager');
-
-// Connection pool
-let _client = null;
-let _db = null;
-let _connectionPromise = null;
-
-async function getConnection() {
-  // Reuse pending connection to prevent race condition
-  if (_connectionPromise) return _connectionPromise;
-  
-  if (_db) {
-    try {
-      await _db.command({ ping: 1 });
-      return _db;
-    } catch (e) {
-      logger.warn("MongoDB connection lost, reconnecting...", { error: e.message });
-      _client = null;
-      _db = null;
-      _connectionPromise = null;
-    }
-  }
-
-  // Create connection promise to prevent race condition
-  _connectionPromise = (async () => {
-    _client = new MongoClient(global.config.DBServer);
-    await _client.connect();
-    _db = _client.db(global.config.DB);
-    logger.info("MongoDB connection established for index management");
-    return _db;
-  })();
-
-  try {
-    const db = await _connectionPromise;
-    _connectionPromise = null;
-    return db;
-  } catch (err) {
-    _connectionPromise = null;
-    throw err;
-  }
-}
 
 /**
  * Gets all collections in the database
  */
 async function getCollections() {
   try {
-    const db = await getConnection();
+    const db = await getDb();
     const collections = await db.listCollections().toArray();
     return collections.map(c => c.name).sort();
   } catch (err) {
@@ -66,7 +25,7 @@ async function getCollections() {
  */
 async function getIndexes(collectionName) {
   try {
-    const db = await getConnection();
+    const db = await getDb();
     const collection = db.collection(collectionName);
     const indexes = await collection.indexes();
     
@@ -196,7 +155,7 @@ async function createIndex(collectionName, indexSpec, options = {}) {
       throw new Error('Index cannot have more than 10 fields (performance concern)');
     }
     
-    const db = await getConnection();
+    const db = await getDb();
     const collection = db.collection(collectionName);
     
     logger.info(`Creating index on ${collectionName}`, { indexSpec, options });
@@ -252,7 +211,7 @@ async function createIndexes(indexRequests) {
  */
 async function dropIndex(collectionName, indexName) {
   try {
-    const db = await getConnection();
+    const db = await getDb();
     const collection = db.collection(collectionName);
     
     // Don't allow dropping _id index
@@ -285,7 +244,7 @@ async function dropIndex(collectionName, indexName) {
  */
 async function getIndexStats(collectionName) {
   try {
-    const db = await getConnection();
+    const db = await getDb();
     const collection = db.collection(collectionName);
     
     const stats = await collection.aggregate([
@@ -309,7 +268,7 @@ async function analyzeCollection(collectionName) {
   try {
     const indexes = await getIndexes(collectionName);
     const stats = await getIndexStats(collectionName);
-    const db = await getConnection();
+    const db = await getDb();
     const collection = db.collection(collectionName);
     
     // Get collection stats
@@ -340,23 +299,6 @@ async function analyzeCollection(collectionName) {
   }
 }
 
-/**
- * Closes the MongoDB connection
- */
-async function closeConnection() {
-  if (_client) {
-    try {
-      await _client.close();
-      logger.info('MongoDB connection closed (IndexManager)');
-    } catch (err) {
-      logger.error('Error closing MongoDB connection', { error: err.message });
-    }
-    _client = null;
-    _db = null;
-    _connectionPromise = null;
-  }
-}
-
 module.exports = {
   getCollections,
   getIndexes,
@@ -366,6 +308,5 @@ module.exports = {
   createIndexes,
   dropIndex,
   getIndexStats,
-  analyzeCollection,
-  closeConnection
+  analyzeCollection
 };

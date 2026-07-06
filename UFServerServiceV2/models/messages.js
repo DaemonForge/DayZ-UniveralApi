@@ -15,82 +15,9 @@
  * Uses the application's MongoDB connection style with connection pooling.
  */
 
-const { MongoClient } = require("mongodb");
 const { createLogger } = require('../utils');
+const { getDb } = require('./db');
 const logger = createLogger(global.logger, 'db.messages');
-
-// Connection pool - reuse connections across requests
-let _client = null;
-let _db = null;
-let _connectionPromise = null;
-
-/**
- * Gets a shared MongoDB connection with automatic reconnection.
- * Uses connection pooling to avoid creating new connections for each request.
- * 
- * @async
- * @function getConnection
- * @returns {Promise<Object>} MongoDB database instance
- */
-async function getConnection() {
-  if (_db) {
-    // Verify connection is still alive
-    try {
-      await _db.command({ ping: 1 });
-      return _db;
-    } catch (e) {
-      logger.warn("MongoDB connection lost, reconnecting...");
-      _client = null;
-      _db = null;
-      _connectionPromise = null;
-    }
-  }
-
-  // Prevent multiple simultaneous connection attempts
-  if (_connectionPromise) {
-    await _connectionPromise;
-    return _db;
-  }
-
-  _connectionPromise = (async () => {
-    try {
-      _client = new MongoClient(global.config.DBServer, {
-        maxPoolSize: 10,
-        minPoolSize: 2,
-        maxIdleTimeMS: 60000,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000
-      });
-      await _client.connect();
-      _db = _client.db(global.config.DB);
-      logger.info("MongoDB connection pool established for Messages");
-      
-      // Handle connection errors
-      _client.on('error', (err) => {
-        logger.error("MongoDB connection error", { error: err.message });
-        _client = null;
-        _db = null;
-        _connectionPromise = null;
-      });
-      
-      _client.on('close', () => {
-        logger.warn("MongoDB connection closed");
-        _client = null;
-        _db = null;
-        _connectionPromise = null;
-      });
-      
-      return _db;
-    } catch (err) {
-      _connectionPromise = null;
-      throw err;
-    }
-  })();
-
-  await _connectionPromise;
-  _connectionPromise = null;
-  return _db;
-}
 
 /**
  * Gets the collections for message operations.
@@ -104,7 +31,7 @@ async function getConnection() {
  *    - playerStatus: The "PlayerMessagesStatus" collection.
  */
 async function getCollections() {
-  const db = await getConnection();
+  const db = await getDb();
   return {
     messages: db.collection("Messages"),
     messagesMeta: db.collection("MessagesMeta"),

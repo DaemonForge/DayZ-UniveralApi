@@ -1,99 +1,26 @@
 // models/players.js
-const { MongoClient } = require("mongodb");
 const { createHash } = require('crypto');
 const { buildUpdateDoc, processValue, createLogger } = require('../utils');
+const { getDb } = require('./db');
 const logger = createLogger(global.logger, 'db.player');
 
-// Connection pool - reuse connections across requests
-let _client = null;
-let _db = null;
-let _connectionPromise = null;
-
 /**
- * Gets a shared MongoDB connection with automatic reconnection.
- * Uses connection pooling to avoid creating new connections for each request.
- * 
- * @async
- * @function getConnection
- * @returns {Promise<Object>} MongoDB database instance
- */
-async function getConnection() {
-  if (_db) {
-    // Verify connection is still alive
-    try {
-      await _db.command({ ping: 1 });
-      return _db;
-    } catch (e) {
-      logger.warn("MongoDB connection lost, reconnecting...", { error: e.message });
-      _client = null;
-      _db = null;
-      _connectionPromise = null;
-    }
-  }
-
-  // Prevent multiple simultaneous connection attempts
-  if (_connectionPromise) {
-    await _connectionPromise;
-    return _db;
-  }
-
-  _connectionPromise = (async () => {
-    try {
-      _client = new MongoClient(global.config.DBServer, {
-        maxPoolSize: 10,
-        minPoolSize: 2,
-        maxIdleTimeMS: 60000,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000
-      });
-      await _client.connect();
-      _db = _client.db(global.config.DB);
-      logger.info("MongoDB connection pool established for Players");
-      
-      // Handle connection errors
-      _client.on('error', (err) => {
-        logger.error("MongoDB connection error", { error: err.message });
-        _client = null;
-        _db = null;
-        _connectionPromise = null;
-      });
-      
-      _client.on('close', () => {
-        logger.warn("MongoDB connection closed");
-        _client = null;
-        _db = null;
-        _connectionPromise = null;
-      });
-      
-      return _db;
-    } catch (err) {
-      _connectionPromise = null;
-      throw err;
-    }
-  })();
-
-  await _connectionPromise;
-  _connectionPromise = null;
-  return _db;
-}
-
-/**
- * Returns the "Players" collection using the pooled connection.
- * 
+ * Returns the "Players" collection using the shared pooled connection.
+ *
  * @deprecated Use getCollection() instead - this is kept for backwards compatibility
  */
 async function getClientAndCollection() {
-    const db = await getConnection();
+    const db = await getDb();
     const collection = db.collection("Players");
     // Return a dummy client with a no-op close for backwards compatibility
     return { client: { close: () => {} }, collection };
 }
 
 /**
- * Returns the "Players" collection using the pooled connection.
+ * Returns the "Players" collection using the shared pooled connection.
  */
 async function getCollection() {
-  const db = await getConnection();
+  const db = await getDb();
   return db.collection("Players");
 }
 

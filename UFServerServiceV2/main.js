@@ -1718,14 +1718,12 @@ app.on('will-quit', async () => {
     (global.logger || console).warn('Error stopping tunnel on exit', { error: err.message });
   }
 
-  // Close MongoDB connection from index manager
+  // Close the shared MongoDB connection pool
   try {
-    const indexManager = getIndexManager();
-    if (indexManager && indexManager.closeConnection) {
-      await indexManager.closeConnection();
-    }
+    const { closeDb } = require('./models/db');
+    await closeDb();
   } catch (err) {
-    (global.logger || console).warn('Error closing IndexManager connection on exit', { error: err.message });
+    (global.logger || console).warn('Error closing MongoDB connection on exit', { error: err.message });
   }
 });
 

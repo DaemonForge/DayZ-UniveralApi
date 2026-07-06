@@ -17,75 +17,9 @@
  * Note: Globals are managed separately via the Globals Editor and are not included here.
  */
 
-const { MongoClient } = require("mongodb");
 const { createLogger } = require('../utils');
+const { getDb } = require('./db');
 const logger = createLogger(global.logger, 'db.modData');
-
-// Connection pool - reuse connections across requests
-let _client = null;
-let _db = null;
-let _connectionPromise = null;
-
-/**
- * Gets a shared MongoDB connection with automatic reconnection.
- * @returns {Promise<Object>} MongoDB database instance
- */
-async function getConnection() {
-  if (_db) {
-    try {
-      await _db.command({ ping: 1 });
-      return _db;
-    } catch (e) {
-      logger.warn("MongoDB connection lost, reconnecting...", { error: e.message });
-      _client = null;
-      _db = null;
-      _connectionPromise = null;
-    }
-  }
-
-  if (_connectionPromise) {
-    await _connectionPromise;
-    return _db;
-  }
-
-  _connectionPromise = (async () => {
-    try {
-      _client = new MongoClient(global.config.DBServer, {
-        maxPoolSize: 10,
-        minPoolSize: 2,
-        maxIdleTimeMS: 60000,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000
-      });
-      await _client.connect();
-      _db = _client.db(global.config.DB);
-      logger.info("MongoDB connection pool established for ModData");
-      
-      _client.on('error', (err) => {
-        logger.error("MongoDB connection error", { error: err.message });
-        _client = null;
-        _db = null;
-        _connectionPromise = null;
-      });
-      
-      _client.on('close', () => {
-        logger.warn("MongoDB connection closed");
-        _client = null;
-        _db = null;
-        _connectionPromise = null;
-      });
-      
-      return _db;
-    } catch (err) {
-      _connectionPromise = null;
-      throw err;
-    }
-  })();
-
-  await _connectionPromise;
-  _connectionPromise = null;
-  return _db;
-}
 
 /**
  * Scans all collections and returns a map of mod names with their data counts
@@ -93,7 +27,7 @@ async function getConnection() {
  */
 async function scanInstalledMods() {
   try {
-    const db = await getConnection();
+    const db = await getDb();
     
     if (!db) {
       throw new Error('Database connection not available');
@@ -304,7 +238,7 @@ async function deleteModData(modName) {
       throw new Error('Cannot delete system/backend data. AUTH and System collections are protected.');
     }
 
-    const db = await getConnection();
+    const db = await getDb();
     const deleteSummary = {
       modName: modName,
       collections: {},

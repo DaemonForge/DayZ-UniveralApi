@@ -105,12 +105,10 @@ async function gracefulShutdown(signal) {
     clearInterval(proxyRenewInterval);
   }
 
-  // Close MongoDB connection — each worker has its own connection
+  // Close the shared MongoDB connection pool (each worker process has its own)
   try {
-    const indexManager = require('./models/indexManager');
-    if (indexManager && indexManager.closeConnection) {
-      await indexManager.closeConnection();
-    }
+    const { closeDb } = require('./models/db');
+    await closeDb();
   } catch (_) { /* closing silently is fine for workers */ }
 
   process.exit(0);
