@@ -37,6 +37,10 @@ static const int UF_UNAUTHORIZED = 401;     // Authentication failed or expired
 static const int UF_AI_CHAT_MAX_POLL_TIME = 300; // Maximum polling duration in seconds (5 minutes)
 static const int UF_AI_CHAT_MAX_RETRIES = 3;     // Maximum number of failed status check retries
 
+// REST read operation timeout in seconds. RestApi is a singleton and this option is only
+// applied by whichever code path creates it first, so every creation site must use this value.
+static const int UF_REST_READ_TIMEOUT = 30;
+
 // AI Chat Status Codes
 static const int UF_AI_PENDING = 202;       // AI processing is in progress
 static const int UF_AI_PROCESSING = 102;    // AI request is still being processed

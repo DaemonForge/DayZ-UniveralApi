@@ -95,45 +95,34 @@ modded class PlayerBase extends ManBase {
 		//any leftover or new stacks
 		while (currentAmount > 0 && !stoploop && MaxLoop > 0){
 			MaxLoop--;
-			ItemBase newItem = ItemBase.Cast(this.GetInventory().CreateInInventory(itemType));
-			if (!newItem){
+			EntityAI newEnt = this.GetInventory().CreateInInventory(itemType);
+			if (!newEnt){
 				stoploop = true; //To stop the loop from running away since it couldn't create an item
 				for (int j = 0; j < itemsArray.Count(); j++){
 					Class.CastTo(item, itemsArray.Get(j));
-					if (item){ 
-						newItem = ItemBase.Cast(item.GetInventory().CreateInInventory(itemType)); //CreateEntityInCargo	
-						if (newItem){
-							//MLLog.Debug("NewItem Created " + newItem.GetType() + " in " + item.GetType());
+					if (item){
+						newEnt = item.GetInventory().CreateInInventory(itemType); //CreateEntityInCargo
+						if (newEnt){
 							stoploop = false; //Item was created so we don't need to stop the loop anymore
 							break;
 						}
 					}
 				}
 			}
-			
-			Magazine newMagItem = Magazine.Cast(newItem);
-			Ammunition_Base newammoItem = Ammunition_Base.Cast(newItem);
-			if (newMagItem && !newammoItem)	{	
-				int SetAmount = currentAmount;
-				if (newMagItem.GetQuantityMax() <= currentAmount){
-					SetAmount = currentAmount;
-					currentAmount = 0;
-				} else {
-					SetAmount = newMagItem.GetQuantityMax();
-					currentAmount = currentAmount - SetAmount;
+
+			if (newEnt){
+				//Cast failure does NOT mean creation failure - weapons and other non-ItemBase entities still spawn
+				ItemBase newItem = ItemBase.Cast(newEnt);
+				if (newItem && hasQuantity){
+					// USetQuantity handles regular items, magazines and ammo piles
+					int beforeAmount = currentAmount;
+					currentAmount = newItem.USetQuantity(currentAmount);
+					if (currentAmount >= beforeAmount){
+						currentAmount--; //item holds no quantity (zero max) - count it as one so the loop terminates
+					}
+				} else { //It created just one of the item
+					currentAmount--;
 				}
-				newMagItem.ServerSetAmmoCount(SetAmount);
-			} else if (hasQuantity){
-				if (newammoItem){
-					currentAmount = newammoItem.USetQuantity(currentAmount);
-	
-				}	
-				ItemBase newItemBase;
-				if (Class.CastTo(newItemBase, newItem)){
-					currentAmount = newItemBase.USetQuantity(currentAmount);
-				}
-			} else { //It created just one of the item
-				currentAmount--;
 			}
 		}
 		return currentAmount;
@@ -164,9 +153,20 @@ modded class PlayerBase extends ManBase {
 		}
 		for (int i = 0; i <= StacksRequired; i++){
 			if (AmountToSpawn > 0){
-				ItemBase newItem = ItemBase.Cast(g_Game.CreateObjectEx(Type, GetPosition(), ECE_PLACE_ON_SURFACE));
+				Object newObj = g_Game.CreateObjectEx(Type, GetPosition(), ECE_PLACE_ON_SURFACE);
+				if (!newObj){
+					break; //spawn failed, don't keep trying
+				}
+				//Cast failure does NOT mean spawn failure - weapons and other non-ItemBase entities still spawn
+				ItemBase newItem = ItemBase.Cast(newObj);
 				if (newItem && HasQuantity){
+					int beforeSpawn = AmountToSpawn;
 					AmountToSpawn = newItem.USetQuantity(AmountToSpawn);
+					if (AmountToSpawn >= beforeSpawn){
+						AmountToSpawn--; //item holds no quantity (zero max) - count it as one so the loop terminates
+					}
+				} else {
+					AmountToSpawn--; //one non-stackable (or non-ItemBase) item spawned
 				}
 			}
 		}
@@ -228,7 +228,7 @@ modded class PlayerBase extends ManBase {
 	 * 
 	 * @param item ItemBase to modify (name is misleading - works for any quantified item)
 	 * @param amount Quantity to set
-	 * @return True if quantity was set successfully, false otherwise
+	 * @return True if the full amount was set, false if item is null or amount exceeded the item's capacity
 	 * 
 	 * @usage
 	 * ItemBase mag = Magazine.Cast(player.GetItemInHands());
@@ -240,22 +240,11 @@ modded class PlayerBase extends ManBase {
 	 */
 	bool USetMoneyAmount(ItemBase item, int amount)
 	{
-		ItemBase money = ItemBase.Cast(item);
-		if (!money){
+		if (!item){
 			return false;
 		}
-		if ( money.IsMagazine() ){
-			Magazine mag = Magazine.Cast(money);
-			if (mag){
-				return true;
-				mag.ServerSetAmmoCount(amount);
-			}
-		}
-		else{
-			money.SetQuantity(amount);
-			return true;
-		}
-		return false;
+		//Delegate to the shared setter which clamps magazines and stacks to their capacity
+		return item.USetQuantity(amount) == 0;
 	}
 	
 	/**

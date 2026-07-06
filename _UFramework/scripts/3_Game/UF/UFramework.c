@@ -125,12 +125,12 @@ class UFramework extends Managed {
 			if (!m_PlayerEndPoint){
 				m_PlayerEndPoint = new UDBEndpoint("Player");
 				if (!m_PlayerEndPoint){
-					Error2("[UF] db(OBJECT_DB)", "CRITICAL: Failed to create Player endpoint!");
+					Error2("[UF] db(PLAYER_DB)", "CRITICAL: Failed to create Player endpoint!");
 				}
 			}
 			return m_PlayerEndPoint;
 		}
-		Error2("[UF] db(OBJECT_DB)", "Invalid collection type: " + collection + " - use OBJECT_DB or PLAYER_DB");
+		Error2("[UF] db()", "Invalid collection type: " + collection + " - use OBJECT_DB or PLAYER_DB");
 		return NULL;
 	}
 	
@@ -590,215 +590,17 @@ class UFramework extends Managed {
 		
 	/**
 	 * Returns the static RestApi instance. If it does not exist, the method creates a new one and sets its
-	 * read operation option to 15.
+	 * read operation timeout to UF_REST_READ_TIMEOUT.
 	 *
 	 * @return RestApi instance used for API interactions.
 	 */
 
-	/**
-	 * Retrieves the authentication token. For client instances, if a valid m_UFauthToken exists, returns its token;
-	 * for server instances, returns the token from the server configuration (UFConfig().ServerAuth).
-	 * If neither condition is met, returns the string "null".
-	 *
-	 * @return String representing the authentication token.
-	 */
-
-	/**
-	 * Validates the current authentication token by ensuring it is neither "null", "error", "ERROR", nor an empty string.
-	 *
-	 * @return Boolean value indicating whether the authentication token is valid.
-	 */
-
-	/**
-	 * Returns the UniversalRest instance to handle REST callback endpoints (legacy system). Lazily initializes 
-	 * the instance if it is not already available.
-	 *
-	 * @return UniversalRest instance for processing REST callbacks.
-	 */
-
-	/**
-	 * Destructor of the UFramework class. On server instances where the framework is initialized, this method
-	 * removes scheduled callbacks from the game's system call queue and deallocates the m_UFauthToken to free resources.
-	 */
-
-	/**
-	 * Initializes the UFramework by detecting the server environment, setting global initialization flags,
-	 * and registering necessary RPC endpoints for subsequent REST API calls and authentication processes.
-	 * For servers, it also schedules periodic status checks and renewals for Q Random numbers.
-	 */
-
-	/**
-	 * RPC handler for receiving UFramework configuration and authentication token from the server.
-	 * Upon receiving valid data, this method resets authentication retry counts and schedules further processing,
-	 * such as updating service statuses and retrieving Discord user info.
-	 *
-	 * @param type CallType of the RPC.
-	 * @param ctx Context for reading parameters, expected to carry ApiAuthToken and UFrameworkConfig.
-	 * @param sender PlayerIdentity that sent the RPC call.
-	 * @param target The RPC call target object.
-	 */
-
-	/**
-	 * Callback function invoked after the authentication token has been received and processed.
-	 * It logs the receipt of the token, triggers a status update on the API, initiates Discord user info retrieval,
-	 * and notifies the mission object that the framework is ready.
-	 */
-
-	/**
-	 * RPC handler to manage retry requests for fetching an authentication token. If running on a client,
-	 * it increments a retry counter and schedules another token request after an increasing delay, up to 20 times.
-	 *
-	 * @param type CallType of the RPC.
-	 * @param ctx Context for reading the retry flag.
-	 * @param sender PlayerIdentity requesting the retry.
-	 * @param target The RPC call target object.
-	 */
-
-	/**
-	 * Requests an authentication token by sending the appropriate RPC call to the server.
-	 * This method is only executed on client instances.
-	 *
-	 * @param first Boolean flag indicating whether this is the initial request.
-	 */
-
-	/**
-	 * Initiates a REST-based authentication process for a given player by GUID.
-	 *
-	 * @param guid Unique identifier for the player.
-	 */
-
-	/**
-	 * Caches the player's authentication token in a map structure. If the player is currently connected,
-	 * the token is directly sent to the player's identity.
-	 *
-	 * @param guid Unique identifier for the player.
-	 * @param auth Authentication token to be cached and possibly delivered immediately.
-	 */
-
-	/**
-	 * Retrieves a cached authentication token for a player.
-	 * If the token is found in the cache, it is returned via the out parameter and the method returns true.
-	 * Otherwise, an error is logged and the method returns false.
-	 *
-	 * @param guid Unique identifier for the player.
-	 * @param auth Out parameter to hold the retrieved authentication token.
-	 * @return Boolean indicating whether a valid token was found.
-	 */
-
-	/**
-	 * RPC handler for client requests to fetch an authentication token.
-	 * Verifies server configuration and either sends a cached token, triggers a token renewal, or requests a retry.
-	 *
-	 * @param type CallType of the RPC.
-	 * @param ctx Context for reading the retry flag.
-	 * @param sender PlayerIdentity requesting the authentication token.
-	 * @param target The RPC call target object.
-	 */
-
-	/**
-	 * Sends the authentication token and partial configuration to a specified player's identity via RPC.
-	 * Ensures that the target identity and token are valid before transmission.
-	 *
-	 * @param idenitity PlayerIdentity receiving the token.
-	 * @param auth The authentication token string to be sent.
-	 */
-
-	/**
-	 * Handles authentication errors for a given player GUID.
-	 * Depending on the online status and whether the error occurs on the server or client,
-	 * schedules a retry for obtaining the authentication token after a predefined delay.
-	 *
-	 * @param guid Unique identifier for the player with the authentication error.
-	 */
-
-	/**
-	 * Sends a Discord message by constructing a Discord object with content, bot name, and avatar URL,
-	 * then posting it to the specified webhook URL.
-	 *
-	 * @param webhookUrl The Discord webhook URL to post the message.
-	 * @param message The message content.
-	 * @param botName Optional parameter for the bot's name.
-	 * @param botAvatarUrl Optional parameter for the bot's avatar URL.
-	 */
-
-	/**
-	 * Sends a Discord object by converting it to JSON format and posting it to the specified Discord webhook URL.
-	 *
-	 * @param webhookUrl The Discord webhook URL.
-	 * @param discordObject The constructed UDiscordObject containing message details.
-	 */
-
-	/**
-	 * Converts a REST error code into its corresponding human-readable string description.
-	 *
-	 * @param ErrorCode An integer representing the REST error code.
-	 * @return String description corresponding to the error code.
-	 */
-
-	/**
-	 * Generates a unique call identifier by incrementing an internal counter.
-	 *
-	 * @return Integer representing a new unique call ID.
-	 */
-
-	/**
-	 * Registers a REST callback by assigning it a unique call ID and inserting it into an internal map.
-	 * The method returns the registered callback instance.
-	 *
-	 * @param cb Instance of UFRestCallBackBase representing the callback.
-	 * @param cid Output parameter to store the unique call ID.
-	 * @return UFRestCallBackBase instance that has been registered.
-	 */
-
-	/**
-	 * Clears a previously registered callback based on its call ID.
-	 * If the callback is found, it is deleted and removed from the internal callbacks map.
-	 * Logs an error if the callback cannot be found.
-	 *
-	 * @param cid Unique call ID of the callback to clear.
-	 * @param traceDebug Additional debugging information for logging purposes.
-	 */
-
-	/**
-	 * Checks whether a given call (identified by its call ID) has been marked as cancelled.
-	 *
-	 * @param cid The unique call ID to check.
-	 * @return Boolean indicating whether the call has been cancelled.
-	 */
-
-	/**
-	 * Initiates a REST API call to fetch new random numbers (Q Random Numbers) for internal use.
-	 * Ensures that a previous request is not still in progress before making a new one.
-	 */
-
-	/**
-	 * Callback function handling the response from the Q Random Numbers request.
-	 * On success, updates the internal Q Random Numbers and reseeds the vanilla random number generator.
-	 * Logs an error if the retrieval fails.
-	 *
-	 * @param cid Unique call ID associated with the random number request.
-	 * @param status REST API status code for the request.
-	 * @param oid Operation identifier.
-	 * @param data Response data containing the new random numbers.
-	 */
-
-	/**
-	 * Callback function for processing the web service status check response.
-	 * Evaluates the service version, authentication status, Discord service availability, and general error conditions.
-	 * Depending on the received data, it sets internal status flags, logs warnings or errors,
-	 * and handles service version mismatches.
-	 *
-	 * @param cid Unique call ID for the status check request.
-	 * @param status REST API status code indicating success, error, or timeout.
-	 * @param oid Operation identifier.
-	 * @param data UFStatus object containing service details and potential errors.
-	 */
 	protected static RestApi RestCore()
 	{
 		RestApi clCore = GetRestApi();
 		if (!clCore) {
 			clCore = CreateRestApi();
-			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
+			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, UF_REST_READ_TIMEOUT);
 		}
 		return clCore;
 	}
@@ -1054,8 +856,19 @@ class UFramework extends Managed {
 	 */
 	void OnRPC_RequestRetry(ParamsReadContext ctx, PlayerIdentity sender) {
 		if (g_Game.IsClient() && ++m_AuthRetries <= 20){
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.RequestAuthToken, m_AuthRetries * 2200, false, true);
+			//Send directly instead of via RequestAuthToken - the 30s forced-request cooldown
+			//(stamped by the initial connect request) would silently swallow the retry
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.SendAuthRequestRPC, m_AuthRetries * 2200, false);
 		}
+	}
+
+	/**
+	 * Sends the auth request RPC for a server-solicited retry, bypassing the client-side
+	 * rate limits. Pacing comes from the retry ladder itself (m_AuthRetries * 2200ms, max 20).
+	 */
+	protected void SendAuthRequestRPC(){
+		UFLog.Debug("[Auth] Sending server-solicited auth retry RPC (attempt " + m_AuthRetries + ")");
+		GetGame().RPCSingleParam(NULL, UF_RPC_REQUEST_AUTH, new Param1<bool>(true), true);
 	}
 	
 	protected int m_LastRequestAuthRetry = 0;
@@ -1227,12 +1040,10 @@ class UFramework extends Managed {
 					ClearPlayerAuth(guid);
 					PreparePlayerAuth(guid);
 				} else {
-					UFLog.Debug("[Auth] [SERVER] Player not found for " + guid + ", requesting client retry");
-					// Try to find any player object to send retry RPC
-					DayZPlayer player = FindPlayer(guid);
-					if (player){
-						GetGame().RPCSingleParam(player, UF_RPC_REQUEST_RETRY, new Param1<bool>(true), true, identity);
-					}
+					UFLog.Debug("[Auth] [SERVER] Player object not found for " + guid + " yet, requesting client retry");
+					// Player object doesn't exist yet (still connecting) - NULL target works,
+					// the identity is enough to route the RPC to the client
+					GetGame().RPCSingleParam(NULL, UF_RPC_REQUEST_RETRY, new Param1<bool>(true), true, identity);
 				}
 			} else {
 				UFLog.Err("[Auth] [SERVER] ServerAuth is empty or null - cannot process auth request");
@@ -1276,10 +1087,15 @@ class UFramework extends Managed {
 	
 	void AuthError(string guid){
 		UFLog.Err("Auth Error for " + guid);
-		//If Auth Token Failed just try again in 3 minutes 
-		if (guid != "" && IsOnline()){
+		//Clear the pending flag so MissionServer.EnsureAuthDelivered retries aren't skipped as duplicates
+		if (m_PendingAuthRequests){
+			m_PendingAuthRequests.RemoveItem(guid);
+		}
+		//If Auth Token Failed just try again in 3 minutes while the player is still connected.
+		//No IsOnline() gate - the retry itself is the recovery probe when the service was down at boot
+		if (guid != "" && m_IsServer && FindPlayer(guid)){
 			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(Rest().GetAuth, 180 * 1000, false, guid);
-		} 
+		}
 		if (!m_IsServer && !IsOnline()){
 			UF().api().Status(this, "CBStatusCheck");
 			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.AuthError, 300 * 1000, false, guid);
@@ -1381,9 +1197,7 @@ class UFramework extends Managed {
 	void ClearCallback(int cid, string traceDebug){
 		if (!m_UCallBacks) return;
 		if (cid == -1) return;
-		UFRestCallBackBase cb;
-		if (m_UCallBacks.Find(cid, cb)){
-			delete cb;
+		if (m_UCallBacks.Contains(cid)){
 			m_UCallBacks.Remove(cid);
 		} else {
 			Error2("[UF] Error couldn't find call back", "CallId: " + cid + "\n--------\n " + traceDebug + "\n--------\n");
@@ -1433,7 +1247,7 @@ class UFramework extends Managed {
 			}
 			if (data.Error == "noauth"){
 				m_UFOnline = false;
-				UFLog.Err("Auth Key is not vaild");
+				UFLog.Err("Auth Key is not valid");
 				if (!m_IsServer){
 					this.RequestAuthToken(false);
 				}
@@ -1479,13 +1293,13 @@ class UFramework extends Managed {
 			}					
 			return;
 		} else if (status == UF_ERROR){
-			Error2("UnviersalApi", "[UF] Something went wrong communicating with the webservice check to make sure it is installed correctly and the mongodb service is running correctly! URL: " + UFConfig().GetBaseURL());
+			Error2("UniversalApi", "[UF] Something went wrong communicating with the webservice check to make sure it is installed correctly and the mongodb service is running correctly! URL: " + UFConfig().GetBaseURL());
 			m_UFOnline = false;
 		}  else if (status == UF_TIMEOUT){
-			Error2("UnviersalApi", "[UF] Webservice is offline or unreachable! URL: " + UFConfig().GetBaseURL());
+			Error2("UniversalApi", "[UF] Webservice is offline or unreachable! URL: " + UFConfig().GetBaseURL());
 			m_UFOnline = false;
 		} else {
-			Error2("UnviersalApi", "[UF] Error with WebService! Status: " + status + " URL: " + UFConfig().GetBaseURL());
+			Error2("UniversalApi", "[UF] Error with WebService! Status: " + status + " URL: " + UFConfig().GetBaseURL());
 			m_UFOnline = false;
 		}
 		

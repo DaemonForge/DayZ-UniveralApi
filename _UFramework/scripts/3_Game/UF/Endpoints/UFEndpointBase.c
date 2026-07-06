@@ -83,7 +83,7 @@ class UFBaseEndpoint extends Managed {
 				Error2("[UF] UFBaseEndpoint::Api()", "CRITICAL: Failed to create RestApi!");
 				return null;
 			}
-			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 30);
+			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, UF_REST_READ_TIMEOUT);
 			clCore.EnableDebug(false);
 		}
 		

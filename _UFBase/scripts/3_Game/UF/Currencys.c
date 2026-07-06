@@ -27,13 +27,30 @@ class UCurrency extends UCurrencyBase{
 	static UCurrency GetCurrency(string key){
 		return m_UCurrencysMap.Get(key);
 	}
-	
-	static int GetLastIndex(string key){
-		return m_UCurrencysMap.Get(key).Count() - 1;
+
+	//Returns the currency only if it is registered with at least one denomination, NULL otherwise
+	static UCurrency GetConfigured(string key){
+		UCurrency currency = m_UCurrencysMap.Get(key);
+		if (!currency || currency.Count() < 1){
+			return NULL;
+		}
+		return currency;
 	}
-	
+
+	static int GetLastIndex(string key){
+		UCurrency currency = m_UCurrencysMap.Get(key);
+		if (!currency){
+			return -1; //unregistered key - callers loop downward from this, so -1 is a safe no-op
+		}
+		return currency.Count() - 1;
+	}
+
 	static int GetLowestDenominationValue(string key){
-		return m_UCurrencysMap.Get(key).LowestDenominationValue();
+		UCurrency currency = m_UCurrencysMap.Get(key);
+		if (!currency || currency.Count() < 1){
+			return 0; //unregistered key - don't null-deref for external callers
+		}
+		return currency.LowestDenominationValue();
 	}
 	
 	static UCurrency Register(string key, TStringIntMap currency){

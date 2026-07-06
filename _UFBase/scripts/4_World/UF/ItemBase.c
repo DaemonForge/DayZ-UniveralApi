@@ -53,21 +53,32 @@ modded class ItemBase {
 	 *     Print("Couldn't add " + overflow + " ml - canteen full");
 	 * }
 	 */
-    int UAddQuantity(float amount) {	
-        if (!IsMagazine()) {
-            int remainingQty = GetQuantityMax() - GetQuantity();
-			if (remainingQty == 0){
+    int UAddQuantity(float amount) {
+        Magazine mag;
+        if (IsMagazine() && Class.CastTo(mag, this)) {
+            // Magazines and ammo piles track quantity via ammo count
+            int remainingAmmo = mag.GetAmmoMax() - mag.GetAmmoCount();
+            if (remainingAmmo <= 0){
                 return amount;
-			}
-            if ( amount >= remainingQty ) {
-                AddQuantity(remainingQty);
-                return amount - remainingQty;
-            } else {
-                AddQuantity(amount);
-                return 0;
             }
-		}        
-        return amount;
+            if ( amount >= remainingAmmo ) {
+                mag.ServerSetAmmoCount(mag.GetAmmoMax());
+                return amount - remainingAmmo;
+            }
+            mag.ServerSetAmmoCount(mag.GetAmmoCount() + amount);
+            return 0;
+        }
+        int remainingQty = GetQuantityMax() - GetQuantity();
+        if (remainingQty == 0){
+            return amount;
+        }
+        if ( amount >= remainingQty ) {
+            AddQuantity(remainingQty);
+            return amount - remainingQty;
+        } else {
+            AddQuantity(amount);
+            return 0;
+        }
 	}
 
 	/**
@@ -84,18 +95,32 @@ modded class ItemBase {
 	 *     Print("Item can only hold " + rice.GetQuantity() + "g, excess: " + excess + "g");
 	 * }
 	 */
-    int USetQuantity(float amount) {	
-        if (!IsMagazine()) {
-            int maxQty = GetQuantityMax();			
-            if ( amount >= maxQty ) {
-                SetQuantity(maxQty);
-                return amount - maxQty;
-            } else {
-                SetQuantity(amount);
-                return 0;
+    int USetQuantity(float amount) {
+        Magazine mag;
+        if (IsMagazine() && Class.CastTo(mag, this)) {
+            // Magazines and ammo piles track quantity via ammo count
+            int maxAmmo = mag.GetAmmoMax();
+            if (maxAmmo <= 0){
+                return amount;
             }
-		}        
-        return amount;
+            if ( amount >= maxAmmo ) {
+                mag.ServerSetAmmoCount(maxAmmo);
+                return amount - maxAmmo;
+            }
+            mag.ServerSetAmmoCount(amount);
+            return 0;
+        }
+        int maxQty = GetQuantityMax();
+        if (maxQty <= 0){
+            return amount; //no quantity capacity (e.g. quantityBar with no varQuantityMax) - nothing can be stored
+        }
+        if ( amount >= maxQty ) {
+            SetQuantity(maxQty);
+            return amount - maxQty;
+        } else {
+            SetQuantity(amount);
+            return 0;
+        }
 	}
     
 	/**

@@ -15,20 +15,14 @@ class UFRestCallBackBase : RestCallback
 	 * @param errorCode The error code from the REST API
 	 */
 	override void OnError(int errorCode) {
-		//Always call super to prevent memory leaks
-		string debugtrace;
-		DumpStackString(debugtrace);
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UF().ClearCallback,m_UFid, debugtrace);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UF().ClearCallback, m_UFid, "UFRestCallBackBase::OnError code=" + errorCode);
 	};
 	
 	/**
 	 * Called when REST API call times out
 	 */
 	override void OnTimeout() {
-		//Always call super to prevent memory leaks
-		string debugtrace;
-		DumpStackString(debugtrace);
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UF().ClearCallback,m_UFid, debugtrace);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UF().ClearCallback, m_UFid, "UFRestCallBackBase::OnTimeout");
 	};
 	
 	/**
@@ -37,10 +31,7 @@ class UFRestCallBackBase : RestCallback
 	 * @param dataSize Size of the response data
 	 */
 	override void OnSuccess(string data, int dataSize) {
-		//Always call super to prevent memory leaks
-		string debugtrace;
-		DumpStackString(debugtrace);
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UF().ClearCallback, m_UFid, debugtrace);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(UF().ClearCallback, m_UFid, "UFRestCallBackBase::OnSuccess");
 	};
 	
 	/**
@@ -78,7 +69,7 @@ class UFCallback<Class T> extends UFCallbackBase {
 	 * @param cid The call ID
 	 */
 	override void OnError(int errorCode, int cid) {
-		UFLog.Err("UFCallback<" + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
+		UFLog.Err("UFCallback OnError ErrorCode: " + UUtil.RestErrorToString(errorCode) + "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != "") {
 			Param4<int, int, string, T> p = new Param4<int, int, string, T>(cid, errorCode, OID, null);
 			UFLog.Debug("" + GetInstance());
@@ -161,7 +152,7 @@ class UFCallbackLoader<Class T> extends UFCallbackBase {
 	 * @param cid The call ID
 	 */
 	override void OnError(int errorCode, int cid) {
-		UFLog.Err("UFCallbackLoader<" + "> OnError  ErrorCode: " + UUtil.RestErrorToString(errorCode)+ "(" + errorCode + ")" + " cid:" + cid);
+		UFLog.Err("UFCallbackLoader OnError ErrorCode: " + UUtil.RestErrorToString(errorCode) + "(" + errorCode + ")" + " cid:" + cid);
 		if (GetInstance() && Function != "") {
 			g_Game.GameScript.CallFunctionParams(GetInstance(), Function, NULL, new Param4<int, int, string, T>(cid, errorCode, OID, NULL));
 		}
@@ -346,20 +337,18 @@ class UNestedCallBack : UFRestCallBackBase
 		m_UFid = -1;
 	}
 	
-	void ~UNestedCallBack(){
-		if(m_CB) delete m_CB;
-	}
-	
 	/**
 	 * Called when REST API call encounters an error
 	 * Translates REST error codes to UF status codes and forwards to nested callback
 	 * @param errorCode The REST error code
 	 */
 	override void OnError(int errorCode) {
+		if (!m_CB){
+			return; //terminal event already handled for this request (engine double-fire)
+		}
 		UFLog.Debug("[UNestedCallBack] OnError - CID: " + m_UFid + ", ErrorCode: " + errorCode);
 		if (UF().IsCallCanceled(m_UFid)){
 			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnError " + UF().ErrorToString(errorCode));
-			delete m_CB;
 			m_CB = NULL;
 			super.OnError(errorCode);
 			return;
@@ -370,7 +359,6 @@ class UNestedCallBack : UFRestCallBackBase
 		}
 		UFLog.Debug("[UNestedCallBack] Forwarding OnError to callback, status: " + rstatus);
 		GetCB().OnError(rstatus, m_UFid);
-		delete m_CB;
 		m_CB = NULL;
 		super.OnError(errorCode);
 	};
@@ -380,10 +368,12 @@ class UNestedCallBack : UFRestCallBackBase
 	 * Forwards UF_TIMEOUT status to nested callback
 	 */
 	override void OnTimeout() {
+		if (!m_CB){
+			return; //terminal event already handled for this request (engine double-fire)
+		}
 		UFLog.Debug("[UNestedCallBack] OnTimeout - CID: " + m_UFid);
 		if (UF().IsCallCanceled(m_UFid)){
 			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnTimeout");
-			delete m_CB;
 			m_CB = NULL;
 			super.OnTimeout();
 			return;
@@ -391,7 +381,6 @@ class UNestedCallBack : UFRestCallBackBase
 		
 		UFLog.Debug("[UNestedCallBack] Forwarding OnTimeout to callback");
 		GetCB().OnError(UF_TIMEOUT, m_UFid);
-		delete m_CB;
 		m_CB = NULL;
 		super.OnTimeout();
 	};
@@ -403,9 +392,11 @@ class UNestedCallBack : UFRestCallBackBase
 	 * @param dataSize Size of the response data
 	 */
 	override void OnSuccess(string data, int dataSize) {
+		if (!m_CB){
+			return; //terminal event already handled for this request (engine double-fire)
+		}
 		if (UF().IsCallCanceled(m_UFid)){
 			UFLog.Debug("Call " + m_UFid + " not called as it was requested to be canceled - OnSuccess");
-			delete m_CB;
 			m_CB = NULL;
 			super.OnSuccess(data, dataSize);
 			return;
@@ -413,14 +404,15 @@ class UNestedCallBack : UFRestCallBackBase
 		if (dataSize <= 0 || data == "{}" || data == "" || data == "{ }"){
 			UFLog.Debug("[UNestedCallBack] Empty data, forwarding as UF_EMPTY");
 			GetCB().OnError(UF_EMPTY, m_UFid);
-			delete m_CB;
 			m_CB = NULL;
 			super.OnSuccess(data, dataSize);
 			return;
 		}
-		UFLog.Debug("[UNestedCallBack] Forwarding OnSuccess to callback, data: " + data.Substring(0, Math.Min(200, data.Length())));
+		if (UFLog.IsDebug()){
+			//Guarded: the substring+concat would otherwise be built on every successful REST response
+			UFLog.Debug("[UNestedCallBack] Forwarding OnSuccess to callback, data: " + data.Substring(0, Math.Min(200, data.Length())));
+		}
 		GetCB().OnSuccess(data, m_UFid);
-		delete m_CB;
 		m_CB = NULL;
 		super.OnSuccess(data, dataSize);
 	};

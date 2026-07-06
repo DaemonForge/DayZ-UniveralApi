@@ -26,7 +26,11 @@ modded class PlayerBase extends ManBase{
 	 * }
 	 */
 	bool UCanAcceptCurrency(string key, ItemBase item){
-		return !item.IsRuined() || UCurrency.GetCurrency(key).CanUseRuined();
+		UCurrency currency = UCurrency.GetCurrency(key);
+		if (!item || !currency){
+			return false;
+		}
+		return !item.IsRuined() || currency.CanUseRuined();
 	}
 	
 	
@@ -50,25 +54,37 @@ modded class PlayerBase extends ManBase{
 	 */
 	int UGetPlayerBalance(string key){
 		int PlayerBalance = 0;
-		if (!UCurrency.GetCurrency(key) || UCurrency.GetCurrency(key).Count() < 1){
+		UCurrency currency = UCurrency.GetConfigured(key);
+		if (!currency){
 			UCurrency.UDebug();
 			UFLog.Err("Currency key: " + key + " is not configured");
 			return 0;
 		}
+		//Precompute lowered denomination names once (case-insensitive to match URemoveMoneyInventory)
+		array<string> denomTypes = new array<string>;
+		for (int j = 0; j < currency.Count(); j++){
+			if (!currency.Get(j)){
+				UFLog.Err("Currency key: " + key + " idx " + j + " is NULL");
+				UCurrency.UDebug();
+				denomTypes.Insert("");
+				continue;
+			}
+			string denomType = currency.Get(j).TypeClass();
+			denomType.ToLower();
+			denomTypes.Insert(denomType);
+		}
 		array<EntityAI> inventory = new array<EntityAI>;
 		this.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, inventory);
-		
+
 		ItemBase item;
 		for (int i = 0; i < inventory.Count(); i++){
 			if (Class.CastTo(item, inventory.Get(i))){
-				for (int j = 0; j < UCurrency.GetCurrency(key).Count(); j++){
-					if (!UCurrency.GetCurrency(key).Get(j)){
-						UFLog.Err("Currency key: " + key + " idx " + j + " is NULL");
-						UCurrency.UDebug();
-						break;
-					}
-					if (item.GetType() == UCurrency.GetCurrency(key).Get(j).TypeClass() && UCanAcceptCurrency(key, item)){
-						PlayerBalance += UCurrentQuantity(item) * UCurrency.GetCurrency(key).Get(j).Value();
+				string itemType = item.GetType();
+				itemType.ToLower();
+				for (j = 0; j < denomTypes.Count(); j++){
+					if (denomTypes.Get(j) != "" && itemType == denomTypes.Get(j) && UCanAcceptCurrency(key, item)){
+						PlayerBalance += UCurrentQuantity(item) * currency.Get(j).Value();
+						break; //an item can only be one denomination
 					}
 				}
 			}
@@ -84,7 +100,7 @@ modded class PlayerBase extends ManBase{
 	 * 
 	 * @param key Currency key (from UCurrency configuration)
 	 * @param Amount Total currency value to add
-	 * @return 0 = all added to inventory, 1 = some spawned on ground, 2 = invalid amount (<= 0)
+	 * @return 0 = all added to inventory, 1 = some spawned on ground, 2 = invalid amount or unconfigured currency
 	 * 
 	 * @usage Award Quest Reward:
 	 * int result = player.UAddMoney("RUB", 1250);
@@ -100,42 +116,63 @@ modded class PlayerBase extends ManBase{
 	 * @note Uses UCreateItemInInventory and UCreateItemGround from _UFBase
 	 * @note Denomination breakdown uses UCurrency.GetHighestDenomination logic
 	 * @note Has infinite loop protection (MaxLoop = 3000)
+	 * @note Value below the lowest denomination is dropped (logged); use the overload with out NotAdded to detect it
 	 */
 	int UAddMoney(string key, int Amount){
+		int notAdded;
+		return UAddMoney(key, Amount, notAdded);
+	}
+
+	/**
+	 * Overload reporting the value that could not be represented by any denomination.
+	 *
+	 * @param NotAdded Out - value that was dropped (0 when the full Amount was added)
+	 */
+	int UAddMoney(string key, int Amount, out int NotAdded){
+		NotAdded = 0;
 		if (Amount <= 0){
+			return 2;
+		}
+		UCurrency currency = UCurrency.GetConfigured(key);
+		if (!currency){
+			UFLog.Err("UAddMoney: Currency key: " + key + " is not configured");
+			NotAdded = Amount;
 			return 2;
 		}
 		int Return = 0;
 		int AmountToAdd = Amount;
 		bool NoError = true;
-		int PlayerBalance = UGetPlayerBalance(key);
-		int OptimalPlayerBalance = PlayerBalance + AmountToAdd;
-		
-		UCurrencyValue MoneyValue = UCurrency.GetCurrency(key).GetHighestDenomination(AmountToAdd);
+		int LowestValue = currency.LowestDenominationValue();
+
+		UCurrencyValue MoneyValue = currency.GetHighestDenomination(AmountToAdd);
 		int MaxLoop = 3000;
-		while (MoneyValue && AmountToAdd >= UCurrency.GetLowestDenominationValue(key) && NoError && MaxLoop > 0){
+		while (MoneyValue && AmountToAdd >= LowestValue && NoError && MaxLoop > 0){
 			MaxLoop--;
 			int AmountToSpawn = UCurrency.GetAmount(MoneyValue,AmountToAdd);
 			if (AmountToSpawn == 0){
 				NoError = false;
 			}
-			
+
 			int AmountLeft = UCreateItemInInventory(MoneyValue.TypeClass(), AmountToSpawn);
 			if (AmountLeft > 0){
 				Return = 1;
 				UCreateItemGround(MoneyValue.TypeClass(), AmountLeft);
 			}
-			
+
 			int AmmountAdded = MoneyValue.Value() * AmountToSpawn;
-			
+
 			AmountToAdd = AmountToAdd - AmmountAdded;
-			
-			UCurrencyValue NewMoneyValue = UCurrency.GetCurrency(key).GetHighestDenomination(AmountToAdd);
+
+			UCurrencyValue NewMoneyValue = currency.GetHighestDenomination(AmountToAdd);
 			if (NewMoneyValue && NewMoneyValue != MoneyValue){
 				MoneyValue = NewMoneyValue;
 			} else {
 				NoError = false;
 			}
+		}
+		if (AmountToAdd > 0){
+			NotAdded = AmountToAdd;
+			UFLog.Debug("UAddMoney: " + AmountToAdd + " " + key + " is below the lowest denomination and was not added");
 		}
 		return Return;
 	}
@@ -147,7 +184,7 @@ modded class PlayerBase extends ManBase{
 	 * 
 	 * @param key Currency key (from UCurrency configuration)
 	 * @param Amount Total currency value to remove
-	 * @return 0 = success, 2 = invalid amount (<= 0)
+	 * @return 0 = success, 1 = success but change spawned on ground, 2 = invalid amount or unconfigured currency, 3 = insufficient funds (partial removal may have occurred - check balance first)
 	 * 
 	 * @usage Deduct Purchase Cost:
 	 * int cost = 750;
@@ -163,29 +200,52 @@ modded class PlayerBase extends ManBase{
 	 * 
 	 * @note Uses URemoveMoneyInventory to handle denomination removal
 	 * @note Automatically calls UAddMoney to give change when breaking large bills
-	 * @note Change logic iterates from highest to lowest denomination
+	 * @note Change logic iterates from lowest to highest denomination and breaks a single bill
 	 */
 	int URemoveMoney(string key, int Amount){
 		if (Amount <= 0){
 			return 2;
 		}
+		UCurrency currency = UCurrency.GetConfigured(key);
+		if (!currency){
+			UFLog.Err("URemoveMoney: Currency key: " + key + " is not configured");
+			return 2;
+		}
 		int Return = 0;
 		int AmountToRemove = Amount;
-		bool NoError = true;
-		for (int i = 0; i < UCurrency.GetCurrency(key).Count(); i++){
-			AmountToRemove =  URemoveMoneyInventory(key, UCurrency.GetCurrency(key).Get(i), AmountToRemove);
+		//Enumerate the inventory once and share it across all removal passes
+		array<EntityAI> itemsArray = new array<EntityAI>;
+		this.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, itemsArray);
+		for (int i = 0; i < currency.Count(); i++){
+			if (AmountToRemove < 1){
+				break;
+			}
+			AmountToRemove = URemoveMoneyInventory(key, currency.Get(i), AmountToRemove, itemsArray);
 		}
-		if (AmountToRemove >= UCurrency.GetLowestDenominationValue(key)){ // Now to delete a larger bill and make change
-			for (int j = UCurrency.GetLastIndex(key); j >= 0; j--){
-				//UFLog.Debug("Trying to remove " + UCurrency.GetCurrency(key).Get(j).TypeClass());
-				int NewAmountToRemove =  URemoveMoneyInventory(key, UCurrency.GetCurrency(key).Get(j), UCurrency.GetCurrency(key).Get(j).Value());
+		if (AmountToRemove >= currency.LowestDenominationValue()){ // Now to delete a larger bill and make change
+			bool ChangeMade = false;
+			for (int j = currency.LastIndex(); j >= 0; j--){
+				int NewAmountToRemove = URemoveMoneyInventory(key, currency.Get(j), currency.Get(j).Value(), itemsArray);
 				if (NewAmountToRemove == 0){
-					int AmountToAddBack = UCurrency.GetCurrency(key).Get(j).Value() - AmountToRemove;
-					//UFLog.Debug("A " + UCurrency.GetCurrency(key).Get(j).TypeClass + " removed trying to add back " + AmountToAddBack );
-					Return = UAddMoney(key, AmountToAddBack);
+					int ChangeNotGiven;
+					Return = UAddMoney(key, currency.Get(j).Value() - AmountToRemove, ChangeNotGiven);
+					if (ChangeNotGiven > 0){
+						UFLog.Info("URemoveMoney: " + ChangeNotGiven + " " + key + " of change could not be matched to a denomination and was lost");
+					}
+					ChangeMade = true;
+					break; //change made - without this, every larger denomination also loses a bill
 				}
 			}
+			if (!ChangeMade){
+				//Nothing left to break - insufficient funds. Whatever the first pass removed stays removed.
+				UFLog.Debug("URemoveMoney: insufficient " + key + " to cover remaining " + AmountToRemove + " of " + Amount);
+				this.UpdateInventoryMenu();
+				return 3;
+			}
+		} else if (AmountToRemove > 0){
+			UFLog.Debug("URemoveMoney: remaining " + AmountToRemove + " " + key + " is below the lowest denomination and was not removed");
 		}
+		this.UpdateInventoryMenu();
 		return Return;
 	}
 	
@@ -217,19 +277,17 @@ modded class PlayerBase extends ManBase{
 		if (AmountToRemove > 0){
 			array<EntityAI> itemsArray = new array<EntityAI>;
 			this.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, itemsArray);
+			string RemoveItemType = removeItemType;
+			RemoveItemType.ToLower();
 			for (int i = 0; i < itemsArray.Count(); i++){
 				ItemBase item = ItemBase.Cast(itemsArray.Get(i));
 				if ( item ){
 					string ItemType = item.GetType();
 					ItemType.ToLower();
-					string RemoveItemType = removeItemType;
-					RemoveItemType.ToLower();
 					if (ItemType == RemoveItemType){
-						int CurQuantity = item.GetQuantity();
+						//UCurrentQuantity is magazine-aware (ammo piles count rounds) to match the USetQuantity write below
+						int CurQuantity = UCurrentQuantity(item);
 						int AmountRemoved = 0;
-						if (!item.HasQuantity()){
-							CurQuantity = 1;
-						} 
 						if (AmountToRemove < CurQuantity){
 							AmountRemoved = AmountToRemove;
 							item.USetQuantity(CurQuantity - AmountToRemove);
@@ -275,17 +333,22 @@ modded class PlayerBase extends ManBase{
 	 * int ammoCount = player.UGetItemCount("Ammo_762x39", true);  // Total ammo including damaged
 	 * 
 	 * @note Uses UCurrentQuantity to handle stackables correctly
+	 * @note Case-insensitive comparison (matches URemoveItemFromInventory)
 	 */
 	int UGetItemCount(string itemType, bool CountRuined = true){
 		int PlayerBalance = 0;
 		array<EntityAI> inventory = new array<EntityAI>;
 		this.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, inventory);
 		
+		string SearchType = itemType;
+		SearchType.ToLower(); //case-insensitive to match URemoveItemFromInventory
 		ItemBase item;
 		for (int i = 0; i < inventory.Count(); i++){
 			if (Class.CastTo(item, inventory.Get(i))){
-				if (item.GetType() == itemType && ( !item.IsRuined() || CountRuined)){
-					PlayerBalance += UCurrentQuantity(item);;
+				string InvType = item.GetType();
+				InvType.ToLower();
+				if (InvType == SearchType && ( !item.IsRuined() || CountRuined)){
+					PlayerBalance += UCurrentQuantity(item);
 				}
 			}
 		}
@@ -305,32 +368,40 @@ modded class PlayerBase extends ManBase{
 	 * @note Respects UCanAcceptCurrency rules (skips ruined items if configured)
 	 */
 	float URemoveMoneyInventory(string key, UCurrencyValue MoneyValue, float Amount ){
+		array<EntityAI> itemsArray = new array<EntityAI>;
+		this.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, itemsArray);
+		float Remaining = URemoveMoneyInventory(key, MoneyValue, Amount, itemsArray);
+		this.UpdateInventoryMenu(); // RPC-Call needed?
+		return Remaining;
+	}
+
+	/**
+	 * Overload taking a pre-enumerated inventory so multi-pass callers (URemoveMoney)
+	 * traverse the inventory once. Does NOT call UpdateInventoryMenu - the caller must.
+	 */
+	float URemoveMoneyInventory(string key, UCurrencyValue MoneyValue, float Amount, array<EntityAI> itemsArray){
 		int AmountToRemove = UCurrency.GetAmount(MoneyValue, Amount);
 		if (AmountToRemove > 0){
-			array<EntityAI> itemsArray = new array<EntityAI>;
-			this.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, itemsArray);
+			string MoneyType = MoneyValue.TypeClass();
+			MoneyType.ToLower();
 			for (int i = 0; i < itemsArray.Count(); i++){
 				ItemBase item = ItemBase.Cast(itemsArray.Get(i));
-				if (item && UCanAcceptCurrency(key, item)){
+				//IsSetForDeletion skips items an earlier pass already removed (deletion is deferred)
+				if (item && !item.IsSetForDeletion()){
 					string ItemType = item.GetType();
 					ItemType.ToLower();
-					string MoneyType = MoneyValue.TypeClass();
-					MoneyType.ToLower();
-					if (ItemType == MoneyType){
-						int CurQuantity = item.GetQuantity();
+					//cheap type compare first, currency lookup only for matches
+					if (ItemType == MoneyType && UCanAcceptCurrency(key, item)){
+						//UCurrentQuantity is magazine-aware (ammo piles count rounds) to match the USetQuantity write below
+						int CurQuantity = UCurrentQuantity(item);
 						int AmountRemoved = 0;
-						if (!item.HasQuantity()){
-							CurQuantity = 1;
-						} 
 						if (AmountToRemove < CurQuantity){
 							AmountRemoved = MoneyValue.Value() * AmountToRemove;
 							item.USetQuantity(CurQuantity - AmountToRemove);
-							this.UpdateInventoryMenu(); // RPC-Call needed?
 							return Amount - AmountRemoved;
 						} else if (AmountToRemove == CurQuantity){
 							AmountRemoved = MoneyValue.Value() * AmountToRemove;
 							g_Game.ObjectDelete(item);
-							this.UpdateInventoryMenu(); // RPC-Call needed?
 							return Amount - AmountRemoved;
 						} else {
 							AmountRemoved = MoneyValue.Value() * CurQuantity;
@@ -339,14 +410,12 @@ modded class PlayerBase extends ManBase{
 							Amount = Amount - AmountRemoved;
 						}
 						if (AmountToRemove <= 0){
-							this.UpdateInventoryMenu(); // RPC-Call needed?
 							return Amount;
 						}
 					}
 				}
 			}
 		}
-		this.UpdateInventoryMenu(); // RPC-Call needed?
 		return Amount;
 	}
 	

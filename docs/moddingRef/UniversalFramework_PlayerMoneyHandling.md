@@ -37,11 +37,12 @@ All methods require a currency key (registered via `UCurrency.Register`):
 int UGetPlayerBalance(string key);
 
 // Add money (spawns items in inventory or ground)
-// Returns: 0=success, 1=some dropped on ground, 2=invalid amount
+// Returns: 0=success, 1=some dropped on ground, 2=invalid amount/currency
+// Overload with `out int NotAdded` reports value below the lowest denomination that was dropped
 int UAddMoney(string key, int Amount);
 
 // Remove money (deletes items, makes change if needed)
-// Returns: 0=success, 1=made change, 2=invalid amount
+// Returns: 0=success, 1=made change, 2=invalid amount/currency, 3=insufficient funds
 int URemoveMoney(string key, int Amount);
 ```
 

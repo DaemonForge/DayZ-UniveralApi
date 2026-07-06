@@ -374,7 +374,7 @@ class UDBEndpoint extends UFBaseEndpoint {
 	 */
 	int Increment(string mod, string oid, string element, float value = 1){
 		if (mod == "" || oid == "" || element == ""){
-			Error2("[UF] Error on DB Incerment","OID and Mod must be valid strings");
+			Error2("[UF] Error on DB Increment","OID and Mod must be valid strings");
 			return -1;
 		}
 		return Transaction(mod, oid, element, value);

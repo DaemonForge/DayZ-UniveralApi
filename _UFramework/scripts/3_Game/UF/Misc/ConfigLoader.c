@@ -139,6 +139,7 @@ class UFrameworkConfig extends Managed {
 }
 
 ref UFrameworkConfig m_UFrameworkConfig;
+bool g_UFConfigNullWarned = false; //warn-once flag for UFConfig() on client before RPC arrives
 
 /**
  * UFConfig
@@ -178,10 +179,9 @@ static UFrameworkConfig UFConfig()
 		}
 	} else if (!m_UFrameworkConfig){
 		// Only warn once per session, not spam
-		static bool s_WarnedOnce = false;
-		if (!s_WarnedOnce){
+		if (!g_UFConfigNullWarned){
 			UFLog.Info("[WARN] UFramework Config is null on client - waiting for RPC");
-			s_WarnedOnce = true;
+			g_UFConfigNullWarned = true;
 		}
 	}
 	return m_UFrameworkConfig;

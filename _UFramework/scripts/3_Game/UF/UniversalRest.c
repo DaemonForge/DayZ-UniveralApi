@@ -73,7 +73,7 @@ class UniversalRest extends Managed
 		if (!clCore)
 		{
 			clCore = CreateRestApi();
-			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, 15);
+			clCore.SetOption(ERestOption.ERESTOPTION_READOPERATION, UF_REST_READ_TIMEOUT);
 		}
 		return clCore;
 	}

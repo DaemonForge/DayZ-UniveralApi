@@ -75,12 +75,18 @@ class UAuthCallBack : UFRestCallBackBase
 		
 		//UFLog.Debug("[UAuthCallBack] Auth of a Player Success data: " + data);
 		autoptr ApiAuthToken authToken;
-		
+
 		JsonSerializer js = new JsonSerializer();
 		string error;
-		js.ReadFromString(authToken, data, error);
-		if (error != ""){
-			UFLog.Err("[UAuthCallBack] Error: " + error);
+		bool parsed = js.ReadFromString(authToken, data, error);
+		if (!parsed || !authToken){
+			//Malformed response (e.g. proxy error page) - retry instead of crashing on authToken.GUID
+			UFLog.Err("[UAuthCallBack] Failed to parse auth response: " + error);
+			if (m_GUID != ""){
+				UF().AuthError(m_GUID);
+			}
+			super.OnSuccess(data, dataSize); //still queue callback cleanup
+			return;
 		}
 		if (authToken.GUID == m_GUID && authToken.AUTH != "ERROR"){
 			UFLog.Debug("[UAuthCallBack] Auth of a Player Success data: GUID " + authToken.GUID);

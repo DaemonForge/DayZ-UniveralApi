@@ -57,6 +57,14 @@ class UFLog extends ULoggerBase {
 		GetInstance().SetLogLevel(level);
 		GetInstance().SetApiLogLevel(apiLevel);
 	}
+
+	/**
+	 * True when DEBUG-level messages would be handled (locally or to API).
+	 * Lets hot paths skip building expensive log strings that DoLog would discard.
+	 */
+	static bool IsDebug(){
+		return GetInstance().IsLevelEnabled(LOG_DEBUG);
+	}
 }
 
 /**
@@ -150,6 +158,11 @@ class ULoggerBaseInstance extends Managed {
 	
 	void SetApiLogLevel(int level){
 		m_LogToApiLevel = level;
+	}
+
+	//True if this level would be handled locally or forwarded to the API
+	bool IsLevelEnabled(int level){
+		return (m_LogLevel >= level || m_LogToApiLevel >= level);
 	}
 	
 	/**
