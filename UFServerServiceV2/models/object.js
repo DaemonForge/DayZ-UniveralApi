@@ -413,7 +413,7 @@ async function deleteObject(ObjectId, mod) {
     
     logger.info('[DB][DELETE] Deleting object', { ObjectId, mod });
     
-    const result = await collection.deleteOne({ ObjectId, mod });
+    const result = await collection.deleteOne({ ObjectId, Mod: mod });
     
     if (result.deletedCount === 0) {
       logger.warn('[DB][DELETE] Object not found for deletion', { ObjectId, mod });
