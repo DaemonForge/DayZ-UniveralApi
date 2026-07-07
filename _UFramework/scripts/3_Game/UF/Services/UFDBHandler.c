@@ -163,6 +163,38 @@ class UDBHandler<Class T> extends UDBHandlerBase{
 	
 	
 	/**
+	 * Saves a secure object: data plus its access control (OBJECT_DB only).
+	 * Players not granted access cannot Load the object and will not see it
+	 * in Query results. Server-side reads are never restricted.
+	 *
+	 * @param oid Object identifier (use "NewObject" to generate one)
+	 * @param object The object to save (must be of type T)
+	 * @param access Access definition - allowlist of GUIDs/SteamIDs and/or rules
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback: void OnCallback(int cid, int status, string oid, T data)
+	 * @return int Call ID, or -1 on error
+	 *
+	 * @code
+	 * USecureAccess access = new USecureAccess();
+	 * access.AllowPlayer(player.GetIdentity().GetId());
+	 * access.AddRule("MyRPGMod", "Level", ">=", "10");
+	 * m_Handler.SaveSecure("Stash_042", stashData, access, this, "OnSaved");
+	 * @endcode
+	 */
+	int SaveSecure(string oid, Class object, USecureAccess access, Class cbInstance = NULL, string cbFunction = "") {
+		string jsonString = "{}";
+		T obj; //Might not need Casting here but using it anyways
+		if (Class.CastTo(obj, object) && UJSONHandler<T>.GetString(obj, jsonString)) {
+			if (cbInstance && cbFunction != "") {
+				return UF().db(Database).SecureSave(Mod, oid, jsonString, access, new UFCallback<T>(cbInstance, cbFunction));
+			}
+			return UF().db(Database).SecureSave(Mod, oid, jsonString, access);
+		}
+		Error2("[UF] DB HANDLER SaveSecure", "Error convertering to JSON or casting make sure you are passing the right class type");
+		return -1;
+	}
+
+	/**
 	 * Loads an object from the database
 	 * @param oid Object identifier
 	 * @param cbInstance The callback instance
@@ -491,10 +523,23 @@ class UDBHandlerBase extends Managed {
 	}
 	
 	
-	/* 
+	/**
+	 * Replaces the access control of an existing object (OBJECT_DB only).
+	 * An empty USecureAccess makes the object public again.
+	 * @param oid Object identifier
+	 * @param access Access definition - allowlist of GUIDs/SteamIDs and/or rules
+	 * @param cbInstance Optional callback instance
+	 * @param cbFunction Optional callback: void OnCallback(int cid, int status, string oid, string data)
+	 * @return int Call ID, or -1 on error
+	 */
+	int SetAccess(string oid, USecureAccess access, Class cbInstance = NULL, string cbFunction = "") {
+		return UF().db(Database).SetAccess(Mod, oid, access, cbInstance, cbFunction);
+	}
+
+	/*
 		Call Cancel
-		
-		This allows you to cancel a call back to prevent access violations 
+
+		This allows you to cancel a call back to prevent access violations
 	*/
 	
 	/**

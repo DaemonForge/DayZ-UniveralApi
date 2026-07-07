@@ -45,18 +45,42 @@ class UAIChatCreateRequest extends UFObject_Base {
 	string Model;
 	int MaxHistory;
 	string KBId;
-	
-	void UAIChatCreateRequest(string systemMessage, string responseFormat, string jsonSchema = "", string model = "", int maxHistory = -1, string kbId = "") {
+	autoptr array<string> AllowedPlayers;
+
+	void UAIChatCreateRequest(string systemMessage, string responseFormat, string jsonSchema = "", string model = "", int maxHistory = -1, string kbId = "", array<string> allowedPlayers = NULL) {
 		SystemMessage = systemMessage;
 		ResponseFormat = responseFormat;
 		JsonSchema = jsonSchema;
 		Model = model;
 		MaxHistory = maxHistory;
 		KBId = kbId;
+		if (allowedPlayers) {
+			AllowedPlayers = allowedPlayers;
+		}
 	}
-	
+
 	override string ToJson() {
 		string jsonString = JsonFileLoader<UAIChatCreateRequest>.JsonMakeData(this);
+		return jsonString;
+	}
+}
+
+/**
+ * Request object for replacing a chat's allowed players list.
+ * GUIDs or SteamID64s - the service normalizes SteamIDs to GUIDs.
+ * An empty list makes the chat public.
+ */
+class UAIChatSetAccessRequest extends UFObject_Base {
+	autoptr array<string> AllowedPlayers = new array<string>;
+
+	void UAIChatSetAccessRequest(array<string> allowedPlayers) {
+		if (allowedPlayers) {
+			AllowedPlayers = allowedPlayers;
+		}
+	}
+
+	override string ToJson() {
+		string jsonString = JsonFileLoader<UAIChatSetAccessRequest>.JsonMakeData(this);
 		return jsonString;
 	}
 }

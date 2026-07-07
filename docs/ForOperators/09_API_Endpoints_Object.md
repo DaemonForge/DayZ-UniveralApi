@@ -49,6 +49,7 @@ If the object doesn't exist and a body is provided from a server request, a new 
 | 200 | Object found and returned |
 | 201 | New object created (server only) |
 | 204 | Object not found, no data in request body |
+| 403 | Secure object - requesting player is not permitted (`{ "Status": "NoPerms" }`) |
 | 500 | Server error |
 
 **Response Body** (200/201):
@@ -113,6 +114,49 @@ Content-Type: application/json
   "owner": "player123"
 }
 ```
+
+---
+
+### POST /Object/SecureSave/:ObjectId/:mod
+
+Save an object together with its access control (Secure Objects). Players not granted access cannot Load the object and will not see it in Query results. Server auth always has full access.
+
+**Authentication**: Server auth only
+
+**URL Parameters**: same as Save (`"NewObject"` generates an ID).
+
+**Request Body**:
+```json
+{
+  "Access": {
+    "AllowedPlayers": ["<GUID or SteamID64>", "..."],
+    "AccessRules": [
+      { "Mod": "MyRPGMod", "Field": "Level", "Op": ">=", "Value": "25" }
+    ]
+  },
+  "Data": { "contents": ["item1"], "owner": "player123" }
+}
+```
+
+- `AllowedPlayers`: SteamID64s are normalized to GUIDs at write time. 
+- `AccessRules`: evaluated against the requesting player's `Players` document (`playerDoc[Mod]`, `Field` supports dot paths). `Op` is one of `=`, `!=`, `>`, `>=`, `<`, `<=`, `in`, `notin`, `contains`, `notcontains`, `exists` (word aliases like `EQUAL`/`NOTIN`/`GTE` accepted case-insensitively; normalized at write time). Values are strings (numbers `"10"`, booleans `"1"`/`"0"`, `in`/`notin` lists comma-separated `"a,b,c"`). Invalid rules are rejected with 400.
+- **AND**: a flat rules array means all rules must pass. **OR**: use groups instead - `"AccessRules": [{ "Rules": [rule, rule] }, { "Rules": [rule] }]` grants access when any group has all of its rules pass. Mixing plain rules and groups in one array is rejected with 400; empty groups are dropped. Flat input is shorthand only - it is stored canonically as a single group, so persisted documents always carry the grouped shape.
+- Missing player data fails positive ops (fail closed); negative ops (`!=`, `notin`, `notcontains`) pass on missing data - combine with `exists` to require the field.
+- Access is granted when the player is allowlisted OR the rules pass. Both empty = public object.
+
+**Response Body**: the saved `Data` payload (like Save).
+
+---
+
+### POST /Object/SetAccess/:ObjectId/:mod
+
+Replace the access control fields of an existing object. An empty body (`{ "AllowedPlayers": [], "AccessRules": [] }`) makes the object public again.
+
+**Authentication**: Server auth only
+
+**Request Body**: `{ "AllowedPlayers": [...], "AccessRules": [...] }` (same semantics as SecureSave).
+
+**Response Codes**: 200 Success, 404 object not found, 400 invalid rules.
 
 ---
 
@@ -257,6 +301,8 @@ Execute a MongoDB query against the Objects collection.
 
 **Important**: `Query` and `OrderBy` must be **JSON strings**, not objects.
 
+**Secure Objects**: player-auth queries are automatically filtered - players only receive objects that are public, list them in `AllowedPlayers`, or whose `AccessRules` they pass. Server-auth queries are unfiltered. Because `MaxResults` limits the database fetch before rule evaluation, a capped page can return fewer results than `MaxResults` when rule-gated objects are filtered out.
+
 **Response Body**:
 ```json
 {
@@ -397,7 +443,9 @@ Objects are stored with this structure:
     "field1": "value1",
     "field2": 123,
     "nested": { "key": "value" }
-  }
+  },
+  "AllowedPlayers": ["<guid>", "..."],
+  "AccessRules": [{ "Mod": "MyRPGMod", "Field": "Level", "Op": ">=", "Value": "25" }]
 }
 ```
 
@@ -406,6 +454,7 @@ Objects are stored with this structure:
 - Your data is stored inside the `data` field
 - When using `FixQuery: 1`, your query fields are prefixed with `data.`
 - The `ObjectId` field is separate from MongoDB's `_id`
+- `AllowedPlayers`/`AccessRules` only exist on objects saved via `SecureSave`/`SetAccess`. They live on the envelope (not inside `data`) so Load/Query responses never expose them to clients.
 
 ---
 

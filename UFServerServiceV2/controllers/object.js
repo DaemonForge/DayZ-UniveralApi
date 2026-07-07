@@ -4,8 +4,9 @@ const { Router } = require('express');
 const router = Router();
 
 const { requireServerAuth, requirePlayerOrServerAuth } = require('../auth/utils');
-const { updateObject, runObjectTransaction, runValidatedObjectTransaction, getObject, newObject, updateObjectField, deleteObject } = require('../models/object');
-const { makeObjectId, isEmpty, createLogger, tryConvertToObject } = require('../utils');
+const { updateObject, runObjectTransaction, runValidatedObjectTransaction, getObject, getObjectFull, setObjectAccess, newObject, updateObjectField, deleteObject } = require('../models/object');
+const { getPlayer } = require('../models/player');
+const { makeObjectId, isEmpty, createLogger, tryConvertToObject, normalizeGuidList, validAccessRule, normalizeRuleOp, accessGrants } = require('../utils');
 const logger = createLogger(global.logger, 'c.object');
 
 // Mount the legacy query handler if needed
@@ -26,6 +27,22 @@ router.post('/Load/:ObjectId/:mod', requirePlayerOrServerAuth, loadObject);
  * Only servers are allowed to save.
  */
 router.post('/Save/:ObjectId/:mod', requireServerAuth, saveObject);
+
+/**
+ * POST /SecureSave/:ObjectId/:mod
+ * Upserts an object together with its access control (Secure Objects).
+ * Body: { Access: { AllowedPlayers: [...], AccessRules: [...] }, Data: {...} }
+ * Only servers are allowed to save.
+ */
+router.post('/SecureSave/:ObjectId/:mod', requireServerAuth, secureSaveObject);
+
+/**
+ * POST /SetAccess/:ObjectId/:mod
+ * Replaces the access control fields of an existing object.
+ * Body: { AllowedPlayers: [...], AccessRules: [...] }
+ * Only servers are allowed to change access.
+ */
+router.post('/SetAccess/:ObjectId/:mod', requireServerAuth, runSetAccess);
 
 /**
  * POST /Update/:ObjectId/:mod
@@ -65,8 +82,9 @@ async function loadObject(req, res) {
     });
     
     try {
-        const results = await getObject(ObjectId, mod);
-        
+        const doc = await getObjectFull(ObjectId, mod);
+        const results = doc ? doc.data : undefined;
+
         if (results === null || typeof results === 'undefined') {
             logger.info(`[LOAD][${mod}] Object NOT FOUND in database`, { mod, ObjectId });
             
@@ -86,6 +104,19 @@ async function loadObject(req, res) {
                 return res.status(200).json(data);
             }
         } else {
+            // Secure Objects: enforce per-player access for restricted objects (server bypasses)
+            if (!req.isServer) {
+                let playerDoc = null;
+                const rules = doc.AccessRules || [];
+                const list = doc.AllowedPlayers || [];
+                if (rules.length > 0 && !list.includes(req.GUID)) {
+                    playerDoc = await getPlayer(req.GUID);
+                }
+                if (!accessGrants(doc, req.GUID, playerDoc)) {
+                    logger.warn(`[LOAD][${mod}] Player not permitted for object`, { mod, ObjectId, GUID: req.GUID });
+                    return res.status(403).json({ Status: "NoPerms", Error: "Not permitted for this object" });
+                }
+            }
             logger.info(`[LOAD][${mod}] Object FOUND - returning existing data`, { mod, ObjectId, hasData: !!results });
             return res.status(200).json(results);
         }
@@ -167,6 +198,119 @@ async function saveObject(req, res) {
     } catch (err) {
         logger.error(`Error in Save endpoint: ${err.message}`, { error: err, mod, ObjectId });
         res.status(500).json(data);
+    }
+}
+
+/**
+ * Normalizes and validates an access block from a request body.
+ * Returns { AllowedPlayers, AccessRules } or { error } on invalid rules.
+ * SteamID64s in AllowedPlayers are normalized to DayZ GUIDs; ops are
+ * normalized to canonical form (EQUAL -> =, NOTIN -> notin, ...).
+ * AccessRules may arrive flat [rule, ...] (AND shorthand) or grouped
+ * [{ Rules: [...] }, ...] (OR of ANDs) - mixing the two shapes is rejected.
+ * Flat input is canonicalized to a single group before storage, so persisted
+ * documents always carry the grouped shape.
+ */
+const RULE_ERROR = "Invalid access rule - Mod/Field must be non-empty strings and Op one of =, !=, >, >=, <, <=, in, notin, contains, notcontains, exists (aliases like EQUAL/NOTIN/GTE accepted)";
+
+function normalizeRule(rule) {
+    if (!validAccessRule(rule)) return null;
+    return { Mod: rule.Mod, Field: rule.Field, Op: normalizeRuleOp(rule.Op), Value: `${rule.Value ?? ""}` };
+}
+
+function parseAccessBody(access) {
+    const rawRules = Array.isArray(access.AccessRules) ? access.AccessRules : [];
+    let rules = [];
+    if (rawRules.some(r => r && Array.isArray(r.Rules))) {
+        // Grouped shape: every entry must be a group; empty groups are dropped
+        if (!rawRules.every(r => r && Array.isArray(r.Rules))) {
+            return { error: "AccessRules cannot mix plain rules and groups - wrap every rule in a { Rules: [...] } group" };
+        }
+        for (const group of rawRules) {
+            const groupRules = group.Rules.map(normalizeRule);
+            if (groupRules.includes(null)) return { error: RULE_ERROR };
+            if (groupRules.length > 0) rules.push({ Rules: groupRules });
+        }
+    } else {
+        const flat = rawRules.map(normalizeRule);
+        if (flat.includes(null)) return { error: RULE_ERROR };
+        // Flat rules are accepted as shorthand but stored canonically as a single
+        // group, so persisted AccessRules always have one shape.
+        if (flat.length > 0) rules = [{ Rules: flat }];
+    }
+    return {
+        AllowedPlayers: normalizeGuidList(access.AllowedPlayers),
+        AccessRules: rules
+    };
+}
+
+/**
+ * Upserts an object together with its access control fields (Secure Objects).
+ * Body: { Access: { AllowedPlayers, AccessRules }, Data: {...} }
+ */
+async function secureSaveObject(req, res) {
+    let { ObjectId, mod } = req.params;
+    const { Access, Data } = req.body;
+
+    logger.info(`[SECURESAVE][${mod}] Secure save request`, { mod, ObjectId });
+
+    if (isEmpty(Data) || typeof Data !== 'object') {
+        return res.status(400).json({ Status: "Error", Error: "Data object is required" });
+    }
+    const access = parseAccessBody(Access || {});
+    if (access.error) {
+        logger.warn(`[SECURESAVE][${mod}] Invalid access block`, { mod, ObjectId, error: access.error });
+        return res.status(400).json({ Status: "Error", Error: access.error });
+    }
+
+    try {
+        if (ObjectId === "NewObject") {
+            ObjectId = makeObjectId();
+            Data.ObjectId = ObjectId;
+            logger.info(`[SECURESAVE] Generated new ObjectId: ${ObjectId}`, { mod });
+        }
+        const updateDoc = { $set: { data: Data, ObjectId, Mod: mod, AllowedPlayers: access.AllowedPlayers, AccessRules: access.AccessRules } };
+        const result = await updateObject(ObjectId, mod, updateDoc, { upsert: true });
+
+        logger.info(`[SECURESAVE][${mod}] Save completed`, {
+            mod,
+            ObjectId,
+            allowedCount: access.AllowedPlayers.length,
+            ruleCount: access.AccessRules.length,
+            wasInsert: result.upsertedCount === 1
+        });
+        return res.status(200).json(Data);
+    } catch (err) {
+        logger.error(`Error in SecureSave endpoint: ${err.message}`, { error: err, mod, ObjectId });
+        return res.status(500).json({ Status: "Error", Error: err.message });
+    }
+}
+
+/**
+ * Replaces the access control fields of an existing object.
+ * Body: { AllowedPlayers, AccessRules }
+ */
+async function runSetAccess(req, res) {
+    const { ObjectId, mod } = req.params;
+
+    logger.info(`[SETACCESS][${mod}] Set access request`, { mod, ObjectId });
+
+    const access = parseAccessBody(req.body || {});
+    if (access.error) {
+        logger.warn(`[SETACCESS][${mod}] Invalid access block`, { mod, ObjectId, error: access.error });
+        return res.status(400).json({ Status: "Error", Error: access.error });
+    }
+
+    try {
+        const found = await setObjectAccess(ObjectId, mod, access);
+        if (!found) {
+            logger.warn(`[SETACCESS][${mod}] Object not found`, { mod, ObjectId });
+            return res.status(404).json({ Status: "NotFound", Error: "Object not found", ID: ObjectId, Mod: mod });
+        }
+        return res.status(200).json({ Status: "Success", ID: ObjectId, Mod: mod });
+    } catch (err) {
+        logger.error(`Error in SetAccess endpoint: ${err.message}`, { error: err, mod, ObjectId });
+        return res.status(500).json({ Status: "Error", Error: err.message, ID: ObjectId, Mod: mod });
     }
 }
 

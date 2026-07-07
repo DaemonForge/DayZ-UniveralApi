@@ -1,100 +1,27 @@
 // models/object.js
 
-const { MongoClient } = require("mongodb");
 const { buildUpdateDoc, processValue, createLogger } = require('../utils');
+const { getDb } = require('./db');
 const logger = createLogger(global.logger, 'db.object');
 
-// Connection pool - reuse connections across requests
-let _client = null;
-let _db = null;
-let _connectionPromise = null;
-
 /**
- * Gets a shared MongoDB connection with automatic reconnection.
- * Uses connection pooling to avoid creating new connections for each request.
- * 
- * @async
- * @function getConnection
- * @returns {Promise<Object>} MongoDB database instance
- */
-async function getConnection() {
-  if (_db) {
-    // Verify connection is still alive
-    try {
-      await _db.command({ ping: 1 });
-      return _db;
-    } catch (e) {
-      logger.warn("MongoDB connection lost, reconnecting...", { error: e.message });
-      _client = null;
-      _db = null;
-      _connectionPromise = null;
-    }
-  }
-
-  // Prevent multiple simultaneous connection attempts
-  if (_connectionPromise) {
-    await _connectionPromise;
-    return _db;
-  }
-
-  _connectionPromise = (async () => {
-    try {
-      _client = new MongoClient(global.config.DBServer, {
-        maxPoolSize: 10,
-        minPoolSize: 2,
-        maxIdleTimeMS: 60000,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000
-      });
-      await _client.connect();
-      _db = _client.db(global.config.DB);
-      logger.info("MongoDB connection pool established for Objects");
-      
-      // Handle connection errors
-      _client.on('error', (err) => {
-        logger.error("MongoDB connection error", { error: err.message });
-        _client = null;
-        _db = null;
-        _connectionPromise = null;
-      });
-      
-      _client.on('close', () => {
-        logger.warn("MongoDB connection closed");
-        _client = null;
-        _db = null;
-        _connectionPromise = null;
-      });
-      
-      return _db;
-    } catch (err) {
-      _connectionPromise = null;
-      throw err;
-    }
-  })();
-
-  await _connectionPromise;
-  _connectionPromise = null;
-  return _db;
-}
-
-/**
- * Returns the "Objects" collection using the pooled connection.
+ * Returns the "Objects" collection using the shared pooled connection.
  * No need to close the connection after use - it's reused.
- * 
+ *
  * @deprecated Use getCollection() instead - this is kept for backwards compatibility
  */
 async function getClientAndCollection() {
-  const db = await getConnection();
+  const db = await getDb();
   const collection = db.collection("Objects");
   // Return a dummy client with a no-op close for backwards compatibility
   return { client: { close: () => {} }, collection };
 }
 
 /**
- * Returns the "Objects" collection using the pooled connection.
+ * Returns the "Objects" collection using the shared pooled connection.
  */
 async function getCollection() {
-  const db = await getConnection();
+  const db = await getDb();
   return db.collection("Objects");
 }
 
@@ -105,21 +32,54 @@ async function getCollection() {
  * @returns {Promise<Object|null>} - The object document, or null if not found.
  */
 async function getObject(ObjectId, Mod) {
+  const doc = await getObjectFull(ObjectId, Mod);
+  return doc ? doc.data : undefined;
+}
+
+/**
+ * Finds an object document by ID and Mod, returning the FULL envelope
+ * (including AllowedPlayers/AccessRules) rather than just the data payload.
+ * Used by access-controlled reads; callers must not leak the envelope to clients.
+ * @param {string} ObjectId - The object's ID.
+ * @param {string} Mod - The object's Mod.
+ * @returns {Promise<Object|undefined>} - The full document, or undefined if not found.
+ */
+async function getObjectFull(ObjectId, Mod) {
   const collection = await getCollection();
   try {
-    logger.debug(`[DB][GET] Looking up object`, { ObjectId, Mod });
     const object = await collection.findOne({ ObjectId, Mod });
-    
-    if (object) {
-      logger.debug(`[DB][GET][${Mod}] Object FOUND in database`, { ObjectId, Mod, hasData: !!object.data });
-    } else {
-      logger.debug(`[DB][GET][${Mod}] Object NOT FOUND in database`, { ObjectId, Mod });
-    }
-    
-    return object ? object.data : undefined;
+    logger.debug(`[DB][GETFULL][${Mod}] Object lookup`, { ObjectId, Mod, found: !!object });
+    return object || undefined;
   } catch (err) {
-    logger.error(`[DB][GET] Error in getObject: ${err.message}`, { error: err, ObjectId, Mod });
+    logger.error(`[DB][GETFULL] Error in getObjectFull: ${err.message}`, { error: err, ObjectId, Mod });
     return undefined;
+  }
+}
+
+/**
+ * Replaces the access control fields of an existing object.
+ * @param {string} ObjectId - The object's ID.
+ * @param {string} Mod - The object's Mod.
+ * @param {Object} access - { AllowedPlayers: string[], AccessRules: Object[] } (already normalized).
+ * @returns {Promise<boolean>} - True if the object exists.
+ */
+async function setObjectAccess(ObjectId, Mod, access) {
+  const collection = await getCollection();
+  try {
+    logger.info(`[DB][ACCESS][${Mod}] Setting object access`, {
+      ObjectId,
+      Mod,
+      allowedCount: access.AllowedPlayers.length,
+      ruleCount: access.AccessRules.length
+    });
+    const result = await collection.updateOne(
+      { ObjectId, Mod },
+      { $set: { AllowedPlayers: access.AllowedPlayers, AccessRules: access.AccessRules } }
+    );
+    return result.matchedCount > 0;
+  } catch (err) {
+    logger.error(`[DB][ACCESS] Error in setObjectAccess: ${err.message}`, { error: err, ObjectId, Mod });
+    throw err;
   }
 }
 
@@ -440,6 +400,8 @@ async function deleteObject(ObjectId, mod) {
 module.exports = {
   getClientAndCollection,
   getObject,
+  getObjectFull,
+  setObjectAccess,
   objectExist,
   newObject,
   updateObject,

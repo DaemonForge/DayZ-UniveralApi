@@ -1,11 +1,12 @@
 const { Router } = require("express");
 const { MongoClient } = require("mongodb");
 
-const { isArray, isObject, CleanRegEx, GenerateLimiter, createLogger, findDangerousQueryOperator } = require('../utils');
+const { isArray, isObject, CleanRegEx, GenerateLimiter, createLogger, findDangerousQueryOperator, accessGrants } = require('../utils');
 const logger = createLogger(global.logger, 'DB.query');
 const { getAnalyzer } = require('../models/queryAnalyzer');
 
-const { CheckAuth, CheckServerAuth } = require("../auth/utils");
+const { CheckAuth, CheckServerAuth, AuthPlayerGuid } = require("../auth/utils");
+const { getPlayer } = require("../models/player");
 
 const router = Router();
 
@@ -36,7 +37,8 @@ function GetCollection(URL) {
 }
 
 async function runQuery(req, res, mod, auth, COLL) {
-    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && COLL === "Objects")) {
+    const isServer = CheckServerAuth(auth);
+    if (isServer || ((await CheckAuth(auth)) && COLL === "Objects")) {
         var RawData = req.body;
         
         // Enhanced logging for territory duplication debugging
@@ -95,7 +97,15 @@ async function runQuery(req, res, mod, auth, COLL) {
             if (COLL == "Objects" && (query.Mod === undefined || query.Mod === null)) {
                 query.Mod = mod;
             }
-            
+
+            // Secure Objects: player-auth queries only see objects they're permitted to.
+            // Rule-gated objects pass the DB filter as candidates and are post-filtered below.
+            let playerGuid = null;
+            if (COLL === "Objects" && !isServer) {
+                playerGuid = AuthPlayerGuid(auth);
+                query = buildObjectPermissionClause(query, playerGuid, true);
+            }
+
             // Log final query for territory debugging
             if (mod === 'FactionTerritories' || mod === 'Factions') {
                 logger.info(`[QUERY][${mod}] Executing query`, {
@@ -114,7 +124,18 @@ async function runQuery(req, res, mod, auth, COLL) {
             const queryStartTime = Date.now();
             let theData = await results.toArray();
             const queryExecutionTime = Date.now() - queryStartTime;
-            
+
+            // Secure Objects: evaluate rule-gated candidates against the requester's player data.
+            // ponytail: MaxResults limits the DB fetch before this filter, so a capped page can
+            // return fewer results than MaxResults when rule-gated objects get filtered out.
+            if (playerGuid !== null) {
+                let playerDoc = null;
+                if (theData.some(d => Array.isArray(d.AccessRules) && d.AccessRules.length > 0)) {
+                    playerDoc = await getPlayer(playerGuid);
+                }
+                theData = theData.filter(d => accessGrants(d, playerGuid, playerDoc));
+            }
+
             // Track query for index recommendations
             try {
                 const analyzer = getAnalyzer();
@@ -197,7 +218,8 @@ async function runQuery(req, res, mod, auth, COLL) {
 };
 
 async function runUpdateFromQuery(req, res, mod, auth, COLL) {
-    if (CheckServerAuth(auth) || ((await CheckAuth(auth)) && global.config.AllowClientWrite)) {
+    const isServer = CheckServerAuth(auth);
+    if (isServer || ((await CheckAuth(auth)) && global.config.AllowClientWrite)) {
         let RawData = req.body;
         const client = new MongoClient(global.config.DBServer);
         try {
@@ -241,6 +263,13 @@ async function runUpdateFromQuery(req, res, mod, auth, COLL) {
             }
             if (COLL == "Objects" && (query.Mod === undefined || query.Mod === null)) {
                 query.Mod = mod;
+            }
+
+            // Secure Objects: player-auth query-updates can only touch objects the player
+            // is allowlisted for (or public ones). Rule-gated objects are deliberately
+            // excluded from player query-updates - rules can't be evaluated per-doc in updateMany.
+            if (COLL === "Objects" && !isServer) {
+                query = buildObjectPermissionClause(query, AuthPlayerGuid(auth), false);
             }
             let element = RawData.Element;
             let operation = RawData.Operation || "set";
@@ -311,18 +340,53 @@ async function runUpdateFromQuery(req, res, mod, auth, COLL) {
 };
 
 /**
+ * Wraps a player's query with the Secure Objects visibility clause so they only
+ * match objects they are permitted to see. Server-auth queries never call this.
+ *
+ * @param {object} query - The (already Mod-scoped) user query.
+ * @param {string} guid - The requesting player's normalized GUID.
+ * @param {boolean} allowRuleCandidates - For reads (true): rule-gated objects pass
+ *   as candidates and are post-filtered against the player's data. For bulk writes
+ *   (false): rule-gated objects are excluded, since rules can't be evaluated per-doc
+ *   in updateMany.
+ * @returns {object} The query AND-ed with the permission clause.
+ *
+ * Perf note: the visibility $or ($exists:false / $size:0) is not index-selective on
+ * its own, so it acts as a residual filter. This is bounded because the caller has
+ * already added `Mod: <mod>` to the query, scoping the scan to a single mod's objects
+ * (fine at game scale). If one mod's Objects collection ever grows large enough to
+ * matter, add a partial index (e.g. on { Mod: 1, AllowedPlayers: 1 }) rather than
+ * complicating this clause.
+ */
+function buildObjectPermissionClause(query, guid, allowRuleCandidates) {
+    const visibility = [
+        { AllowedPlayers: { "$exists": false } }, // legacy / never secured
+        { AllowedPlayers: { "$size": 0 } },       // explicitly public
+        { AllowedPlayers: guid }                  // on the allowlist
+    ];
+    if (allowRuleCandidates) {
+        visibility.push({ AccessRules: { "$exists": true, "$ne": [] } });
+        return { "$and": [query, { "$or": visibility }] };
+    }
+    return { "$and": [
+        query,
+        { "$or": visibility },
+        { "$or": [{ AccessRules: { "$exists": false } }, { AccessRules: { "$size": 0 } }] }
+    ] };
+}
+
+/**
  * Recursively processes the provided query object or array by prefixing keys with a given prefix.
- * 
+ *
  * This function traverses the query structure and for each property that does not start with the
- * "$" character or the given prefix (followed by a dot), it renames the property by prepending the 
+ * "$" character or the given prefix (followed by a dot), it renames the property by prepending the
  * prefix and a dot. For array values, each element is recursively processed.
+ * Especially useful when the query needs to target specific fields within a nested structure.
  *
  * @param {(Object|Array|*)} query - The query structure to be processed, which can be an object, an array, or any value.
  * @param {string} prefix - The string prefix to add to keys that do not already match a specific pattern.
  * @returns {(Object|Array|*)} - The processed query with keys correctly prefixed.
  */
-// Recursively fixes a query by prefixing non-operator keys with the given prefix.
-// This is especially useful when the query needs to target specific fields within a nested structure.
 function FixQuery(query, prefix) {
     // If the query is an object, process each key-value pair.
     if (isObject(query)) {

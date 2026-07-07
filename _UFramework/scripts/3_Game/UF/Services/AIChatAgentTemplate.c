@@ -51,6 +51,7 @@ class UAIChatAgent<Class T> extends Managed {
     protected autoptr array<autoptr UAIChatHistoryEntry> m_History;
     protected autoptr array<autoptr UAIChatContext> m_StaticContext;
     protected autoptr array<autoptr UAIChatToolDef> m_Tools;
+    protected autoptr array<string> m_AllowedPlayers;
     protected string m_SchemaName;
     protected string m_JsonSchema;
 
@@ -117,7 +118,12 @@ class UAIChatAgent<Class T> extends Managed {
     // Override to specify the AI model to use. Return empty string for default (gpt-4o-mini).
     // Available models: "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo", "o1", "o1-mini", "o3-mini"
     string GetModel(){ return ""; }
-    
+
+    // Override (or use SetAllowedPlayers) to restrict which players can access this chat session.
+    // Accepts DayZ GUIDs or SteamID64s - the service normalizes SteamIDs to GUIDs.
+    // Return NULL or an empty array for a public session (default).
+    array<string> AllowedPlayers(){ return m_AllowedPlayers; }
+
     // ============ TOOL DISPATCH ============
     
     /**
@@ -217,6 +223,19 @@ class UAIChatAgent<Class T> extends Managed {
         return m_KBId;
     }
 
+    /**
+     * Restricts this agent's chat session to specific players.
+     * Accepts DayZ GUIDs (player.GetIdentity().GetId()) or SteamID64s - mixed freely,
+     * the service normalizes SteamIDs to GUIDs. NULL or empty = public session (default).
+     * Call before Chat(); if the session already exists it is updated live.
+     */
+    void SetAllowedPlayers(array<string> players){
+        m_AllowedPlayers = players;
+        if (m_Ready && m_ChatId != ""){
+            UF().AI().SetAccess(m_ChatId, players);
+        }
+    }
+
     void AddStaticContext(string description, array<string> items){
         if (description == "" || !items) return;
         autoptr UAIChatContext ctx = new UAIChatContext(description);
@@ -267,7 +286,7 @@ class UAIChatAgent<Class T> extends Managed {
         UFAIChatEndpoint ai = UF().AI();
         string schema = GetSchemaForAPI();
         // Use "JSON" response format with schema
-        int cid = ai.Create(SystemInstructions(), "JSON", schema, GetModel(), m_MaxHistory, new UAIChatAgentCreateCB<T>(this, ""), m_KBId);
+        int cid = ai.Create(SystemInstructions(), "JSON", schema, GetModel(), m_MaxHistory, new UAIChatAgentCreateCB<T>(this, ""), m_KBId, AllowedPlayers());
         if (cid == -1){
             Error2("[UF][UAIChatAgent<T>] CreateSession", "Failed to create AI chat session");
             CallHandlerError(m_PendingHandler, m_PendingHandlerFn, -1);

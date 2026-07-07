@@ -319,6 +319,150 @@ function NormalizeToGUID(idorguid) {
 }
 
 /**
+ * Normalizes an allowlist of player identifiers: drops non-string/empty entries
+ * and converts SteamID64s to DayZ GUIDs. Non-array input yields an empty list.
+ * @param {*} list - Array of GUIDs/SteamID64s (or anything else).
+ * @returns {string[]} Normalized GUIDs.
+ */
+function normalizeGuidList(list) {
+  if (!Array.isArray(list)) return [];
+  return list.filter(id => typeof id === 'string' && id !== '').map(NormalizeToGUID);
+}
+
+// ---- Secure Objects access control ----
+// Stored object envelopes may carry AllowedPlayers (normalized GUIDs) and
+// AccessRules evaluated against the requester's Players document.
+// AccessRules is stored as an array of groups { Rules: [...] } where ANY group
+// whose rules all pass grants access (OR of ANDs); flat wire input is
+// canonicalized into a single group at write time (see parseAccessBody).
+// Server-auth requests bypass these checks entirely.
+
+const ACCESS_RULE_OPS = ["=", "!=", ">", ">=", "<", "<=", "in", "notin", "contains", "notcontains", "exists"];
+
+// Word aliases accepted anywhere an op is written ("EQUAL" -> "=", "NOTIN" -> "notin", ...)
+const ACCESS_RULE_OP_ALIASES = {
+  "equal": "=", "eq": "=", "==": "=",
+  "notequal": "!=", "ne": "!=", "neq": "!=",
+  "gt": ">", "gte": ">=", "lt": "<", "lte": "<=",
+  "nin": "notin"
+};
+
+/**
+ * Normalizes an op (case-insensitive, aliases resolved) to its canonical form.
+ * @param {string} op
+ * @returns {string} Canonical op, or "" when unknown.
+ */
+function normalizeRuleOp(op) {
+  if (typeof op !== 'string') return "";
+  const low = op.toLowerCase().trim();
+  const mapped = ACCESS_RULE_OP_ALIASES[low] || low;
+  return ACCESS_RULE_OPS.includes(mapped) ? mapped : "";
+}
+
+/**
+ * Validates an access rule's shape.
+ * @param {Object} rule - { Mod, Field, Op, Value }
+ * @returns {boolean}
+ */
+function validAccessRule(rule) {
+  return !!rule && typeof rule === 'object'
+    && typeof rule.Mod === 'string' && rule.Mod !== ''
+    && typeof rule.Field === 'string' && rule.Field !== ''
+    && normalizeRuleOp(rule.Op) !== '';
+}
+
+function getByPath(obj, path) {
+  return String(path).split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
+}
+
+// Equality used by =, !=, in, notin, contains, notcontains: numeric when both
+// sides are numeric (DayZ stores booleans as 0/1), otherwise string comparison.
+function valueEquals(actual, expected) {
+  const a = Number(actual);
+  const e = Number(expected);
+  const numeric = actual !== undefined && actual !== null && actual !== ''
+    && String(expected).trim() !== '' && !isNaN(a) && !isNaN(e);
+  return numeric ? a === e : String(actual) === String(expected);
+}
+
+// "in"/"notin" values are comma-separated lists: "Traders,Medics" or "1,2,3"
+function splitList(value) {
+  return String(value).split(',').map(v => v.trim()).filter(v => v !== '');
+}
+
+/**
+ * Evaluates one access rule against a player's document from the Players collection.
+ * Rules reference the player's per-mod data: Field is a dot path inside playerDoc[Mod].
+ *
+ * Ops: =, !=, >, >=, <, <= (numeric), in, notin (comma-separated list),
+ * contains, notcontains (array membership), exists (field is present).
+ * Word aliases (EQUAL, NOTIN, GTE, ...) are accepted case-insensitively.
+ *
+ * Missing player data fails positive ops (fail closed); negative ops
+ * (!=, notin, notcontains) pass on missing data - combine with "exists"
+ * to require the field to be present.
+ * @param {Object} rule - { Mod, Field, Op, Value }
+ * @param {Object|null} playerDoc - Full document from the Players collection.
+ * @returns {boolean}
+ */
+function ruleMatches(rule, playerDoc) {
+  if (!validAccessRule(rule)) return false;
+  const op = normalizeRuleOp(rule.Op);
+  const actual = getByPath((playerDoc || {})[rule.Mod] || {}, rule.Field);
+  // Same coercion rule as valueEquals: numeric only when both sides are real numbers
+  const a = Number(actual);
+  const e = Number(rule.Value);
+  const numeric = actual !== undefined && actual !== null && actual !== ''
+    && String(rule.Value).trim() !== '' && !isNaN(a) && !isNaN(e);
+  switch (op) {
+    case "=": return valueEquals(actual, rule.Value);
+    case "!=": return !valueEquals(actual, rule.Value);
+    case "in": return splitList(rule.Value).some(v => valueEquals(actual, v));
+    case "notin": return !splitList(rule.Value).some(v => valueEquals(actual, v));
+    case "contains": return Array.isArray(actual) && actual.some(item => valueEquals(item, rule.Value));
+    case "notcontains": return !Array.isArray(actual) || !actual.some(item => valueEquals(item, rule.Value));
+    case "exists": return actual !== undefined && actual !== null;
+    case ">": return numeric && a > e;
+    case ">=": return numeric && a >= e;
+    case "<": return numeric && a < e;
+    case "<=": return numeric && a <= e;
+  }
+  return false;
+}
+
+/**
+ * Evaluates a stored AccessRules value: [{ Rules: [rule, rule] }, { Rules: [rule] }].
+ * ANY group whose rules ALL pass grants access (OR of ANDs). Empty groups never
+ * grant. Storage is always this grouped shape - parseAccessBody canonicalizes
+ * flat wire input into a single group - so anything else (e.g. hand-edited
+ * plain rules) fails closed.
+ * @param {Array} rules - AccessRules from the object envelope.
+ * @param {Object|null} playerDoc - The requester's Players document.
+ * @returns {boolean}
+ */
+function accessRulesPass(rules, playerDoc) {
+  if (!Array.isArray(rules)) return false;
+  return rules.some(g => g && Array.isArray(g.Rules) && g.Rules.length > 0 && g.Rules.every(r => ruleMatches(r, playerDoc)));
+}
+
+/**
+ * Full access decision for a stored object envelope. Granted when the object is
+ * public (no allowlist, no rules), when the GUID is on the allowlist, or when
+ * the access rules pass against the player's saved data (see accessRulesPass).
+ * @param {Object} doc - Object envelope (may carry AllowedPlayers/AccessRules).
+ * @param {string} guid - Requesting player's normalized GUID.
+ * @param {Object|null} playerDoc - The player's Players document (only needed when rules exist).
+ * @returns {boolean}
+ */
+function accessGrants(doc, guid, playerDoc) {
+  const list = (doc && doc.AllowedPlayers) || [];
+  const rules = (doc && doc.AccessRules) || [];
+  if (list.length === 0 && rules.length === 0) return true;
+  if (guid && list.includes(guid)) return true;
+  return accessRulesPass(rules, playerDoc);
+}
+
+/**
  * Express middleware to extract and validate authentication keys from requests
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -539,9 +683,15 @@ module.exports = {
   CheckIndexes,
   CheckRecentVersion,
   NormalizeToGUID,
+  normalizeGuidList,
   ExtractAuthKey,
   CleanRegEx,
   findDangerousQueryOperator,
   getClientIp,
-  GenerateLimiter
+  GenerateLimiter,
+  validAccessRule,
+  normalizeRuleOp,
+  ruleMatches,
+  accessRulesPass,
+  accessGrants
 };  

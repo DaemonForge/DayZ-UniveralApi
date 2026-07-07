@@ -220,18 +220,185 @@ class UDBEndpoint extends UFBaseEndpoint {
 	}
 	
 	/**
+	 * Saves a secure object: data plus its access control (OBJECT_DB only).
+	 * Players not granted access cannot Load the object and will not see it in Query results.
+	 * Fire-and-forget variant (no callback).
+	 *
+	 * Overloads are disambiguated by argument count (like Save): 4 args = silent,
+	 * 5 args = UFCallbackBase callback, 6 args = instance + function-name callback.
+	 *
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID (use "NewObject" to generate one)
+	 * @param jsonString JSON data to save
+	 * @param access Access definition (allowlist and/or rules)
+	 * @return Call ID or -1 on error
+	 *
+	 * @usage UF().db(OBJECT_DB).SecureSave("MyMod", "Stash_042", stash.ToJson(), access);
+	 */
+	int SecureSave(string mod, string oid, string jsonString, USecureAccess access) {
+		if (mod == "" || oid == "" || jsonString == "" || !access){
+			Error2("[UF] Error on DB SecureSave","OID, jsonString, Mod and access must be valid");
+			return -1;
+		}
+		if (m_Collection != "Object"){
+			Error2("[UF] Error on DB SecureSave","SecureSave is only available for OBJECT_DB");
+			return -1;
+		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
+		int cid = -1;
+		string endpoint = "SecureSave/" + oid + "/" + mod;
+		string body = "{\"Access\":" + access.ToJson() + ",\"Data\":" + jsonString + "}";
+
+		autoptr UFRestCallBackBase ncb = new USilentCallBack();
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, body, rcb);
+
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "SecureSave");
+		}
+		return cid;
+	}
+
+	/**
+	 * Saves a secure object with a UFCallbackBase callback (OBJECT_DB only).
+	 *
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID (use "NewObject" to generate one)
+	 * @param jsonString JSON data to save
+	 * @param access Access definition (allowlist and/or rules)
+	 * @param cb UFCallbackBase-derived callback
+	 * @return Call ID or -1 on error
+	 */
+	int SecureSave(string mod, string oid, string jsonString, USecureAccess access, UFCallbackBase cb) {
+		if (mod == "" || oid == "" || jsonString == "" || !access || !cb){
+			Error2("[UF] Error on DB SecureSave","OID, jsonString, Mod, access and callback must be valid");
+			return -1;
+		}
+		if (m_Collection != "Object"){
+			Error2("[UF] Error on DB SecureSave","SecureSave is only available for OBJECT_DB");
+			return -1;
+		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
+		int cid = -1;
+		string endpoint = "SecureSave/" + oid + "/" + mod;
+		string body = "{\"Access\":" + access.ToJson() + ",\"Data\":" + jsonString + "}";
+
+		cb.SetOID(oid); //Only sets if not set
+
+		autoptr UNestedCallBack ncb = new UNestedCallBack(cb);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, body, rcb);
+
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "SecureSave");
+		}
+		return cid;
+	}
+
+	/**
+	 * Saves a secure object with an instance + function-name callback (OBJECT_DB only).
+	 *
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID (use "NewObject" to generate one)
+	 * @param jsonString JSON data to save
+	 * @param access Access definition (allowlist and/or rules)
+	 * @param cbInstance Object to call callback on
+	 * @param cbFunction Callback method name
+	 * @return Call ID or -1 on error
+	 *
+	 * @usage UF().db(OBJECT_DB).SecureSave("MyMod", "Stash_042", stash.ToJson(), access, this, "OnSaved");
+	 * @note Callback signature: void OnSaved(int cid, int status, string oid, string data)
+	 */
+	int SecureSave(string mod, string oid, string jsonString, USecureAccess access, Class cbInstance, string cbFunction) {
+		if (mod == "" || oid == "" || jsonString == "" || !access){
+			Error2("[UF] Error on DB SecureSave","OID, jsonString, Mod and access must be valid");
+			return -1;
+		}
+		if (m_Collection != "Object"){
+			Error2("[UF] Error on DB SecureSave","SecureSave is only available for OBJECT_DB");
+			return -1;
+		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
+		int cid = -1;
+		string endpoint = "SecureSave/" + oid + "/" + mod;
+		string body = "{\"Access\":" + access.ToJson() + ",\"Data\":" + jsonString + "}";
+
+		autoptr UFRestCallBackBase ncb = new UDBCallBack(cbInstance, cbFunction, cid, oid);
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, body, rcb);
+
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "SecureSave");
+		}
+		return cid;
+	}
+
+	/**
+	 * Replaces the access control of an existing object (OBJECT_DB only).
+	 * An empty access definition makes the object public again.
+	 *
+	 * @param mod Mod identifier namespace
+	 * @param oid Object ID
+	 * @param access Access definition (allowlist and/or rules)
+	 * @param cbInstance Optional object to call callback on
+	 * @param cbFunction Optional callback method name
+	 * @return Call ID or -1 on error
+	 *
+	 * @note Callback signature: void OnAccessSet(int cid, int status, string oid, string data)
+	 */
+	int SetAccess(string mod, string oid, USecureAccess access, Class cbInstance = NULL, string cbFunction = "") {
+		if (mod == "" || oid == "" || !access){
+			Error2("[UF] Error on DB SetAccess","OID, Mod and access must be valid");
+			return -1;
+		}
+		if (m_Collection != "Object"){
+			Error2("[UF] Error on DB SetAccess","SetAccess is only available for OBJECT_DB");
+			return -1;
+		}
+		if (!g_UFramework){
+			UFLog.Err("[UF] g_UFramework is NULL - framework not ready");
+			return -1;
+		}
+		int cid = -1;
+		string endpoint = "SetAccess/" + oid + "/" + mod;
+
+		autoptr UFRestCallBackBase ncb;
+		if (cbInstance && cbFunction != "") {
+			ncb = new UDBCallBack(cbInstance, cbFunction, cid, oid);
+		} else {
+			ncb = new USilentCallBack();
+		}
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+		Post(endpoint, access.ToJson(), rcb);
+
+		if (cid == -1){
+			Error2("[UF] Error failed to register callback with UF", "SetAccess");
+		}
+		return cid;
+	}
+
+	/**
 	 * Loads data from database with UFCallbackBase callback.
-	 * 
+	 *
 	 * @param mod Mod identifier namespace
 	 * @param oid Object ID to load
 	 * @param cb UFCallbackBase-derived callback
 	 * @param jsonString Optional query parameters (default: "{}")
 	 * @return Call ID or -1 on error
-	 * 
+	 *
 	 * @usage UF().db(OBJECT_DB).Load("MyMod", "config", new MyLoadCallback());
 	 * @note Callback receives parsed object as typed parameter if using UFCallback<T>
 	 */
-	
+
 	int Load(string mod, string oid, UFCallbackBase cb, string jsonString = "{}") {		
 		if (mod == "" || oid == "" || jsonString == "" || !cb){
 			Error2("[UF] Error on DB Load","OID and Mod must be valid strings");

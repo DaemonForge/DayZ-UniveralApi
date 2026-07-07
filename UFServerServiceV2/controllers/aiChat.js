@@ -1,10 +1,38 @@
 // controllers/aiChat.js
 const { createClient, createResponse, isCompatMode, getDefaultModel } = require('../aiClient');
-const {saveChatSummary,createChatSummary, getSummaryById, updateChatSummaryStatus, createChat,  getChat,  addMessageToChat, updateMessageStatus, updateMessageWithToolCall, getMessageWithToolCall, getMessageById, getChatHistory, resetChat, deleteChat} = require('../models/aiChat');
+const {saveChatSummary,createChatSummary, getSummaryById, updateChatSummaryStatus, createChat,  getChat, getChatAccess, setChatAccess, addMessageToChat, updateMessageStatus, updateMessageWithToolCall, getMessageWithToolCall, getMessageById, getChatHistory, resetChat, deleteChat} = require('../models/aiChat');
 const Ajv = require('ajv');
-const {createLogger} = require('../utils');
+const {createLogger, normalizeGuidList, accessGrants} = require('../utils');
 const logger = createLogger(global.logger, 'aiChat');
 global.OPENAISTATUS = "Pending";
+
+/**
+ * Per-session access check. Server auth always passes.
+ * A missing/empty AllowedPlayers list means the chat is public (legacy behavior).
+ * @param {object} req - Request with isServer/GUID set by auth middleware.
+ * @param {string[]|undefined} allowedPlayers - Normalized GUIDs from the chat document.
+ * @returns {boolean}
+ */
+function canAccessChat(req, allowedPlayers) {
+    if (req.isServer) return true;
+    return accessGrants({ AllowedPlayers: allowedPlayers }, req.GUID, null);
+}
+
+function denyChatAccess(req, res, ChatId) {
+    logger.warn("Player not permitted for chat", { ChatId, GUID: req.GUID });
+    return res.status(403).json({ Status: "NoPerms", Error: "Not permitted for this chat" });
+}
+
+/**
+ * Access check for handlers that don't otherwise load the chat: skips the DB
+ * read entirely for server auth, then checks the projected allowlist.
+ * A missing chat is NOT a denial - the caller's own not-found handling runs.
+ */
+async function chatAccessDenied(req, ChatId) {
+    if (req.isServer) return false;
+    const chat = await getChatAccess(ChatId);
+    return !!chat && !canAccessChat(req, chat.AllowedPlayers);
+}
 
 // Lazy-load KB search to avoid circular dependencies
 let kbSearchFn = null;
@@ -562,6 +590,15 @@ router.use((req, res, next) => {
 router.post('/Create', requireServerAuth, runCreateChat);
 
 /**
+ * Endpoint to replace the AllowedPlayers list of an existing chat session.
+ * Expects a JSON body: { AllowedPlayers: ["<GUID or SteamID64>", ...] }
+ * An empty array makes the chat public again.
+ *
+ * Only server auth is allowed here.
+ */
+router.post('/SetAccess/:ChatId', requireServerAuth, runSetChatAccess);
+
+/**
  * Endpoint to send a user message in an existing chat session.
  * Expects:
  *  - URL parameter :ChatId to identify the chat
@@ -696,7 +733,13 @@ function getJsonResponseFormatMessage(jsonSchema) {
 async function runCreateChat(req, res){
     try {
         logger.info("Received create chat request", { body: req.body });
-        let { SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory, KBId } = req.body;
+        let { SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory, KBId, AllowedPlayers } = req.body;
+        if (AllowedPlayers !== undefined && !Array.isArray(AllowedPlayers)) {
+            logger.warn("Invalid AllowedPlayers provided, must be an array", { AllowedPlayers });
+            return res.status(400).json({ Status: "Error", Error: "AllowedPlayers must be an array of GUIDs/SteamIDs" });
+        }
+        // SteamID64s are normalized to DayZ GUIDs; empty/missing list = public chat
+        AllowedPlayers = normalizeGuidList(AllowedPlayers);
         
         // Log KB ID specifically for debugging
         if (KBId) {
@@ -748,7 +791,7 @@ async function runCreateChat(req, res){
             MaxHistory, 
             KBId: KBId || 'none' 
         });
-        const result = await createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory, KBId);
+        const result = await createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory, KBId, AllowedPlayers);
         logger.info("Chat created successfully", { ChatId: result.ChatId, KBId: KBId || 'none' });
         return res.status(200).json({ Status: "Success", ChatId: result.ChatId });
     } catch (err) {
@@ -756,6 +799,34 @@ async function runCreateChat(req, res){
         return res.status(500).json({ Status: "Error", Error: "Failed to create chat" });
     }
 };
+
+/**
+ * Replaces the AllowedPlayers list of an existing chat (server only).
+ * Expected JSON body: { AllowedPlayers: ["<GUID or SteamID64>", ...] }
+ * Returns: { Status: "Success", ChatId: "..." }
+ */
+async function runSetChatAccess(req, res) {
+    try {
+        const { ChatId } = req.params;
+        let { AllowedPlayers } = req.body;
+        logger.info("Received set chat access request", { ChatId });
+        if (!Array.isArray(AllowedPlayers)) {
+            logger.warn("Invalid AllowedPlayers provided, must be an array", { ChatId });
+            return res.status(400).json({ Status: "Error", Error: "AllowedPlayers must be an array of GUIDs/SteamIDs" });
+        }
+        AllowedPlayers = normalizeGuidList(AllowedPlayers);
+        const found = await setChatAccess(ChatId, AllowedPlayers);
+        if (!found) {
+            logger.warn("Chat not found for set access", { ChatId });
+            return res.status(404).json({ Status: "NotFound", Error: "Chat not found" });
+        }
+        logger.info("Chat access updated", { ChatId, count: AllowedPlayers.length });
+        return res.status(200).json({ Status: "Success", ChatId });
+    } catch (err) {
+        logger.error("Error setting chat access: " + err.message, { stack: err.stack });
+        return res.status(500).json({ Status: "Error", Error: "Failed to set chat access" });
+    }
+}
 
 /**
  * Sends a user message in a chat.
@@ -799,6 +870,9 @@ async function sendMessage(req, res){
         if (!chat) {
             logger.warn("Chat not found", { ChatId });
             return res.status(200).json({ Status: "NotFound", Error: "Chat not found" });
+        }
+        if (!canAccessChat(req, chat.AllowedPlayers)) {
+            return denyChatAccess(req, res, ChatId);
         }
 
         // Check if there's already a pending message in this chat
@@ -1052,6 +1126,9 @@ async function getMessageStatus(req, res){
             return res.status(200).json({ Status: "NotFound", Error: "Message not found" });
         }
         const { ChatId, message } = result;
+        if (!canAccessChat(req, result.AllowedPlayers)) {
+            return denyChatAccess(req, res, ChatId);
+        }
         if (message.status === "Success") {
             // Always return Message as a string - the client handles JSON parsing
             let messageContent = message.content;
@@ -1097,6 +1174,11 @@ async function runGetChatHistory(req, res){
         if (!chat) {
             return res.status(404).json({ Status: "Error", Error: "Chat not found" });
         }
+        if (!canAccessChat(req, chat.AllowedPlayers)) {
+            return denyChatAccess(req, res, ChatId);
+        }
+        // Don't leak the allowlist to clients
+        delete chat.AllowedPlayers;
         // Remap the content field to Message in each message
         const remappedChat = {
             ...chat,
@@ -1124,6 +1206,9 @@ async function runResetChat(req, res){
         if (!ChatId) {
             logger.warn("Missing ChatId parameter for reset chat");
             return res.status(400).json({ Status: "Error", Error: "ChatId is required" });
+        }
+        if (await chatAccessDenied(req, ChatId)) {
+            return denyChatAccess(req, res, ChatId);
         }
         const success = await resetChat(ChatId);
         if (!success) {
@@ -1186,6 +1271,9 @@ async function runSummarizeChat(req, res){
         if (!chat) {
             logger.warn("Chat not found for summarization", { ChatId });
             return res.status(200).json({ Status: "NotFound", SummaryId:"", Summary:"", Error: "Chat not found" });
+        }
+        if (!canAccessChat(req, chat.AllowedPlayers)) {
+            return denyChatAccess(req, res, ChatId);
         }
         // Check if a summary already exists on the chat record.
         // If the summary exists and the lastUpdated and summaryUpdated timestamps match,
@@ -1266,6 +1354,9 @@ async function getSummaryStatus(req, res) {
             logger.warn("Summary record not found", { SummaryId });
             return res.status(404).json({ Status: "NotFound", Error: "Summary not found", Summary:""});
         }
+        if (await chatAccessDenied(req, summaryRecord.ChatId)) {
+            return denyChatAccess(req, res, summaryRecord.ChatId);
+        }
         const { Status, Summary } = summaryRecord;
         logger.info("Returning summary status", { SummaryId, Status });
         if (Status === "Success") {
@@ -1308,7 +1399,11 @@ async function submitToolResult(req, res) {
         
         const { chat, message } = messageData;
         const ChatId = chat.ChatId;
-        
+
+        if (!canAccessChat(req, chat.AllowedPlayers)) {
+            return denyChatAccess(req, res, ChatId);
+        }
+
         // Verify the message has a tool call waiting
         if (message.status !== "ToolCall" || !message.toolCall) {
             return res.status(400).json({ Status: "Error", Error: "Message is not waiting for a tool result" });

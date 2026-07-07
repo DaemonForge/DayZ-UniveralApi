@@ -1,16 +1,17 @@
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
 const { createLogger } = require('../utils');
+const { getDb } = require('./db');
 const logger = createLogger(global.logger, 'db.aiChat');
 
 /**
- * Connects to the database and returns the Chats collection.
- * @returns {Promise<{ client: MongoClient, chats: Collection, chatSummaries: Collection }>}
+ * Returns the Chats/ChatSummaries collections on the shared pooled connection.
+ * The returned client has a no-op close for backwards compatibility - callers
+ * keep their `finally { await client.close(); }` without tearing down the pool.
+ * @returns {Promise<{ client: { close: Function }, chats: Collection, chatSummaries: Collection }>}
  */
 async function getCollections() {
-  const client = new MongoClient(global.config.DBServer);
-  await client.connect();
-  const db = client.db(global.config.DB);
-  return { client, chats: db.collection("Chats"), chatSummaries: db.collection("ChatSummaries") };
+  const db = await getDb();
+  return { client: { close: () => {} }, chats: db.collection("Chats"), chatSummaries: db.collection("ChatSummaries") };
 }
 
 /**
@@ -23,7 +24,7 @@ async function getCollections() {
  * @param {string|null} KBId - Optional Knowledge Base ID for KB-enhanced chat.
  * @returns {Promise<{ ChatId: string }>}
  */
-async function createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory, KBId = null) {
+async function createChat(SystemMessage, ResponseFormat, JsonSchema, Model, MaxHistory, KBId = null, AllowedPlayers = []) {
   const { client, chats } = await getCollections();
   try {
     logger.debug("Creating new chat session", { 
@@ -62,6 +63,7 @@ The knowledge base search will return relevant documents that you should use to 
       Model: Model || 'gpt-4o-mini',
       MaxHistory: MaxHistory || 20,
       KBId: KBId || null,
+      AllowedPlayers: AllowedPlayers || [],
       Messages: [],
       createdAt: new Date(),
       lastUpdated: new Date()
@@ -93,6 +95,48 @@ async function getChat(ChatId) {
     return chat;
   } catch (error) {
     logger.error(`Error getting chat: ${error.message}`, { error });
+    throw error;
+  } finally {
+    await client.close();
+  }
+}
+
+/**
+ * Retrieves only a chat's access control (AllowedPlayers), not its messages.
+ * Used for permission checks where the full document is not needed.
+ * @param {string} ChatId
+ * @returns {Promise<{ AllowedPlayers?: string[] }|null>} - Projected doc, or null if not found.
+ */
+async function getChatAccess(ChatId) {
+  const { client, chats } = await getCollections();
+  try {
+    const chat = await chats.findOne({ ChatId }, { projection: { AllowedPlayers: 1 } });
+    return chat;
+  } catch (error) {
+    logger.error(`Error getting chat access: ${error.message}`, { error });
+    throw error;
+  } finally {
+    await client.close();
+  }
+}
+
+/**
+ * Replaces the AllowedPlayers list of a chat session.
+ * @param {string} ChatId
+ * @param {string[]} AllowedPlayers - Already-normalized GUIDs. Empty array = public.
+ * @returns {Promise<boolean>} - True if the chat exists.
+ */
+async function setChatAccess(ChatId, AllowedPlayers) {
+  const { client, chats } = await getCollections();
+  try {
+    logger.info(`Setting chat access for ChatId ${ChatId}`, { count: AllowedPlayers.length });
+    const result = await chats.updateOne(
+      { ChatId },
+      { $set: { AllowedPlayers, lastUpdated: new Date() } }
+    );
+    return result.matchedCount > 0;
+  } catch (error) {
+    logger.error(`Error setting chat access: ${error.message}`, { error });
     throw error;
   } finally {
     await client.close();
@@ -187,14 +231,14 @@ async function getMessageById(MessageId) {
     logger.info(`Retrieving message with MessageId ${MessageId}`);
     const chat = await chats.findOne(
       { "Messages.MessageId": MessageId },
-      { projection: { ChatId: 1, "Messages.$": 1 } }
+      { projection: { ChatId: 1, AllowedPlayers: 1, "Messages.$": 1 } }
     );
     if (!chat || !chat.Messages || chat.Messages.length === 0) {
       logger.warn(`Message not found for MessageId ${MessageId}`);
       return null;
     }
     logger.info(`Message retrieved for MessageId ${MessageId}`);
-    return { ChatId: chat.ChatId, message: chat.Messages[0] };
+    return { ChatId: chat.ChatId, message: chat.Messages[0], AllowedPlayers: chat.AllowedPlayers };
   } catch (error) {
     logger.error(`Error retrieving message: ${error.message}`, { error });
     throw error;
@@ -423,7 +467,7 @@ async function getMessageWithToolCall(MessageId) {
     logger.info(`Retrieving message with tool call for MessageId ${MessageId}`);
     const chat = await chats.findOne(
       { "Messages.MessageId": MessageId },
-      { projection: { ChatId: 1, SystemMessage: 1, ResponseFormat: 1, JsonSchema: 1, Model: 1, MaxHistory: 1, Messages: 1 } }
+      { projection: { ChatId: 1, SystemMessage: 1, ResponseFormat: 1, JsonSchema: 1, Model: 1, MaxHistory: 1, AllowedPlayers: 1, Messages: 1 } }
     );
     if (!chat || !chat.Messages) {
       return null;
@@ -448,6 +492,8 @@ module.exports = {
   saveChatSummary,
   createChat,
   getChat,
+  getChatAccess,
+  setChatAccess,
   addMessageToChat,
   updateMessageStatus,
   updateMessageWithToolCall,

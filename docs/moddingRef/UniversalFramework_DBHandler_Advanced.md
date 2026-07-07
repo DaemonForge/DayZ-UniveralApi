@@ -2,7 +2,93 @@
 
 ## Overview
 
-Advanced database operations beyond basic Save/Load. This covers query building, atomic transactions, partial updates, pagination, and the underlying query classes for complex data retrieval patterns.
+Advanced database operations beyond basic Save/Load. This covers secure objects (per-player access control), query building, atomic transactions, partial updates, pagination, and the underlying query classes for complex data retrieval patterns.
+
+---
+
+## Secure Objects (Access Control)
+
+`OBJECT_DB` objects are normally visible to every client. A **secure object** carries an access definition so only specific players can Load it or see it in Query results. The server always has full access.
+
+**Access is granted when the player is on the allowlist OR all access rules pass. An object with an empty allowlist and no rules is public (default).**
+
+```enforce
+// Save a stash only two players (and rule-passing VIPs) can see
+USecureAccess access = new USecureAccess();
+access.AllowPlayer(player.GetIdentity().GetId());   // DayZ GUID
+access.AllowPlayer("76561198012345678");            // SteamID64 also works - normalized service-side
+access.AddRule("MyRPGMod", "IsVIP", "=", "1");      // OR: anyone whose MyRPGMod player data has IsVIP
+g_Handler.SaveSecure("Stash_042", stashData, access, this, "OnSaved");
+
+// Change access later (empty access = public again)
+g_Handler.SetAccess("Stash_042", access, this, "OnAccessSet");
+```
+
+**Queries just work.** A client calling `Query()` automatically receives only the objects it may see - no client-side changes needed. A denied `Load()` returns `UF_UNAUTHORIZED`.
+
+### Method Signatures
+
+```enforce
+// UDBHandler<T> - OBJECT_DB only
+int SaveSecure(string oid, T object, USecureAccess access, Class cbInstance = NULL, string cbFunction = "");
+int SetAccess(string oid, USecureAccess access, Class cbInstance = NULL, string cbFunction = "");
+
+class USecureAccess {
+    void AllowPlayer(string guidOrSteamId);   // add one player (GUID or SteamID64)
+    void AllowPlayers(array<string> ids);     // add many
+    void AddRule(string mod, string field, string op, string value);  // rules AND together
+    UAccessRuleGroup AddGroup();              // OR alternative - see below
+}
+```
+
+### Access Rules (Advanced Secure Objects)
+
+Rules are evaluated on the service against the requesting player's saved `PLAYER_DB` data for the given mod. Rules added with `AddRule()` must ALL pass (AND). Allowlisted players skip rule evaluation.
+
+| Parameter | Meaning |
+|-----------|---------|
+| `mod` | Which mod's player data to check (the mod name used with `PLAYER_DB`) |
+| `field` | Field inside that data; dot paths allowed (`"Stats.Reputation"`) |
+| `op` | See operator table below |
+| `value` | Always a string: numbers as `"10"`, booleans as `"1"`/`"0"` (DayZ JSON convention) |
+
+| Operator | Meaning | Value format |
+|----------|---------|--------------|
+| `=` / `!=` | Equal / not equal (numeric when both sides are numbers) | `"25"`, `"Traders"`, `"1"` |
+| `>` `>=` `<` `<=` | Numeric comparison | `"25"` |
+| `in` / `notin` | Field value is (not) one of a list | Comma-separated: `"Traders,Medics"` or `"1,2,3"` |
+| `contains` / `notcontains` | Array field does (not) contain the value | `"veteran"` |
+| `exists` | Field is present at all | ignored |
+
+Word aliases are accepted case-insensitively: `EQUAL`, `NOTEQUAL`, `IN`, `NOTIN`, `GTE`, `LTE`, ...
+
+```enforce
+// Only Traders faction members level 25+ can see this vault
+USecureAccess access = new USecureAccess();
+access.AddRule("MyRPGMod", "Level", ">=", "25");
+access.AddRule("MyRPGMod", "Faction", "=", "Traders");
+g_Handler.SaveSecure("TraderVault", vault, access);
+```
+
+### OR Logic (Rule Groups)
+
+`AddGroup()` starts an OR alternative: access is granted when **any** group has **all** of its rules pass. Rules added with plain `AddRule()` form the first group.
+
+```enforce
+// VIPs OR (level 50+ Traders/Medics) can see this
+USecureAccess access = new USecureAccess();
+access.AddRule("MyRPGMod", "IsVIP", "=", "1");         // group 1: VIP
+
+UAccessRuleGroup vets = access.AddGroup();              // group 2: veteran traders
+vets.AddRule("MyRPGMod", "Level", ">=", "50");
+vets.AddRule("MyRPGMod", "Faction", "in", "Traders,Medics");
+
+g_Handler.SaveSecure("EliteStash", stash, access);
+```
+
+**Missing data semantics:** positive ops (`=`, `>`, `in`, `contains`, ...) fail when the player has no saved data for that mod or field (fail closed). Negative ops (`!=`, `notin`, `notcontains`) pass on missing data - combine with an `exists` rule when the field must be present. Server-side access is never restricted.
+
+> **Note:** Players granted only by *rules* are excluded from client `QueryUpdate` writes (rules can't be evaluated in bulk updates). Allowlisted players are not affected.
 
 ---
 

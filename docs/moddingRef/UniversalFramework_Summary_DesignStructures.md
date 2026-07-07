@@ -38,10 +38,11 @@ Players receive a JWT token issued by the server on connect. Limited access - pr
 | Feature | Server | Player | Notes |
 |---------|--------|--------|-------|
 | **Object DB** ||||
-| Load | [YES] Read + Create | [YES] Read only | Server can create if not exists |
+| Load | [YES] Read + Create | [YES] Read only | Server can create if not exists; secure objects deny non-permitted players |
 | Save | [YES] | [NO] | |
+| SecureSave / SetAccess | [YES] | [NO] | Attach allowlist + access rules to an object |
 | Update/Transaction | [YES] | [NO] | |
-| Query | [YES] | [YES] | Both can query |
+| Query | [YES] | [YES] | Both can query; players only see objects they're permitted to |
 | **Player DB** ||||
 | Load | [YES] Any player | [YES] Own GUID only | Player token restricts to own data |
 | Save | [YES] | [NO] | |
@@ -61,9 +62,10 @@ Players receive a JWT token issued by the server on connect. Limited access - pr
 | Channel Create/Delete/Edit | [YES] | [NO] | |
 | Channel Send/Messages | [YES] | [YES] | Both can interact |
 | **AI Chat** ||||
-| Create | [YES] | [NO] | Server creates sessions |
-| Send / Read / Reset | [YES] | [YES] | Both can use existing chats |
-| MessageStatus / Summarize | [YES] | [YES] | |
+| Create | [YES] | [NO] | Server creates sessions; optional AllowedPlayers list restricts access |
+| Send / Read / Reset | [YES] | [YES]* | *Only players on the session's AllowedPlayers list (empty list = public) |
+| MessageStatus / Summarize | [YES] | [YES]* | *Same AllowedPlayers restriction |
+| SetAccess | [YES] | [NO] | Replace a session's AllowedPlayers list |
 | Delete | [YES] | [NO] | |
 | **Message Queues** ||||
 | Read | [YES] | [YES] | Per-reader pointers |
@@ -79,7 +81,7 @@ Players receive a JWT token issued by the server on connect. Limited access - pr
 
 1. **Player DB is per-player isolated** - A player's auth token only allows access to their own GUID. Server can access any player. Always use `player.GetIdentity().GetId()` for `PLAYER_DB` keys, never `GetPlainId()`.
 
-2. **Object DB is shared** - Any authenticated request can read. Only server can write.
+2. **Object DB is shared** - Any authenticated request can read. Only server can write. Objects saved with `SaveSecure` are the exception: players must be on the allowlist or pass the object's access rules to Load or see them in Query results (server always has full access).
 
 3. **Write operations are server-only** - Save, Update, Transaction always require server auth.
 

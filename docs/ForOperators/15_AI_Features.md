@@ -26,7 +26,21 @@ Create a new chat session.
   "SystemMessage": "You are a helpful assistant.",
   "KnowledgeBaseId": "my_kb",
   "ResponseFormat": "Text", // or "JSON"
-  "Tools": [{...}] // Optional OpenAI Tool definitions
+  "Tools": [{...}], // Optional OpenAI Tool definitions
+  "AllowedPlayers": ["<GUID or SteamID64>", "..."] // Optional - restricts session access
+}
+```
+
+`AllowedPlayers` restricts which player tokens can Send/Read/Reset/Summarize this session (SteamID64s are normalized to GUIDs). Empty or omitted = public (any valid player token with the ChatId). Denied players receive `403 { "Status": "NoPerms" }`. Server auth always has access.
+
+### POST /AI/Chat/SetAccess/:ChatId
+Replace the AllowedPlayers list of an existing chat session.
+
+**Auth**: Server
+**Body**:
+```json
+{
+  "AllowedPlayers": ["<GUID or SteamID64>", "..."] // empty array = public again
 }
 ```
 

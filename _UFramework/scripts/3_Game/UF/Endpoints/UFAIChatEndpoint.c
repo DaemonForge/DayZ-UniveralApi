@@ -30,9 +30,10 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 	 * @param maxHistory - Optional maximum history to keep
 	 * @param cb - Callback for response handling
 	 * @param kbId - Optional Knowledge Base ID for enhanced context retrieval
+	 * @param allowedPlayers - Optional GUIDs/SteamID64s allowed to access this chat (NULL/empty = public)
 	 * @return Call ID or -1 on error
 	 */
-	int Create(string systemMessage, string responseFormat, string jsonSchema = "", string model = "", int maxHistory = -1, UFCallbackBase cb = NULL, string kbId = "") {
+	int Create(string systemMessage, string responseFormat, string jsonSchema = "", string model = "", int maxHistory = -1, UFCallbackBase cb = NULL, string kbId = "", array<string> allowedPlayers = NULL) {
 		if (!g_UFramework){
 			UFLog.Err("[UF] AI Chat Create - g_UFramework is NULL");
 			return -1;
@@ -47,7 +48,7 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 		}
 		
 		int cid = -1;
-		autoptr UAIChatCreateRequest req = new UAIChatCreateRequest(systemMessage, responseFormat, jsonSchema, model, maxHistory, kbId);
+		autoptr UAIChatCreateRequest req = new UAIChatCreateRequest(systemMessage, responseFormat, jsonSchema, model, maxHistory, kbId, allowedPlayers);
 		
 		autoptr UFRestCallBackBase ncb;
 		if (cb) {
@@ -184,6 +185,46 @@ class UFAIChatEndpoint extends UFBaseEndpoint {
 		return cid;
 	}
 	
+	/**
+	 * Replaces the allowed players list of an existing chat (server only).
+	 * Accepts GUIDs or SteamID64s - the service normalizes SteamIDs to GUIDs.
+	 * @param chatId - The ID of the chat to update
+	 * @param allowedPlayers - Players allowed to access the chat (empty = public)
+	 * @param cb - Optional callback for response handling
+	 * @return Call ID or -1 on error
+	 */
+	int SetAccess(string chatId, array<string> allowedPlayers, UFCallbackBase cb = NULL) {
+		if (!g_UFramework){
+			UFLog.Err("[UF] AI Chat SetAccess - g_UFramework is NULL");
+			return -1;
+		}
+		if (!UF().IsOpenAIEnabled()){
+			Error2("[UF] AI Chat SetAccess", "OpenAI service is not online");
+			return -1;
+		}
+		if (chatId == "") {
+			Error2("[UF] AI Chat SetAccess", "chatId must be a valid string");
+			return -1;
+		}
+
+		int cid = -1;
+		autoptr UAIChatSetAccessRequest req = new UAIChatSetAccessRequest(allowedPlayers);
+		autoptr UFRestCallBackBase ncb;
+		if (cb) {
+			ncb = new UNestedCallBack(cb);
+		} else {
+			ncb = new USilentCallBack();
+		}
+		autoptr RestCallback rcb = RestCallback.Cast(g_UFramework.RegisterCall(ncb, cid));
+
+		Post("SetAccess/" + chatId, req.ToJson(), rcb);
+
+		if (cid == -1) {
+			Error2("[UF] AI Chat SetAccess", "Error Registering Callback");
+		}
+		return cid;
+	}
+
 	/**
 	 * Resets a chat session (clears history)
 	 * @param chatId - The ID of the chat to reset

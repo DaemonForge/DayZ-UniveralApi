@@ -35,8 +35,9 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 	 * @param jsonSchema JSON schema for parsing responses (required)
 	 * @param model Optional AI model to use
 	 * @param maxHistory Optional maximum history to keep
+	 * @param allowedPlayers Optional GUIDs/SteamID64s allowed to access this chat (NULL/empty = public)
 	 */
-	void UAIChatHandler(string systemMessage, Class obj, string funcName, string jsonSchema, string model = "", int maxHistory = -1)
+	void UAIChatHandler(string systemMessage, Class obj, string funcName, string jsonSchema, string model = "", int maxHistory = -1, array<string> allowedPlayers = NULL)
 	{
 		UFLog.Debug("[UAIChatHandler<T>] Creating new chat session, Model: " + model + ", MaxHistory: " + maxHistory);
 		
@@ -52,7 +53,7 @@ class UAIChatHandler<Class T> extends UAIChatHandlerBase
 		
 		UFLog.Debug("[UAIChatHandler<T>] Calling Create endpoint, SchemaLen: " + jsonSchema.Length().ToString());
 		// Create the chat with JSON response format
-		m_LastCallId = UF().AI().Create(systemMessage, "JSON", jsonSchema, model, maxHistory, new UFCallback<UAIChatCreateResponse>(this, "OnChatCreated"));
+		m_LastCallId = UF().AI().Create(systemMessage, "JSON", jsonSchema, model, maxHistory, new UFCallback<UAIChatCreateResponse>(this, "OnChatCreated"), "", allowedPlayers);
 		UFLog.Debug("[UAIChatHandler<T>] Create request sent, CID: " + m_LastCallId);
 	}
 	
@@ -218,8 +219,9 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 	 * @param funcName Function name to call on response
 	 * @param model Optional AI model to use
 	 * @param maxHistory Optional maximum history to keep
+	 * @param allowedPlayers Optional GUIDs/SteamID64s allowed to access this chat (NULL/empty = public)
 	 */
-	void UStringAIChatHandler(string systemMessage, Class obj, string funcName, string model = "", int maxHistory = -1)
+	void UStringAIChatHandler(string systemMessage, Class obj, string funcName, string model = "", int maxHistory = -1, array<string> allowedPlayers = NULL)
 	{
 		UFLog.Debug("[UStringAIChatHandler] Creating new chat session, Model: " + model + ", MaxHistory: " + maxHistory);
 		m_IsCreating = true;
@@ -228,7 +230,7 @@ class UStringAIChatHandler extends UAIChatHandlerBase
 		
 		UFLog.Debug("[UStringAIChatHandler] Calling Create endpoint");
 		// Create the chat with string response format
-		m_LastCallId = UF().AI().Create(systemMessage, "string", "", model, maxHistory, new UFCallback<StatusObject>(this, "OnChatCreated"));
+		m_LastCallId = UF().AI().Create(systemMessage, "string", "", model, maxHistory, new UFCallback<StatusObject>(this, "OnChatCreated"), "", allowedPlayers);
 		UFLog.Debug("[UStringAIChatHandler] Create request sent, CID: " + m_LastCallId);
 	}
 	
@@ -800,6 +802,23 @@ class UAIChatHandlerBase extends Managed
 		return m_LastCallId;
 	}
 	
+	/**
+	 * Replace the allowed players list for this chat (server only).
+	 * Accepts DayZ GUIDs or SteamID64s - the service normalizes SteamIDs to GUIDs.
+	 * An empty array makes the chat public.
+	 * @return Call ID or -1 on error
+	 */
+	int SetAccess(array<string> allowedPlayers)
+	{
+		if (m_ChatId == "") {
+			Error("[UF] [UAIChatHandlerBase] Cannot set access, no chat ID set");
+			return -1;
+		}
+
+		m_LastCallId = UF().AI().SetAccess(m_ChatId, allowedPlayers);
+		return m_LastCallId;
+	}
+
 	/**
 	 * Delete the chat entirely
 	 * @return Call ID or -1 on error

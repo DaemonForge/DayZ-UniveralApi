@@ -38,14 +38,25 @@ OpenAI API                        (GPT models)
 | Operation | Server | Player (Client) |
 |-----------|--------|----------------|
 | Create session | ✅ | ❌ |
-| Send message | ✅ | ✅ |
-| Check message status | ✅ | ✅ |
-| Read history | ✅ | ✅ |
-| Reset chat | ✅ | ✅ |
-| Summarize | ✅ | ✅ |
+| Send message | ✅ | ✅* |
+| Check message status | ✅ | ✅* |
+| Read history | ✅ | ✅* |
+| Reset chat | ✅ | ✅* |
+| Summarize | ✅ | ✅* |
+| Set allowed players | ✅ | ❌ |
 | Delete session | ✅ | ❌ |
 
 > **Note:** The server must create chat sessions. Once created, both server and players can send messages.
+>
+> **\*Session access control:** By default any player with the ChatId can access the chat. Pass an allowed-players list when creating the session (GUIDs or SteamID64s - SteamIDs are normalized to GUIDs service-side) and only those players can Send/Read/Reset/Summarize it; everyone else gets `UF_UNAUTHORIZED`. An empty list keeps the chat public. Use `SetAllowedPlayers()` on agents, the `allowedPlayers` constructor parameter on handlers, or `UF().AI().SetAccess(chatId, players)` to change it later.
+>
+> ```enforce
+> autoptr SquadAdvisor npc = new SquadAdvisor();
+> array<string> squad = new array<string>;
+> squad.Insert(player.GetIdentity().GetId());
+> npc.SetAllowedPlayers(squad);   // before Chat(), or any time - live-updates an existing session
+> npc.Chat("Hello", this, "OnResponse");
+> ```
 
 ### Server-Client Workflow
 
@@ -165,6 +176,11 @@ void SetKBId(string kbId);
 
 // Add persistent context blocks
 void AddStaticContext(string description, array<string> items);
+
+// Restrict the session to specific players (GUIDs or SteamID64s, mixed freely).
+// NULL/empty = public. Call before Chat(); live-updates an existing session.
+// Alternatively override: array<string> AllowedPlayers()
+void SetAllowedPlayers(array<string> players);
 ```
 
 ### Model Selection
@@ -356,6 +372,7 @@ ai.Reset(chatId);                    // Clear history
 ai.Delete(chatId);                   // Delete session
 ai.Summarize(chatId, callback);      // Get summary
 ai.MessageStatus(messageId, callback); // Check status
+ai.SetAccess(chatId, allowedPlayers);  // Restrict session to specific players (server only)
 ```
 
 ---

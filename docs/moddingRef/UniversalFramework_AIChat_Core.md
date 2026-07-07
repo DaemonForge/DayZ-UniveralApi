@@ -95,8 +95,11 @@ Best for **advanced scenarios** requiring direct API control.
 ```enforce
 UFAIChatEndpoint ai = UF().AI();
 
-// Create session - params: systemMessage, format, jsonSchema, model, maxHistory, callback, kbId
+// Create session - params: systemMessage, format, jsonSchema, model, maxHistory, callback, kbId, allowedPlayers
 int cid = ai.Create("System message", "string", "", "gpt-4o-mini", 25, callback, "");
+
+// Restrict who can access the session (server only, GUIDs or SteamID64s, empty = public)
+ai.SetAccess(chatId, allowedPlayers);
 
 // Send message
 ai.Send(chatId, "Hello", callback, context, tools);
@@ -121,6 +124,7 @@ Chat creation happens automatically - messages can be sent immediately (they que
 | `funcName` | string | Callback function name for messages |
 | `model` | string | AI model (optional - default: "gpt-4o-mini") |
 | `maxHistory` | int | Max history entries (optional - default: -1 unlimited) |
+| `allowedPlayers` | array\<string\> | Optional GUIDs/SteamID64s allowed to access this chat (NULL/empty = public) |
 
 ```enforce
 autoptr UStringAIChatHandler handler = new UStringAIChatHandler(
@@ -150,6 +154,7 @@ autoptr UStringAIChatHandler handler = new UStringAIChatHandler(chatId, this, "O
 | `NotifyOnCreated(string callbackFunc)` | Set callback for when chat creation completes |
 | `Summarize(callback)` | Get conversation summary |
 | `Reset()` | Clear chat history |
+| `SetAccess(array<string> allowedPlayers)` | Replace the allowed players list (server only; empty = public) |
 | `Delete()` | Delete the session (server only) |
 | `GetChatId()` | Get the chat ID (empty until created) |
 | `GetQueueCount()` | Get number of messages waiting to be sent |

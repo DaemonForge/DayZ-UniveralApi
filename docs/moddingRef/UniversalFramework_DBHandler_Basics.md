@@ -8,7 +8,7 @@
 
 | Constant | Collection | Access |
 |----------|------------|--------|
-| `OBJECT_DB` | Objects | Shared - any client can access |
+| `OBJECT_DB` | Objects | Shared - any client can access (unless saved with `SaveSecure` - see [Secure Objects](UniversalFramework_DBHandler_Advanced.md#secure-objects-access-control)) |
 | `PLAYER_DB` | Players | Per-player - client only accesses own data |
 
 ## Permissions
@@ -203,6 +203,7 @@ Save custom levels and experience for players.
 ### Clan System
 Store shared clan information.
 *   **Implementation**: Use `OBJECT_DB` with `oid="Clan_123"`. Anyone in his clan can load this ID to see members, but you must handle permissions in your code to ensure only officers can edit.
+*   **Restricting reads**: Use `SaveSecure()` with the member GUIDs so only clan members can even see the object - see [Secure Objects](UniversalFramework_DBHandler_Advanced.md#secure-objects-access-control).
 
 ## Tags
 `database`, `persistence`, `mongodb`, `UDBHandler`, `saving`, `loading`, `player-data`, `player-db`, `object-db`, `how-to`, `reference`, `doc-usage`, `modder`
